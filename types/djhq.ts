@@ -1,0 +1,165 @@
+/**
+ * Allowed subscription tiers for the DJHQ MVP.
+ */
+export type SubscriptionPlan = "free" | "pro"
+
+/**
+ * Supported release formats.
+ */
+export type ReleaseType = "single" | "EP" | "album"
+
+/**
+ * Supported social/music platforms for artist links.
+ */
+export type SocialPlatform =
+  | "beatport"
+  | "spotify"
+  | "soundcloud"
+  | "youtube"
+  | "instagram"
+  | "tiktok"
+  | "website"
+  | "other"
+
+/**
+ * ISO-8601 date-time string.
+ */
+export type ISODateString = string
+
+/**
+ * Public social or music link displayed on the artist profile.
+ */
+export interface SocialLink {
+  /** Platform identifier used for rendering and filtering. */
+  platform: SocialPlatform
+  /** Human-readable label shown in the UI. */
+  label: string
+  /** Absolute destination URL. */
+  url: string
+}
+
+/**
+ * A music release that can be featured or listed on the profile.
+ */
+export interface Release {
+  /** Stable unique release identifier. */
+  id: string
+  /** Release title. */
+  title: string
+  /** Label, distributor, or self-release name. */
+  label: string
+  /** Official release date. */
+  releaseDate: ISODateString
+  /** Cover artwork image URL. */
+  artworkUrl: string
+  /** Primary platform URL for listening or purchase. */
+  platformUrl: string
+  /** Release format. */
+  type: ReleaseType
+}
+
+/**
+ * Upcoming live performance information.
+ */
+export interface Gig {
+  /** Stable unique gig identifier. */
+  id: string
+  /** Event date. */
+  date: ISODateString
+  /** Venue or event name. */
+  venue: string
+  /** City of the event. */
+  city: string
+  /** Country of the event. */
+  country: string
+  /** Optional public ticket/event URL. */
+  ticketUrl?: string
+}
+
+/**
+ * Press/gallery image metadata for profile previews.
+ */
+export interface GalleryImage {
+  /** Stable unique image identifier. */
+  id: string
+  /** Public image URL. */
+  imageUrl: string
+  /** Accessible alternative text. */
+  altText: string
+  /** Sort order for deterministic rendering. */
+  sortOrder: number
+}
+
+/**
+ * Artist booking contact details.
+ */
+export interface BookingInfo {
+  /** Primary booking email. */
+  email: string
+  /** Optional external booking page URL. */
+  bookingUrl?: string
+  /** Optional short availability note. */
+  availabilityText?: string
+}
+
+/**
+ * Press kit availability and metadata.
+ */
+export interface PressKit {
+  /** Whether the press kit is publicly available. */
+  enabled: boolean
+  /** Download or request URL for the press kit. */
+  downloadUrl: string
+  /** List of assets included in the press kit. */
+  assetsIncluded: string[]
+}
+
+/**
+ * Core DJHQ artist profile aggregate for the MVP.
+ */
+export interface Artist {
+  /** Stable unique artist identifier. */
+  id: string
+  /** Tenant/workspace identifier for multi-tenant isolation. */
+  tenantId: string
+  /** Owning user identifier for authorization boundaries. */
+  ownerUserId: string
+  /** Public profile handle used in route paths. */
+  handle: string
+  /** Public artist display name. */
+  artistName: string
+  /** Optional legal or real name. */
+  realName?: string
+  /** Optional short positioning line. */
+  tagline?: string
+  /** Public genre tags. */
+  genres: string[]
+  /** Public location string. */
+  location: string
+  /** Short profile bio. */
+  shortBio: string
+  /** Hero image URL for the profile. */
+  heroImageUrl: string
+  /** Optional avatar image URL. */
+  avatarUrl?: string
+  /** Primary social/music links. */
+  socialLinks: SocialLink[]
+  /** Optional featured release. */
+  featuredRelease?: Release
+  /** Upcoming gigs for the profile. */
+  upcomingGigs: Gig[]
+  /** Gallery preview images. */
+  galleryImages: GalleryImage[]
+  /** Booking configuration and contact info. */
+  bookingInfo: BookingInfo
+  /** Press kit configuration. */
+  pressKit: PressKit
+  /** Current active subscription plan. */
+  plan: SubscriptionPlan
+  /** Whether the profile is publicly visible. */
+  isPublished: boolean
+  /** Record creation timestamp. */
+  createdAt: ISODateString
+  /** Record last update timestamp. */
+  updatedAt: ISODateString
+}

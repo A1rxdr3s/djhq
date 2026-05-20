@@ -7,16 +7,20 @@ import {
   Calendar,
   Download,
   ExternalLink,
+  Globe,
   Instagram,
   Mail,
   MapPin,
   Music2,
   Play,
   Radio,
+  Link2,
+  Music,
   Youtube,
   type LucideIcon,
 } from "lucide-react"
-import { artists, getArtistByHandle, type ArtistProfile, type SocialPlatform } from "@/data/artists"
+import { mockArtist } from "@/data/mock-artist"
+import type { SocialLink, SocialPlatform } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,17 +37,18 @@ const socialIcons: Record<SocialPlatform, LucideIcon> = {
   spotify: Radio,
   soundcloud: Play,
   youtube: Youtube,
+  tiktok: Music,
+  website: Globe,
+  other: Link2,
 }
 
 export function generateStaticParams() {
-  return artists.map((artist) => ({
-    handle: artist.handle,
-  }))
+  return [{ handle: mockArtist.handle }]
 }
 
 export async function generateMetadata({ params }: PublicProfilePageProps): Promise<Metadata> {
   const { handle } = await params
-  const artist = getArtistByHandle(handle)
+  const artist = handle.toLowerCase() === mockArtist.handle ? mockArtist : null
 
   if (!artist) {
     return {
@@ -60,7 +65,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
       description: artist.shortBio,
       images: [
         {
-          url: artist.heroImage,
+          url: artist.heroImageUrl,
           alt: `${artist.artistName} press photo`,
         },
       ],
@@ -72,7 +77,7 @@ function SectionTitle({ children }: { children: ReactNode }) {
   return <h2 className="text-xs font-semibold uppercase tracking-widest text-accent">{children}</h2>
 }
 
-function MainLink({ link }: { link: ArtistProfile["socialLinks"][number] }) {
+function MainLink({ link }: { link: SocialLink }) {
   const Icon = socialIcons[link.platform]
 
   return (
@@ -94,15 +99,20 @@ function MainLink({ link }: { link: ArtistProfile["socialLinks"][number] }) {
 
 export default async function PublicArtistProfilePage({ params }: PublicProfilePageProps) {
   const { handle } = await params
-  const artist = getArtistByHandle(handle)
+  const artist = handle.toLowerCase() === mockArtist.handle ? mockArtist : null
 
   if (!artist) {
     notFound()
   }
 
   const featuredRelease = artist.featuredRelease
+  if (!featuredRelease) {
+    notFound()
+  }
   const upcomingGigs = artist.upcomingGigs.slice(0, 3)
-  const photoPreview = artist.photoGallery.slice(0, 3)
+  const photoPreview = artist.galleryImages.slice(0, 3)
+  const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
+  const featuredReleaseDescription = artist.tagline ?? artist.shortBio
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -127,7 +137,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-2xl shadow-black/40">
           <div className="relative min-h-[540px] sm:min-h-[620px]">
             <Image
-              src={artist.heroImage}
+              src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
               fill
               priority
@@ -156,13 +166,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <Button asChild size="lg" className="h-12 bg-accent text-accent-foreground hover:bg-accent/90">
-                  <a href={`mailto:${artist.bookingEmail}`}>
+                  <a href={`mailto:${artist.bookingInfo.email}`}>
                     <Mail className="h-4 w-4" />
                     Book this artist
                   </a>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="h-12 border-border/70 bg-background/55 text-foreground backdrop-blur-sm hover:bg-secondary">
-                  <a href={featuredRelease.url}>
+                  <a href={featuredRelease.platformUrl}>
                     <Play className="h-4 w-4" />
                     Listen now
                   </a>
@@ -191,13 +201,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               <div className="min-w-0 flex-1">
                 <h2 className="text-lg font-bold text-foreground">{featuredRelease.title}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {featuredRelease.label} / {featuredRelease.year}
+                  {featuredRelease.label} / {featuredReleaseYear}
                 </p>
                 <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                  {featuredRelease.description}
+                  {featuredReleaseDescription}
                 </p>
                 <Button asChild variant="outline" className="mt-4 w-full border-border text-foreground hover:bg-secondary sm:w-auto">
-                  <a href={featuredRelease.url}>
+                  <a href={featuredRelease.platformUrl}>
                     Open release
                     <ExternalLink className="h-4 w-4" />
                   </a>
@@ -217,9 +227,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">{gig.venue}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {gig.date} / {gig.city}
+                      {new Date(gig.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} / {gig.city}
                     </p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-widest text-accent">{gig.billing}</p>
+                    <p className="mt-1 text-xs font-medium uppercase tracking-widest text-accent">{gig.country}</p>
                   </div>
                 </div>
               ))}
@@ -230,23 +240,23 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <SectionTitle>Press Kit / Booking</SectionTitle>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <Button asChild className="h-12 bg-accent text-accent-foreground hover:bg-accent/90">
-                <a href={artist.pressKitUrl}>
+                <a href={artist.pressKit.downloadUrl}>
                   <Download className="h-4 w-4" />
                   Download press kit
                 </a>
               </Button>
               <Button asChild variant="outline" className="h-12 border-border text-foreground hover:bg-secondary">
-                <a href={`mailto:${artist.bookingEmail}`}>
+                <a href={`mailto:${artist.bookingInfo.email}`}>
                   <Mail className="h-4 w-4" />
                   Contact booking
                 </a>
               </Button>
             </div>
             <a
-              href={`mailto:${artist.bookingEmail}`}
+              href={`mailto:${artist.bookingInfo.email}`}
               className="mt-4 block rounded-2xl bg-secondary/35 px-4 py-3 text-center font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              {artist.bookingEmail}
+              {artist.bookingInfo.email}
             </a>
           </section>
 
@@ -256,12 +266,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               {photoPreview.map((photo) => (
                 <div key={photo.id} className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-secondary">
                   <Image
-                    src={photo.src}
-                    alt={photo.alt}
+                    src={photo.imageUrl}
+                    alt={photo.altText}
                     fill
                     loading="eager"
                     sizes="(min-width: 768px) 220px, 33vw"
-                    className={cn("object-cover", photo.position)}
+                    className={cn(
+                      "object-cover",
+                      photo.sortOrder === 1 ? "object-left" : photo.sortOrder === 2 ? "object-center" : "object-right",
+                    )}
                   />
                 </div>
               ))}

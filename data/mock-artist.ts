@@ -1,0 +1,93 @@
+import type { Artist } from "@/types/djhq"
+
+export const mockArtist: Artist = {
+  id: "artist_andresherrera_001",
+  tenantId: "tenant_djhq_demo_001",
+  ownerUserId: "user_andres_herrera_001",
+  handle: "andresherrera",
+  artistName: "ANDRES:HERRERA",
+  realName: "Andres Herrera",
+  tagline: "Peak-time house and techno for modern club rooms.",
+  genres: ["House", "Tech House", "Melodic Techno"],
+  location: "Miami / Berlin",
+  shortBio:
+    "ANDRES:HERRERA delivers dark, groove-led house and techno shaped for peak-time dance floors. His recent releases and club sets bridge underground energy with polished, international booking-ready presentation.",
+  heroImageUrl: "/images/dj-hero.jpg",
+  avatarUrl: "/placeholder-user.jpg",
+  socialLinks: [
+    { platform: "beatport", label: "Beatport", url: "https://www.beatport.com/artist/andres-herrera/000001" },
+    { platform: "spotify", label: "Spotify", url: "https://open.spotify.com/artist/000001" },
+    { platform: "soundcloud", label: "SoundCloud", url: "https://soundcloud.com/andresherrera" },
+    { platform: "youtube", label: "YouTube", url: "https://www.youtube.com/@andresherrera" },
+    { platform: "instagram", label: "Instagram", url: "https://www.instagram.com/andresherrera" },
+  ],
+  featuredRelease: {
+    id: "release_midnight_protocol_ep_2026",
+    title: "Midnight Protocol EP",
+    label: "Drumcode",
+    releaseDate: "2026-05-08T00:00:00.000Z",
+    artworkUrl: "/placeholder.jpg",
+    platformUrl: "https://www.beatport.com/release/midnight-protocol-ep/000001",
+    type: "EP",
+  },
+  upcomingGigs: [
+    {
+      id: "gig_space_miami_2026_06_14",
+      date: "2026-06-14T03:00:00.000Z",
+      venue: "Club Space",
+      city: "Miami",
+      country: "US",
+      ticketUrl: "https://ra.co/events/000001",
+    },
+    {
+      id: "gig_fabric_london_2026_07_05",
+      date: "2026-07-05T22:30:00.000Z",
+      venue: "Fabric",
+      city: "London",
+      country: "UK",
+      ticketUrl: "https://ra.co/events/000002",
+    },
+    {
+      id: "gig_watergate_berlin_2026_08_22",
+      date: "2026-08-22T23:00:00.000Z",
+      venue: "Watergate",
+      city: "Berlin",
+      country: "DE",
+      ticketUrl: "https://ra.co/events/000003",
+    },
+  ],
+  galleryImages: [
+    {
+      id: "gallery_press_001",
+      imageUrl: "/images/dj-hero.jpg",
+      altText: "ANDRES:HERRERA performing with moody blue lighting",
+      sortOrder: 1,
+    },
+    {
+      id: "gallery_press_002",
+      imageUrl: "/placeholder.jpg",
+      altText: "ANDRES:HERRERA studio portrait",
+      sortOrder: 2,
+    },
+    {
+      id: "gallery_press_003",
+      imageUrl: "/placeholder-user.jpg",
+      altText: "ANDRES:HERRERA promo headshot",
+      sortOrder: 3,
+    },
+  ],
+  bookingInfo: {
+    email: "booking@andresherrera.com",
+    bookingUrl: "https://www.andresherrera.com/booking",
+    availabilityText: "Available worldwide for club, festival, and brand events.",
+  },
+  pressKit: {
+    enabled: true,
+    downloadUrl: "https://www.andresherrera.com/epk",
+    assetsIncluded: ["Short bio", "Press photos", "Featured release links", "Upcoming gigs", "Technical rider"],
+  },
+  plan: "pro",
+  isPublished: true,
+  createdAt: "2026-05-01T12:00:00.000Z",
+  updatedAt: "2026-05-20T15:30:00.000Z",
+}
