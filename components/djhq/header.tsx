@@ -57,7 +57,7 @@ export function Header() {
       </div>
 
       {/* Mobile menu */}
-        {mobileMenuOpen && (
+      {mobileMenuOpen && (
         <div className="border-t border-border bg-background md:hidden">
           <nav id="mobile-navigation" className="flex flex-col gap-4 px-4 py-6">
             <Link href="#profile" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
@@ -67,11 +67,13 @@ export function Header() {
               Pricing
             </Link>
             <hr className="border-border" />
-            <Link href="#pricing" className="text-sm text-muted-foreground">
+            <Link href="#pricing" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
               Login
             </Link>
             <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              <Link href="#pricing">Start Free</Link>
+              <Link href="#pricing" onClick={() => setMobileMenuOpen(false)}>
+                Start Free
+              </Link>
             </Button>
           </nav>
         </div>

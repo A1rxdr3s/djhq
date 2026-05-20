@@ -4,42 +4,37 @@ import { Button } from "@/components/ui/button"
 const plans = [
   {
     name: "Free",
-    description: "For setting up your first DJHQ.",
+    description: "For launching your first public DJ profile.",
     price: "$0",
     period: "forever",
     features: [
-      "Basic public profile",
-      "5 links",
+      "Public DJ profile",
+      "Main links",
+      "Latest release",
+      "Upcoming gig",
+      "Social/music links",
       "DJHQ branded URL",
     ],
-    cta: "Get Started",
+    cta: "Start free",
     highlighted: false,
   },
   {
     name: "Pro",
-    description: "For active DJs and producers.",
+    description: "For DJs who need a fuller electronic press kit.",
     price: "$12",
     period: "/month",
     features: [
-      "Premium profile and press kit",
-      "Unlimited links, releases, and gigs",
-      "Booking contact and analytics",
+      "Full press kit",
+      "More releases",
+      "More gigs",
+      "DJ sets / mixes",
+      "Photo gallery",
+      "Custom styling",
+      "Booking contact section",
+      "Future custom domain support",
     ],
-    cta: "Start Free Trial",
+    cta: "Upgrade to Pro",
     highlighted: true,
-  },
-  {
-    name: "Label / Team",
-    description: "For collectives, labels, and agencies.",
-    price: "$39",
-    period: "/month",
-    features: [
-      "Multiple artist profiles",
-      "Team access",
-      "Shared media library",
-    ],
-    cta: "Contact Sales",
-    highlighted: false,
   },
 ]
 
@@ -50,11 +45,14 @@ export function PricingSection() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-medium uppercase tracking-widest text-accent">Pricing</span>
           <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Start simple. Upgrade when your profile needs more.
+            Start free. Upgrade when your DJHQ page needs more.
           </h2>
+          <p className="mt-4 text-balance text-muted-foreground">
+            Two simple plans for the first launch version of DJHQ.
+          </p>
         </div>
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-3">
+        <div className="mx-auto mt-14 grid max-w-5xl gap-8 lg:grid-cols-2">
           {plans.map((plan) => (
             <div
               key={plan.name}

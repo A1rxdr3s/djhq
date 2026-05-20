@@ -1,110 +1,59 @@
 import Link from "next/link"
-import { Twitter, Instagram, Youtube } from "lucide-react"
+import { Instagram, Youtube } from "lucide-react"
 
-const productLinks = [
-  { label: "Product", href: "#product" },
+const footerLinks = [
   { label: "Examples", href: "#profile" },
-  { label: "Dashboard", href: "#dashboard" },
   { label: "Pricing", href: "#pricing" },
-]
-
-const toolsLinks = [
-  { label: "BPM Calculator", href: "#tools" },
-  { label: "Harmonic Mixing", href: "#tools" },
-  { label: "Release Checklist", href: "#tools" },
-]
-
-const companyLinks = [
-  { label: "About", href: "#product" },
-  { label: "Careers", href: "mailto:hello@djhq.com?subject=Careers%20at%20DJHQ" },
-  { label: "Contact", href: "mailto:hello@djhq.com?subject=DJHQ%20contact" },
-  { label: "Privacy", href: "mailto:legal@djhq.com?subject=DJHQ%20privacy" },
-  { label: "Terms", href: "mailto:legal@djhq.com?subject=DJHQ%20terms" },
+  { label: "Login", href: "#pricing" },
+  { label: "Start Free", href: "#pricing" },
 ]
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-background py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-5">
-          {/* Brand */}
-          <div className="lg:col-span-2">
+    <footer className="border-t border-border bg-background py-12">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
+          <div>
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded bg-accent">
                 <span className="text-sm font-bold text-accent-foreground">DJ</span>
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">DJHQ</span>
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              A premium public profile, press kit, and booking link for modern DJs.
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              A premium link-in-bio and electronic press kit page built specifically for DJs.
             </p>
-            {/* Social links */}
-            <div className="mt-6 flex items-center gap-4">
-              <a href="https://x.com/" aria-label="DJHQ on X" className="text-muted-foreground transition-colors hover:text-foreground">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </a>
+          </div>
+
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <nav className="flex flex-wrap gap-x-6 gap-y-3">
+              {footerLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="flex items-center gap-4">
               <a href="https://www.instagram.com/" aria-label="DJHQ on Instagram" className="text-muted-foreground transition-colors hover:text-foreground">
                 <Instagram className="h-5 w-5" />
-                <span className="sr-only">Instagram</span>
               </a>
               <a href="https://www.youtube.com/" aria-label="DJHQ on YouTube" className="text-muted-foreground transition-colors hover:text-foreground">
                 <Youtube className="h-5 w-5" />
-                <span className="sr-only">YouTube</span>
               </a>
             </div>
           </div>
-
-          {/* Product links */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground">Product</h4>
-            <ul className="mt-4 space-y-3">
-              {productLinks.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Tools links */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground">Tools</h4>
-            <ul className="mt-4 space-y-3">
-              {toolsLinks.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company links */}
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground">Company</h4>
-            <ul className="mt-4 space-y-3">
-              {companyLinks.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
+        <div className="flex flex-col justify-between gap-3 border-t border-border pt-6 sm:flex-row">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} DJHQ. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Made with ♥ for the electronic music community
+            Built for DJs, electronic artists, and bookers.
           </p>
         </div>
       </div>
