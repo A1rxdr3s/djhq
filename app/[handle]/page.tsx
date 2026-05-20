@@ -131,6 +131,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               alt={`${artist.artistName} performing behind the decks`}
               fill
               priority
+              loading="eager"
               sizes="(min-width: 768px) 768px, 100vw"
               className="object-cover"
             />
@@ -258,6 +259,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     src={photo.src}
                     alt={photo.alt}
                     fill
+                    loading="eager"
                     sizes="(min-width: 768px) 220px, 33vw"
                     className={cn("object-cover", photo.position)}
                   />
