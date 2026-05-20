@@ -8,6 +8,8 @@ import { mockArtist } from "@/data/mock-artist"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 const navItems = [
   { id: "overview", label: "Overview" },
@@ -33,7 +35,21 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState("overview")
+  const [artistName, setArtistName] = useState(mockArtist.artistName)
+  const [handle, setHandle] = useState(mockArtist.handle)
+  const [genres, setGenres] = useState(mockArtist.genres.join(", "))
+  const [location, setLocation] = useState(mockArtist.location)
+  const [shortBio, setShortBio] = useState(mockArtist.shortBio)
+  const [heroImageUrl, setHeroImageUrl] = useState(mockArtist.heroImageUrl)
+  const [saveMessage, setSaveMessage] = useState("")
   const publicProfileUrl = `/${mockArtist.handle}`
+  const isProfileDirty =
+    artistName !== mockArtist.artistName ||
+    handle !== mockArtist.handle ||
+    genres !== mockArtist.genres.join(", ") ||
+    location !== mockArtist.location ||
+    shortBio !== mockArtist.shortBio ||
+    heroImageUrl !== mockArtist.heroImageUrl
   const completionItems = [
     "Core profile info",
     "Music and social links",
@@ -78,15 +94,48 @@ export default function DashboardPage() {
           <CardTitle>Profile</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <ReadOnlyField label="Artist Name" value={mockArtist.artistName} />
-          <ReadOnlyField label="Handle" value={mockArtist.handle} />
-          <ReadOnlyField label="Genres" value={mockArtist.genres.join(", ")} />
-          <ReadOnlyField label="Location" value={mockArtist.location} />
-          <div className="md:col-span-2">
-            <ReadOnlyField label="Short Bio" value={mockArtist.shortBio} />
+          <div className="space-y-1.5">
+            <label htmlFor="artistName" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Artist Name
+            </label>
+            <Input id="artistName" value={artistName} onChange={(event) => setArtistName(event.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="handle" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Handle
+            </label>
+            <Input id="handle" value={handle} onChange={(event) => setHandle(event.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="genres" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Genres
+            </label>
+            <Input id="genres" value={genres} onChange={(event) => setGenres(event.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="location" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Location
+            </label>
+            <Input id="location" value={location} onChange={(event) => setLocation(event.target.value)} />
           </div>
           <div className="md:col-span-2">
-            <ReadOnlyField label="Hero Image URL" value={mockArtist.heroImageUrl} />
+            <div className="space-y-1.5">
+              <label htmlFor="shortBio" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Short Bio
+              </label>
+              <Textarea id="shortBio" value={shortBio} onChange={(event) => setShortBio(event.target.value)} />
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="heroImageUrl"
+                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+              >
+                Hero Image URL
+              </label>
+              <Input id="heroImageUrl" value={heroImageUrl} onChange={(event) => setHeroImageUrl(event.target.value)} />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -290,11 +339,17 @@ export default function DashboardPage() {
                 View profile
               </Link>
             </Button>
-            <Button size="sm" disabled className="bg-accent text-accent-foreground">
+            <Button
+              size="sm"
+              disabled={!isProfileDirty}
+              onClick={() => setSaveMessage("Changes are saved locally only in this prototype.")}
+              className="bg-accent text-accent-foreground"
+            >
               <Save className="h-4 w-4" />
               Save changes
             </Button>
           </div>
+          {saveMessage ? <p className="text-xs text-muted-foreground">{saveMessage}</p> : null}
         </header>
 
         <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
