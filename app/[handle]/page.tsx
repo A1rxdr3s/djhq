@@ -54,6 +54,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
   }
 
   return {
+    metadataBase: new URL("https://djhq.com"),
     title: `${artist.artistName} - DJHQ`,
     description: artist.shortBio,
     openGraph: {
