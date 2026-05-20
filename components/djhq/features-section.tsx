@@ -1,20 +1,20 @@
-import { CalendarCheck, LayoutDashboard, Sparkles } from "lucide-react"
+import { CalendarCheck, Link2, Sparkles } from "lucide-react"
 
 const values = [
   {
     icon: Sparkles,
-    title: "Look professional",
-    description: "Send promoters and bookers one polished profile instead of scattered links.",
+    title: "Built for DJs",
+    description: "Show releases, gigs, mixes, photos, and booking info in one place.",
   },
   {
     icon: CalendarCheck,
-    title: "Get booked faster",
-    description: "Keep your bio, music, gigs, photos, and booking contact ready in one place.",
+    title: "Booker-ready",
+    description: "Give promoters one clean page with everything they need.",
   },
   {
-    icon: LayoutDashboard,
-    title: "Stay organized",
-    description: "Manage releases, links, press assets, and artist info from a clean dashboard.",
+    icon: Link2,
+    title: "Free to start",
+    description: "Launch your first DJHQ profile and upgrade later when you need more.",
   },
 ]
 
@@ -23,10 +23,13 @@ export function FeaturesSection() {
     <section id="product" className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="text-xs font-medium uppercase tracking-widest text-accent">Product</span>
+          <span className="text-xs font-medium uppercase tracking-widest text-accent">DJ-first link page</span>
           <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            One premium page for the business side of your artist identity
+            Not just another link-in-bio.
           </h2>
+          <p className="mt-4 text-balance text-muted-foreground">
+            DJHQ gives your music, gigs, press assets, and booking links room to feel intentional.
+          </p>
         </div>
 
         <div className="mt-12 grid gap-5 md:grid-cols-3">
