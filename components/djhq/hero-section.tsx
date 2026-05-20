@@ -1,24 +1,21 @@
+import Image from "next/image"
+import Link from "next/link"
 import {
   ArrowRight,
-  Eye,
-  Music,
   Calendar,
   Download,
-  Link2,
-  BarChart3,
-  Mail,
-  Pencil,
-  Plus,
-  Upload,
-  Instagram,
   ExternalLink,
-  Play,
-  MapPin,
+  Eye,
   FileText,
-  TrendingUp,
+  Instagram,
+  Mail,
+  MapPin,
+  Music,
+  Pencil,
+  Play,
+  Upload,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
 
 function SoundCloudIcon({ className }: { className?: string }) {
   return (
@@ -46,121 +43,102 @@ function BeatportIcon({ className }: { className?: string }) {
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen overflow-hidden pt-20">
-      {/* Layered ambient background */}
+    <section className="relative overflow-hidden pt-20">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/3 top-[15%] h-[600px] w-[600px] rounded-full bg-accent/[0.04] blur-[150px]" />
-        <div className="absolute right-1/4 top-[40%] h-[400px] w-[400px] rounded-full bg-accent/[0.025] blur-[120px]" />
-        {/* Subtle grid texture */}
+        <div className="absolute left-1/4 top-[12%] h-[560px] w-[560px] rounded-full bg-accent/[0.045] blur-[150px]" />
+        <div className="absolute right-[12%] top-[38%] h-[380px] w-[380px] rounded-full bg-accent/[0.025] blur-[120px]" />
         <div
           className="absolute inset-0 opacity-[0.02]"
           style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
             backgroundSize: "64px 64px",
           }}
         />
       </div>
 
       <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-7xl flex-col items-center px-4 py-12 sm:px-6 lg:px-8">
-        {/* Top badge */}
         <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-accent/20 bg-accent/[0.06] px-5 py-2">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-50" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
           </span>
-          <span className="text-xs font-semibold tracking-widest text-accent uppercase">Now in Public Beta</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-accent">Premium DJ Profiles</span>
         </div>
 
-        {/* Headline */}
         <h1 className="max-w-4xl text-center text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-[4.25rem] lg:leading-[1.08]">
-          Your entire DJ career,{" "}
-          <span className="relative text-accent">
-            organized in one link
-            <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 300 8" fill="none" preserveAspectRatio="none">
-              <path d="M1 5.5C60 2 120 2 150 3.5C180 5 240 6 299 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-accent/30" />
-            </svg>
-          </span>
+          Your professional DJ profile, press kit, and booking link.
         </h1>
 
-        {/* Subheadline */}
-        <p className="mt-6 max-w-[640px] text-center text-balance text-lg leading-relaxed text-muted-foreground">
-          DJHQ gives DJs and producers a premium public profile, smart links, press kit, release hub, booking assets, and producer tools — all managed from one clean control panel.
+        <p className="mt-6 max-w-[680px] text-center text-balance text-lg leading-relaxed text-muted-foreground">
+          DJHQ helps DJs and producers share music, releases, gigs, press assets, and booking information through one premium public page.
         </p>
 
-        {/* CTAs */}
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold px-8 h-12 text-sm">
-            Start building your DJHQ
-            <ArrowRight className="ml-2 h-4 w-4" />
+          <Button asChild size="lg" className="h-12 bg-accent px-8 text-sm font-semibold text-accent-foreground hover:bg-accent/90">
+            <Link href="#pricing">
+              Start your DJHQ
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </Button>
-          <Button size="lg" variant="outline" className="border-border/60 text-foreground hover:bg-secondary/60 h-12 text-sm">
-            <Eye className="mr-2 h-4 w-4" />
-            View artist demo
+          <Button asChild size="lg" variant="outline" className="h-12 border-border/60 text-sm text-foreground hover:bg-secondary/60">
+            <Link href="#profile">
+              <Eye className="mr-2 h-4 w-4" />
+              View artist demo
+            </Link>
           </Button>
         </div>
 
-        {/* ========== SPLIT PRODUCT MOCKUP ========== */}
         <div className="relative mt-16 w-full max-w-[1120px]">
-          {/* Large ambient glow behind the mockup */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[700px] rounded-full bg-accent/[0.05] blur-[140px]" />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.05] blur-[140px]" />
 
-          {/* Connector line between panels */}
-          <div className="pointer-events-none absolute left-1/2 top-8 bottom-8 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-accent/15 to-transparent hidden md:block" />
-
-          <div className="relative grid gap-5 md:grid-cols-2">
-            {/* ===== LEFT: Public Artist Profile ===== */}
+          <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:items-start">
             <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/80 shadow-2xl shadow-black/50 backdrop-blur-sm">
-              {/* Subtle accent border glow */}
               <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-accent/[0.08]" />
 
-              {/* Browser-style top bar */}
               <div className="flex items-center justify-between border-b border-border/60 bg-background/60 px-4 py-2.5">
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   <div className="flex gap-1.5">
                     <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
                     <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
                     <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
                   </div>
-                  <div className="ml-3 flex items-center gap-1.5 rounded-md bg-secondary/60 px-3 py-1">
-                    <ExternalLink className="h-3 w-3 text-muted-foreground/60" />
-                    <span className="text-[10px] text-muted-foreground/80 font-mono">djhq.com/andresherrera</span>
+                  <div className="ml-3 flex min-w-0 items-center gap-1.5 rounded-md bg-secondary/60 px-3 py-1">
+                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                    <span className="truncate font-mono text-[10px] text-muted-foreground/80">djhq.com/andresherrera</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="h-2 w-2 rounded-full bg-accent/60" />
-                  <span className="text-[10px] font-semibold tracking-widest text-accent/80 uppercase">Live</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-accent/80">Live</span>
                 </div>
               </div>
 
               <div className="p-5">
-                {/* Artist hero image */}
                 <div className="relative mb-5 aspect-[16/7] w-full overflow-hidden rounded-xl">
                   <Image
                     src="/images/dj-hero.jpg"
                     alt="DJ performing at a club with moody lighting"
                     fill
+                    sizes="(min-width: 1024px) 55vw, 100vw"
                     className="object-cover"
                     priority
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-                  {/* Floating genre tags on the image */}
-                  <div className="absolute bottom-3 left-3 flex gap-1.5">
-                    <span className="rounded-full bg-background/70 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium text-foreground/90">House</span>
-                    <span className="rounded-full bg-background/70 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium text-foreground/90">Tech House</span>
-                    <span className="rounded-full bg-accent/20 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium text-accent">Producer</span>
+                  <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-background/70 px-2.5 py-1 text-[10px] font-medium text-foreground/90 backdrop-blur-sm">House</span>
+                    <span className="rounded-full bg-background/70 px-2.5 py-1 text-[10px] font-medium text-foreground/90 backdrop-blur-sm">Tech House</span>
+                    <span className="rounded-full bg-accent/20 px-2.5 py-1 text-[10px] font-medium text-accent backdrop-blur-sm">Producer</span>
                   </div>
                 </div>
 
-                {/* Artist identity */}
-                <div className="mb-1">
-                  <h3 className="text-2xl font-bold tracking-tight text-foreground">ANDRES:HERRERA</h3>
-                </div>
-
-                {/* Location + social row */}
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin className="h-3 w-3" />
-                    <span className="text-xs">Miami, FL</span>
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold tracking-tight text-foreground">ANDRES:HERRERA</h3>
+                    <div className="mt-1 flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span className="text-xs">Miami, FL</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <a href="https://www.instagram.com/" aria-label="View Instagram profile" className="text-muted-foreground/60 transition-colors hover:text-foreground">
@@ -178,65 +156,54 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                {/* Profile CTAs */}
                 <div className="mb-5 flex gap-2.5">
-                  <button className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent py-2.5 text-xs font-semibold text-accent-foreground transition-colors hover:bg-accent/90">
+                  <button type="button" className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent py-2.5 text-xs font-semibold text-accent-foreground transition-colors hover:bg-accent/90">
                     <Mail className="h-3.5 w-3.5" />
                     Book This Artist
                   </button>
-                  <button className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border/60 bg-secondary/40 py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary/70">
+                  <button type="button" className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border/60 bg-secondary/40 py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary/70">
                     <Play className="h-3.5 w-3.5" />
                     Listen Now
                   </button>
                 </div>
 
-                {/* Featured release card */}
-                <div className="mb-3 overflow-hidden rounded-xl border border-border/50 bg-secondary/20">
-                  <div className="px-3.5 py-2 border-b border-border/30">
-                    <p className="text-[10px] font-semibold tracking-widest text-muted-foreground/70 uppercase">Featured Release</p>
+                <div className="grid gap-3 lg:grid-cols-2">
+                  <div className="overflow-hidden rounded-xl border border-border/50 bg-secondary/20">
+                    <div className="border-b border-border/30 px-3.5 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Featured Release</p>
+                    </div>
+                    <div className="flex items-center gap-3.5 p-3.5">
+                      <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-accent/10 bg-accent/10">
+                        <Music className="h-6 w-6 text-accent/70" />
+                        <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent">
+                          <Play className="ml-[1px] h-2 w-2 text-accent-foreground" />
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">Midnight Protocol EP</p>
+                        <p className="text-xs text-muted-foreground/70">Drumcode / 2025</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3.5 p-3.5">
-                    <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg bg-accent/10 border border-accent/10">
-                      <Music className="h-6 w-6 text-accent/70" />
-                      <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent flex items-center justify-center">
-                        <Play className="h-2 w-2 text-accent-foreground ml-[1px]" />
+
+                  <div className="overflow-hidden rounded-xl border border-border/50 bg-secondary/20">
+                    <div className="border-b border-border/30 px-3.5 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Next Gig</p>
+                    </div>
+                    <div className="flex items-center gap-3.5 p-3.5">
+                      <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg border border-accent/10 bg-accent/10">
+                        <span className="text-[10px] font-semibold uppercase leading-none text-accent">Aug</span>
+                        <span className="text-lg font-bold leading-tight text-foreground">15</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">Fabric London</p>
+                        <p className="text-xs text-muted-foreground/70">Room 1 - Headline Set</p>
                       </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground truncate">Midnight Protocol EP</p>
-                      <p className="text-xs text-muted-foreground/70">Drumcode / 2025</p>
-                      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-secondary/60">
-                        <div className="h-full w-[65%] rounded-full bg-accent/40" />
-                      </div>
-                    </div>
-                    <span className="flex-shrink-0 rounded-md bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent tracking-wide">NEW</span>
                   </div>
                 </div>
 
-                {/* Upcoming gig card */}
-                <div className="mb-3 overflow-hidden rounded-xl border border-border/50 bg-secondary/20">
-                  <div className="px-3.5 py-2 border-b border-border/30">
-                    <p className="text-[10px] font-semibold tracking-widest text-muted-foreground/70 uppercase">Next Gig</p>
-                  </div>
-                  <div className="flex items-center gap-3.5 p-3.5">
-                    <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-accent/10 border border-accent/10">
-                      <span className="text-[10px] font-semibold text-accent uppercase leading-none">Aug</span>
-                      <span className="text-lg font-bold text-foreground leading-tight">15</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground truncate">Fabric London</p>
-                      <p className="text-xs text-muted-foreground/70">Room 1 — Headline Set</p>
-                      <div className="mt-1 flex items-center gap-1">
-                        <MapPin className="h-2.5 w-2.5 text-muted-foreground/50" />
-                        <span className="text-[10px] text-muted-foreground/60">London, UK</span>
-                      </div>
-                    </div>
-                    <span className="flex-shrink-0 rounded-md bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">Headline</span>
-                  </div>
-                </div>
-
-                {/* Press kit download */}
-                <button className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border/50 bg-secondary/20 py-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary/40 hover:border-border">
+                <button type="button" className="mt-3 flex w-full items-center justify-center gap-2.5 rounded-xl border border-border/50 bg-secondary/20 py-3 text-xs font-medium text-foreground transition-colors hover:border-border hover:bg-secondary/40">
                   <FileText className="h-4 w-4 text-muted-foreground/60" />
                   Download Electronic Press Kit
                   <Download className="h-3.5 w-3.5 text-accent/60" />
@@ -244,134 +211,35 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* ===== RIGHT: Private Dashboard ===== */}
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/80 shadow-2xl shadow-black/50 backdrop-blur-sm">
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-foreground/[0.04]" />
-
-              {/* Dashboard top bar */}
-              <div className="flex items-center justify-between border-b border-border/60 bg-background/60 px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1.5">
-                    <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
-                  </div>
-                  <div className="ml-3 flex items-center gap-1.5 rounded-md bg-secondary/60 px-3 py-1">
-                    <span className="text-[10px] text-muted-foreground/80 font-mono">djhq.com/dashboard</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2 w-2 rounded-full bg-foreground/30" />
-                  <span className="text-[10px] font-semibold tracking-widest text-muted-foreground/60 uppercase">Private</span>
-                </div>
+            <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 shadow-2xl shadow-black/40 backdrop-blur-sm lg:mt-12">
+              <div className="border-b border-border/60 bg-background/60 px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Private Dashboard</p>
               </div>
-
-              <div className="p-5">
-                {/* Welcome header with profile completion */}
-                <div className="mb-5 flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Welcome back, Andres</h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground/70">Your DJHQ is looking great</p>
+              <div className="space-y-4 p-4">
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Control panel</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Update music, gigs, press assets, and booking info from one clean workspace.</p>
+                </div>
+                <div className="rounded-xl border border-border/40 bg-secondary/15 p-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-muted-foreground/60">Profile</span>
+                    <span className="text-sm font-bold text-accent">85%</span>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-medium text-muted-foreground/60">Profile</span>
-                      <span className="text-sm font-bold text-accent">85%</span>
-                    </div>
-                    <div className="h-1.5 w-24 overflow-hidden rounded-full bg-secondary/60">
-                      <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-accent/80 to-accent" />
-                    </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary/60">
+                    <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-accent/80 to-accent" />
                   </div>
                 </div>
-
-                {/* Stats grid */}
-                <div className="mb-5 grid grid-cols-2 gap-2.5">
-                  {[
-                    { icon: Link2, label: "Link Clicks", value: "12.4k", change: "+12%", up: true },
-                    { icon: Eye, label: "Profile Views", value: "8.2k", change: "+8%", up: true },
-                    { icon: Mail, label: "Booking Inquiries", value: "47", change: "+23%", up: true },
-                    { icon: Download, label: "EPK Downloads", value: "312", change: "+15%", up: true },
-                  ].map((stat) => (
-                    <div key={stat.label} className="rounded-xl border border-border/40 bg-secondary/15 p-3.5">
-                      <div className="mb-2 flex items-center gap-1.5">
-                        <div className="flex h-5 w-5 items-center justify-center rounded bg-accent/10">
-                          <stat.icon className="h-3 w-3 text-accent/70" />
-                        </div>
-                        <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">{stat.label}</p>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-xl font-bold tracking-tight text-foreground">{stat.value}</p>
-                        <div className="flex items-center gap-0.5">
-                          <TrendingUp className="h-2.5 w-2.5 text-accent" />
-                          <span className="text-[10px] font-semibold text-accent">{stat.change}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Latest releases */}
-                <div className="mb-3 overflow-hidden rounded-xl border border-border/40 bg-secondary/15">
-                  <div className="flex items-center justify-between px-3.5 py-2 border-b border-border/30">
-                    <p className="text-[10px] font-semibold tracking-widest text-muted-foreground/60 uppercase">Latest Releases</p>
-                    <BarChart3 className="h-3 w-3 text-muted-foreground/40" />
-                  </div>
-                  <div className="p-3.5 space-y-2.5">
-                    {[
-                      { title: "Midnight Protocol", label: "Drumcode", streams: "24.8k", date: "2 days ago" },
-                      { title: "Neural Network", label: "Suara", streams: "18.3k", date: "2 weeks ago" },
-                    ].map((release) => (
-                      <div key={release.title} className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-accent/8 border border-accent/10">
-                          <Music className="h-4 w-4 text-accent/60" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-foreground truncate">{release.title}</p>
-                          <p className="text-[10px] text-muted-foreground/60">{release.label} — {release.streams} streams</p>
-                        </div>
-                        <span className="flex-shrink-0 text-[10px] text-muted-foreground/40">{release.date}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Upcoming gigs */}
-                <div className="mb-3 overflow-hidden rounded-xl border border-border/40 bg-secondary/15">
-                  <div className="flex items-center justify-between px-3.5 py-2 border-b border-border/30">
-                    <p className="text-[10px] font-semibold tracking-widest text-muted-foreground/60 uppercase">Upcoming Gigs</p>
-                    <Calendar className="h-3 w-3 text-muted-foreground/40" />
-                  </div>
-                  <div className="p-3.5 space-y-2.5">
-                    {[
-                      { venue: "Fabric London", date: "Aug 15", type: "Headline", color: "text-accent" },
-                      { venue: "Berghain Berlin", date: "Sep 3", type: "Guest", color: "text-muted-foreground" },
-                    ].map((gig) => (
-                      <div key={gig.venue} className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-accent/8 border border-accent/10">
-                          <span className="text-[8px] font-bold text-accent/70 uppercase leading-none">{gig.date.split(" ")[0]}</span>
-                          <span className="text-sm font-bold text-foreground leading-tight">{gig.date.split(" ")[1]}</span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-foreground truncate">{gig.venue}</p>
-                          <p className="text-[10px] text-muted-foreground/60">{gig.date}</p>
-                        </div>
-                        <span className={`flex-shrink-0 rounded-md bg-accent/8 px-2 py-0.5 text-[10px] font-medium ${gig.color}`}>{gig.type}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick actions */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-2">
                   {[
                     { icon: Pencil, label: "Edit Profile" },
-                    { icon: Plus, label: "Add Release" },
+                    { icon: Music, label: "Add Release" },
                     { icon: Calendar, label: "Add Gig" },
                     { icon: Upload, label: "Upload Press Photo" },
                   ].map((action) => (
                     <button
+                      type="button"
                       key={action.label}
-                      className="flex items-center gap-2 rounded-xl border border-border/40 bg-secondary/15 px-3 py-2.5 text-xs font-medium text-foreground/80 transition-colors hover:bg-secondary/30 hover:border-border/60 hover:text-foreground"
+                      className="flex items-center gap-2 rounded-xl border border-border/40 bg-secondary/15 px-3 py-2.5 text-xs font-medium text-foreground/80 transition-colors hover:border-border/60 hover:bg-secondary/30 hover:text-foreground"
                     >
                       <action.icon className="h-3.5 w-3.5 text-muted-foreground/50" />
                       {action.label}
@@ -379,23 +247,6 @@ export function HeroSection() {
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Bottom labels */}
-          <div className="mt-6 flex items-center justify-center gap-10">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 border border-accent/20">
-                <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground/70">Your public profile — what fans and promoters see</span>
-            </div>
-            <div className="h-4 w-px bg-border/40 hidden sm:block" />
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10">
-                <div className="h-1.5 w-1.5 rounded-full bg-foreground/40" />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground/70">Your private dashboard — your control panel</span>
             </div>
           </div>
         </div>

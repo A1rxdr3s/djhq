@@ -2,24 +2,20 @@ import Link from "next/link"
 import { Twitter, Instagram, Youtube } from "lucide-react"
 
 const productLinks = [
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Product", href: "#product" },
   { label: "Examples", href: "#profile" },
   { label: "Dashboard", href: "#dashboard" },
-  { label: "Changelog", href: "#roadmap" },
+  { label: "Pricing", href: "#pricing" },
 ]
 
 const toolsLinks = [
   { label: "BPM Calculator", href: "#tools" },
-  { label: "Delay Time Calculator", href: "#tools" },
   { label: "Harmonic Mixing", href: "#tools" },
-  { label: "LUFS Checker", href: "#tools" },
   { label: "Release Checklist", href: "#tools" },
 ]
 
 const companyLinks = [
-  { label: "About", href: "#features" },
-  { label: "Blog", href: "#roadmap" },
+  { label: "About", href: "#product" },
   { label: "Careers", href: "mailto:hello@djhq.com?subject=Careers%20at%20DJHQ" },
   { label: "Contact", href: "mailto:hello@djhq.com?subject=DJHQ%20contact" },
   { label: "Privacy", href: "mailto:legal@djhq.com?subject=DJHQ%20privacy" },
@@ -40,7 +36,7 @@ export function Footer() {
               <span className="text-lg font-bold tracking-tight text-foreground">DJHQ</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              The digital headquarters for modern DJs. One profile. Every release. Every gig. Every link. Every asset.
+              A premium public profile, press kit, and booking link for modern DJs.
             </p>
             {/* Social links */}
             <div className="mt-6 flex items-center gap-4">

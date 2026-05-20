@@ -1,57 +1,42 @@
-import { Check, ArrowRight } from "lucide-react"
+import { ArrowRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const plans = [
   {
     name: "Free",
-    description: "For DJs starting out",
+    description: "For setting up your first DJHQ.",
     price: "$0",
     period: "forever",
     features: [
       "Basic public profile",
-      "Limited links (5)",
-      "Basic social links",
+      "5 links",
       "DJHQ branded URL",
-      "Basic producer tools",
     ],
     cta: "Get Started",
     highlighted: false,
   },
   {
     name: "Pro",
-    description: "For active DJs and producers",
+    description: "For active DJs and producers.",
     price: "$12",
     period: "/month",
     features: [
-      "Premium public profile",
-      "Unlimited links",
-      "Releases showcase",
-      "Gig calendar",
-      "Press kit builder",
-      "Booking form",
-      "Media gallery",
-      "Analytics dashboard",
-      "Custom theme",
-      "Priority tools",
+      "Premium profile and press kit",
+      "Unlimited links, releases, and gigs",
+      "Booking contact and analytics",
     ],
     cta: "Start Free Trial",
     highlighted: true,
   },
   {
     name: "Label / Team",
-    description: "For labels, collectives and agencies",
+    description: "For collectives, labels, and agencies.",
     price: "$39",
     period: "/month",
     features: [
       "Multiple artist profiles",
-      "Team access & roles",
+      "Team access",
       "Shared media library",
-      "Advanced press kits",
-      "Multi-artist dashboard",
-      "Advanced analytics",
-      "White-label options",
-      "Priority support",
-      "Custom integrations",
     ],
     cta: "Contact Sales",
     highlighted: false,
@@ -62,19 +47,14 @@ export function PricingSection() {
   return (
     <section id="pricing" className="py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-medium uppercase tracking-widest text-accent">Pricing</span>
           <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Simple, transparent pricing
+            Start simple. Upgrade when your profile needs more.
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            Start free and upgrade when you need more. No hidden fees, no surprises.
-          </p>
         </div>
 
-        {/* Pricing cards */}
-        <div className="mt-16 grid gap-8 lg:grid-cols-3">
+        <div className="mt-14 grid gap-8 lg:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}

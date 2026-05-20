@@ -21,17 +21,14 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
-          <Link href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <Link href="#product" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Product
-          </Link>
-          <Link href="#tools" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Tools
-          </Link>
-          <Link href="#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Pricing
           </Link>
           <Link href="#profile" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Examples
+          </Link>
+          <Link href="#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            Pricing
           </Link>
         </nav>
 
@@ -40,8 +37,8 @@ export function Header() {
           <Link href="#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Login
           </Link>
-          <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-            Start Free
+          <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Link href="#pricing">Start Free</Link>
           </Button>
         </div>
 
@@ -66,24 +63,21 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="border-t border-border bg-background md:hidden">
           <nav id="mobile-navigation" className="flex flex-col gap-4 px-4 py-6">
-            <Link href="#features" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <Link href="#product" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
               Product
-            </Link>
-            <Link href="#tools" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
-              Tools
-            </Link>
-            <Link href="#pricing" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
-              Pricing
             </Link>
             <Link href="#profile" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
               Examples
+            </Link>
+            <Link href="#pricing" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
+              Pricing
             </Link>
             <hr className="border-border" />
             <Link href="#pricing" className="text-sm text-muted-foreground">
               Login
             </Link>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              Start Free
+            <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+              <Link href="#pricing">Start Free</Link>
             </Button>
           </nav>
         </div>
