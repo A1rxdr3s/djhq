@@ -6,7 +6,7 @@ const productLinks = [
   { label: "Pricing", href: "#pricing" },
   { label: "Examples", href: "#profile" },
   { label: "Dashboard", href: "#dashboard" },
-  { label: "Changelog", href: "#" },
+  { label: "Changelog", href: "#roadmap" },
 ]
 
 const toolsLinks = [
@@ -18,12 +18,12 @@ const toolsLinks = [
 ]
 
 const companyLinks = [
-  { label: "About", href: "#" },
-  { label: "Blog", href: "#" },
-  { label: "Careers", href: "#" },
-  { label: "Contact", href: "#" },
-  { label: "Privacy", href: "#" },
-  { label: "Terms", href: "#" },
+  { label: "About", href: "#features" },
+  { label: "Blog", href: "#roadmap" },
+  { label: "Careers", href: "mailto:hello@djhq.com?subject=Careers%20at%20DJHQ" },
+  { label: "Contact", href: "mailto:hello@djhq.com?subject=DJHQ%20contact" },
+  { label: "Privacy", href: "mailto:legal@djhq.com?subject=DJHQ%20privacy" },
+  { label: "Terms", href: "mailto:legal@djhq.com?subject=DJHQ%20terms" },
 ]
 
 export function Footer() {
@@ -44,15 +44,15 @@ export function Footer() {
             </p>
             {/* Social links */}
             <div className="mt-6 flex items-center gap-4">
-              <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+              <a href="https://x.com/" aria-label="DJHQ on X" className="text-muted-foreground transition-colors hover:text-foreground">
                 <Twitter className="h-5 w-5" />
                 <span className="sr-only">Twitter</span>
               </a>
-              <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+              <a href="https://www.instagram.com/" aria-label="DJHQ on Instagram" className="text-muted-foreground transition-colors hover:text-foreground">
                 <Instagram className="h-5 w-5" />
                 <span className="sr-only">Instagram</span>
               </a>
-              <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+              <a href="https://www.youtube.com/" aria-label="DJHQ on YouTube" className="text-muted-foreground transition-colors hover:text-foreground">
                 <Youtube className="h-5 w-5" />
                 <span className="sr-only">YouTube</span>
               </a>

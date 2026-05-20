@@ -37,7 +37,7 @@ export function Header() {
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-4 md:flex">
-          <Link href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <Link href="#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Login
           </Link>
           <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -47,9 +47,12 @@ export function Header() {
 
         {/* Mobile menu button */}
         <button
+          type="button"
           className="md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+          aria-controls="mobile-navigation"
+          aria-expanded={mobileMenuOpen}
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? (
             <X className="h-6 w-6 text-foreground" />
@@ -62,7 +65,7 @@ export function Header() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="border-t border-border bg-background md:hidden">
-          <nav className="flex flex-col gap-4 px-4 py-6">
+          <nav id="mobile-navigation" className="flex flex-col gap-4 px-4 py-6">
             <Link href="#features" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
               Product
             </Link>
@@ -76,7 +79,7 @@ export function Header() {
               Examples
             </Link>
             <hr className="border-border" />
-            <Link href="#" className="text-sm text-muted-foreground">
+            <Link href="#pricing" className="text-sm text-muted-foreground">
               Login
             </Link>
             <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">

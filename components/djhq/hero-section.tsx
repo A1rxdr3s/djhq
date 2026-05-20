@@ -163,10 +163,18 @@ export function HeroSection() {
                     <span className="text-xs">Miami, FL</span>
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <Instagram className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer" />
-                    <SpotifyIcon className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer" />
-                    <SoundCloudIcon className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer" />
-                    <BeatportIcon className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer" />
+                    <a href="https://www.instagram.com/" aria-label="View Instagram profile" className="text-muted-foreground/60 transition-colors hover:text-foreground">
+                      <Instagram className="h-4 w-4" />
+                    </a>
+                    <a href="https://open.spotify.com/" aria-label="Listen on Spotify" className="text-muted-foreground/60 transition-colors hover:text-foreground">
+                      <SpotifyIcon className="h-4 w-4" />
+                    </a>
+                    <a href="https://soundcloud.com/" aria-label="Listen on SoundCloud" className="text-muted-foreground/60 transition-colors hover:text-foreground">
+                      <SoundCloudIcon className="h-4 w-4" />
+                    </a>
+                    <a href="https://www.beatport.com/" aria-label="View Beatport profile" className="text-muted-foreground/60 transition-colors hover:text-foreground">
+                      <BeatportIcon className="h-4 w-4" />
+                    </a>
                   </div>
                 </div>
 

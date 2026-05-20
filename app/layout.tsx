@@ -16,7 +16,6 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'DJHQ — The Digital Headquarters for Modern DJs',
   description: 'One profile. Every release. Every gig. Every link. Every asset. DJHQ gives DJs and producers a premium public profile, smart links, press kit, release hub, booking assets, and producer tools.',
-  generator: 'v0.app',
   keywords: ['DJ', 'producer', 'electronic music', 'press kit', 'booking', 'artist profile', 'music industry'],
   icons: {
     icon: [

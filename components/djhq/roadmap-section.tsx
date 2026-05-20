@@ -30,7 +30,7 @@ const integrations = [
 
 export function RoadmapSection() {
   return (
-    <section className="border-t border-border bg-card/50 py-24">
+    <section id="roadmap" className="border-t border-border bg-card/50 py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="mx-auto max-w-2xl text-center">
@@ -66,7 +66,7 @@ export function RoadmapSection() {
           <p className="text-sm text-muted-foreground">
             <Sparkles className="mr-1 inline h-4 w-4 text-accent" />
             Have a feature request?{" "}
-            <a href="#" className="text-accent hover:underline">
+            <a href="mailto:hello@djhq.com?subject=DJHQ%20feature%20request" className="text-accent hover:underline">
               Let us know
             </a>
           </p>
