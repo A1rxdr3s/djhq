@@ -33,11 +33,47 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
+type FeaturedReleaseFormState = {
+  title: string
+  label: string
+  releaseDate: string
+  type: string
+  platformUrl: string
+  artworkUrl: string
+}
+
+type GigFormState = {
+  id: string
+  venue: string
+  date: string
+  city: string
+  country: string
+  ticketUrl?: string
+}
+
 export default function DashboardPage() {
   const initialSocialLinks: Array<{ platform: string; label: string; url: string }> = mockArtist.socialLinks.map((link) => ({
     platform: link.platform,
     label: link.label,
     url: link.url,
+  }))
+  const initialFeaturedRelease: FeaturedReleaseFormState | null = mockArtist.featuredRelease
+    ? {
+        title: mockArtist.featuredRelease.title,
+        label: mockArtist.featuredRelease.label,
+        releaseDate: mockArtist.featuredRelease.releaseDate,
+        type: mockArtist.featuredRelease.type,
+        platformUrl: mockArtist.featuredRelease.platformUrl,
+        artworkUrl: mockArtist.featuredRelease.artworkUrl,
+      }
+    : null
+  const initialUpcomingGigs: GigFormState[] = mockArtist.upcomingGigs.map((gig) => ({
+    id: gig.id,
+    venue: gig.venue,
+    date: gig.date,
+    city: gig.city,
+    country: gig.country,
+    ticketUrl: gig.ticketUrl,
   }))
   const [activeSection, setActiveSection] = useState("overview")
   const [artistName, setArtistName] = useState(mockArtist.artistName)
@@ -47,6 +83,8 @@ export default function DashboardPage() {
   const [shortBio, setShortBio] = useState(mockArtist.shortBio)
   const [heroImageUrl, setHeroImageUrl] = useState(mockArtist.heroImageUrl)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
+  const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
+  const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [saveMessage, setSaveMessage] = useState("")
   const publicProfileUrl = `/${mockArtist.handle}`
   const isProfileDirty =
@@ -57,7 +95,9 @@ export default function DashboardPage() {
     shortBio !== mockArtist.shortBio ||
     heroImageUrl !== mockArtist.heroImageUrl
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
-  const isSaveDirty = isProfileDirty || isLinksDirty
+  const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
+  const isGigsDirty = JSON.stringify(upcomingGigs) !== JSON.stringify(initialUpcomingGigs)
+  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isGigsDirty
   const completionItems = [
     "Core profile info",
     "Music and social links",
@@ -224,7 +264,7 @@ export default function DashboardPage() {
   }
 
   function renderFeaturedRelease() {
-    if (!mockArtist.featuredRelease) {
+    if (!featuredRelease) {
       return null
     }
 
@@ -234,12 +274,76 @@ export default function DashboardPage() {
           <CardTitle>Featured Release</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <ReadOnlyField label="Title" value={mockArtist.featuredRelease.title} />
-          <ReadOnlyField label="Label" value={mockArtist.featuredRelease.label} />
-          <ReadOnlyField label="Release Date" value={new Date(mockArtist.featuredRelease.releaseDate).toLocaleDateString("en-US")} />
-          <ReadOnlyField label="Type" value={mockArtist.featuredRelease.type} />
+          <div className="space-y-1.5">
+            <label htmlFor="releaseTitle" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Title
+            </label>
+            <Input
+              id="releaseTitle"
+              value={featuredRelease.title}
+              onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, title: event.target.value } : current))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="releaseLabel" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Label
+            </label>
+            <Input
+              id="releaseLabel"
+              value={featuredRelease.label}
+              onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, label: event.target.value } : current))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="releaseDate" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Release Date
+            </label>
+            <Input
+              id="releaseDate"
+              type="date"
+              value={featuredRelease.releaseDate}
+              onChange={(event) =>
+                setFeaturedRelease((current) => (current ? { ...current, releaseDate: event.target.value } : current))
+              }
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="releaseType" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Type
+            </label>
+            <Input
+              id="releaseType"
+              value={featuredRelease.type}
+              onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, type: event.target.value } : current))}
+            />
+          </div>
           <div className="md:col-span-2">
-            <ReadOnlyField label="Platform URL" value={mockArtist.featuredRelease.platformUrl} />
+            <div className="space-y-1.5">
+              <label htmlFor="releasePlatformUrl" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Platform URL
+              </label>
+              <Input
+                id="releasePlatformUrl"
+                value={featuredRelease.platformUrl}
+                onChange={(event) =>
+                  setFeaturedRelease((current) => (current ? { ...current, platformUrl: event.target.value } : current))
+                }
+              />
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <div className="space-y-1.5">
+              <label htmlFor="releaseArtworkUrl" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Artwork URL
+              </label>
+              <Input
+                id="releaseArtworkUrl"
+                value={featuredRelease.artworkUrl}
+                onChange={(event) =>
+                  setFeaturedRelease((current) => (current ? { ...current, artworkUrl: event.target.value } : current))
+                }
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -253,22 +357,92 @@ export default function DashboardPage() {
           <CardTitle>Gigs</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {mockArtist.upcomingGigs.map((gig) => (
+          {upcomingGigs.map((gig, index) => (
             <div key={gig.id} className="rounded-md border border-border bg-secondary/30 p-3">
               <div className="mb-3 flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-accent" />
-                <p className="text-sm font-semibold text-foreground">{gig.venue}</p>
+                <Input
+                  id={`gig-venue-${index}`}
+                  value={gig.venue}
+                  onChange={(event) =>
+                    setUpcomingGigs((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, venue: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
               </div>
               <div className="grid gap-2 md:grid-cols-3">
-                <ReadOnlyField label="Date" value={new Date(gig.date).toLocaleDateString("en-US")} />
-                <ReadOnlyField label="City" value={gig.city} />
-                <ReadOnlyField label="Country" value={gig.country} />
-              </div>
-              {gig.ticketUrl && (
-                <div className="mt-2">
-                  <ReadOnlyField label="Ticket URL" value={gig.ticketUrl} />
+                <div className="space-y-1.5">
+                  <label htmlFor={`gig-date-${index}`} className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    Date
+                  </label>
+                  <Input
+                    id={`gig-date-${index}`}
+                    type="date"
+                    value={gig.date}
+                    onChange={(event) =>
+                      setUpcomingGigs((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, date: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
                 </div>
-              )}
+                <div className="space-y-1.5">
+                  <label htmlFor={`gig-city-${index}`} className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    City
+                  </label>
+                  <Input
+                    id={`gig-city-${index}`}
+                    value={gig.city}
+                    onChange={(event) =>
+                      setUpcomingGigs((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, city: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`gig-country-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Country
+                  </label>
+                  <Input
+                    id={`gig-country-${index}`}
+                    value={gig.country}
+                    onChange={(event) =>
+                      setUpcomingGigs((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, country: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+              </div>
+              <div className="mt-2 space-y-1.5">
+                <label htmlFor={`gig-ticket-${index}`} className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  Ticket URL
+                </label>
+                <Input
+                  id={`gig-ticket-${index}`}
+                  value={gig.ticketUrl ?? ""}
+                  onChange={(event) =>
+                    setUpcomingGigs((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, ticketUrl: event.target.value || undefined } : item,
+                      ),
+                    )
+                  }
+                />
+              </div>
             </div>
           ))}
         </CardContent>
