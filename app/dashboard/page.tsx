@@ -34,6 +34,11 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 export default function DashboardPage() {
+  const initialSocialLinks: Array<{ platform: string; label: string; url: string }> = mockArtist.socialLinks.map((link) => ({
+    platform: link.platform,
+    label: link.label,
+    url: link.url,
+  }))
   const [activeSection, setActiveSection] = useState("overview")
   const [artistName, setArtistName] = useState(mockArtist.artistName)
   const [handle, setHandle] = useState(mockArtist.handle)
@@ -41,6 +46,7 @@ export default function DashboardPage() {
   const [location, setLocation] = useState(mockArtist.location)
   const [shortBio, setShortBio] = useState(mockArtist.shortBio)
   const [heroImageUrl, setHeroImageUrl] = useState(mockArtist.heroImageUrl)
+  const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
   const [saveMessage, setSaveMessage] = useState("")
   const publicProfileUrl = `/${mockArtist.handle}`
   const isProfileDirty =
@@ -50,6 +56,8 @@ export default function DashboardPage() {
     location !== mockArtist.location ||
     shortBio !== mockArtist.shortBio ||
     heroImageUrl !== mockArtist.heroImageUrl
+  const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
+  const isSaveDirty = isProfileDirty || isLinksDirty
   const completionItems = [
     "Core profile info",
     "Music and social links",
@@ -149,11 +157,65 @@ export default function DashboardPage() {
           <CardTitle>Links</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {mockArtist.socialLinks.map((link) => (
-            <div key={`${link.platform}-${link.url}`} className="grid gap-2 rounded-md border border-border bg-secondary/30 p-3 md:grid-cols-3">
-              <ReadOnlyField label="Platform" value={link.platform} />
-              <ReadOnlyField label="Label" value={link.label} />
-              <ReadOnlyField label="URL" value={link.url} />
+          {socialLinks.map((link, index) => (
+            <div key={`${link.platform}-${index}`} className="grid gap-2 rounded-md border border-border bg-secondary/30 p-3 md:grid-cols-3">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor={`link-platform-${index}`}
+                  className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                >
+                  Platform
+                </label>
+                <Input
+                  id={`link-platform-${index}`}
+                  value={link.platform}
+                  onChange={(event) =>
+                    setSocialLinks((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, platform: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor={`link-label-${index}`}
+                  className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                >
+                  Label
+                </label>
+                <Input
+                  id={`link-label-${index}`}
+                  value={link.label}
+                  onChange={(event) =>
+                    setSocialLinks((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, label: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor={`link-url-${index}`}
+                  className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                >
+                  URL
+                </label>
+                <Input
+                  id={`link-url-${index}`}
+                  value={link.url}
+                  onChange={(event) =>
+                    setSocialLinks((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, url: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </div>
             </div>
           ))}
         </CardContent>
@@ -341,7 +403,7 @@ export default function DashboardPage() {
             </Button>
             <Button
               size="sm"
-              disabled={!isProfileDirty}
+              disabled={!isSaveDirty}
               onClick={() => setSaveMessage("Changes are saved locally only in this prototype.")}
               className="bg-accent text-accent-foreground"
             >
