@@ -13,6 +13,25 @@ export default function SignInPage() {
   const [message, setMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  async function handleGoogleSignIn() {
+    setIsGoogleLoading(true)
+    setMessage("")
+    setErrorMessage("")
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      setErrorMessage(error.message)
+      setIsGoogleLoading(false)
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -54,9 +73,22 @@ export default function SignInPage() {
         <Card className="border-border bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
-            <CardDescription>Access your DJHQ dashboard with a secure email magic link.</CardDescription>
+            <CardDescription>Access your DJHQ dashboard with Google or a secure email magic link.</CardDescription>
           </CardHeader>
           <CardContent>
+            <Button
+              type="button"
+              disabled={isGoogleLoading || isSending}
+              onClick={handleGoogleSignIn}
+              className="h-11 w-full bg-accent text-accent-foreground"
+            >
+              {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
+            </Button>
+
+            <div className="my-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              or continue with email
+            </div>
+
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-1.5">
                 <label htmlFor="email" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
