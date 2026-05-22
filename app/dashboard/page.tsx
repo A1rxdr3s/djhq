@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation"
-import Link from "next/link"
 import DashboardClient from "./dashboard-client"
+import OnboardingForm from "./onboarding-form"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import type { Artist, ReleaseType, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 const mvpArtistHandle = "andresherrera"
 
@@ -92,31 +90,6 @@ function normalizeReleaseType(type: string): ReleaseType {
   }
 
   return type === "album" ? "album" : "single"
-}
-
-function EmptyArtistState() {
-  return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute left-1/2 top-0 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-accent/[0.06] blur-[130px]" />
-        <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.035] blur-[120px]" />
-      </div>
-
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
-        <Card className="border-border bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>No artist profile found for your account.</CardTitle>
-            <CardDescription>Onboarding will be added next.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full border-border bg-background/70">
-              <Link href="/">Back to DJHQ</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
-  )
 }
 
 async function getOwnedArtist(supabase: SupabaseAdminClient, userId: string) {
@@ -280,13 +253,13 @@ export default async function DashboardPage() {
   const claimableArtist = await getClaimableSeededArtist(adminClient)
 
   if (!claimableArtist) {
-    return <EmptyArtistState />
+    return <OnboardingForm defaultBookingEmail={user.email ?? "booking@example.com"} />
   }
 
   const claimedArtist = await claimSeededArtist(adminClient, claimableArtist.id, user.id)
 
   if (!claimedArtist?.owner_user_id || claimedArtist.owner_user_id !== user.id) {
-    return <EmptyArtistState />
+    return <OnboardingForm defaultBookingEmail={user.email ?? "booking@example.com"} />
   }
 
   return (

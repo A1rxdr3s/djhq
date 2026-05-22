@@ -42,9 +42,22 @@ type SaveArtistPayload = {
   gigs: SaveGigPayload[]
 }
 
+type CreateArtistPayload = {
+  artistName?: string
+  handle?: string
+  genres?: string[]
+  location?: string
+  shortBio?: string
+  bookingEmail?: string
+}
+
 type ArtistIdRow = {
   id: string
   owner_user_id: string | null
+}
+
+type ArtistHandleRow = {
+  id: string
 }
 
 type SupabaseAdminClient = ReturnType<typeof createSupabaseAdminClient>
@@ -56,7 +69,11 @@ function badRequest(message: string) {
 }
 
 function normalizeHandle(handle: string) {
-  return handle.trim().toLowerCase()
+  return handle
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
 }
 
 function normalizeReleaseType(type: string) {
@@ -96,6 +113,34 @@ function validatePayload(payload: SaveArtistPayload) {
   return null
 }
 
+function validateCreatePayload(payload: CreateArtistPayload, normalizedHandle: string) {
+  if (!payload.artistName?.trim()) {
+    return "Artist name is required."
+  }
+
+  if (!normalizedHandle) {
+    return "Handle is required."
+  }
+
+  if (normalizedHandle.length < 3 || normalizedHandle.length > 50) {
+    return "Handle must be between 3 and 50 characters."
+  }
+
+  if (!Array.isArray(payload.genres) || !payload.genres.map((genre) => genre.trim()).filter(Boolean).length) {
+    return "At least one genre is required."
+  }
+
+  if (!payload.location?.trim()) {
+    return "Location is required."
+  }
+
+  if (!payload.shortBio?.trim()) {
+    return "Short bio is required."
+  }
+
+  return null
+}
+
 async function getArtistForWrite(supabase: SupabaseAdminClient, artistId: string) {
   const { data, error } = await supabase
     .from("artists")
@@ -112,6 +157,90 @@ async function getArtistForWrite(supabase: SupabaseAdminClient, artistId: string
   }
 
   return data
+}
+
+export async function POST(request: Request) {
+  const authClient = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 })
+  }
+
+  let payload: CreateArtistPayload
+
+  try {
+    payload = (await request.json()) as CreateArtistPayload
+  } catch {
+    return badRequest("Invalid JSON payload.")
+  }
+
+  const normalizedHandle = normalizeHandle(payload.handle ?? "")
+  const validationError = validateCreatePayload(payload, normalizedHandle)
+
+  if (validationError) {
+    return badRequest(validationError)
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient()
+    const artistName = payload.artistName?.trim() ?? ""
+    const genres = (payload.genres ?? []).map((genre) => genre.trim()).filter(Boolean)
+    const location = payload.location?.trim() ?? ""
+    const shortBio = payload.shortBio?.trim() ?? ""
+    const { data: existingArtist, error: existingArtistError } = await supabase
+      .from("artists")
+      .select("id")
+      .eq("handle", normalizedHandle)
+      .maybeSingle<ArtistHandleRow>()
+
+    if (existingArtistError) {
+      throw existingArtistError
+    }
+
+    if (existingArtist) {
+      return NextResponse.json({ error: "This handle is already taken." }, { status: 409 })
+    }
+
+    const bookingEmail = payload.bookingEmail?.trim() || user.email || "booking@example.com"
+    const { data: createdArtist, error: createArtistError } = await supabase
+      .from("artists")
+      .insert({
+        tenant_id: null,
+        owner_user_id: user.id,
+        handle: normalizedHandle,
+        artist_name: artistName,
+        genres,
+        location,
+        short_bio: shortBio,
+        hero_image_url: "/images/dj-hero.jpg",
+        avatar_url: "/placeholder-user.jpg",
+        booking_email: bookingEmail,
+        booking_url: null,
+        press_kit_enabled: false,
+        press_kit_download_url: null,
+        press_kit_assets: [],
+        plan: "free",
+        is_published: false,
+      })
+      .select("*")
+      .single()
+
+    if (createArtistError) {
+      if (createArtistError.code === "23505") {
+        return NextResponse.json({ error: "This handle is already taken." }, { status: 409 })
+      }
+
+      throw createArtistError
+    }
+
+    return NextResponse.json({ artist: createdArtist }, { status: 201 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to create artist profile."
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function PATCH(request: Request) {
