@@ -139,6 +139,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
+  const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -271,6 +273,47 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
+  async function handleUploadHeroImage() {
+    if (!heroImageFile) {
+      setSaveMessage("Please select an image to upload.")
+      return
+    }
+
+    setIsUploadingHeroImage(true)
+    setSaveMessage("")
+
+    try {
+      const formData = new FormData()
+      formData.append("artistId", artist.id)
+      formData.append("file", heroImageFile)
+
+      const response = await fetch("/api/artists/hero-image", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = (await response.json()) as { error?: string; heroImageUrl?: string }
+
+      if (!response.ok || !result.heroImageUrl) {
+        throw new Error(result.error ?? "Unable to upload hero image.")
+      }
+
+      setHeroImageUrl(result.heroImageUrl)
+      setArtist((current) => ({
+        ...current,
+        heroImageUrl: result.heroImageUrl ?? current.heroImageUrl,
+        updatedAt: new Date().toISOString(),
+      }))
+      setHeroImageFile(null)
+      setSaveMessage("Hero image uploaded.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to upload hero image."
+      setSaveMessage(message)
+    } finally {
+      setIsUploadingHeroImage(false)
+    }
+  }
+
   async function handleSignOut() {
     const { supabase } = await import("@/lib/supabase/client")
     await supabase.auth.signOut()
@@ -353,6 +396,39 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 Hero Image URL
               </label>
               <Input id="heroImageUrl" value={heroImageUrl} onChange={(event) => setHeroImageUrl(event.target.value)} />
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <div className="space-y-2">
+              <label
+                htmlFor="heroImageFile"
+                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+              >
+                Upload Hero Image
+              </label>
+              <Input
+                id="heroImageFile"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => setHeroImageFile(event.target.files?.[0] ?? null)}
+              />
+              <Button
+                type="button"
+                onClick={handleUploadHeroImage}
+                disabled={!heroImageFile || isUploadingHeroImage || isSaving || isPublishing}
+                className="bg-secondary text-foreground hover:bg-secondary/80"
+              >
+                {isUploadingHeroImage ? "Uploading..." : "Upload hero image"}
+              </Button>
+              <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
+              {heroImageUrl ? (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Hero Preview</p>
+                  <div className="relative aspect-[16/7] overflow-hidden rounded-md border border-border bg-secondary/40">
+                    <Image src={heroImageUrl} alt={`${artistName || "Artist"} hero preview`} fill className="object-cover" />
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </CardContent>
@@ -763,7 +839,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <LogOut className="h-4 w-4" />
               Sign out
             </Button>
-            <Button size="sm" disabled={!isSaveDirty || isSaving || isPublishing} onClick={handleSaveChanges} className="bg-accent text-accent-foreground">
+            <Button
+              size="sm"
+              disabled={!isSaveDirty || isSaving || isPublishing || isUploadingHeroImage}
+              onClick={handleSaveChanges}
+              className="bg-accent text-accent-foreground"
+            >
               <Save className="h-4 w-4" />
               {isSaving ? "Saving..." : "Save changes"}
             </Button>
