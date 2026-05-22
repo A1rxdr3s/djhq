@@ -36,6 +36,7 @@ type SaveGigPayload = {
 
 type SaveArtistPayload = {
   artistId: string
+  isPublished: boolean
   profile: SaveProfilePayload
   socialLinks: SaveSocialLinkPayload[]
   featuredRelease: SaveFeaturedReleasePayload
@@ -84,6 +85,10 @@ function normalizeReleaseType(type: string) {
 function validatePayload(payload: SaveArtistPayload) {
   if (!payload.artistId?.trim()) {
     return "Artist id is required."
+  }
+
+  if (typeof payload.isPublished !== "boolean") {
+    return "Publish state is required."
   }
 
   if (!payload.profile.handle.trim()) {
@@ -286,6 +291,7 @@ export async function PATCH(request: Request) {
         location: payload.profile.location.trim(),
         short_bio: payload.profile.shortBio.trim(),
         hero_image_url: payload.profile.heroImageUrl.trim(),
+        is_published: payload.isPublished,
       })
       .eq("id", artistId)
 

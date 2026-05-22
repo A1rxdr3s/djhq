@@ -138,6 +138,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -159,93 +160,114 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     "Booking and press kit",
   ]
 
-  async function handleSaveChanges() {
-    setIsSaving(true)
-    setSaveMessage("")
-
+  async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
       .split(",")
       .map((genre) => genre.trim())
       .filter(Boolean)
 
-    try {
-      const response = await fetch("/api/artists", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+    const response = await fetch("/api/artists", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        artistId: artist.id,
+        isPublished: nextPublished,
+        profile: {
+          artistName,
+          handle,
+          genres: savedGenres,
+          location,
+          shortBio,
+          heroImageUrl,
         },
-        body: JSON.stringify({
-          artistId: artist.id,
-          profile: {
-            artistName,
-            handle,
-            genres: savedGenres,
-            location,
-            shortBio,
-            heroImageUrl,
-          },
-          socialLinks,
-          featuredRelease,
-          gigs: upcomingGigs,
-        }),
-      })
+        socialLinks,
+        featuredRelease,
+        gigs: upcomingGigs,
+      }),
+    })
 
-      if (!response.ok) {
-        const result = (await response.json()) as { error?: string }
-        throw new Error(result.error ?? "Unable to save changes.")
-      }
+    if (!response.ok) {
+      const result = (await response.json()) as { error?: string }
+      throw new Error(result.error ?? "Unable to save changes.")
+    }
 
-      const savedArtist: Artist = {
-        ...artist,
-        artistName: artistName.trim(),
-        handle: handle.trim().toLowerCase(),
-        genres: savedGenres,
-        location: location.trim(),
-        shortBio: shortBio.trim(),
-        heroImageUrl: heroImageUrl.trim(),
-        socialLinks: socialLinks.map((link) => ({
-          platform: normalizeSocialPlatform(link.platform),
-          label: link.label.trim(),
-          url: link.url.trim(),
-        })),
-        featuredRelease: featuredRelease
-          ? {
-              id: artist.featuredRelease?.id ?? "featured-release",
-              title: featuredRelease.title.trim(),
-              label: featuredRelease.label.trim(),
-              releaseDate: featuredRelease.releaseDate,
-              artworkUrl: featuredRelease.artworkUrl.trim(),
-              platformUrl: featuredRelease.platformUrl.trim(),
-              type: normalizeReleaseType(featuredRelease.type),
-            }
-          : undefined,
-        upcomingGigs: upcomingGigs.map((gig) => ({
-          id: gig.id,
-          date: gig.date,
-          venue: gig.venue.trim(),
-          city: gig.city.trim(),
-          country: gig.country.trim(),
-          ticketUrl: gig.ticketUrl?.trim() || undefined,
-        })),
-        updatedAt: new Date().toISOString(),
-      }
+    const savedArtist: Artist = {
+      ...artist,
+      artistName: artistName.trim(),
+      handle: handle.trim().toLowerCase(),
+      genres: savedGenres,
+      location: location.trim(),
+      shortBio: shortBio.trim(),
+      heroImageUrl: heroImageUrl.trim(),
+      isPublished: nextPublished,
+      socialLinks: socialLinks.map((link) => ({
+        platform: normalizeSocialPlatform(link.platform),
+        label: link.label.trim(),
+        url: link.url.trim(),
+      })),
+      featuredRelease: featuredRelease
+        ? {
+            id: artist.featuredRelease?.id ?? "featured-release",
+            title: featuredRelease.title.trim(),
+            label: featuredRelease.label.trim(),
+            releaseDate: featuredRelease.releaseDate,
+            artworkUrl: featuredRelease.artworkUrl.trim(),
+            platformUrl: featuredRelease.platformUrl.trim(),
+            type: normalizeReleaseType(featuredRelease.type),
+          }
+        : undefined,
+      upcomingGigs: upcomingGigs.map((gig) => ({
+        id: gig.id,
+        date: gig.date,
+        venue: gig.venue.trim(),
+        city: gig.city.trim(),
+        country: gig.country.trim(),
+        ticketUrl: gig.ticketUrl?.trim() || undefined,
+      })),
+      updatedAt: new Date().toISOString(),
+    }
 
-      setArtist(savedArtist)
-      setArtistName(savedArtist.artistName)
-      setHandle(savedArtist.handle)
-      setGenres(savedArtist.genres.join(", "))
-      setLocation(savedArtist.location)
-      setShortBio(savedArtist.shortBio)
-      setHeroImageUrl(savedArtist.heroImageUrl)
-      setSocialLinks(getSocialLinkFormState(savedArtist))
-      setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
-      setUpcomingGigs(getGigFormState(savedArtist))
-      setSaveMessage("Changes saved to Supabase.")
+    setArtist(savedArtist)
+    setArtistName(savedArtist.artistName)
+    setHandle(savedArtist.handle)
+    setGenres(savedArtist.genres.join(", "))
+    setLocation(savedArtist.location)
+    setShortBio(savedArtist.shortBio)
+    setHeroImageUrl(savedArtist.heroImageUrl)
+    setSocialLinks(getSocialLinkFormState(savedArtist))
+    setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
+    setUpcomingGigs(getGigFormState(savedArtist))
+    setSaveMessage(successMessage)
+  }
+
+  async function handleSaveChanges() {
+    setIsSaving(true)
+    setSaveMessage("")
+
+    try {
+      await persistArtistChanges(artist.isPublished, "Changes saved to Supabase.")
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to save changes."
       setSaveMessage(message)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleTogglePublish() {
+    setIsPublishing(true)
+    setSaveMessage("")
+    const nextPublished = !artist.isPublished
+
+    try {
+      await persistArtistChanges(nextPublished, nextPublished ? "Profile published." : "Profile unpublished.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to update publish state."
+      setSaveMessage(message)
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -655,15 +677,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <span className="text-sm text-muted-foreground">{publicProfileUrl}</span>
           </div>
           <div className="rounded-md border border-border bg-secondary/35 p-3 text-sm text-muted-foreground">
-            Publishing controls will be connected once authentication and database storage are added.
+            Control whether your profile is visible at {publicProfileUrl}.
           </div>
+          <Button
+            type="button"
+            disabled={isPublishing || isSaving}
+            onClick={handleTogglePublish}
+            className={artist.isPublished ? "bg-secondary text-foreground hover:bg-secondary/80" : "bg-accent text-accent-foreground hover:bg-accent/90"}
+          >
+            {isPublishing ? "Updating..." : artist.isPublished ? "Unpublish profile" : "Publish profile"}
+          </Button>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Globe className="h-3.5 w-3.5" />
-            Profile visibility is currently read-only in this MVP dashboard.
+            Profile visibility updates immediately after publishing changes.
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Mail className="h-3.5 w-3.5" />
-            Save and publish actions are mock-only for now.
+            Only the profile owner can publish or unpublish this artist.
           </div>
         </CardContent>
       </Card>
@@ -733,12 +763,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <LogOut className="h-4 w-4" />
               Sign out
             </Button>
-            <Button
-              size="sm"
-              disabled={!isSaveDirty || isSaving}
-              onClick={handleSaveChanges}
-              className="bg-accent text-accent-foreground"
-            >
+            <Button size="sm" disabled={!isSaveDirty || isSaving || isPublishing} onClick={handleSaveChanges} className="bg-accent text-accent-foreground">
               <Save className="h-4 w-4" />
               {isSaving ? "Saving..." : "Save changes"}
             </Button>
