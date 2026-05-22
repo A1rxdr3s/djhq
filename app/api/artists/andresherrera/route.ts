@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 const mvpArtistId = "11111111-1111-4111-8111-111111111111"
 const mvpArtistHandle = "andresherrera"
@@ -45,7 +46,10 @@ type SaveArtistPayload = {
 
 type ArtistIdRow = {
   id: string
+  owner_user_id: string | null
 }
+
+type SupabaseAdminClient = ReturnType<typeof createSupabaseAdminClient>
 
 const validReleaseTypes = ["single", "ep", "album"] as const
 
@@ -90,11 +94,10 @@ function validatePayload(payload: SaveArtistPayload) {
   return null
 }
 
-async function getMvpArtistId() {
-  const supabase = createSupabaseAdminClient()
+async function getMvpArtistForWrite(supabase: SupabaseAdminClient) {
   const { data: seededArtist, error: seededArtistError } = await supabase
     .from("artists")
-    .select("id")
+    .select("id, owner_user_id")
     .eq("id", mvpArtistId)
     .maybeSingle<ArtistIdRow>()
 
@@ -103,12 +106,12 @@ async function getMvpArtistId() {
   }
 
   if (seededArtist) {
-    return seededArtist.id
+    return seededArtist
   }
 
   const { data: handleArtist, error: handleArtistError } = await supabase
     .from("artists")
-    .select("id")
+    .select("id, owner_user_id")
     .eq("handle", mvpArtistHandle)
     .maybeSingle<ArtistIdRow>()
 
@@ -120,10 +123,19 @@ async function getMvpArtistId() {
     throw new Error("MVP artist not found.")
   }
 
-  return handleArtist.id
+  return handleArtist
 }
 
 export async function PATCH(request: Request) {
+  const authClient = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 })
+  }
+
   let payload: SaveArtistPayload
 
   try {
@@ -140,8 +152,13 @@ export async function PATCH(request: Request) {
 
   try {
     const supabase = createSupabaseAdminClient()
-    const artistId = await getMvpArtistId()
+    const writableArtist = await getMvpArtistForWrite(supabase)
+    const artistId = writableArtist.id
     const normalizedHandle = normalizeHandle(payload.profile.handle)
+
+    if (writableArtist.owner_user_id && writableArtist.owner_user_id !== user.id) {
+      return NextResponse.json({ error: "You do not have permission to edit this artist." }, { status: 403 })
+    }
 
     const { error: artistError } = await supabase
       .from("artists")
