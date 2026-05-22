@@ -19,6 +19,28 @@ function sanitizeFileName(fileName: string) {
   return baseName.replace(/-+/g, "-").replace(/^-+|-+$/g, "")
 }
 
+function resolveImageExtension(fileName: string, mimeType: string) {
+  const nameExtension = fileName.split(".").pop()?.toLowerCase()
+
+  if (nameExtension === "jpg" || nameExtension === "jpeg") {
+    return "jpg"
+  }
+
+  if (nameExtension === "png" || nameExtension === "webp") {
+    return nameExtension
+  }
+
+  if (mimeType === "image/png") {
+    return "png"
+  }
+
+  if (mimeType === "image/webp") {
+    return "webp"
+  }
+
+  return "jpg"
+}
+
 export async function POST(request: Request) {
   const authClient = await createSupabaseServerClient()
   const {
@@ -76,9 +98,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
     }
 
-    const safeFileName = sanitizeFileName(file.name || "hero-image")
+    const extension = resolveImageExtension(file.name, file.type)
+    const sanitizedOriginalName = sanitizeFileName(file.name || "hero-image")
+    const baseName = sanitizedOriginalName.replace(/\.(jpg|jpeg|png|webp)$/i, "") || "hero-image"
     const timestamp = Date.now()
-    const filePath = `artists/${artist.id}/hero/${timestamp}-${safeFileName || "hero-image"}`
+    const filePath = `artists/${artist.id}/hero/${timestamp}-${baseName}.${extension}`
     const fileBuffer = Buffer.from(await file.arrayBuffer())
 
     const { error: uploadError } = await supabase.storage.from("artist-heroes").upload(filePath, fileBuffer, {
