@@ -9,6 +9,9 @@ In Supabase, go to Project Settings -> API and copy:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+`SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be prefixed with `NEXT_PUBLIC_` or imported into browser/client code. The current dashboard write route uses it as a temporary MVP strategy until authentication and owner-based RLS policies are implemented.
 
 ## Database Migrations
 

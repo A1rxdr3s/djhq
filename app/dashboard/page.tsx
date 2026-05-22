@@ -304,6 +304,7 @@ export default function DashboardPage() {
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [saveMessage, setSaveMessage] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -354,6 +355,95 @@ export default function DashboardPage() {
       isMounted = false
     }
   }, [])
+
+  async function handleSaveChanges() {
+    setIsSaving(true)
+    setSaveMessage("")
+
+    const savedGenres = genres
+      .split(",")
+      .map((genre) => genre.trim())
+      .filter(Boolean)
+
+    try {
+      const response = await fetch("/api/artists/andresherrera", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          profile: {
+            artistName,
+            handle,
+            genres: savedGenres,
+            location,
+            shortBio,
+            heroImageUrl,
+          },
+          socialLinks,
+          featuredRelease,
+          gigs: upcomingGigs,
+        }),
+      })
+
+      if (!response.ok) {
+        const result = (await response.json()) as { error?: string }
+        throw new Error(result.error ?? "Unable to save changes.")
+      }
+
+      const savedArtist: Artist = {
+        ...artist,
+        artistName: artistName.trim(),
+        handle: handle.trim().toLowerCase(),
+        genres: savedGenres,
+        location: location.trim(),
+        shortBio: shortBio.trim(),
+        heroImageUrl: heroImageUrl.trim(),
+        socialLinks: socialLinks.map((link) => ({
+          platform: normalizeSocialPlatform(link.platform),
+          label: link.label.trim(),
+          url: link.url.trim(),
+        })),
+        featuredRelease: featuredRelease
+          ? {
+              id: artist.featuredRelease?.id ?? "featured-release",
+              title: featuredRelease.title.trim(),
+              label: featuredRelease.label.trim(),
+              releaseDate: featuredRelease.releaseDate,
+              artworkUrl: featuredRelease.artworkUrl.trim(),
+              platformUrl: featuredRelease.platformUrl.trim(),
+              type: normalizeReleaseType(featuredRelease.type),
+            }
+          : undefined,
+        upcomingGigs: upcomingGigs.map((gig) => ({
+          id: gig.id,
+          date: gig.date,
+          venue: gig.venue.trim(),
+          city: gig.city.trim(),
+          country: gig.country.trim(),
+          ticketUrl: gig.ticketUrl?.trim() || undefined,
+        })),
+        updatedAt: new Date().toISOString(),
+      }
+
+      setArtist(savedArtist)
+      setArtistName(savedArtist.artistName)
+      setHandle(savedArtist.handle)
+      setGenres(savedArtist.genres.join(", "))
+      setLocation(savedArtist.location)
+      setShortBio(savedArtist.shortBio)
+      setHeroImageUrl(savedArtist.heroImageUrl)
+      setSocialLinks(getSocialLinkFormState(savedArtist))
+      setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
+      setUpcomingGigs(getGigFormState(savedArtist))
+      setSaveMessage("Changes saved to Supabase.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to save changes."
+      setSaveMessage(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   function renderOverview() {
     return (
@@ -825,12 +915,12 @@ export default function DashboardPage() {
             </Button>
             <Button
               size="sm"
-              disabled={!isSaveDirty}
-              onClick={() => setSaveMessage("Changes are saved locally only in this prototype.")}
+              disabled={!isSaveDirty || isSaving}
+              onClick={handleSaveChanges}
               className="bg-accent text-accent-foreground"
             >
               <Save className="h-4 w-4" />
-              Save changes
+              {isSaving ? "Saving..." : "Save changes"}
             </Button>
           </div>
           {saveMessage ? <p className="text-xs text-muted-foreground">{saveMessage}</p> : null}

@@ -32,6 +32,8 @@ type PublicProfilePageProps = {
   }>
 }
 
+export const dynamic = "force-dynamic"
+
 const socialIcons: Record<SocialPlatform, LucideIcon> = {
   instagram: Instagram,
   beatport: Music2,
