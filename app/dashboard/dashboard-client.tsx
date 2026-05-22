@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Calendar, ExternalLink, Globe, LogOut, Mail, Save } from "lucide-react"
-import type { Artist, ReleaseType, SocialPlatform } from "@/types/djhq"
+import type { Artist, GalleryImage, ReleaseType, SocialPlatform } from "@/types/djhq"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -141,6 +141,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isPublishing, setIsPublishing] = useState(false)
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
   const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false)
+  const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
+  const [galleryImageFile, setGalleryImageFile] = useState<File | null>(null)
+  const [galleryImageAltText, setGalleryImageAltText] = useState("")
+  const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -241,6 +245,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setUpcomingGigs(getGigFormState(savedArtist))
+    setGalleryImages(savedArtist.galleryImages)
     setSaveMessage(successMessage)
   }
 
@@ -311,6 +316,49 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setSaveMessage(message)
     } finally {
       setIsUploadingHeroImage(false)
+    }
+  }
+
+  async function handleUploadGalleryImage() {
+    if (!galleryImageFile) {
+      setSaveMessage("Please select a gallery image to upload.")
+      return
+    }
+
+    setIsUploadingGalleryImage(true)
+    setSaveMessage("")
+
+    try {
+      const formData = new FormData()
+      formData.append("artistId", artist.id)
+      formData.append("file", galleryImageFile)
+      formData.append("altText", galleryImageAltText)
+
+      const response = await fetch("/api/artists/gallery-image", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = (await response.json()) as { error?: string; galleryImage?: GalleryImage }
+
+      if (!response.ok || !result.galleryImage) {
+        throw new Error(result.error ?? "Unable to upload gallery image.")
+      }
+
+      setGalleryImages((current) => [...current, result.galleryImage as GalleryImage])
+      setArtist((current) => ({
+        ...current,
+        galleryImages: [...current.galleryImages, result.galleryImage as GalleryImage],
+        updatedAt: new Date().toISOString(),
+      }))
+      setGalleryImageFile(null)
+      setGalleryImageAltText("")
+      setSaveMessage("Gallery image uploaded.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to upload gallery image."
+      setSaveMessage(message)
+    } finally {
+      setIsUploadingGalleryImage(false)
     }
   }
 
@@ -702,9 +750,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <CardHeader>
           <CardTitle>Gallery</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
-            {artist.galleryImages.map((image) => (
+            {galleryImages.map((image) => (
               <div key={image.id} className="space-y-2">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-md border border-border bg-secondary/40">
                   <Image src={image.imageUrl} alt={image.altText} fill sizes="200px" className="object-cover" />
@@ -712,6 +760,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <p className="truncate text-xs text-muted-foreground">{image.altText}</p>
               </div>
             ))}
+          </div>
+          <div className="space-y-3 rounded-md border border-border bg-secondary/30 p-3">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="galleryImageFile"
+                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+              >
+                Upload Gallery Image
+              </label>
+              <Input
+                id="galleryImageFile"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => setGalleryImageFile(event.target.files?.[0] ?? null)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="galleryImageAltText"
+                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+              >
+                Alt Text
+              </label>
+              <Input
+                id="galleryImageAltText"
+                value={galleryImageAltText}
+                onChange={(event) => setGalleryImageAltText(event.target.value)}
+                placeholder="Live set photo, press portrait, or stage moment"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleUploadGalleryImage}
+              disabled={!galleryImageFile || isUploadingGalleryImage || isSaving || isPublishing}
+              className="bg-secondary text-foreground hover:bg-secondary/80"
+            >
+              {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}
+            </Button>
+            <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
           </div>
         </CardContent>
       </Card>
@@ -841,7 +928,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </Button>
             <Button
               size="sm"
-              disabled={!isSaveDirty || isSaving || isPublishing || isUploadingHeroImage}
+              disabled={!isSaveDirty || isSaving || isPublishing || isUploadingHeroImage || isUploadingGalleryImage}
               onClick={handleSaveChanges}
               className="bg-accent text-accent-foreground"
             >
