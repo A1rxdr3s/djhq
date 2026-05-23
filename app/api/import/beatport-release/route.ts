@@ -14,6 +14,7 @@ type ImportedMetadata = {
   type: ReleaseType | null
   platformUrl: string
   artworkUrl: string | null
+  warning?: string
 }
 
 const beatportHostnames = new Set(["beatport.com", "www.beatport.com"])
@@ -200,6 +201,14 @@ function getStructuredMetadata(html: string) {
   return { label, releaseDate, type }
 }
 
+function isCloudflareChallengePage(html: string) {
+  return (
+    /<title>\s*Just a moment\.\.\.\s*<\/title>/i.test(html) ||
+    html.includes("__cf_chl_") ||
+    html.includes("challenges.cloudflare.com")
+  )
+}
+
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient()
   const {
@@ -250,6 +259,20 @@ export async function POST(request: Request) {
     }
 
     const html = await response.text()
+    if (isCloudflareChallengePage(html)) {
+      const blockedMetadata: ImportedMetadata = {
+        title: null,
+        label: null,
+        releaseDate: null,
+        type: null,
+        platformUrl: beatportUrl.toString(),
+        artworkUrl: null,
+        warning: "Beatport may block full metadata. Complete label, date, and type manually.",
+      }
+
+      return NextResponse.json(blockedMetadata)
+    }
+
     const titleMetadata = cleanBeatportTitle(getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html))
     const artworkUrl = getMetaContent(html, ["og:image", "twitter:image"])
     const structuredMetadata = getStructuredMetadata(html)

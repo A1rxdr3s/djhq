@@ -64,6 +64,7 @@ type BeatportReleaseMetadata = {
   type: string | null
   platformUrl: string
   artworkUrl: string | null
+  warning?: string
 }
 
 const socialPlatforms: SocialPlatform[] = [
@@ -146,6 +147,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [saveMessage, setSaveMessage] = useState("")
+  const [importWarning, setImportWarning] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isFetchingBeatportMetadata, setIsFetchingBeatportMetadata] = useState(false)
@@ -298,6 +300,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     setIsFetchingBeatportMetadata(true)
     setSaveMessage("")
+    setImportWarning("")
 
     try {
       const response = await fetch("/api/import/beatport-release", {
@@ -313,7 +316,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       const result = (await response.json()) as BeatportReleaseMetadata & { error?: string }
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Unable to fetch Beatport metadata.")
+        throw new Error("Unable to fetch Beatport metadata. Please verify the Beatport URL and try again.")
       }
 
       setFeaturedRelease((current) =>
@@ -329,9 +332,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             }
           : current,
       )
+      setImportWarning(result.warning ?? "")
       setSaveMessage("Beatport metadata imported. Review and save changes.")
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to fetch Beatport metadata."
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to fetch Beatport metadata. Please verify the Beatport URL and try again."
       setSaveMessage(message)
     } finally {
       setIsFetchingBeatportMetadata(false)
@@ -776,6 +783,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               >
                 {isFetchingBeatportMetadata ? "Fetching..." : "Fetch Beatport metadata"}
               </Button>
+              <p className="text-xs text-muted-foreground">
+                Beatport import can usually detect title/artwork. Label and date may need manual entry.
+              </p>
+              {importWarning ? <p className="text-xs text-foreground">{importWarning}</p> : null}
             </div>
           </div>
           <div className="md:col-span-2">
