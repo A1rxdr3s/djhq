@@ -309,7 +309,7 @@ function MainLink({ link }: { link: SocialLink }) {
     <a
       href={link.url}
       aria-label={`${link.label} for this artist`}
-      className="flex min-h-14 items-center justify-between rounded-2xl border border-border bg-card/80 px-4 py-3 transition-colors hover:border-accent/50 hover:bg-accent/5"
+      className="flex min-h-14 items-center justify-between rounded-2xl border border-border bg-card/85 px-4 py-3 transition-colors hover:border-accent/50 hover:bg-accent/5"
     >
       <span className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
@@ -338,6 +338,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
   const featuredReleaseDescription = artist.tagline ?? artist.shortBio
+  const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
+  const prioritizedLinks = [...artist.socialLinks].sort((a, b) => {
+    const priorityA = linkPriority.indexOf(a.platform)
+    const priorityB = linkPriority.indexOf(b.platform)
+    const safePriorityA = priorityA === -1 ? Number.MAX_SAFE_INTEGER : priorityA
+    const safePriorityB = priorityB === -1 ? Number.MAX_SAFE_INTEGER : priorityB
+
+    return safePriorityA - safePriorityB
+  })
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -346,8 +355,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.035] blur-[120px]" />
       </div>
 
-      <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 sm:py-8">
-        <header className="mb-4 flex items-center justify-between">
+      <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 sm:py-7">
+        <header className="mb-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded bg-accent">
               <span className="text-sm font-bold text-accent-foreground">DJ</span>
@@ -360,7 +369,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </header>
 
         <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-2xl shadow-black/40">
-          <div className="relative min-h-[540px] sm:min-h-[620px]">
+          <div className="relative min-h-[500px] sm:min-h-[560px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
@@ -370,7 +379,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               sizes="(min-width: 768px) 768px, 100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/65 to-background/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/15" />
             <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.04]" />
 
             <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
@@ -386,10 +395,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <MapPin className="h-4 w-4 text-accent" />
                 {artist.location}
               </p>
-              <p className="mt-4 line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              <p className="mt-3 line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                 {artist.shortBio}
               </p>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <Button asChild size="lg" className="h-12 bg-accent text-accent-foreground hover:bg-accent/90">
                   <a href={`mailto:${artist.bookingInfo.email}`}>
                     <Mail className="h-4 w-4" />
@@ -407,11 +416,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </div>
         </section>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-3 space-y-3">
           <section className="rounded-3xl border border-border bg-background/70 p-4 backdrop-blur-sm">
             <SectionTitle>Music / Social Links</SectionTitle>
-            <div className="mt-4 grid gap-3">
-              {artist.socialLinks.map((link) => (
+            <div className="mt-3 grid gap-2.5">
+              {prioritizedLinks.map((link) => (
                 <MainLink key={link.platform} link={link} />
               ))}
             </div>
@@ -419,21 +428,27 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
           <section className="rounded-3xl border border-border bg-card p-4 sm:p-5">
             <SectionTitle>Featured Release</SectionTitle>
-            <div className="mt-4 flex gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-accent/10">
-                <Music2 className="h-7 w-7 text-accent" />
+            <div className="mt-3 flex gap-3 sm:gap-4">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-accent/10 sm:h-20 sm:w-20">
+                <Image
+                  src={featuredRelease.artworkUrl}
+                  alt={`${featuredRelease.title} artwork`}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg font-bold text-foreground">{featuredRelease.title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {featuredRelease.label} / {featuredReleaseYear}
+                <h2 className="text-base font-bold text-foreground sm:text-lg">{featuredRelease.title}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+                  {featuredRelease.label} / {featuredRelease.type} / {featuredReleaseYear}
                 </p>
-                <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                   {featuredReleaseDescription}
                 </p>
-                <Button asChild variant="outline" className="mt-4 w-full border-border text-foreground hover:bg-secondary sm:w-auto">
+                <Button asChild variant="outline" className="mt-3 w-full border-border text-foreground hover:bg-secondary sm:w-auto">
                   <a href={featuredRelease.platformUrl}>
-                    Open release
+                    Listen / Buy
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
@@ -443,18 +458,27 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
           <section className="rounded-3xl border border-border bg-card p-4 sm:p-5">
             <SectionTitle>Upcoming Gigs</SectionTitle>
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-2.5">
               {upcomingGigs.map((gig) => (
-                <div key={gig.id} className="flex gap-3 rounded-2xl bg-secondary/35 p-3">
+                <div key={gig.id} className="flex items-start gap-3 rounded-2xl bg-secondary/35 p-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10">
                     <Calendar className="h-5 w-5 text-accent" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground">{gig.venue}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {new Date(gig.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} / {gig.city}
                     </p>
                     <p className="mt-1 text-xs font-medium uppercase tracking-widest text-accent">{gig.country}</p>
+                    {gig.ticketUrl ? (
+                      <a
+                        href={gig.ticketUrl}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent"
+                      >
+                        Tickets
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -462,32 +486,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </section>
 
           <section className="rounded-3xl border border-border bg-card p-4 sm:p-5">
-            <SectionTitle>Press Kit / Booking</SectionTitle>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Button asChild className="h-12 bg-accent text-accent-foreground hover:bg-accent/90">
-                <a href={artist.pressKit.downloadUrl}>
-                  <Download className="h-4 w-4" />
-                  Download press kit
-                </a>
-              </Button>
-              <Button asChild variant="outline" className="h-12 border-border text-foreground hover:bg-secondary">
-                <a href={`mailto:${artist.bookingInfo.email}`}>
-                  <Mail className="h-4 w-4" />
-                  Contact booking
-                </a>
-              </Button>
-            </div>
-            <a
-              href={`mailto:${artist.bookingInfo.email}`}
-              className="mt-4 block rounded-2xl bg-secondary/35 px-4 py-3 text-center font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {artist.bookingInfo.email}
-            </a>
-          </section>
-
-          <section className="rounded-3xl border border-border bg-card p-4 sm:p-5">
             <SectionTitle>Photo Preview</SectionTitle>
-            <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3">
               {photoPreview.map((photo) => (
                 <div key={photo.id} className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-secondary">
                   <Image
@@ -505,9 +505,37 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               ))}
             </div>
           </section>
+
+          <section className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+            <SectionTitle>Press Kit / Booking</SectionTitle>
+            <div className="mt-3 rounded-2xl border border-border bg-secondary/35 p-3.5">
+              <p className="text-sm font-semibold text-foreground">Ready for promoters and talent buyers.</p>
+              <p className="mt-1 text-xs text-muted-foreground">One contact point and instant press kit access.</p>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <Button asChild className="h-12 bg-accent text-accent-foreground hover:bg-accent/90">
+                <a href={artist.pressKit.downloadUrl}>
+                  <Download className="h-4 w-4" />
+                  Download press kit
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="h-12 border-border text-foreground hover:bg-secondary">
+                <a href={`mailto:${artist.bookingInfo.email}`}>
+                  <Mail className="h-4 w-4" />
+                  Contact booking
+                </a>
+              </Button>
+            </div>
+            <a
+              href={`mailto:${artist.bookingInfo.email}`}
+              className="mt-3 block rounded-2xl bg-secondary/35 px-4 py-3 text-center font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {artist.bookingInfo.email}
+            </a>
+          </section>
         </div>
 
-        <footer className="py-8 text-center">
+        <footer className="py-6 text-center">
           <Link href="/" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
             Powered by DJHQ
           </Link>
