@@ -314,15 +314,14 @@ function MainLink({ link }: { link: SocialLink }) {
     <a
       href={link.url}
       aria-label={`${link.label} for this artist`}
-      className="group flex min-h-10 items-center justify-between gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent/[0.08]"
+      title={link.label}
+      className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/45 hover:bg-accent/[0.09] hover:shadow-accent/10"
     >
-      <span className="flex min-w-0 items-center gap-2">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.08]">
-          <Icon className="h-3.5 w-3.5 text-accent transition-transform group-hover:scale-110" />
-        </span>
-        <span className="truncate text-xs font-semibold text-foreground sm:text-sm">{link.label}</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.08]">
+        <Icon className="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
       </span>
-      <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+      <span className="sr-only">{link.label}</span>
+      <ExternalLink className="absolute right-1.5 top-1.5 h-2.5 w-2.5 text-muted-foreground/55 transition-colors group-hover:text-accent/80" />
     </a>
   )
 }
@@ -464,7 +463,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
           <section className="rounded-[1.65rem] border border-white/10 bg-card/75 p-4 shadow-xl shadow-black/20 backdrop-blur-sm lg:col-start-1 lg:row-start-1">
             <SectionTitle>Music / Social Links</SectionTitle>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
+            <div className="mt-3 flex flex-wrap gap-2">
               {prioritizedLinks.map((link) => (
                 <MainLink key={`${link.platform}-${link.url}`} link={link} />
               ))}
