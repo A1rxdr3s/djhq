@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, ExternalLink, Globe, LogOut, Mail, Save } from "lucide-react"
+import { Calendar, ExternalLink, Globe, LogOut, Mail, Save, Trash2 } from "lucide-react"
 import type { Artist, GalleryImage, ReleaseType, SocialPlatform } from "@/types/djhq"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -145,6 +145,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [galleryImageFile, setGalleryImageFile] = useState<File | null>(null)
   const [galleryImageAltText, setGalleryImageAltText] = useState("")
   const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
+  const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -359,6 +360,43 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setSaveMessage(message)
     } finally {
       setIsUploadingGalleryImage(false)
+    }
+  }
+
+  async function handleDeleteGalleryImage(galleryImageId: string) {
+    setDeletingGalleryImageId(galleryImageId)
+    setSaveMessage("")
+
+    try {
+      const response = await fetch("/api/artists/gallery-image", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          artistId: artist.id,
+          galleryImageId,
+        }),
+      })
+
+      const result = (await response.json()) as { error?: string; success?: boolean }
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error ?? "Unable to delete gallery image.")
+      }
+
+      setGalleryImages((current) => current.filter((image) => image.id !== galleryImageId))
+      setArtist((current) => ({
+        ...current,
+        galleryImages: current.galleryImages.filter((image) => image.id !== galleryImageId),
+        updatedAt: new Date().toISOString(),
+      }))
+      setSaveMessage("Gallery image deleted.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete gallery image."
+      setSaveMessage(message)
+    } finally {
+      setDeletingGalleryImageId(null)
     }
   }
 
@@ -757,7 +795,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="relative aspect-[4/5] overflow-hidden rounded-md border border-border bg-secondary/40">
                   <Image src={image.imageUrl} alt={image.altText} fill sizes="200px" className="object-cover" />
                 </div>
-                <p className="truncate text-xs text-muted-foreground">{image.altText}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-xs text-muted-foreground">{image.altText}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteGalleryImage(image.id)}
+                    disabled={
+                      deletingGalleryImageId === image.id || isUploadingGalleryImage || isSaving || isPublishing
+                    }
+                    className="h-7 px-2"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {deletingGalleryImageId === image.id ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -793,7 +846,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <Button
               type="button"
               onClick={handleUploadGalleryImage}
-              disabled={!galleryImageFile || isUploadingGalleryImage || isSaving || isPublishing}
+              disabled={!galleryImageFile || isUploadingGalleryImage || isSaving || isPublishing || !!deletingGalleryImageId}
               className="bg-secondary text-foreground hover:bg-secondary/80"
             >
               {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}
