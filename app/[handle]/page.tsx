@@ -510,7 +510,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
                       {featuredRelease.type}
                     </p>
-                    <h2 className="mt-1 text-xl font-bold leading-tight text-foreground sm:text-2xl">
+                    <h2 className="mt-1 line-clamp-2 text-xl font-bold leading-tight text-foreground [overflow-wrap:anywhere] sm:text-2xl">
                       {featuredRelease.title}
                     </h2>
                     <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">

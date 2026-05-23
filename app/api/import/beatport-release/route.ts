@@ -71,10 +71,19 @@ function cleanBeatportTitle(title: string | null) {
     return null
   }
 
-  const cleanedTitle = title
+  let cleanedTitle = title
+    .replace(/\s*\|\s*Music\s*&\s*Downloads\s*$/i, "")
+    .replace(/\s*\|\s*Beatport\s*$/i, "")
+    .replace(/\s*Music\s*&\s*Downloads\s*$/i, "")
     .replace(/\s*[|-]\s*Beatport(?:\s*.*)?$/i, "")
     .replace(/\s+on\s+Beatport$/i, "")
     .trim()
+
+  if (cleanedTitle.includes(" - ")) {
+    cleanedTitle = cleanedTitle.split(" - ").slice(1).join(" - ").trim()
+  }
+
+  cleanedTitle = cleanedTitle.replace(/\s*\[[^\]]+\]\s*$/g, "").trim()
 
   return cleanedTitle || null
 }
@@ -165,7 +174,7 @@ function getStructuredMetadata(html: string) {
   for (const jsonLd of extractJsonLd(html)) {
     walkJson(jsonLd, (record) => {
       if (!label) {
-        label = getNamedValue(record.recordLabel) ?? getNamedValue(record.label)
+        label = getNamedValue(record.recordLabel) ?? getNamedValue(record.recordLabelName)
       }
 
       if (!releaseDate) {
@@ -241,7 +250,7 @@ export async function POST(request: Request) {
       title,
       label: structuredMetadata.label,
       releaseDate: structuredMetadata.releaseDate,
-      type: structuredMetadata.type ?? normalizeReleaseType(title),
+      type: structuredMetadata.type,
       platformUrl: beatportUrl.toString(),
       artworkUrl,
     }
