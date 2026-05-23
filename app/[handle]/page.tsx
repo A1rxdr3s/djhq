@@ -365,13 +365,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           sizes="100vw"
           className="scale-110 object-cover opacity-20 blur-3xl"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--accent)/0.20),_transparent_34%),linear-gradient(180deg,_hsl(var(--background)/0.72),_hsl(var(--background))_58%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--accent)/0.20),_transparent_34%),radial-gradient(circle_at_82%_24%,_hsl(var(--accent)/0.12),_transparent_32%),linear-gradient(180deg,_hsl(var(--background)/0.72),_hsl(var(--background))_58%)]" />
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.035]" />
-        <div className="absolute left-1/2 top-8 h-[520px] w-[min(760px,90vw)] -translate-x-1/2 rounded-full border border-accent/10 bg-accent/[0.035] blur-3xl" />
+        <div className="absolute left-1/2 top-8 h-[620px] w-[min(1180px,94vw)] -translate-x-1/2 rounded-full border border-accent/10 bg-accent/[0.035] blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6 sm:py-7">
-        <header className="mx-auto mb-3 flex max-w-xl items-center justify-between">
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-7">
+        <header className="mx-auto mb-3 flex max-w-6xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded bg-accent">
               <span className="text-sm font-bold text-accent-foreground">DJ</span>
@@ -383,16 +383,16 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </span>
         </header>
 
-        <div className="mx-auto max-w-xl rounded-[2rem] border border-border/80 bg-background/45 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl sm:p-3">
+        <div className="mx-auto max-w-xl rounded-[2rem] border border-border/80 bg-background/45 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl sm:p-3 lg:max-w-6xl lg:p-4">
         <section className="overflow-hidden rounded-[1.65rem] border border-border bg-card shadow-2xl shadow-black/40">
-          <div className="relative min-h-[470px] sm:min-h-[540px]">
+          <div className="relative min-h-[470px] sm:min-h-[540px] lg:min-h-[680px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
               fill
               priority
               loading="eager"
-              sizes="(min-width: 768px) 640px, 100vw"
+              sizes="(min-width: 1024px) 1120px, (min-width: 768px) 640px, 100vw"
               className="object-cover"
             />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.18),_transparent_28%,_hsl(var(--background)/0.84)_78%,_hsl(var(--background)))]" />
@@ -408,7 +408,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </span>
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
               <div className="mb-3 flex flex-wrap gap-2">
                 {artist.genres.map((genre) => (
                   <Badge key={genre} className="border-white/10 bg-black/35 text-foreground backdrop-blur-sm">
@@ -416,17 +416,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </Badge>
                 ))}
               </div>
-              <h1 className="max-w-[10ch] text-5xl font-black uppercase leading-[0.9] tracking-tight text-foreground sm:text-7xl">
+              <h1 className="max-w-[10ch] text-5xl font-black uppercase leading-[0.9] tracking-tight text-foreground sm:text-7xl lg:max-w-[14ch] lg:text-8xl">
                 {artist.artistName}
               </h1>
               <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 text-accent" />
                 {artist.location}
               </p>
-              <p className="mt-3 line-clamp-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-3 line-clamp-2 max-w-lg text-sm leading-relaxed text-muted-foreground lg:max-w-2xl lg:text-base">
                 {artist.shortBio}
               </p>
-              <div className="mt-5 grid grid-cols-2 gap-2.5 rounded-2xl border border-white/10 bg-black/35 p-2 backdrop-blur-md">
+              <div className="mt-5 grid grid-cols-2 gap-2.5 rounded-2xl border border-white/10 bg-black/35 p-2 backdrop-blur-md lg:max-w-xl">
                 <Button asChild size="lg" className="h-12 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
                   <a href={`mailto:${artist.bookingInfo.email}`}>
                     <Mail className="h-4 w-4" />
@@ -449,8 +449,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </div>
         </section>
 
-        <div className="mt-3 space-y-3">
-          <section className="rounded-[1.65rem] border border-border bg-card/80 p-4 backdrop-blur-sm">
+        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
+          <section className="rounded-[1.65rem] border border-border bg-card/80 p-4 backdrop-blur-sm lg:col-start-1 lg:row-start-1">
             <SectionTitle>Music / Social Links</SectionTitle>
             <div className="mt-3 grid grid-cols-2 gap-2.5">
               {prioritizedLinks.map((link) => (
@@ -459,7 +459,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-[1.65rem] border border-border bg-card">
+          <section className="overflow-hidden rounded-[1.65rem] border border-border bg-card lg:col-start-2 lg:row-start-1">
             <div className="relative p-4 sm:p-5">
               <div className="absolute inset-0 opacity-20">
                 <Image
@@ -512,7 +512,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] border border-border bg-card/90 p-4 sm:p-5">
+          <section className="rounded-[1.65rem] border border-border bg-card/90 p-4 sm:p-5 lg:col-start-2 lg:row-start-2">
             <SectionTitle>Upcoming Gigs</SectionTitle>
             <div className="mt-3 space-y-2.5">
               {upcomingGigs.map((gig) => (
@@ -544,7 +544,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] border border-border bg-card/90 p-4 sm:p-5">
+          <section className="rounded-[1.65rem] border border-border bg-card/90 p-4 sm:p-5 lg:col-start-1 lg:row-span-2 lg:row-start-2">
             <SectionTitle>Photo Preview</SectionTitle>
             <div className="mt-3 grid grid-cols-5 grid-rows-2 gap-2.5">
               {photoPreview.map((photo, index) => (
@@ -571,7 +571,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-[1.65rem] border border-accent/20 bg-accent/[0.06] p-4 shadow-xl shadow-accent/5 sm:p-5">
+          <section className="overflow-hidden rounded-[1.65rem] border border-accent/20 bg-accent/[0.06] p-4 shadow-xl shadow-accent/5 sm:p-5 lg:col-start-2 lg:row-start-3">
             <SectionTitle>Booking / Press Kit</SectionTitle>
             <div className="mt-4">
               <p className="text-2xl font-bold leading-tight text-foreground">
