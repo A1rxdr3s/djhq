@@ -412,11 +412,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </span>
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8 xl:p-10">
-              <div className="relative max-w-[min(880px,100%)] overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(135deg,_hsl(var(--background)/0.18),_hsl(var(--background)/0.06)_55%,_hsl(var(--accent)/0.055))] p-3.5 shadow-2xl shadow-black/[0.28] backdrop-blur-[3px] sm:p-5 lg:p-6 xl:p-7">
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 lg:p-7 xl:p-8">
+              <div className="relative max-w-[min(880px,100%)] overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(135deg,_hsl(var(--background)/0.18),_hsl(var(--background)/0.06)_55%,_hsl(var(--accent)/0.055))] p-3 shadow-2xl shadow-black/[0.28] backdrop-blur-[3px] sm:p-4 lg:p-5 xl:p-6">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_8%_100%,_hsl(var(--accent)/0.12),_transparent_38%),linear-gradient(90deg,_hsl(var(--background)/0.20),_transparent_70%)]" />
                 <div className="relative">
-                <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-4">
+                <div className="mb-2.5 flex flex-wrap gap-1.5 sm:mb-3">
                   {artist.genres.map((genre) => (
                     <Badge
                       key={genre}
@@ -429,14 +429,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <h1 className="max-w-full whitespace-normal break-words text-[clamp(2.75rem,10vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:whitespace-nowrap sm:text-[clamp(3rem,6.5vw,4.75rem)] lg:text-[clamp(3.75rem,5.1vw,5.5rem)]">
                   {artist.artistName}
                 </h1>
-                <p className="mt-4 flex items-center gap-2 text-sm font-medium text-white/[0.72]">
+                <p className="mt-3 flex items-center gap-2 text-sm font-medium text-white/[0.72]">
                   <MapPin className="h-4 w-4 text-accent" />
                   {artist.location}
                 </p>
-                <p className="mt-3 line-clamp-2 max-w-lg text-sm leading-relaxed text-white/[0.72] drop-shadow-lg lg:max-w-2xl lg:text-base">
+                <p className="mt-2 line-clamp-2 max-w-lg text-sm leading-relaxed text-white/[0.68] drop-shadow-lg lg:max-w-2xl lg:text-base">
                   {artist.shortBio}
                 </p>
-                <div className="mt-5 inline-flex rounded-full border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm">
+                <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 rounded-[1.75rem] border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm sm:rounded-full">
                   <Button
                     asChild
                     size="lg"
@@ -447,6 +447,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       Book this artist
                     </a>
                   </Button>
+                  {prioritizedLinks.map((link) => (
+                    <MainLink key={`${link.platform}-${link.url}`} link={link} />
+                  ))}
                 </div>
                 </div>
               </div>
@@ -454,17 +457,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </div>
         </section>
 
-        {prioritizedLinks.length > 0 ? (
-          <div className="mx-auto mt-3 flex w-fit max-w-full flex-wrap gap-2 rounded-[1.7rem] border border-white/[0.08] bg-background/[0.35] p-2 shadow-lg shadow-black/20 backdrop-blur-sm sm:rounded-full">
-            {prioritizedLinks.map((link) => (
-              <MainLink key={`${link.platform}-${link.url}`} link={link} />
-            ))}
-          </div>
-        ) : null}
-
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
-          <section className="group overflow-hidden rounded-[1.65rem] bg-card/70 shadow-xl shadow-black/20 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/35 lg:col-start-2 lg:row-start-1">
-            <div className="relative min-h-[360px] p-4 sm:p-5">
+          <section className="group overflow-hidden rounded-[1.65rem] bg-card/75 shadow-2xl shadow-black/25 ring-1 ring-white/[0.04] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/35 lg:col-start-2 lg:row-start-1">
+            <div className="relative min-h-[380px] p-4 sm:p-5">
               {hasFeaturedArtwork ? (
                 <div className="absolute inset-0 opacity-35 transition-opacity duration-500 group-hover:opacity-[0.42]">
                   <Image
@@ -481,7 +476,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               )}
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,_hsl(var(--accent)/0.12),_transparent_32%),radial-gradient(circle_at_18%_82%,_hsl(var(--accent)/0.08),_transparent_38%),linear-gradient(180deg,_hsl(var(--background)/0.42),_hsl(var(--background)/0.82))]" />
               <div className="absolute -left-12 top-16 h-48 w-48 rounded-full bg-accent/[0.08] blur-3xl" />
-              <div className="relative flex min-h-[328px] flex-col">
+              <div className="relative flex min-h-[348px] flex-col">
                 <SectionTitle>Featured Release</SectionTitle>
                 <div className="mt-5 grid flex-1 gap-5 sm:grid-cols-[minmax(135px,0.9fr)_minmax(0,1fr)] sm:items-end">
                   <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-[1.55rem] bg-accent/10 shadow-2xl shadow-black/45 ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.015] sm:mx-0 sm:max-w-none">
@@ -564,9 +559,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] bg-card/50 p-3 shadow-xl shadow-black/20 sm:p-4 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          <section className="rounded-[1.65rem] bg-card/45 p-3 shadow-lg shadow-black/15 sm:p-4 lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <SectionTitle>Photo Preview</SectionTitle>
-            <div className="mt-4 grid grid-cols-5 grid-rows-2 gap-2.5 lg:h-[520px]">
+            <div className="mt-4 grid grid-cols-5 grid-rows-2 gap-2.5 lg:h-[480px]">
               {photoPreview.map((photo, index) => (
                 <div
                   key={photo.id}
