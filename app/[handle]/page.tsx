@@ -436,41 +436,31 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <p className="mt-3 line-clamp-2 max-w-lg text-sm leading-relaxed text-white/[0.72] drop-shadow-lg lg:max-w-2xl lg:text-base">
                   {artist.shortBio}
                 </p>
-                <div className="mt-5 grid grid-cols-2 gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm sm:max-w-xl">
+                <div className="mt-5 inline-flex rounded-full border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm">
                   <Button
                     asChild
                     size="lg"
-                    className="h-12 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-accent/25"
+                    className="h-12 rounded-full bg-accent px-6 text-accent-foreground shadow-lg shadow-accent/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-accent/25"
                   >
                     <a href={`mailto:${artist.bookingInfo.email}`}>
                       <Mail className="h-4 w-4" />
-                      Book
-                    </a>
-                  </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="h-12 rounded-full border-white/15 bg-black/[0.12] text-foreground backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/10"
-                  >
-                    <a href={featuredRelease.platformUrl}>
-                      <Play className="h-4 w-4" />
-                      Listen
+                      Book this artist
                     </a>
                   </Button>
                 </div>
-                {prioritizedLinks.length > 0 ? (
-                  <div className="mt-3 inline-flex max-w-full flex-wrap gap-2 rounded-[1.7rem] border border-white/[0.08] bg-black/[0.10] p-2 backdrop-blur-sm sm:w-fit sm:rounded-full">
-                    {prioritizedLinks.map((link) => (
-                      <MainLink key={`${link.platform}-${link.url}`} link={link} />
-                    ))}
-                  </div>
-                ) : null}
                 </div>
               </div>
             </div>
           </div>
         </section>
+
+        {prioritizedLinks.length > 0 ? (
+          <div className="mx-auto mt-3 flex w-fit max-w-full flex-wrap gap-2 rounded-[1.7rem] border border-white/[0.08] bg-background/[0.35] p-2 shadow-lg shadow-black/20 backdrop-blur-sm sm:rounded-full">
+            {prioritizedLinks.map((link) => (
+              <MainLink key={`${link.platform}-${link.url}`} link={link} />
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
           <section className="group overflow-hidden rounded-[1.65rem] bg-card/70 shadow-xl shadow-black/20 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/35 lg:col-start-2 lg:row-start-1">
