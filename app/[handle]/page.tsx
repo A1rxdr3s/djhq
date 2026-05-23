@@ -315,13 +315,13 @@ function MainLink({ link }: { link: SocialLink }) {
       href={link.url}
       aria-label={`${link.label} for this artist`}
       title={link.label}
-      className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent/[0.09] hover:shadow-lg hover:shadow-accent/10"
+      className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.025] shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent/[0.09] hover:shadow-lg hover:shadow-accent/10 sm:bg-white/[0.03]"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.07]">
-        <Icon className="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
+      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.055] sm:h-8 sm:w-8 sm:bg-accent/[0.07]">
+        <Icon className="h-3.5 w-3.5 text-accent transition-transform group-hover:scale-110 sm:h-4 sm:w-4" />
       </span>
       <span className="sr-only">{link.label}</span>
-      <ExternalLink className="absolute right-1.5 top-1.5 h-2.5 w-2.5 text-muted-foreground/55 transition-colors group-hover:text-accent/80" />
+      <ExternalLink className="absolute right-1.5 top-1.5 h-2 w-2 text-muted-foreground/50 transition-colors group-hover:text-accent/80 sm:h-2.5 sm:w-2.5" />
     </a>
   )
 }
@@ -386,7 +386,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         <div className="mx-auto max-w-xl rounded-[2rem] border border-white/[0.07] bg-background/[0.18] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-md sm:p-2.5 lg:max-w-6xl lg:p-3">
         <section className="group overflow-hidden rounded-[1.65rem] border border-white/[0.08] bg-card shadow-2xl shadow-black/35">
-          <div className="relative min-h-[470px] sm:min-h-[540px] lg:min-h-[680px]">
+          <div className="relative min-h-[405px] sm:min-h-[500px] lg:min-h-[680px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
@@ -412,11 +412,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </span>
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 lg:p-7 xl:p-8">
-              <div className="relative max-w-[min(880px,100%)] overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(135deg,_hsl(var(--background)/0.18),_hsl(var(--background)/0.06)_55%,_hsl(var(--accent)/0.055))] p-3 shadow-2xl shadow-black/[0.28] backdrop-blur-[3px] sm:p-4 lg:p-5 xl:p-6">
+            <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 lg:p-7 xl:p-8">
+              <div className="relative max-w-[min(880px,100%)] overflow-hidden rounded-[1.5rem] border border-white/[0.07] bg-[linear-gradient(135deg,_hsl(var(--background)/0.18),_hsl(var(--background)/0.06)_55%,_hsl(var(--accent)/0.055))] p-2.5 shadow-2xl shadow-black/[0.28] backdrop-blur-[3px] sm:rounded-[1.75rem] sm:p-4 lg:p-5 xl:p-6">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_8%_100%,_hsl(var(--accent)/0.12),_transparent_38%),linear-gradient(90deg,_hsl(var(--background)/0.20),_transparent_70%)]" />
                 <div className="relative">
-                <div className="mb-2.5 flex flex-wrap gap-1.5 sm:mb-3">
+                <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3">
                   {artist.genres.map((genre) => (
                     <Badge
                       key={genre}
@@ -426,21 +426,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </Badge>
                   ))}
                 </div>
-                <h1 className="max-w-full whitespace-normal break-words text-[clamp(2.75rem,10vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:whitespace-nowrap sm:text-[clamp(3rem,6.5vw,4.75rem)] lg:text-[clamp(3.75rem,5.1vw,5.5rem)]">
+                <h1 className="max-w-full whitespace-nowrap text-[clamp(2.1rem,9.2vw,3rem)] font-black uppercase leading-[0.92] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:text-[clamp(3rem,6.5vw,4.75rem)] lg:text-[clamp(3.75rem,5.1vw,5.5rem)]">
                   {artist.artistName}
                 </h1>
-                <p className="mt-3 flex items-center gap-2 text-sm font-medium text-white/[0.72]">
-                  <MapPin className="h-4 w-4 text-accent" />
+                <p className="mt-2 flex items-center gap-2 text-xs font-medium text-white/[0.72] sm:mt-3 sm:text-sm">
+                  <MapPin className="h-3.5 w-3.5 text-accent sm:h-4 sm:w-4" />
                   {artist.location}
                 </p>
-                <p className="mt-2 line-clamp-2 max-w-lg text-sm leading-relaxed text-white/[0.68] drop-shadow-lg lg:max-w-2xl lg:text-base">
+                <p className="mt-1.5 line-clamp-2 max-w-lg text-xs leading-relaxed text-white/[0.66] drop-shadow-lg sm:mt-2 sm:text-sm lg:max-w-2xl lg:text-base">
                   {artist.shortBio}
                 </p>
-                <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 rounded-[1.75rem] border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm sm:rounded-full">
+                <div className="mt-3 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm sm:mt-4 sm:gap-2 sm:rounded-full">
                   <Button
                     asChild
                     size="lg"
-                    className="h-12 rounded-full bg-accent px-6 text-accent-foreground shadow-lg shadow-accent/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-accent/25"
+                    className="h-11 rounded-full bg-accent px-5 text-accent-foreground shadow-lg shadow-accent/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-accent/25 sm:h-12 sm:px-6"
                   >
                     <a href={`mailto:${artist.bookingInfo.email}`}>
                       <Mail className="h-4 w-4" />
@@ -459,7 +459,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
           <section className="group overflow-hidden rounded-[1.65rem] bg-card/75 shadow-2xl shadow-black/25 ring-1 ring-white/[0.04] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/35 lg:col-start-2 lg:row-start-1">
-            <div className="relative min-h-[380px] p-4 sm:p-5">
+            <div className="relative min-h-[330px] p-3 sm:min-h-[380px] sm:p-5">
               {hasFeaturedArtwork ? (
                 <div className="absolute inset-0 opacity-35 transition-opacity duration-500 group-hover:opacity-[0.42]">
                   <Image
@@ -476,10 +476,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               )}
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,_hsl(var(--accent)/0.12),_transparent_32%),radial-gradient(circle_at_18%_82%,_hsl(var(--accent)/0.08),_transparent_38%),linear-gradient(180deg,_hsl(var(--background)/0.42),_hsl(var(--background)/0.82))]" />
               <div className="absolute -left-12 top-16 h-48 w-48 rounded-full bg-accent/[0.08] blur-3xl" />
-              <div className="relative flex min-h-[348px] flex-col">
+              <div className="relative flex min-h-[304px] flex-col sm:min-h-[348px]">
                 <SectionTitle>Featured Release</SectionTitle>
-                <div className="mt-5 grid flex-1 gap-5 sm:grid-cols-[minmax(135px,0.9fr)_minmax(0,1fr)] sm:items-end">
-                  <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-[1.55rem] bg-accent/10 shadow-2xl shadow-black/45 ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.015] sm:mx-0 sm:max-w-none">
+                <div className="mt-4 grid flex-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(135px,0.9fr)_minmax(0,1fr)] sm:items-end sm:gap-5">
+                  <div className="relative mx-auto aspect-square w-full max-w-[168px] overflow-hidden rounded-[1.35rem] bg-accent/10 shadow-2xl shadow-black/45 ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.015] sm:mx-0 sm:max-w-none sm:rounded-[1.55rem]">
                     <div className="absolute -inset-8 bg-accent/[0.08] blur-3xl" />
                     <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.34),_transparent_42%),radial-gradient(circle_at_78%_82%,_hsl(var(--foreground)/0.08),_transparent_38%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
                       <div className="flex h-16 w-16 items-center justify-center rounded-full border border-accent/20 bg-black/[0.18] shadow-2xl shadow-accent/10 backdrop-blur-sm">
@@ -502,19 +502,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
                       {featuredRelease.type}
                     </p>
-                    <h2 className="mt-2 line-clamp-3 text-2xl font-black leading-[0.98] text-foreground [overflow-wrap:anywhere] sm:text-3xl">
+                    <h2 className="mt-2 line-clamp-2 text-2xl font-black leading-[0.98] text-foreground [overflow-wrap:anywhere] sm:line-clamp-3 sm:text-3xl">
                       {featuredRelease.title}
                     </h2>
                     <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                       {featuredRelease.label} / {featuredReleaseYear}
                     </p>
-                    <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:line-clamp-3">
                       {featuredReleaseDescription}
                     </p>
                     <Button
                       asChild
                       variant="outline"
-                      className="mt-5 h-11 w-full rounded-full border-accent/20 bg-accent/[0.08] text-foreground shadow-lg shadow-accent/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-accent/[0.14] hover:shadow-accent/15 sm:w-auto"
+                      className="mt-4 h-11 w-full rounded-full border-accent/20 bg-accent/[0.08] text-foreground shadow-lg shadow-accent/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-accent/[0.14] hover:shadow-accent/15 sm:mt-5 sm:w-auto"
                     >
                       <a href={featuredRelease.platformUrl}>
                         Listen / Buy
@@ -527,13 +527,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] bg-card/55 p-4 shadow-xl shadow-black/15 sm:p-5 lg:col-start-2 lg:row-start-2">
+          <section className="rounded-[1.65rem] bg-card/55 p-3 shadow-xl shadow-black/15 sm:p-5 lg:col-start-2 lg:row-start-2">
             <SectionTitle>Upcoming Gigs</SectionTitle>
-            <div className="mt-4 space-y-1">
+            <div className="mt-3 space-y-1 sm:mt-4">
               {upcomingGigs.map((gig) => (
                 <div
                   key={gig.id}
-                  className="group flex items-start gap-3 border-t border-white/[0.07] py-3 first:border-t-0 first:pt-0 last:pb-0"
+                  className="group flex items-start gap-3 border-t border-white/[0.07] py-2.5 first:border-t-0 first:pt-0 last:pb-0 sm:py-3"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/[0.08] transition-colors duration-300 group-hover:bg-accent/[0.13]">
                     <Calendar className="h-4 w-4 text-accent" />
@@ -589,12 +589,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="relative overflow-hidden rounded-[1.65rem] bg-[radial-gradient(circle_at_18%_0%,_hsl(var(--accent)/0.18),_transparent_42%),linear-gradient(135deg,_hsl(var(--accent)/0.08),_hsl(var(--background)/0.72))] p-4 shadow-2xl shadow-accent/10 ring-1 ring-accent/20 sm:p-5 lg:col-start-2 lg:row-start-3">
+          <section className="relative overflow-hidden rounded-[1.65rem] bg-[radial-gradient(circle_at_18%_0%,_hsl(var(--accent)/0.18),_transparent_42%),linear-gradient(135deg,_hsl(var(--accent)/0.08),_hsl(var(--background)/0.72))] p-3 shadow-2xl shadow-accent/10 ring-1 ring-accent/20 sm:p-5 lg:col-start-2 lg:row-start-3">
             <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.018]" />
             <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-accent/[0.10] blur-3xl" />
             <div className="relative">
             <SectionTitle>Booking / Press Kit</SectionTitle>
-            <div className="mt-5">
+            <div className="mt-4 sm:mt-5">
               <p className="text-2xl font-bold leading-[1.02] text-foreground">
                 Bring {artist.artistName} to your next room.
               </p>
