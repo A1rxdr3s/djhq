@@ -460,7 +460,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </Button>
                 </div>
                 {prioritizedLinks.length > 0 ? (
-                  <div className="mt-3 flex max-w-full flex-wrap gap-2 rounded-[1.7rem] border border-white/[0.08] bg-black/[0.10] p-2 backdrop-blur-sm sm:max-w-xl sm:rounded-full">
+                  <div className="mt-3 inline-flex max-w-full flex-wrap gap-2 rounded-[1.7rem] border border-white/[0.08] bg-black/[0.10] p-2 backdrop-blur-sm sm:w-fit sm:rounded-full">
                     {prioritizedLinks.map((link) => (
                       <MainLink key={`${link.platform}-${link.url}`} link={link} />
                     ))}
