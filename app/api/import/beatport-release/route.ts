@@ -66,9 +66,14 @@ function getPageTitle(html: string) {
   return match?.[1] ? decodeHtml(match[1]) : null
 }
 
+function extractBracketedLabel(title: string) {
+  const match = title.match(/\s*\[([^\]]+)\]\s*$/)
+  return match?.[1]?.trim() || null
+}
+
 function cleanBeatportTitle(title: string | null) {
   if (!title) {
-    return null
+    return { title: null, bracketedLabel: null }
   }
 
   let cleanedTitle = title
@@ -79,13 +84,15 @@ function cleanBeatportTitle(title: string | null) {
     .replace(/\s+on\s+Beatport$/i, "")
     .trim()
 
+  const bracketedLabel = extractBracketedLabel(cleanedTitle)
+
+  cleanedTitle = cleanedTitle.replace(/\s*\[[^\]]+\]\s*$/g, "").trim()
+
   if (cleanedTitle.includes(" - ")) {
     cleanedTitle = cleanedTitle.split(" - ").slice(1).join(" - ").trim()
   }
 
-  cleanedTitle = cleanedTitle.replace(/\s*\[[^\]]+\]\s*$/g, "").trim()
-
-  return cleanedTitle || null
+  return { title: cleanedTitle || null, bracketedLabel }
 }
 
 function normalizeReleaseType(value: string | null): ReleaseType | null {
@@ -243,12 +250,12 @@ export async function POST(request: Request) {
     }
 
     const html = await response.text()
-    const title = cleanBeatportTitle(getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html))
+    const titleMetadata = cleanBeatportTitle(getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html))
     const artworkUrl = getMetaContent(html, ["og:image", "twitter:image"])
     const structuredMetadata = getStructuredMetadata(html)
     const importedMetadata: ImportedMetadata = {
-      title,
-      label: structuredMetadata.label,
+      title: titleMetadata.title,
+      label: structuredMetadata.label ?? titleMetadata.bracketedLabel,
       releaseDate: structuredMetadata.releaseDate,
       type: structuredMetadata.type,
       platformUrl: beatportUrl.toString(),
