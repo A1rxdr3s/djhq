@@ -393,11 +393,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               priority
               loading="eager"
               sizes="(min-width: 1024px) 1120px, (min-width: 768px) 640px, 100vw"
-              className="object-cover"
+              className="object-cover saturate-[0.82] contrast-110 brightness-[0.72]"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.18),_transparent_28%,_hsl(var(--background)/0.84)_78%,_hsl(var(--background)))]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,_transparent,_hsl(var(--background)/0.54)_70%)]" />
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.045]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.42),_hsl(var(--background)/0.08)_26%,_hsl(var(--background)/0.72)_68%,_hsl(var(--background)))]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_22%,_transparent_18%,_hsl(var(--background)/0.42)_62%,_hsl(var(--background)/0.86)_100%)]" />
+            <div className="absolute inset-y-0 left-0 w-2/3 bg-[linear-gradient(90deg,_hsl(var(--background)/0.60),_transparent)]" />
+            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.035]" />
 
             <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3">
               <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/80 backdrop-blur-md">
@@ -409,41 +410,50 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
 
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
-              <div className="mb-3 flex flex-wrap gap-2">
-                {artist.genres.map((genre) => (
-                  <Badge key={genre} className="border-white/10 bg-black/35 text-foreground backdrop-blur-sm">
-                    {genre}
-                  </Badge>
-                ))}
-              </div>
-              <h1 className="max-w-[10ch] text-5xl font-black uppercase leading-[0.9] tracking-tight text-foreground sm:text-7xl lg:max-w-[14ch] lg:text-8xl">
-                {artist.artistName}
-              </h1>
-              <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 text-accent" />
-                {artist.location}
-              </p>
-              <p className="mt-3 line-clamp-2 max-w-lg text-sm leading-relaxed text-muted-foreground lg:max-w-2xl lg:text-base">
-                {artist.shortBio}
-              </p>
-              <div className="mt-5 grid grid-cols-2 gap-2.5 rounded-2xl border border-white/10 bg-black/35 p-2 backdrop-blur-md lg:max-w-xl">
-                <Button asChild size="lg" className="h-12 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
-                  <a href={`mailto:${artist.bookingInfo.email}`}>
-                    <Mail className="h-4 w-4" />
-                    Book
-                  </a>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="h-12 rounded-xl border-white/15 bg-white/5 text-foreground backdrop-blur-sm hover:bg-white/10"
-                >
-                  <a href={featuredRelease.platformUrl}>
-                    <Play className="h-4 w-4" />
-                    Listen
-                  </a>
-                </Button>
+              <div className="max-w-3xl rounded-[1.5rem] border border-white/10 bg-black/28 p-3.5 shadow-2xl shadow-black/35 backdrop-blur-md sm:p-5 lg:p-6">
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  {artist.genres.map((genre) => (
+                    <Badge
+                      key={genre}
+                      className="border-white/10 bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white/75 backdrop-blur-sm"
+                    >
+                      {genre}
+                    </Badge>
+                  ))}
+                </div>
+                <h1 className="max-w-[10ch] text-5xl font-black uppercase leading-[0.88] tracking-tight text-foreground drop-shadow-2xl sm:text-7xl lg:max-w-[14ch] lg:text-8xl">
+                  {artist.artistName}
+                </h1>
+                <p className="mt-3 flex items-center gap-2 text-sm text-white/70">
+                  <MapPin className="h-4 w-4 text-accent" />
+                  {artist.location}
+                </p>
+                <p className="mt-3 line-clamp-2 max-w-lg text-sm leading-relaxed text-white/68 lg:max-w-2xl lg:text-base">
+                  {artist.shortBio}
+                </p>
+                <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5 backdrop-blur-md lg:max-w-xl">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-12 rounded-xl bg-accent text-accent-foreground shadow-lg shadow-accent/15 hover:bg-accent/90"
+                  >
+                    <a href={`mailto:${artist.bookingInfo.email}`}>
+                      <Mail className="h-4 w-4" />
+                      Book
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="h-12 rounded-xl border-white/15 bg-black/25 text-foreground backdrop-blur-sm hover:bg-white/10"
+                  >
+                    <a href={featuredRelease.platformUrl}>
+                      <Play className="h-4 w-4" />
+                      Listen
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
