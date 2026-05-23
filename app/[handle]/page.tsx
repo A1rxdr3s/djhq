@@ -426,7 +426,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </Badge>
                   ))}
                 </div>
-                <h1 className="max-w-[11ch] text-[clamp(3rem,12vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.015em] text-foreground drop-shadow-2xl sm:max-w-[12ch] sm:text-[clamp(4.25rem,10vw,6.5rem)] lg:max-w-[13ch] lg:text-[clamp(5rem,7vw,7.5rem)] xl:max-w-[14ch]">
+                <h1 className="max-w-full whitespace-normal break-words text-[clamp(2.75rem,10vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:text-[clamp(3.75rem,8vw,5.25rem)] lg:text-[clamp(4.5rem,5.7vw,6.25rem)]">
                   {artist.artistName}
                 </h1>
                 <p className="mt-4 flex items-center gap-2 text-sm font-medium text-white/[0.72]">
