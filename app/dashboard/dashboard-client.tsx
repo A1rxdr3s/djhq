@@ -57,6 +57,15 @@ type GigFormState = {
   ticketUrl?: string
 }
 
+type BeatportReleaseMetadata = {
+  title: string | null
+  label: string | null
+  releaseDate: string | null
+  type: string | null
+  platformUrl: string
+  artworkUrl: string | null
+}
+
 const socialPlatforms: SocialPlatform[] = [
   "beatport",
   "spotify",
@@ -139,6 +148,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [isFetchingBeatportMetadata, setIsFetchingBeatportMetadata] = useState(false)
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
   const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false)
   const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
@@ -277,6 +287,54 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setSaveMessage(message)
     } finally {
       setIsPublishing(false)
+    }
+  }
+
+  async function handleFetchBeatportMetadata() {
+    if (!featuredRelease?.platformUrl.trim()) {
+      setSaveMessage("Paste a Beatport release URL first.")
+      return
+    }
+
+    setIsFetchingBeatportMetadata(true)
+    setSaveMessage("")
+
+    try {
+      const response = await fetch("/api/import/beatport-release", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: featuredRelease.platformUrl,
+        }),
+      })
+
+      const result = (await response.json()) as BeatportReleaseMetadata & { error?: string }
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Unable to fetch Beatport metadata.")
+      }
+
+      setFeaturedRelease((current) =>
+        current
+          ? {
+              ...current,
+              title: result.title ?? current.title,
+              label: result.label ?? current.label,
+              releaseDate: result.releaseDate ?? current.releaseDate,
+              type: result.type ?? current.type,
+              platformUrl: result.platformUrl,
+              artworkUrl: result.artworkUrl ?? current.artworkUrl,
+            }
+          : current,
+      )
+      setSaveMessage("Beatport metadata imported. Review and save changes.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to fetch Beatport metadata."
+      setSaveMessage(message)
+    } finally {
+      setIsFetchingBeatportMetadata(false)
     }
   }
 
@@ -709,6 +767,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   setFeaturedRelease((current) => (current ? { ...current, platformUrl: event.target.value } : current))
                 }
               />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleFetchBeatportMetadata}
+                disabled={isFetchingBeatportMetadata || isSaving || isPublishing}
+                className="border-border bg-background/70"
+              >
+                {isFetchingBeatportMetadata ? "Fetching..." : "Fetch Beatport metadata"}
+              </Button>
             </div>
           </div>
           <div className="md:col-span-2">
@@ -1078,7 +1145,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </Button>
             <Button
               size="sm"
-              disabled={!isSaveDirty || isSaving || isPublishing || isUploadingHeroImage || isUploadingGalleryImage}
+              disabled={
+                !isSaveDirty ||
+                isSaving ||
+                isPublishing ||
+                isFetchingBeatportMetadata ||
+                isUploadingHeroImage ||
+                isUploadingGalleryImage
+              }
               onClick={handleSaveChanges}
               className="bg-accent text-accent-foreground"
             >
