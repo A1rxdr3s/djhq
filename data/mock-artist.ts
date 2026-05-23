@@ -30,6 +30,7 @@ export const mockArtist: Artist = {
     platformUrl: "https://www.beatport.com/release/midnight-protocol-ep/000001",
     type: "EP",
   },
+  selectedReleases: [],
   upcomingGigs: [
     {
       id: "gig_space_miami_2026_06_14",

@@ -26,6 +26,15 @@ type SaveFeaturedReleasePayload = {
   artworkUrl: string
 } | null
 
+type SaveSelectedReleasePayload = {
+  title: string
+  label: string
+  releaseDate: string
+  type: string
+  platformUrl: string
+  artworkUrl: string
+}
+
 type SaveGigPayload = {
   venue: string
   date: string
@@ -40,6 +49,7 @@ type SaveArtistPayload = {
   profile: SaveProfilePayload
   socialLinks: SaveSocialLinkPayload[]
   featuredRelease: SaveFeaturedReleasePayload
+  selectedReleases: SaveSelectedReleasePayload[]
   gigs: SaveGigPayload[]
 }
 
@@ -113,6 +123,20 @@ function validatePayload(payload: SaveArtistPayload) {
 
   if (invalidGig) {
     return "Each gig must include venue, date, city, and country."
+  }
+
+  const invalidSelectedRelease = payload.selectedReleases.find(
+    (release) =>
+      !release.title.trim() ||
+      !release.label.trim() ||
+      !release.releaseDate.trim() ||
+      !release.type.trim() ||
+      !release.platformUrl.trim() ||
+      !release.artworkUrl.trim(),
+  )
+
+  if (invalidSelectedRelease) {
+    return "Each selected release must include title, label, date, type, platform URL, and artwork URL."
   }
 
   return null
@@ -346,6 +370,36 @@ export async function PATCH(request: Request) {
 
       if (insertFeaturedReleaseError) {
         throw insertFeaturedReleaseError
+      }
+    }
+
+    const { error: deleteSelectedReleasesError } = await supabase
+      .from("releases")
+      .delete()
+      .eq("artist_id", artistId)
+      .eq("is_featured", false)
+
+    if (deleteSelectedReleasesError) {
+      throw deleteSelectedReleasesError
+    }
+
+    if (payload.selectedReleases.length > 0) {
+      const { error: insertSelectedReleasesError } = await supabase.from("releases").insert(
+        payload.selectedReleases.map((release, index) => ({
+          artist_id: artistId,
+          title: release.title.trim(),
+          label: release.label.trim(),
+          release_date: release.releaseDate,
+          artwork_url: release.artworkUrl.trim(),
+          platform_url: release.platformUrl.trim(),
+          type: normalizeReleaseType(release.type),
+          is_featured: false,
+          sort_order: index + 1,
+        })),
+      )
+
+      if (insertSelectedReleasesError) {
+        throw insertSelectedReleasesError
       }
     }
 

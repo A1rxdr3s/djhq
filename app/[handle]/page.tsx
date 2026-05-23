@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
-import type { Artist, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
+import type { Artist, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -82,6 +82,7 @@ type ReleaseRow = {
   artwork_url: string
   platform_url: string
   type: string
+  is_featured: boolean
 }
 
 type GigRow = {
@@ -143,6 +144,18 @@ function normalizeReleaseType(type: string): ReleaseType {
   return type === "album" ? "album" : "single"
 }
 
+function mapReleaseRow(row: ReleaseRow): Release {
+  return {
+    id: row.id,
+    title: row.title,
+    label: row.label,
+    releaseDate: row.release_date,
+    artworkUrl: row.artwork_url,
+    platformUrl: row.platform_url,
+    type: normalizeReleaseType(row.type),
+  }
+}
+
 function getMockArtistFallback(handle: string) {
   return handle === mockArtist.handle ? mockArtist : null
 }
@@ -171,7 +184,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       return null
     }
 
-    const [socialLinksResult, featuredReleaseResult, gigsResult, galleryImagesResult] = await Promise.all([
+    const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult] = await Promise.all([
       supabase
         .from("social_links")
         .select("platform, label, url")
@@ -180,12 +193,11 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<SocialLinkRow[]>(),
       supabase
         .from("releases")
-        .select("id, title, label, release_date, artwork_url, platform_url, type")
+        .select("id, title, label, release_date, artwork_url, platform_url, type, is_featured")
         .eq("artist_id", artistRow.id)
-        .eq("is_featured", true)
         .order("sort_order", { ascending: true })
-        .limit(1)
-        .maybeSingle<ReleaseRow>(),
+        .order("release_date", { ascending: false })
+        .returns<ReleaseRow[]>(),
       supabase
         .from("gigs")
         .select("id, date, venue, city, country, ticket_url")
@@ -200,9 +212,13 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<GalleryImageRow[]>(),
     ])
 
-    if (socialLinksResult.error || featuredReleaseResult.error || gigsResult.error || galleryImagesResult.error) {
-      throw socialLinksResult.error ?? featuredReleaseResult.error ?? gigsResult.error ?? galleryImagesResult.error
+    if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error) {
+      throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error
     }
+
+    const releaseRows = releasesResult.data ?? []
+    const featuredReleaseRow = releaseRows.find((release) => release.is_featured)
+    const selectedReleaseRows = releaseRows.filter((release) => !release.is_featured)
 
     return {
       id: artistRow.id,
@@ -222,17 +238,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         label: link.label,
         url: link.url,
       })),
-      featuredRelease: featuredReleaseResult.data
-        ? {
-            id: featuredReleaseResult.data.id,
-            title: featuredReleaseResult.data.title,
-            label: featuredReleaseResult.data.label,
-            releaseDate: featuredReleaseResult.data.release_date,
-            artworkUrl: featuredReleaseResult.data.artwork_url,
-            platformUrl: featuredReleaseResult.data.platform_url,
-            type: normalizeReleaseType(featuredReleaseResult.data.type),
-          }
-        : undefined,
+      featuredRelease: featuredReleaseRow ? mapReleaseRow(featuredReleaseRow) : undefined,
+      selectedReleases: selectedReleaseRows.map(mapReleaseRow),
       upcomingGigs: (gigsResult.data ?? []).map((gig) => ({
         id: gig.id,
         date: gig.date,
@@ -331,6 +338,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   if (!featuredRelease) {
     notFound()
   }
+  const selectedReleases = artist.selectedReleases
   const upcomingGigs = artist.upcomingGigs.slice(0, 3)
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
@@ -591,6 +599,62 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
         </div>
+
+        {selectedReleases.length > 0 ? (
+          <section className="mt-8 lg:mt-10">
+            <SectionTitle>Selected Releases</SectionTitle>
+            <div className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
+              {selectedReleases.map((release) => {
+                const releaseYear = new Date(release.releaseDate).getUTCFullYear()
+                const hasArtwork = release.artworkUrl.trim().length > 0
+
+                return (
+                  <article
+                    key={release.id}
+                    className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
+                      {hasArtwork ? (
+                        <Image
+                          src={release.artworkUrl}
+                          alt={`${release.title} artwork`}
+                          fill
+                          sizes="220px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.24),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                          <Music2 className="h-8 w-8 text-accent/75" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                    </div>
+                    <div className="mt-3 min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">
+                        {release.type}
+                      </p>
+                      <h3 className="mt-1 text-balance text-base font-bold leading-tight text-foreground">
+                        {release.title}
+                      </h3>
+                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {release.label} · {releaseYear}
+                      </p>
+                      <a
+                        href={release.platformUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent/80"
+                      >
+                        Listen
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        ) : null}
 
         <footer className="py-10 text-center sm:py-12">
           <Link

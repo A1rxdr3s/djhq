@@ -146,6 +146,8 @@ export interface Artist {
   socialLinks: SocialLink[]
   /** Optional featured release. */
   featuredRelease?: Release
+  /** Catalog releases shown in the Selected Releases section. */
+  selectedReleases: Release[]
   /** Upcoming gigs for the profile. */
   upcomingGigs: Gig[]
   /** Gallery preview images. */

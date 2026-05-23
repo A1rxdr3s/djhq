@@ -45,6 +45,7 @@ type ReleaseRow = {
   artwork_url: string
   platform_url: string
   type: string
+  is_featured: boolean
 }
 
 type GigRow = {
@@ -141,7 +142,7 @@ async function claimSeededArtist(supabase: SupabaseAdminClient, artistId: string
 }
 
 async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow: ArtistRow): Promise<Artist> {
-  const [socialLinksResult, featuredReleaseResult, gigsResult, galleryImagesResult] = await Promise.all([
+  const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult] = await Promise.all([
     supabase
       .from("social_links")
       .select("platform, label, url")
@@ -150,12 +151,11 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<SocialLinkRow[]>(),
     supabase
       .from("releases")
-      .select("id, title, label, release_date, artwork_url, platform_url, type")
+      .select("id, title, label, release_date, artwork_url, platform_url, type, is_featured")
       .eq("artist_id", artistRow.id)
-      .eq("is_featured", true)
       .order("sort_order", { ascending: true })
-      .limit(1)
-      .maybeSingle<ReleaseRow>(),
+      .order("release_date", { ascending: false })
+      .returns<ReleaseRow[]>(),
     supabase
       .from("gigs")
       .select("id, date, venue, city, country, ticket_url")
@@ -170,9 +170,13 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<GalleryImageRow[]>(),
   ])
 
-  if (socialLinksResult.error || featuredReleaseResult.error || gigsResult.error || galleryImagesResult.error) {
-    throw socialLinksResult.error ?? featuredReleaseResult.error ?? gigsResult.error ?? galleryImagesResult.error
+  if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error) {
+    throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error
   }
+
+  const releaseRows = releasesResult.data ?? []
+  const featuredReleaseRow = releaseRows.find((release) => release.is_featured)
+  const selectedReleaseRows = releaseRows.filter((release) => !release.is_featured)
 
   return {
     id: artistRow.id,
@@ -192,17 +196,26 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       label: link.label,
       url: link.url,
     })),
-    featuredRelease: featuredReleaseResult.data
+    featuredRelease: featuredReleaseRow
       ? {
-          id: featuredReleaseResult.data.id,
-          title: featuredReleaseResult.data.title,
-          label: featuredReleaseResult.data.label,
-          releaseDate: featuredReleaseResult.data.release_date,
-          artworkUrl: featuredReleaseResult.data.artwork_url,
-          platformUrl: featuredReleaseResult.data.platform_url,
-          type: normalizeReleaseType(featuredReleaseResult.data.type),
+          id: featuredReleaseRow.id,
+          title: featuredReleaseRow.title,
+          label: featuredReleaseRow.label,
+          releaseDate: featuredReleaseRow.release_date,
+          artworkUrl: featuredReleaseRow.artwork_url,
+          platformUrl: featuredReleaseRow.platform_url,
+          type: normalizeReleaseType(featuredReleaseRow.type),
         }
       : undefined,
+    selectedReleases: selectedReleaseRows.map((release) => ({
+      id: release.id,
+      title: release.title,
+      label: release.label,
+      releaseDate: release.release_date,
+      artworkUrl: release.artwork_url,
+      platformUrl: release.platform_url,
+      type: normalizeReleaseType(release.type),
+    })),
     upcomingGigs: (gigsResult.data ?? []).map((gig) => ({
       id: gig.id,
       date: gig.date,
