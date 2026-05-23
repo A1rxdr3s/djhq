@@ -5,7 +5,6 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import {
-  Calendar,
   Download,
   ExternalLink,
   Globe,
@@ -300,10 +299,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-center gap-3">
-      <h2 className="text-[10px] font-medium uppercase tracking-[0.26em] text-accent/75">{children}</h2>
-      <div className="h-px flex-1 bg-gradient-to-r from-accent/20 via-white/10 to-transparent" />
-    </div>
+    <h2 className="text-[10px] font-medium uppercase tracking-[0.28em] text-accent/70">{children}</h2>
   )
 }
 
@@ -315,13 +311,10 @@ function MainLink({ link }: { link: SocialLink }) {
       href={link.url}
       aria-label={`${link.label} for this artist`}
       title={link.label}
-      className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.025] shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent/[0.09] hover:shadow-lg hover:shadow-accent/10 sm:bg-white/[0.03]"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-accent backdrop-blur-sm transition-colors hover:border-accent/35 hover:bg-accent/[0.08]"
     >
-      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.055] sm:h-8 sm:w-8 sm:bg-accent/[0.07]">
-        <Icon className="h-3.5 w-3.5 text-accent transition-transform group-hover:scale-110 sm:h-4 sm:w-4" />
-      </span>
+      <Icon className="h-4 w-4" />
       <span className="sr-only">{link.label}</span>
-      <ExternalLink className="absolute right-1.5 top-1.5 h-2 w-2 text-muted-foreground/50 transition-colors group-hover:text-accent/80 sm:h-2.5 sm:w-2.5" />
     </a>
   )
 }
@@ -341,8 +334,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const upcomingGigs = artist.upcomingGigs.slice(0, 3)
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
-  const featuredReleaseDescription = artist.tagline ?? artist.shortBio
+  const releaseTagline =
+    artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
   const hasFeaturedArtwork = featuredRelease.artworkUrl.trim().length > 0
+  const hasPressKit =
+    artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
   const prioritizedLinks = artist.socialLinks.filter((link) => link.url.trim().length > 0).sort((a, b) => {
     const priorityA = linkPriority.indexOf(a.platform)
@@ -371,22 +367,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="absolute left-1/2 top-0 h-[720px] w-[min(1280px,98vw)] -translate-x-1/2 rounded-full bg-accent/[0.025] blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-7">
-        <header className="mx-auto mb-4 flex max-w-6xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
+        <header className="mb-5 flex items-center justify-between sm:mb-6">
+          <Link href="/" className="flex items-center gap-2.5 text-foreground/80 transition-colors hover:text-foreground">
             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/20 bg-accent/10">
               <span className="text-xs font-bold text-accent">DJ</span>
             </div>
-            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/80">DJHQ</span>
+            <span className="text-sm font-semibold uppercase tracking-[0.18em]">DJHQ</span>
           </Link>
-          <span className="rounded-full border border-white/10 bg-card/50 px-3 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur-md">
-            @{artist.handle}
-          </span>
+          <span className="font-mono text-[11px] text-muted-foreground/90">@{artist.handle}</span>
         </header>
 
-        <div className="mx-auto max-w-xl rounded-[2rem] border border-white/[0.07] bg-background/[0.18] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-md sm:p-2.5 lg:max-w-6xl lg:p-3">
-        <section className="group overflow-hidden rounded-[1.65rem] border border-white/[0.08] bg-card shadow-2xl shadow-black/35">
-          <div className="relative min-h-[405px] sm:min-h-[500px] lg:min-h-[680px]">
+        <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
+          <div className="relative min-h-[420px] sm:min-h-[520px] lg:min-h-[680px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
@@ -394,182 +387,149 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               priority
               loading="eager"
               sizes="(min-width: 1024px) 1120px, (min-width: 768px) 640px, 100vw"
-              className="object-cover saturate-[0.95] contrast-110 brightness-[0.86] transition-transform duration-[1800ms] ease-out group-hover:scale-[1.025]"
+              className="object-cover saturate-[0.95] contrast-110 brightness-[0.86] transition-transform duration-[1800ms] ease-out group-hover:scale-[1.02]"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.30),_hsl(var(--background)/0.03)_30%,_hsl(var(--background)/0.42)_63%,_hsl(var(--background)/0.96))]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,_transparent_18%,_hsl(var(--background)/0.20)_62%,_hsl(var(--background)/0.72)_100%)]" />
-            <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.018]" />
-            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-[radial-gradient(ellipse_at_24%_86%,_hsl(var(--accent)/0.14),_transparent_35%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.34)_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.28),_hsl(var(--background)/0.04)_32%,_hsl(var(--background)/0.48)_68%,_hsl(var(--background)/0.97))]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,_transparent_20%,_hsl(var(--background)/0.22)_58%,_hsl(var(--background)/0.68)_100%)]" />
+            <div className="absolute inset-y-0 left-0 w-2/3 bg-[linear-gradient(92deg,_hsl(var(--background)/0.38),_transparent_76%)]" />
+            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.016]" />
+            <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_88%,_hsl(var(--accent)/0.12),_transparent_40%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_48%,_hsl(var(--background)/0.28)_100%)]" />
 
-            <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3">
-              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.24em] text-white/[0.78] backdrop-blur-sm">
-                Electronic Press Kit
-              </span>
-              <span className="rounded-full border border-accent/20 bg-accent/[0.08] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-accent backdrop-blur-sm">
-                Booking Ready
-              </span>
-            </div>
-
-            <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 lg:p-7 xl:p-8">
-              <div className="relative max-w-[min(880px,100%)] overflow-hidden rounded-[1.5rem] border border-white/[0.07] bg-[linear-gradient(135deg,_hsl(var(--background)/0.18),_hsl(var(--background)/0.06)_55%,_hsl(var(--accent)/0.055))] p-2.5 shadow-2xl shadow-black/[0.28] backdrop-blur-[3px] sm:rounded-[1.75rem] sm:p-4 lg:p-5 xl:p-6">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_8%_100%,_hsl(var(--accent)/0.12),_transparent_38%),linear-gradient(90deg,_hsl(var(--background)/0.20),_transparent_70%)]" />
-                <div className="relative">
-                <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3">
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(72%,420px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.92)_0%,_hsl(var(--background)/0.55)_42%,_transparent_100%)]" />
+              <div className="relative max-w-3xl">
+                <div className="mb-2.5 flex flex-wrap gap-1.5 sm:mb-3">
                   {artist.genres.map((genre) => (
                     <Badge
                       key={genre}
-                      className="border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/[0.72] backdrop-blur-sm"
+                      className="border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white/70 backdrop-blur-sm"
                     >
                       {genre}
                     </Badge>
                   ))}
                 </div>
-                <h1 className="max-w-full whitespace-nowrap text-[clamp(2.1rem,9.2vw,3rem)] font-black uppercase leading-[0.92] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:text-[clamp(3rem,6.5vw,4.75rem)] lg:text-[clamp(3.75rem,5.1vw,5.5rem)]">
+                <h1 className="max-w-full text-[clamp(1.85rem,7.8vw,2.85rem)] font-black uppercase leading-[0.94] tracking-[-0.02em] text-foreground drop-shadow-2xl sm:text-[clamp(2.5rem,6.2vw,4rem)] sm:leading-[0.92] lg:max-w-none lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap lg:text-[clamp(3.25rem,4.8vw,5.25rem)]">
                   {artist.artistName}
                 </h1>
-                <p className="mt-2 flex items-center gap-2 text-xs font-medium text-white/[0.72] sm:mt-3 sm:text-sm">
-                  <MapPin className="h-3.5 w-3.5 text-accent sm:h-4 sm:w-4" />
+                {releaseTagline ? (
+                  <p className="mt-2 text-sm font-medium uppercase tracking-[0.14em] text-accent/90 sm:text-base">
+                    {releaseTagline}
+                  </p>
+                ) : null}
+                <p className="mt-2 flex items-center gap-2 text-xs font-medium text-white/70 sm:mt-3 sm:text-sm">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-accent sm:h-4 sm:w-4" />
                   {artist.location}
                 </p>
-                <p className="mt-1.5 line-clamp-2 max-w-lg text-xs leading-relaxed text-white/[0.66] drop-shadow-lg sm:mt-2 sm:text-sm lg:max-w-2xl lg:text-base">
+                <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-relaxed text-white/65 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-base">
                   {artist.shortBio}
                 </p>
-                <div className="mt-3 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm sm:mt-4 sm:gap-2 sm:rounded-full">
+                <div className="mt-4 flex flex-col gap-3 sm:mt-5">
                   <Button
                     asChild
                     size="lg"
-                    className="h-11 rounded-full bg-accent px-5 text-accent-foreground shadow-lg shadow-accent/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-accent/25 sm:h-12 sm:px-6"
+                    className="h-11 w-fit rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:h-12"
                   >
                     <a href={`mailto:${artist.bookingInfo.email}`}>
                       <Mail className="h-4 w-4" />
                       Book this artist
                     </a>
                   </Button>
-                  {prioritizedLinks.map((link) => (
-                    <MainLink key={`${link.platform}-${link.url}`} link={link} />
-                  ))}
-                </div>
+                  {prioritizedLinks.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {prioritizedLinks.map((link) => (
+                        <MainLink key={`${link.platform}-${link.url}`} link={link} />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
-          <section className="group overflow-hidden rounded-[1.65rem] bg-card/75 shadow-2xl shadow-black/25 ring-1 ring-white/[0.04] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/35 lg:col-start-2 lg:row-start-1">
-            <div className="relative min-h-[330px] p-3 sm:min-h-[380px] sm:p-5">
-              {hasFeaturedArtwork ? (
-                <div className="absolute inset-0 opacity-35 transition-opacity duration-500 group-hover:opacity-[0.42]">
+        <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start lg:gap-10">
+          <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-6 lg:col-start-2 lg:row-start-1">
+            <SectionTitle>Featured Release</SectionTitle>
+            <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(180px,220px)_minmax(0,1fr)] sm:items-end sm:gap-6">
+              <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none">
+                {!hasFeaturedArtwork ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                    <Music2 className="h-10 w-10 text-accent/80" />
+                  </div>
+                ) : (
                   <Image
                     src={featuredRelease.artworkUrl}
-                    alt=""
+                    alt={`${featuredRelease.title} artwork`}
                     fill
-                    aria-hidden="true"
-                    sizes="560px"
-                    className="scale-110 object-cover blur-2xl"
+                    sizes="(min-width: 1024px) 280px, 240px"
+                    className="object-cover"
                   />
-                </div>
-              ) : (
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_18%,_hsl(var(--accent)/0.24),_transparent_36%),radial-gradient(circle_at_76%_76%,_hsl(var(--foreground)/0.07),_transparent_40%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
-              )}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,_hsl(var(--accent)/0.12),_transparent_32%),radial-gradient(circle_at_18%_82%,_hsl(var(--accent)/0.08),_transparent_38%),linear-gradient(180deg,_hsl(var(--background)/0.42),_hsl(var(--background)/0.82))]" />
-              <div className="absolute -left-12 top-16 h-48 w-48 rounded-full bg-accent/[0.08] blur-3xl" />
-              <div className="relative flex min-h-[304px] flex-col sm:min-h-[348px]">
-                <SectionTitle>Featured Release</SectionTitle>
-                <div className="mt-4 grid flex-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(135px,0.9fr)_minmax(0,1fr)] sm:items-end sm:gap-5">
-                  <div className="relative mx-auto aspect-square w-full max-w-[168px] overflow-hidden rounded-[1.35rem] bg-accent/10 shadow-2xl shadow-black/45 ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.015] sm:mx-0 sm:max-w-none sm:rounded-[1.55rem]">
-                    <div className="absolute -inset-8 bg-accent/[0.08] blur-3xl" />
-                    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.34),_transparent_42%),radial-gradient(circle_at_78%_82%,_hsl(var(--foreground)/0.08),_transparent_38%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-accent/20 bg-black/[0.18] shadow-2xl shadow-accent/10 backdrop-blur-sm">
-                        <Music2 className="h-8 w-8 text-accent" />
-                      </div>
-                    </div>
-                    {hasFeaturedArtwork ? (
-                      <Image
-                        src={featuredRelease.artworkUrl}
-                        alt=""
-                        aria-hidden="true"
-                        fill
-                        sizes="(min-width: 1024px) 260px, 220px"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    ) : null}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-white/[0.04]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
-                      {featuredRelease.type}
-                    </p>
-                    <h2 className="mt-2 line-clamp-2 text-2xl font-black leading-[0.98] text-foreground [overflow-wrap:anywhere] sm:line-clamp-3 sm:text-3xl">
-                      {featuredRelease.title}
-                    </h2>
-                    <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                      {featuredRelease.label} / {featuredReleaseYear}
-                    </p>
-                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:line-clamp-3">
-                      {featuredReleaseDescription}
-                    </p>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="mt-4 h-11 w-full rounded-full border-accent/20 bg-accent/[0.08] text-foreground shadow-lg shadow-accent/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-accent/[0.14] hover:shadow-accent/15 sm:mt-5 sm:w-auto"
-                    >
-                      <a href={featuredRelease.platformUrl}>
-                        Listen / Buy
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                  </div>
-                </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+              </div>
+              <div className="min-w-0 pb-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
+                  {featuredRelease.type}
+                </p>
+                <h2 className="mt-2 text-2xl font-black leading-[0.98] text-foreground [overflow-wrap:anywhere] sm:text-3xl">
+                  {featuredRelease.title}
+                </h2>
+                <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  {featuredRelease.label} · {featuredReleaseYear}
+                </p>
+                <Button
+                  asChild
+                  className="mt-5 h-11 rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-auto"
+                >
+                  <a href={featuredRelease.platformUrl}>
+                    Listen / Buy
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
               </div>
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] bg-card/55 p-3 shadow-xl shadow-black/15 sm:p-5 lg:col-start-2 lg:row-start-2">
+          <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:col-start-2 lg:row-start-2 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
             <SectionTitle>Upcoming Gigs</SectionTitle>
-            <div className="mt-3 space-y-1 sm:mt-4">
+            <div className="mt-4 divide-y divide-white/[0.06]">
               {upcomingGigs.map((gig) => (
-                <div
-                  key={gig.id}
-                  className="group flex items-start gap-3 border-t border-white/[0.07] py-2.5 first:border-t-0 first:pt-0 last:pb-0 sm:py-3"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/[0.08] transition-colors duration-300 group-hover:bg-accent/[0.13]">
-                    <Calendar className="h-4 w-4 text-accent" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground transition-colors duration-300 group-hover:text-accent">{gig.venue}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {new Date(gig.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} / {gig.city}
-                    </p>
-                    <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-accent/85">{gig.country}</p>
-                    {gig.ticketUrl ? (
-                      <a
-                        href={gig.ticketUrl}
-                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent"
-                      >
-                        Tickets
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    ) : null}
-                  </div>
+                <div key={gig.id} className="flex flex-col gap-1 py-3.5 first:pt-0 last:pb-0 sm:py-4">
+                  <p className="text-sm font-semibold text-foreground">{gig.venue}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(gig.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}{" "}
+                    · {gig.city}, {gig.country}
+                  </p>
+                  {gig.ticketUrl ? (
+                    <a
+                      href={gig.ticketUrl}
+                      className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-accent transition-colors hover:text-accent/80"
+                    >
+                      Tickets
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  ) : null}
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] bg-card/45 p-3 shadow-lg shadow-black/15 sm:p-4 lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <SectionTitle>Photo Preview</SectionTitle>
-            <div className="mt-4 grid grid-cols-5 grid-rows-2 gap-2.5 lg:h-[480px]">
+          <section className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+            <SectionTitle>Press Photos</SectionTitle>
+            <div className="mt-4 grid grid-cols-5 grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:h-[480px]">
               {photoPreview.map((photo, index) => (
                 <div
                   key={photo.id}
                   className={cn(
-                    "group relative overflow-hidden bg-secondary shadow-lg shadow-black/20 ring-1 ring-white/[0.08] transition-all duration-500 hover:-translate-y-0.5 hover:ring-accent/25 hover:shadow-2xl hover:shadow-black/35",
+                    "relative overflow-hidden bg-secondary",
                     index === 0
-                      ? "col-span-3 row-span-2 aspect-[4/5] rounded-[1.65rem] lg:aspect-auto"
-                      : "col-span-2 aspect-[4/3] rounded-[1.25rem] lg:aspect-auto",
+                      ? "col-span-3 row-span-2 aspect-[4/5] rounded-2xl shadow-md shadow-black/25 lg:aspect-auto lg:rounded-[1.5rem]"
+                      : "col-span-2 aspect-[4/3] rounded-xl shadow-sm shadow-black/20 lg:aspect-auto",
                   )}
                 >
                   <Image
@@ -579,59 +539,60 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     loading="eager"
                     sizes="(min-width: 768px) 220px, 33vw"
                     className={cn(
-                      "object-cover saturate-[0.96] transition-transform duration-700 group-hover:scale-[1.045]",
+                      "object-cover saturate-[0.97]",
                       photo.sortOrder === 1 ? "object-left" : photo.sortOrder === 2 ? "object-center" : "object-right",
                     )}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-[0.65] transition-opacity duration-500 group-hover:opacity-[0.42]" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="relative overflow-hidden rounded-[1.65rem] bg-[radial-gradient(circle_at_18%_0%,_hsl(var(--accent)/0.18),_transparent_42%),linear-gradient(135deg,_hsl(var(--accent)/0.08),_hsl(var(--background)/0.72))] p-3 shadow-2xl shadow-accent/10 ring-1 ring-accent/20 sm:p-5 lg:col-start-2 lg:row-start-3">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.018]" />
-            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-accent/[0.10] blur-3xl" />
+          <section className="relative overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-5 shadow-lg shadow-black/25 sm:p-6 lg:col-start-2 lg:row-start-3">
+            <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.012]" />
             <div className="relative">
-            <SectionTitle>Booking / Press Kit</SectionTitle>
-            <div className="mt-4 sm:mt-5">
-              <p className="text-2xl font-bold leading-[1.02] text-foreground">
+              <SectionTitle>Booking</SectionTitle>
+              <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl">
                 Bring {artist.artistName} to your next room.
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Promoter-ready contact, photos, and artist materials in one place.
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Press kit, photos, and booking contact for promoters and venues.
               </p>
-            </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <Button asChild className="h-12 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-accent/25">
-                <a href={artist.pressKit.downloadUrl}>
-                  <Download className="h-4 w-4" />
-                  Press kit
+              <div className="mt-5 flex flex-col gap-3">
+                {hasPressKit ? (
+                  <Button
+                    asChild
+                    className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8"
+                  >
+                    <a href={artist.pressKit.downloadUrl}>
+                      <Download className="h-4 w-4" />
+                      Download press kit
+                    </a>
+                  </Button>
+                ) : (
+                  <Button
+                    asChild
+                    className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8"
+                  >
+                    <a href={`mailto:${artist.bookingInfo.email}`}>
+                      <Mail className="h-4 w-4" />
+                      Book this artist
+                    </a>
+                  </Button>
+                )}
+                <a
+                  href={`mailto:${artist.bookingInfo.email}`}
+                  className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground"
+                >
+                  {artist.bookingInfo.email}
                 </a>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="h-12 rounded-full border-white/10 bg-background/35 text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:bg-secondary"
-              >
-                <a href={`mailto:${artist.bookingInfo.email}`}>
-                  <Mail className="h-4 w-4" />
-                  Contact
-                </a>
-              </Button>
-            </div>
-            <a
-              href={`mailto:${artist.bookingInfo.email}`}
-              className="mt-3 block rounded-full border border-white/10 bg-background/25 px-4 py-3 text-center font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {artist.bookingInfo.email}
-            </a>
+              </div>
             </div>
           </section>
         </div>
-        </div>
 
-        <footer className="py-8 text-center">
+        <footer className="py-10 text-center sm:py-12">
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/80 transition-colors hover:text-foreground"
