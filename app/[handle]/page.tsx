@@ -412,8 +412,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </span>
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
-              <div className="relative max-w-3xl overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(135deg,_hsl(var(--background)/0.18),_hsl(var(--background)/0.06)_55%,_hsl(var(--accent)/0.055))] p-3.5 shadow-2xl shadow-black/[0.28] backdrop-blur-[3px] sm:p-5 lg:p-6">
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8 xl:p-10">
+              <div className="relative max-w-[min(880px,100%)] overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(135deg,_hsl(var(--background)/0.18),_hsl(var(--background)/0.06)_55%,_hsl(var(--accent)/0.055))] p-3.5 shadow-2xl shadow-black/[0.28] backdrop-blur-[3px] sm:p-5 lg:p-6 xl:p-7">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_8%_100%,_hsl(var(--accent)/0.12),_transparent_38%),linear-gradient(90deg,_hsl(var(--background)/0.20),_transparent_70%)]" />
                 <div className="relative">
                 <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-4">
@@ -426,7 +426,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </Badge>
                   ))}
                 </div>
-                <h1 className="max-w-[10ch] text-5xl font-black uppercase leading-[0.88] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:text-7xl lg:max-w-[14ch] lg:text-8xl">
+                <h1 className="max-w-[11ch] text-[clamp(3rem,12vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.015em] text-foreground drop-shadow-2xl sm:max-w-[12ch] sm:text-[clamp(4.25rem,10vw,6.5rem)] lg:max-w-[13ch] lg:text-[clamp(5rem,7vw,7.5rem)] xl:max-w-[14ch]">
                   {artist.artistName}
                 </h1>
                 <p className="mt-4 flex items-center gap-2 text-sm font-medium text-white/[0.72]">
@@ -436,7 +436,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <p className="mt-3 line-clamp-2 max-w-lg text-sm leading-relaxed text-white/[0.72] drop-shadow-lg lg:max-w-2xl lg:text-base">
                   {artist.shortBio}
                 </p>
-                <div className="mt-5 grid grid-cols-2 gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm lg:max-w-xl">
+                <div className="mt-5 grid grid-cols-2 gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] p-1.5 backdrop-blur-sm sm:max-w-xl">
                   <Button
                     asChild
                     size="lg"
@@ -460,7 +460,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </Button>
                 </div>
                 {prioritizedLinks.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2 rounded-full border border-white/[0.08] bg-black/[0.10] p-2 backdrop-blur-sm lg:max-w-xl">
+                  <div className="mt-3 flex max-w-full flex-wrap gap-2 rounded-[1.7rem] border border-white/[0.08] bg-black/[0.10] p-2 backdrop-blur-sm sm:max-w-xl sm:rounded-full">
                     {prioritizedLinks.map((link) => (
                       <MainLink key={`${link.platform}-${link.url}`} link={link} />
                     ))}
