@@ -57,7 +57,7 @@ type GigFormState = {
   ticketUrl?: string
 }
 
-type BeatportReleaseMetadata = {
+type ImportedReleaseMetadata = {
   title: string | null
   label: string | null
   releaseDate: string | null
@@ -150,7 +150,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [importWarning, setImportWarning] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
-  const [isFetchingBeatportMetadata, setIsFetchingBeatportMetadata] = useState(false)
+  const [isImportingReleaseMetadata, setIsImportingReleaseMetadata] = useState(false)
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
   const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false)
   const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
@@ -292,18 +292,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
-  async function handleFetchBeatportMetadata() {
+  async function handleImportReleaseMetadata() {
     if (!featuredRelease?.platformUrl.trim()) {
-      setSaveMessage("Paste a Beatport release URL first.")
+      setSaveMessage("Paste a supported release URL first.")
       return
     }
 
-    setIsFetchingBeatportMetadata(true)
+    setIsImportingReleaseMetadata(true)
     setSaveMessage("")
     setImportWarning("")
 
     try {
-      const response = await fetch("/api/import/beatport-release", {
+      const response = await fetch("/api/import/release-metadata", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -313,10 +313,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         }),
       })
 
-      const result = (await response.json()) as BeatportReleaseMetadata & { error?: string }
+      const result = (await response.json()) as ImportedReleaseMetadata & { error?: string }
 
       if (!response.ok) {
-        throw new Error("Unable to fetch Beatport metadata. Please verify the Beatport URL and try again.")
+        throw new Error("Unable to import release metadata. Please verify the release URL and try again.")
       }
 
       setFeaturedRelease((current) =>
@@ -333,15 +333,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           : current,
       )
       setImportWarning(result.warning ?? "")
-      setSaveMessage("Beatport metadata imported. Review and save changes.")
+      setSaveMessage("Release metadata imported. Review and save changes.")
     } catch (error) {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : "Unable to fetch Beatport metadata. Please verify the Beatport URL and try again."
+          : "Unable to import release metadata. Please verify the release URL and try again."
       setSaveMessage(message)
     } finally {
-      setIsFetchingBeatportMetadata(false)
+      setIsImportingReleaseMetadata(false)
     }
   }
 
@@ -777,14 +777,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleFetchBeatportMetadata}
-                disabled={isFetchingBeatportMetadata || isSaving || isPublishing}
+                onClick={handleImportReleaseMetadata}
+                disabled={isImportingReleaseMetadata || isSaving || isPublishing}
                 className="border-border bg-background/70"
               >
-                {isFetchingBeatportMetadata ? "Fetching..." : "Fetch Beatport metadata"}
+                {isImportingReleaseMetadata ? "Fetching..." : "Import release metadata"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Beatport import can usually detect title/artwork. Label and date may need manual entry.
+                Metadata import can usually detect title/artwork. Label, date, and type may need manual entry.
               </p>
               {importWarning ? <p className="text-xs text-foreground">{importWarning}</p> : null}
             </div>
@@ -1160,7 +1160,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 !isSaveDirty ||
                 isSaving ||
                 isPublishing ||
-                isFetchingBeatportMetadata ||
+                isImportingReleaseMetadata ||
                 isUploadingHeroImage ||
                 isUploadingGalleryImage
               }

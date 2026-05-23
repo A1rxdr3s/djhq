@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 
-type BeatportReleaseImportPayload = {
+type ReleaseImportPayload = {
   url?: string
 }
 
 type ReleaseType = "single" | "ep" | "album"
+type ReleaseProvider = "beatport" | "spotify"
 
 type ImportedMetadata = {
+  provider: ReleaseProvider
   title: string | null
   label: string | null
   releaseDate: string | null
@@ -17,7 +19,14 @@ type ImportedMetadata = {
   warning?: string
 }
 
+type SpotifyOEmbedResponse = {
+  title?: string
+  author_name?: string
+  thumbnail_url?: string
+}
+
 const beatportHostnames = new Set(["beatport.com", "www.beatport.com"])
+const spotifyHostnames = new Set(["open.spotify.com", "spotify.link"])
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 })
@@ -94,6 +103,34 @@ function cleanBeatportTitle(title: string | null) {
   }
 
   return { title: cleanedTitle || null, bracketedLabel }
+}
+
+function cleanSpotifyTitle(title: string | null, artistNames?: string | null) {
+  if (!title) {
+    return null
+  }
+
+  let cleanedTitle = title
+    .replace(/\s*\|\s*Spotify\s*$/i, "")
+    .replace(/\s+-\s+song and lyrics by.+$/i, "")
+    .replace(/\s+-\s+Spotify\s*$/i, "")
+    .trim()
+
+  if (artistNames) {
+    const escapedArtistNames = artistNames.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    cleanedTitle = cleanedTitle.replace(new RegExp(`^${escapedArtistNames}\\s+-\\s+`, "i"), "").trim()
+  }
+
+  if (cleanedTitle.includes(" - ")) {
+    cleanedTitle = cleanedTitle.split(" - ").slice(1).join(" - ").trim()
+  }
+
+  cleanedTitle = cleanedTitle
+    .replace(/\s+-\s+Radio Edit$/i, "")
+    .replace(/\s*\((Original Mix|Radio Edit|Extended Mix|Club Mix|Edit)\)\s*$/i, "")
+    .trim()
+
+  return cleanedTitle || null
 }
 
 function normalizeReleaseType(value: string | null): ReleaseType | null {
@@ -209,6 +246,131 @@ function isCloudflareChallengePage(html: string) {
   )
 }
 
+function detectProvider(url: URL): ReleaseProvider | null {
+  const hostname = url.hostname.toLowerCase()
+
+  if (beatportHostnames.has(hostname)) {
+    return "beatport"
+  }
+
+  if (spotifyHostnames.has(hostname)) {
+    return "spotify"
+  }
+
+  return null
+}
+
+async function importBeatportMetadata(url: URL): Promise<ImportedMetadata> {
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "text/html",
+      "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
+    },
+    next: {
+      revalidate: 0,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error("Unable to fetch Beatport release metadata.")
+  }
+
+  const html = await response.text()
+
+  if (isCloudflareChallengePage(html)) {
+    return {
+      provider: "beatport",
+      title: null,
+      label: null,
+      releaseDate: null,
+      type: null,
+      platformUrl: url.toString(),
+      artworkUrl: null,
+      warning: "Beatport blocked metadata access through Cloudflare. Complete label, date, and type manually.",
+    }
+  }
+
+  const titleMetadata = cleanBeatportTitle(getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html))
+  const artworkUrl = getMetaContent(html, ["og:image", "twitter:image"])
+  const structuredMetadata = getStructuredMetadata(html)
+
+  return {
+    provider: "beatport",
+    title: titleMetadata.title,
+    label: structuredMetadata.label ?? titleMetadata.bracketedLabel,
+    releaseDate: structuredMetadata.releaseDate,
+    type: structuredMetadata.type,
+    platformUrl: url.toString(),
+    artworkUrl,
+    warning: "Beatport may block full metadata. Label, date, and type may need manual entry.",
+  }
+}
+
+async function getSpotifyOEmbedMetadata(url: URL) {
+  const oEmbedUrl = new URL("https://open.spotify.com/oembed")
+  oEmbedUrl.searchParams.set("url", url.toString())
+
+  const response = await fetch(oEmbedUrl.toString(), {
+    headers: {
+      Accept: "application/json",
+    },
+    next: {
+      revalidate: 0,
+    },
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  return (await response.json()) as SpotifyOEmbedResponse
+}
+
+async function getHtmlMetadata(url: URL) {
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "text/html",
+      "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
+    },
+    next: {
+      revalidate: 0,
+    },
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  return response.text()
+}
+
+async function importSpotifyMetadata(url: URL): Promise<ImportedMetadata> {
+  const oEmbedMetadata = await getSpotifyOEmbedMetadata(url)
+  const html = oEmbedMetadata ? null : await getHtmlMetadata(url)
+  const htmlTitle = html ? getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html) : null
+  const htmlImage = html ? getMetaContent(html, ["og:image", "twitter:image"]) : null
+  const title = cleanSpotifyTitle(oEmbedMetadata?.title ?? htmlTitle, oEmbedMetadata?.author_name)
+
+  return {
+    provider: "spotify",
+    title,
+    label: null,
+    releaseDate: null,
+    type: null,
+    platformUrl: url.toString(),
+    artworkUrl: oEmbedMetadata?.thumbnail_url ?? htmlImage,
+    warning: "Spotify does not expose label, release date, or release type publicly. Complete those fields manually.",
+  }
+}
+
+async function importReleaseMetadata(provider: ReleaseProvider, url: URL) {
+  if (provider === "beatport") {
+    return importBeatportMetadata(url)
+  }
+
+  return importSpotifyMetadata(url)
+}
+
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient()
   const {
@@ -219,74 +381,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 })
   }
 
-  let payload: BeatportReleaseImportPayload
+  let payload: ReleaseImportPayload
 
   try {
-    payload = (await request.json()) as BeatportReleaseImportPayload
+    payload = (await request.json()) as ReleaseImportPayload
   } catch {
     return badRequest("Invalid JSON payload.")
   }
 
   if (!payload.url?.trim()) {
-    return badRequest("Beatport URL is required.")
+    return badRequest("Release URL is required.")
   }
 
-  let beatportUrl: URL
+  let releaseUrl: URL
 
   try {
-    beatportUrl = new URL(payload.url)
+    releaseUrl = new URL(payload.url)
   } catch {
-    return badRequest("A valid Beatport URL is required.")
+    return badRequest("A valid release URL is required.")
   }
 
-  if (beatportUrl.protocol !== "https:" || !beatportHostnames.has(beatportUrl.hostname.toLowerCase())) {
-    return badRequest("Only Beatport release URLs are supported.")
+  if (releaseUrl.protocol !== "https:") {
+    return badRequest("Only HTTPS release URLs are supported.")
+  }
+
+  const provider = detectProvider(releaseUrl)
+
+  if (!provider) {
+    return badRequest("Only Beatport and Spotify release URLs are supported right now.")
   }
 
   try {
-    const response = await fetch(beatportUrl.toString(), {
-      headers: {
-        Accept: "text/html",
-        "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
-      },
-      next: {
-        revalidate: 0,
-      },
-    })
-
-    if (!response.ok) {
-      return NextResponse.json({ error: "Unable to fetch Beatport release metadata." }, { status: 502 })
-    }
-
-    const html = await response.text()
-    if (isCloudflareChallengePage(html)) {
-      const blockedMetadata: ImportedMetadata = {
-        title: null,
-        label: null,
-        releaseDate: null,
-        type: null,
-        platformUrl: beatportUrl.toString(),
-        artworkUrl: null,
-        warning: "Beatport may block full metadata. Complete label, date, and type manually.",
-      }
-
-      return NextResponse.json(blockedMetadata)
-    }
-
-    const titleMetadata = cleanBeatportTitle(getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html))
-    const artworkUrl = getMetaContent(html, ["og:image", "twitter:image"])
-    const structuredMetadata = getStructuredMetadata(html)
-    const importedMetadata: ImportedMetadata = {
-      title: titleMetadata.title,
-      label: structuredMetadata.label ?? titleMetadata.bracketedLabel,
-      releaseDate: structuredMetadata.releaseDate,
-      type: structuredMetadata.type,
-      platformUrl: beatportUrl.toString(),
-      artworkUrl,
-    }
-
-    return NextResponse.json(importedMetadata)
+    return NextResponse.json(await importReleaseMetadata(provider, releaseUrl))
   } catch {
-    return NextResponse.json({ error: "Unable to import Beatport metadata." }, { status: 502 })
+    return NextResponse.json({ error: "Unable to import release metadata. Please verify the URL and try again." }, { status: 502 })
   }
 }
