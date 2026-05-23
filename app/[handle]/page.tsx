@@ -486,19 +486,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <div className="mt-5 grid flex-1 gap-5 sm:grid-cols-[minmax(135px,0.9fr)_minmax(0,1fr)] sm:items-end">
                   <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-[1.55rem] bg-accent/10 shadow-2xl shadow-black/45 ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.015] sm:mx-0 sm:max-w-none">
                     <div className="absolute -inset-8 bg-accent/[0.08] blur-3xl" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.34),_transparent_42%),radial-gradient(circle_at_78%_82%,_hsl(var(--foreground)/0.08),_transparent_38%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-accent/20 bg-black/[0.18] shadow-2xl shadow-accent/10 backdrop-blur-sm">
+                        <Music2 className="h-8 w-8 text-accent" />
+                      </div>
+                    </div>
                     {hasFeaturedArtwork ? (
                       <Image
                         src={featuredRelease.artworkUrl}
-                        alt={`${featuredRelease.title} artwork`}
+                        alt=""
+                        aria-hidden="true"
                         fill
                         sizes="(min-width: 1024px) 260px, 220px"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_28%_22%,_hsl(var(--accent)/0.42),_transparent_44%),radial-gradient(circle_at_78%_82%,_hsl(var(--foreground)/0.08),_transparent_38%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                        <Music2 className="h-12 w-12 text-accent" />
-                      </div>
-                    )}
+                    ) : null}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-white/[0.04]" />
                   </div>
                   <div className="min-w-0">
