@@ -314,15 +314,15 @@ function MainLink({ link }: { link: SocialLink }) {
     <a
       href={link.url}
       aria-label={`${link.label} for this artist`}
-      className="group flex min-h-12 items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-3.5 py-3 shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent/[0.08]"
+      className="group flex min-h-10 items-center justify-between gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent/[0.08]"
     >
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.08]">
-          <Icon className="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.08]">
+          <Icon className="h-3.5 w-3.5 text-accent transition-transform group-hover:scale-110" />
         </span>
-        <span className="truncate text-sm font-semibold text-foreground">{link.label}</span>
+        <span className="truncate text-xs font-semibold text-foreground sm:text-sm">{link.label}</span>
       </span>
-      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
     </a>
   )
 }
@@ -345,7 +345,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const featuredReleaseDescription = artist.tagline ?? artist.shortBio
   const hasFeaturedArtwork = featuredRelease.artworkUrl.trim().length > 0
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
-  const prioritizedLinks = [...artist.socialLinks].sort((a, b) => {
+  const prioritizedLinks = artist.socialLinks.filter((link) => link.url.trim().length > 0).sort((a, b) => {
     const priorityA = linkPriority.indexOf(a.platform)
     const priorityB = linkPriority.indexOf(b.platform)
     const safePriorityA = priorityA === -1 ? Number.MAX_SAFE_INTEGER : priorityA
@@ -464,9 +464,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
           <section className="rounded-[1.65rem] border border-white/10 bg-card/75 p-4 shadow-xl shadow-black/20 backdrop-blur-sm lg:col-start-1 lg:row-start-1">
             <SectionTitle>Music / Social Links</SectionTitle>
-            <div className="mt-3 grid grid-cols-2 gap-2.5">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
               {prioritizedLinks.map((link) => (
-                <MainLink key={link.platform} link={link} />
+                <MainLink key={`${link.platform}-${link.url}`} link={link} />
               ))}
             </div>
           </section>
