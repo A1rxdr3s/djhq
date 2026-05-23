@@ -474,9 +474,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
           <section className="group overflow-hidden rounded-[1.65rem] bg-card/70 shadow-xl shadow-black/20 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/35 lg:col-start-2 lg:row-start-1">
-            <div className="relative p-4 sm:p-5">
+            <div className="relative min-h-[360px] p-4 sm:p-5">
               {hasFeaturedArtwork ? (
-                <div className="absolute inset-0 opacity-30 transition-opacity duration-500 group-hover:opacity-[0.36]">
+                <div className="absolute inset-0 opacity-35 transition-opacity duration-500 group-hover:opacity-[0.42]">
                   <Image
                     src={featuredRelease.artworkUrl}
                     alt=""
@@ -487,44 +487,47 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   />
                 </div>
               ) : (
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_18%,_hsl(var(--accent)/0.24),_transparent_35%),radial-gradient(circle_at_80%_80%,_hsl(var(--foreground)/0.06),_transparent_38%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_18%,_hsl(var(--accent)/0.24),_transparent_36%),radial-gradient(circle_at_76%_76%,_hsl(var(--foreground)/0.07),_transparent_40%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
               )}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_12%,_hsl(var(--accent)/0.11),_transparent_34%),linear-gradient(180deg,_hsl(var(--background)/0.54),_hsl(var(--background)/0.78))]" />
-              <div className="relative">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,_hsl(var(--accent)/0.12),_transparent_32%),radial-gradient(circle_at_18%_82%,_hsl(var(--accent)/0.08),_transparent_38%),linear-gradient(180deg,_hsl(var(--background)/0.42),_hsl(var(--background)/0.82))]" />
+              <div className="absolute -left-12 top-16 h-48 w-48 rounded-full bg-accent/[0.08] blur-3xl" />
+              <div className="relative flex min-h-[328px] flex-col">
                 <SectionTitle>Featured Release</SectionTitle>
-                <div className="mt-5 flex gap-4 sm:gap-5">
-                  <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-[1.35rem] bg-accent/10 shadow-2xl shadow-black/35 ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.015] sm:h-32 sm:w-28">
+                <div className="mt-5 grid flex-1 gap-5 sm:grid-cols-[minmax(135px,0.9fr)_minmax(0,1fr)] sm:items-end">
+                  <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-[1.55rem] bg-accent/10 shadow-2xl shadow-black/45 ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.015] sm:mx-0 sm:max-w-none">
+                    <div className="absolute -inset-8 bg-accent/[0.08] blur-3xl" />
                     {hasFeaturedArtwork ? (
                       <Image
                         src={featuredRelease.artworkUrl}
                         alt={`${featuredRelease.title} artwork`}
                         fill
-                        sizes="128px"
+                        sizes="(min-width: 1024px) 260px, 220px"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_28%_22%,_hsl(var(--accent)/0.42),_transparent_44%),radial-gradient(circle_at_78%_82%,_hsl(var(--foreground)/0.08),_transparent_38%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                        <Music2 className="h-8 w-8 text-accent" />
+                        <Music2 className="h-12 w-12 text-accent" />
                       </div>
                     )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-white/[0.04]" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/90">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
                       {featuredRelease.type}
                     </p>
-                    <h2 className="mt-1.5 line-clamp-2 text-xl font-bold leading-[1.02] text-foreground [overflow-wrap:anywhere] sm:text-2xl">
+                    <h2 className="mt-2 line-clamp-3 text-2xl font-black leading-[0.98] text-foreground [overflow-wrap:anywhere] sm:text-3xl">
                       {featuredRelease.title}
                     </h2>
-                    <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                    <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                       {featuredRelease.label} / {featuredReleaseYear}
                     </p>
-                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
                       {featuredReleaseDescription}
                     </p>
                     <Button
                       asChild
                       variant="outline"
-                      className="mt-4 w-full rounded-full border-white/10 bg-background/45 text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:bg-secondary sm:w-auto"
+                      className="mt-5 h-11 w-full rounded-full border-accent/20 bg-accent/[0.08] text-foreground shadow-lg shadow-accent/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-accent/[0.14] hover:shadow-accent/15 sm:w-auto"
                     >
                       <a href={featuredRelease.platformUrl}>
                         Listen / Buy
