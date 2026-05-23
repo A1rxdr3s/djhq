@@ -58,13 +58,14 @@ type GigFormState = {
 }
 
 type ImportedReleaseMetadata = {
+  provider: "beatport" | "spotify"
   title: string | null
+  artist: string | null
   label: string | null
   releaseDate: string | null
   type: string | null
   platformUrl: string
   artworkUrl: string | null
-  warning?: string
 }
 
 const socialPlatforms: SocialPlatform[] = [
@@ -147,7 +148,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [saveMessage, setSaveMessage] = useState("")
-  const [importWarning, setImportWarning] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isImportingReleaseMetadata, setIsImportingReleaseMetadata] = useState(false)
@@ -300,7 +300,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     setIsImportingReleaseMetadata(true)
     setSaveMessage("")
-    setImportWarning("")
 
     try {
       const response = await fetch("/api/import/release-metadata", {
@@ -316,23 +315,34 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       const result = (await response.json()) as ImportedReleaseMetadata & { error?: string }
 
       if (!response.ok) {
-        throw new Error("Unable to import release metadata. Please verify the release URL and try again.")
+        throw new Error(result.error ?? "Unable to import release metadata. Please verify the release URL and try again.")
       }
 
-      setFeaturedRelease((current) =>
-        current
-          ? {
-              ...current,
-              title: result.title ?? current.title,
-              label: result.label ?? current.label,
-              releaseDate: result.releaseDate ?? current.releaseDate,
-              type: result.type ?? current.type,
-              platformUrl: result.platformUrl,
-              artworkUrl: result.artworkUrl ?? current.artworkUrl,
-            }
-          : current,
-      )
-      setImportWarning(result.warning ?? "")
+      setFeaturedRelease((current) => {
+        if (!current) {
+          return current
+        }
+
+        const nextLabel = current.label.trim()
+          ? current.label
+          : result.provider === "spotify"
+            ? result.artist?.trim() || current.label
+            : result.label?.trim() || current.label
+
+        const nextTitle = result.title?.trim() || current.title
+        const nextType =
+          result.type != null ? normalizeReleaseType(result.type) : current.type
+
+        return {
+          ...current,
+          title: nextTitle,
+          label: nextLabel,
+          releaseDate: result.releaseDate ?? current.releaseDate,
+          type: nextType,
+          platformUrl: result.platformUrl,
+          artworkUrl: result.artworkUrl ?? current.artworkUrl,
+        }
+      })
       setSaveMessage("Release metadata imported. Review and save changes.")
     } catch (error) {
       const message =
@@ -781,12 +791,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 disabled={isImportingReleaseMetadata || isSaving || isPublishing}
                 className="border-border bg-background/70"
               >
-                {isImportingReleaseMetadata ? "Fetching..." : "Import release metadata"}
+                {isImportingReleaseMetadata ? "Fetching..." : "Import metadata"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Metadata import can usually detect title/artwork. Label, date, and type may need manual entry.
+                Paste an open.spotify.com track or album link. Title, artwork, and platform URL are filled from public
+                Spotify data when available; Label, date, and type usually need manual entry.
               </p>
-              {importWarning ? <p className="text-xs text-foreground">{importWarning}</p> : null}
             </div>
           </div>
           <div className="md:col-span-2">

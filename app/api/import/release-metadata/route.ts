@@ -1,79 +1,17 @@
 import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { decodeHtml, getMetaContent, getPageTitle } from "@/lib/release-metadata/html"
+import { importSpotifyReleaseMetadata, isSpotifyHostname } from "@/lib/release-metadata/spotify"
+import type { ImportedReleaseMetadata, ReleaseProvider, ReleaseType } from "@/lib/release-metadata/types"
 
 type ReleaseImportPayload = {
   url?: string
 }
 
-type ReleaseType = "single" | "ep" | "album"
-type ReleaseProvider = "beatport" | "spotify"
-
-type ImportedMetadata = {
-  provider: ReleaseProvider
-  title: string | null
-  label: string | null
-  releaseDate: string | null
-  type: ReleaseType | null
-  platformUrl: string
-  artworkUrl: string | null
-  warning?: string
-}
-
-type SpotifyOEmbedResponse = {
-  title?: string
-  author_name?: string
-  thumbnail_url?: string
-}
-
 const beatportHostnames = new Set(["beatport.com", "www.beatport.com"])
-const spotifyHostnames = new Set(["open.spotify.com", "spotify.link"])
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 })
-}
-
-function decodeHtml(value: string) {
-  return value
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .trim()
-}
-
-function getTagAttributes(tag: string) {
-  const attributes: Record<string, string> = {}
-  const attributePattern = /([a-zA-Z:-]+)\s*=\s*["']([^"']*)["']/g
-  let match: RegExpExecArray | null
-
-  while ((match = attributePattern.exec(tag))) {
-    attributes[match[1].toLowerCase()] = decodeHtml(match[2])
-  }
-
-  return attributes
-}
-
-function getMetaContent(html: string, names: string[]) {
-  const expectedNames = new Set(names.map((name) => name.toLowerCase()))
-  const metaTags = html.match(/<meta\b[^>]*>/gi) ?? []
-
-  for (const tag of metaTags) {
-    const attributes = getTagAttributes(tag)
-    const metaName = attributes.property ?? attributes.name ?? attributes.itemprop
-
-    if (metaName && expectedNames.has(metaName.toLowerCase()) && attributes.content) {
-      return attributes.content
-    }
-  }
-
-  return null
-}
-
-function getPageTitle(html: string) {
-  const match = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-  return match?.[1] ? decodeHtml(match[1]) : null
 }
 
 function extractBracketedLabel(title: string) {
@@ -103,34 +41,6 @@ function cleanBeatportTitle(title: string | null) {
   }
 
   return { title: cleanedTitle || null, bracketedLabel }
-}
-
-function cleanSpotifyTitle(title: string | null, artistNames?: string | null) {
-  if (!title) {
-    return null
-  }
-
-  let cleanedTitle = title
-    .replace(/\s*\|\s*Spotify\s*$/i, "")
-    .replace(/\s+-\s+song and lyrics by.+$/i, "")
-    .replace(/\s+-\s+Spotify\s*$/i, "")
-    .trim()
-
-  if (artistNames) {
-    const escapedArtistNames = artistNames.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    cleanedTitle = cleanedTitle.replace(new RegExp(`^${escapedArtistNames}\\s+-\\s+`, "i"), "").trim()
-  }
-
-  if (cleanedTitle.includes(" - ")) {
-    cleanedTitle = cleanedTitle.split(" - ").slice(1).join(" - ").trim()
-  }
-
-  cleanedTitle = cleanedTitle
-    .replace(/\s+-\s+Radio Edit$/i, "")
-    .replace(/\s*\((Original Mix|Radio Edit|Extended Mix|Club Mix|Edit)\)\s*$/i, "")
-    .trim()
-
-  return cleanedTitle || null
 }
 
 function normalizeReleaseType(value: string | null): ReleaseType | null {
@@ -253,14 +163,14 @@ function detectProvider(url: URL): ReleaseProvider | null {
     return "beatport"
   }
 
-  if (spotifyHostnames.has(hostname)) {
+  if (isSpotifyHostname(hostname)) {
     return "spotify"
   }
 
   return null
 }
 
-async function importBeatportMetadata(url: URL): Promise<ImportedMetadata> {
+async function importBeatportMetadata(url: URL): Promise<ImportedReleaseMetadata> {
   const response = await fetch(url.toString(), {
     headers: {
       Accept: "text/html",
@@ -281,12 +191,12 @@ async function importBeatportMetadata(url: URL): Promise<ImportedMetadata> {
     return {
       provider: "beatport",
       title: null,
+      artist: null,
       label: null,
       releaseDate: null,
       type: null,
       platformUrl: url.toString(),
       artworkUrl: null,
-      warning: "Beatport blocked metadata access through Cloudflare. Complete label, date, and type manually.",
     }
   }
 
@@ -297,78 +207,21 @@ async function importBeatportMetadata(url: URL): Promise<ImportedMetadata> {
   return {
     provider: "beatport",
     title: titleMetadata.title,
+    artist: null,
     label: structuredMetadata.label ?? titleMetadata.bracketedLabel,
     releaseDate: structuredMetadata.releaseDate,
     type: structuredMetadata.type,
     platformUrl: url.toString(),
     artworkUrl,
-    warning: "Beatport may block full metadata. Label, date, and type may need manual entry.",
   }
 }
 
-async function getSpotifyOEmbedMetadata(url: URL) {
-  const oEmbedUrl = new URL("https://open.spotify.com/oembed")
-  oEmbedUrl.searchParams.set("url", url.toString())
-
-  const response = await fetch(oEmbedUrl.toString(), {
-    headers: {
-      Accept: "application/json",
-    },
-    next: {
-      revalidate: 0,
-    },
-  })
-
-  if (!response.ok) {
-    return null
-  }
-
-  return (await response.json()) as SpotifyOEmbedResponse
-}
-
-async function getHtmlMetadata(url: URL) {
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: "text/html",
-      "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
-    },
-    next: {
-      revalidate: 0,
-    },
-  })
-
-  if (!response.ok) {
-    return null
-  }
-
-  return response.text()
-}
-
-async function importSpotifyMetadata(url: URL): Promise<ImportedMetadata> {
-  const oEmbedMetadata = await getSpotifyOEmbedMetadata(url)
-  const html = oEmbedMetadata ? null : await getHtmlMetadata(url)
-  const htmlTitle = html ? getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html) : null
-  const htmlImage = html ? getMetaContent(html, ["og:image", "twitter:image"]) : null
-  const title = cleanSpotifyTitle(oEmbedMetadata?.title ?? htmlTitle, oEmbedMetadata?.author_name)
-
-  return {
-    provider: "spotify",
-    title,
-    label: null,
-    releaseDate: null,
-    type: null,
-    platformUrl: url.toString(),
-    artworkUrl: oEmbedMetadata?.thumbnail_url ?? htmlImage,
-    warning: "Spotify does not expose label, release date, or release type publicly. Complete those fields manually.",
-  }
-}
-
-async function importReleaseMetadata(provider: ReleaseProvider, url: URL) {
+async function importReleaseMetadata(provider: ReleaseProvider, url: URL): Promise<ImportedReleaseMetadata> {
   if (provider === "beatport") {
     return importBeatportMetadata(url)
   }
 
-  return importSpotifyMetadata(url)
+  return importSpotifyReleaseMetadata(url)
 }
 
 export async function POST(request: Request) {
@@ -413,7 +266,11 @@ export async function POST(request: Request) {
 
   try {
     return NextResponse.json(await importReleaseMetadata(provider, releaseUrl))
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Unsupported Spotify")) {
+      return badRequest(error.message)
+    }
+
     return NextResponse.json({ error: "Unable to import release metadata. Please verify the URL and try again." }, { status: 502 })
   }
 }
