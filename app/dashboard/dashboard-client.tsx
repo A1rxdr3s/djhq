@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, ExternalLink, Globe, LogOut, Mail, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Calendar, ExternalLink, Globe, LogOut, Mail, Save, Trash2 } from "lucide-react"
 import type { Artist, GalleryImage, ReleaseType, SocialPlatform } from "@/types/djhq"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -146,6 +146,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [galleryImageAltText, setGalleryImageAltText] = useState("")
   const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
   const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
+  const [isReorderingGallery, setIsReorderingGallery] = useState(false)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -397,6 +398,53 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setSaveMessage(message)
     } finally {
       setDeletingGalleryImageId(null)
+    }
+  }
+
+  async function handleReorderGalleryImage(currentIndex: number, direction: "up" | "down") {
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+
+    if (targetIndex < 0 || targetIndex >= galleryImages.length) {
+      return
+    }
+
+    const reordered = [...galleryImages]
+    const [movedImage] = reordered.splice(currentIndex, 1)
+    reordered.splice(targetIndex, 0, movedImage)
+
+    setIsReorderingGallery(true)
+    setSaveMessage("")
+
+    try {
+      const response = await fetch("/api/artists/gallery-image", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          artistId: artist.id,
+          orderedImageIds: reordered.map((image) => image.id),
+        }),
+      })
+
+      const result = (await response.json()) as { error?: string; galleryImages?: GalleryImage[] }
+
+      if (!response.ok || !result.galleryImages) {
+        throw new Error(result.error ?? "Unable to reorder gallery images.")
+      }
+
+      setGalleryImages(result.galleryImages)
+      setArtist((current) => ({
+        ...current,
+        galleryImages: result.galleryImages ?? current.galleryImages,
+        updatedAt: new Date().toISOString(),
+      }))
+      setSaveMessage("Gallery order updated.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to reorder gallery images."
+      setSaveMessage(message)
+    } finally {
+      setIsReorderingGallery(false)
     }
   }
 
@@ -790,26 +838,68 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
-            {galleryImages.map((image) => (
+            {galleryImages.map((image, index) => (
               <div key={image.id} className="space-y-2">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-md border border-border bg-secondary/40">
                   <Image src={image.imageUrl} alt={image.altText} fill sizes="200px" className="object-cover" />
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-xs text-muted-foreground">{image.altText}</p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteGalleryImage(image.id)}
-                    disabled={
-                      deletingGalleryImageId === image.id || isUploadingGalleryImage || isSaving || isPublishing
-                    }
-                    className="h-7 px-2"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {deletingGalleryImageId === image.id ? "Deleting..." : "Delete"}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReorderGalleryImage(index, "up")}
+                      disabled={
+                        index === 0 ||
+                        isReorderingGallery ||
+                        !!deletingGalleryImageId ||
+                        isUploadingGalleryImage ||
+                        isSaving ||
+                        isPublishing
+                      }
+                      className="h-7 px-2"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                      Move up
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReorderGalleryImage(index, "down")}
+                      disabled={
+                        index === galleryImages.length - 1 ||
+                        isReorderingGallery ||
+                        !!deletingGalleryImageId ||
+                        isUploadingGalleryImage ||
+                        isSaving ||
+                        isPublishing
+                      }
+                      className="h-7 px-2"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                      Move down
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteGalleryImage(image.id)}
+                      disabled={
+                        deletingGalleryImageId === image.id ||
+                        isReorderingGallery ||
+                        isUploadingGalleryImage ||
+                        isSaving ||
+                        isPublishing
+                      }
+                      className="h-7 px-2"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {deletingGalleryImageId === image.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -846,7 +936,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <Button
               type="button"
               onClick={handleUploadGalleryImage}
-              disabled={!galleryImageFile || isUploadingGalleryImage || isSaving || isPublishing || !!deletingGalleryImageId}
+              disabled={
+                !galleryImageFile ||
+                isUploadingGalleryImage ||
+                isReorderingGallery ||
+                isSaving ||
+                isPublishing ||
+                !!deletingGalleryImageId
+              }
               className="bg-secondary text-foreground hover:bg-secondary/80"
             >
               {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}

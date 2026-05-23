@@ -206,6 +206,11 @@ type DeleteGalleryImagePayload = {
   galleryImageId?: string
 }
 
+type ReorderGalleryImagesPayload = {
+  artistId?: string
+  orderedImageIds?: string[]
+}
+
 export async function DELETE(request: Request) {
   const authClient = await createSupabaseServerClient()
   const {
@@ -293,6 +298,120 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true, galleryImageId: galleryImage.id, storageDeleted }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to delete gallery image."
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: Request) {
+  const authClient = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 })
+  }
+
+  let payload: ReorderGalleryImagesPayload
+
+  try {
+    payload = (await request.json()) as ReorderGalleryImagesPayload
+  } catch {
+    return badRequest("Invalid JSON payload.")
+  }
+
+  const artistId = payload.artistId?.trim()
+  const orderedImageIds = Array.isArray(payload.orderedImageIds) ? payload.orderedImageIds.map((id) => id.trim()) : []
+
+  if (!artistId) {
+    return badRequest("Artist id is required.")
+  }
+
+  if (!orderedImageIds.length || orderedImageIds.some((id) => !id)) {
+    return badRequest("orderedImageIds must include at least one valid image id.")
+  }
+
+  if (new Set(orderedImageIds).size !== orderedImageIds.length) {
+    return badRequest("orderedImageIds must not contain duplicates.")
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data: artist, error: artistError } = await supabase
+      .from("artists")
+      .select("id, owner_user_id")
+      .eq("id", artistId)
+      .maybeSingle<ArtistOwnershipRow>()
+
+    if (artistError) {
+      throw artistError
+    }
+
+    if (!artist) {
+      return NextResponse.json({ error: "Artist not found." }, { status: 404 })
+    }
+
+    if (artist.owner_user_id !== user.id) {
+      return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
+    }
+
+    const { data: existingImages, error: existingImagesError } = await supabase
+      .from("gallery_images")
+      .select("id, image_url, alt_text, sort_order")
+      .eq("artist_id", artist.id)
+      .returns<GalleryImageRow[]>()
+
+    if (existingImagesError) {
+      throw existingImagesError
+    }
+
+    const existingImageIds = (existingImages ?? []).map((image) => image.id)
+
+    if (existingImageIds.length !== orderedImageIds.length) {
+      return badRequest("orderedImageIds must match the artist gallery image count.")
+    }
+
+    const existingImageIdSet = new Set(existingImageIds)
+
+    if (orderedImageIds.some((id) => !existingImageIdSet.has(id))) {
+      return badRequest("orderedImageIds include an image that does not belong to this artist.")
+    }
+
+    const updates = orderedImageIds.map((id, index) =>
+      supabase.from("gallery_images").update({ sort_order: index + 1 }).eq("id", id).eq("artist_id", artist.id),
+    )
+
+    const updateResults = await Promise.all(updates)
+    const updateError = updateResults.find((result) => result.error)?.error
+
+    if (updateError) {
+      throw updateError
+    }
+
+    const { data: reorderedImages, error: reorderedImagesError } = await supabase
+      .from("gallery_images")
+      .select("id, image_url, alt_text, sort_order")
+      .eq("artist_id", artist.id)
+      .order("sort_order", { ascending: true })
+      .returns<GalleryImageRow[]>()
+
+    if (reorderedImagesError) {
+      throw reorderedImagesError
+    }
+
+    return NextResponse.json(
+      {
+        galleryImages: (reorderedImages ?? []).map((image) => ({
+          id: image.id,
+          imageUrl: image.image_url,
+          altText: image.alt_text,
+          sortOrder: image.sort_order,
+        })),
+      },
+      { status: 200 },
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to reorder gallery images."
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
