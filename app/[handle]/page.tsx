@@ -301,8 +301,8 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-center gap-3">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">{children}</h2>
-      <div className="h-px flex-1 bg-border/70" />
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent/90">{children}</h2>
+      <div className="h-px flex-1 bg-gradient-to-r from-border via-border/50 to-transparent" />
     </div>
   )
 }
@@ -314,10 +314,10 @@ function MainLink({ link }: { link: SocialLink }) {
     <a
       href={link.url}
       aria-label={`${link.label} for this artist`}
-      className="group flex min-h-12 items-center justify-between rounded-2xl border border-border/80 bg-background/55 px-3.5 py-3 backdrop-blur-sm transition-colors hover:border-accent/50 hover:bg-accent/10"
+      className="group flex min-h-12 items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-3.5 py-3 shadow-sm shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent/[0.08]"
     >
       <span className="flex min-w-0 items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/10 bg-accent/[0.08]">
           <Icon className="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
         </span>
         <span className="truncate text-sm font-semibold text-foreground">{link.label}</span>
@@ -343,6 +343,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
   const featuredReleaseDescription = artist.tagline ?? artist.shortBio
+  const hasFeaturedArtwork = featuredRelease.artworkUrl.trim().length > 0
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
   const prioritizedLinks = [...artist.socialLinks].sort((a, b) => {
     const priorityA = linkPriority.indexOf(a.platform)
@@ -365,26 +366,27 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           sizes="100vw"
           className="scale-110 object-cover opacity-20 blur-3xl"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--accent)/0.20),_transparent_34%),radial-gradient(circle_at_82%_24%,_hsl(var(--accent)/0.12),_transparent_32%),linear-gradient(180deg,_hsl(var(--background)/0.72),_hsl(var(--background))_58%)]" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.035]" />
-        <div className="absolute left-1/2 top-8 h-[620px] w-[min(1180px,94vw)] -translate-x-1/2 rounded-full border border-accent/10 bg-accent/[0.035] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--accent)/0.18),_transparent_32%),radial-gradient(circle_at_82%_24%,_hsl(var(--accent)/0.10),_transparent_30%),radial-gradient(circle_at_18%_78%,_hsl(var(--foreground)/0.06),_transparent_34%),linear-gradient(180deg,_hsl(var(--background)/0.70),_hsl(var(--background))_60%)]" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.025]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,_hsl(var(--background))_0%,_transparent_18%,_transparent_82%,_hsl(var(--background))_100%)]" />
+        <div className="absolute left-1/2 top-8 h-[620px] w-[min(1180px,94vw)] -translate-x-1/2 rounded-full border border-accent/10 bg-accent/[0.03] blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-7">
-        <header className="mx-auto mb-3 flex max-w-6xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-accent">
-              <span className="text-sm font-bold text-accent-foreground">DJ</span>
+        <header className="mx-auto mb-4 flex max-w-6xl items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/20 bg-accent/10">
+              <span className="text-xs font-bold text-accent">DJ</span>
             </div>
-            <span className="text-lg font-bold tracking-tight text-foreground">DJHQ</span>
+            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/80">DJHQ</span>
           </Link>
-          <span className="rounded-full border border-border bg-card/70 px-3 py-1 font-mono text-[11px] text-muted-foreground">
+          <span className="rounded-full border border-white/10 bg-card/50 px-3 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur-md">
             @{artist.handle}
           </span>
         </header>
 
-        <div className="mx-auto max-w-xl rounded-[2rem] border border-border/80 bg-background/45 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl sm:p-3 lg:max-w-6xl lg:p-4">
-        <section className="overflow-hidden rounded-[1.65rem] border border-border bg-card shadow-2xl shadow-black/40">
+        <div className="mx-auto max-w-xl rounded-[2rem] border border-white/10 bg-background/40 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl sm:p-3 lg:max-w-6xl lg:p-4">
+        <section className="overflow-hidden rounded-[1.65rem] border border-white/10 bg-card shadow-2xl shadow-black/40">
           <div className="relative min-h-[470px] sm:min-h-[540px] lg:min-h-[680px]">
             <Image
               src={artist.heroImageUrl}
@@ -460,7 +462,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </section>
 
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start">
-          <section className="rounded-[1.65rem] border border-border bg-card/80 p-4 backdrop-blur-sm lg:col-start-1 lg:row-start-1">
+          <section className="rounded-[1.65rem] border border-white/10 bg-card/75 p-4 shadow-xl shadow-black/20 backdrop-blur-sm lg:col-start-1 lg:row-start-1">
             <SectionTitle>Music / Social Links</SectionTitle>
             <div className="mt-3 grid grid-cols-2 gap-2.5">
               {prioritizedLinks.map((link) => (
@@ -469,29 +471,40 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-[1.65rem] border border-border bg-card lg:col-start-2 lg:row-start-1">
+          <section className="overflow-hidden rounded-[1.65rem] border border-white/10 bg-card shadow-xl shadow-black/25 lg:col-start-2 lg:row-start-1">
             <div className="relative p-4 sm:p-5">
-              <div className="absolute inset-0 opacity-20">
-                <Image
-                  src={featuredRelease.artworkUrl}
-                  alt=""
-                  fill
-                  aria-hidden="true"
-                  sizes="560px"
-                  className="scale-110 object-cover blur-2xl"
-                />
-              </div>
+              {hasFeaturedArtwork ? (
+                <div className="absolute inset-0 opacity-25">
+                  <Image
+                    src={featuredRelease.artworkUrl}
+                    alt=""
+                    fill
+                    aria-hidden="true"
+                    sizes="560px"
+                    className="scale-110 object-cover blur-2xl"
+                  />
+                </div>
+              ) : (
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.20),_transparent_36%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
+              )}
+              <div className="absolute inset-0 bg-background/35" />
               <div className="relative">
                 <SectionTitle>Featured Release</SectionTitle>
                 <div className="mt-4 flex gap-3 sm:gap-4">
-                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-accent/10 shadow-xl shadow-black/30 sm:h-28 sm:w-28">
-                    <Image
-                      src={featuredRelease.artworkUrl}
-                      alt={`${featuredRelease.title} artwork`}
-                      fill
-                      sizes="112px"
-                      className="object-cover"
-                    />
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-accent/10 shadow-xl shadow-black/30 sm:h-28 sm:w-28">
+                    {hasFeaturedArtwork ? (
+                      <Image
+                        src={featuredRelease.artworkUrl}
+                        alt={`${featuredRelease.title} artwork`}
+                        fill
+                        sizes="112px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.35),_transparent_44%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                        <Music2 className="h-8 w-8 text-accent" />
+                      </div>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
@@ -509,7 +522,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <Button
                       asChild
                       variant="outline"
-                      className="mt-3 w-full rounded-xl border-border bg-background/50 text-foreground hover:bg-secondary sm:w-auto"
+                      className="mt-3 w-full rounded-xl border-white/10 bg-background/55 text-foreground hover:bg-secondary sm:w-auto"
                     >
                       <a href={featuredRelease.platformUrl}>
                         Listen / Buy
@@ -522,7 +535,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] border border-border bg-card/90 p-4 sm:p-5 lg:col-start-2 lg:row-start-2">
+          <section className="rounded-[1.65rem] border border-white/10 bg-card/85 p-4 shadow-xl shadow-black/20 sm:p-5 lg:col-start-2 lg:row-start-2">
             <SectionTitle>Upcoming Gigs</SectionTitle>
             <div className="mt-3 space-y-2.5">
               {upcomingGigs.map((gig) => (
@@ -554,15 +567,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] border border-border bg-card/90 p-4 sm:p-5 lg:col-start-1 lg:row-span-2 lg:row-start-2">
+          <section className="rounded-[1.65rem] border border-white/10 bg-card/85 p-4 shadow-xl shadow-black/20 sm:p-5 lg:col-start-1 lg:row-span-2 lg:row-start-2">
             <SectionTitle>Photo Preview</SectionTitle>
-            <div className="mt-3 grid grid-cols-5 grid-rows-2 gap-2.5">
+            <div className="mt-3 grid grid-cols-5 grid-rows-2 gap-2.5 lg:h-[520px]">
               {photoPreview.map((photo, index) => (
                 <div
                   key={photo.id}
                   className={cn(
-                    "relative overflow-hidden rounded-2xl bg-secondary",
-                    index === 0 ? "col-span-3 row-span-2 aspect-[4/5]" : "col-span-2 aspect-[4/3]",
+                    "group relative overflow-hidden rounded-2xl border border-white/10 bg-secondary shadow-lg shadow-black/20",
+                    index === 0 ? "col-span-3 row-span-2 aspect-[4/5] lg:aspect-auto" : "col-span-2 aspect-[4/3] lg:aspect-auto",
                   )}
                 >
                   <Image
@@ -572,16 +585,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     loading="eager"
                     sizes="(min-width: 768px) 220px, 33vw"
                     className={cn(
-                      "object-cover",
+                      "object-cover transition-transform duration-700 group-hover:scale-105",
                       photo.sortOrder === 1 ? "object-left" : photo.sortOrder === 2 ? "object-center" : "object-right",
                     )}
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-45" />
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-[1.65rem] border border-accent/20 bg-accent/[0.06] p-4 shadow-xl shadow-accent/5 sm:p-5 lg:col-start-2 lg:row-start-3">
+          <section className="overflow-hidden rounded-[1.65rem] border border-accent/20 bg-[radial-gradient(circle_at_top_left,_hsl(var(--accent)/0.12),_transparent_42%),hsl(var(--accent)/0.045)] p-4 shadow-xl shadow-accent/5 sm:p-5 lg:col-start-2 lg:row-start-3">
             <SectionTitle>Booking / Press Kit</SectionTitle>
             <div className="mt-4">
               <p className="text-2xl font-bold leading-tight text-foreground">
@@ -619,9 +633,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </div>
         </div>
 
-        <footer className="py-6 text-center">
-          <Link href="/" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-            Powered by DJHQ
+        <footer className="py-8 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/80 transition-colors hover:text-foreground"
+          >
+            <span className="h-px w-8 bg-border" />
+            DJHQ
+            <span className="h-px w-8 bg-border" />
           </Link>
         </footer>
       </div>
