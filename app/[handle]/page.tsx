@@ -451,8 +451,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start lg:gap-10">
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-6 lg:col-start-2 lg:row-start-1">
             <SectionTitle>Featured Release</SectionTitle>
-            <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(180px,220px)_minmax(0,1fr)] sm:items-end sm:gap-6">
-              <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none">
+            <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(150px,38%)_minmax(0,1fr)] sm:items-end sm:gap-5 lg:grid-cols-1 lg:items-start lg:gap-4">
+              <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-[200px] lg:max-w-[180px]">
                 {!hasFeaturedArtwork ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
                     <Music2 className="h-10 w-10 text-accent/80" />
@@ -468,11 +468,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
               </div>
-              <div className="min-w-0 pb-1">
+              <div className="min-w-0 pb-1 lg:w-full lg:min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
                   {featuredRelease.type}
                 </p>
-                <h2 className="mt-2 text-2xl font-black leading-[0.98] text-foreground [overflow-wrap:anywhere] sm:text-3xl">
+                <h2 className="mt-2 max-w-prose text-balance text-2xl font-black leading-[1.05] tracking-[-0.01em] text-foreground sm:text-3xl lg:max-w-none lg:text-[1.75rem] lg:leading-[1.08] xl:text-[1.875rem]">
                   {featuredRelease.title}
                 </h2>
                 <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
