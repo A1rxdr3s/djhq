@@ -449,10 +449,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </section>
 
         <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start lg:gap-10">
-          <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-6 lg:col-start-2 lg:row-start-1">
+          <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:col-start-2 lg:row-start-1 lg:p-4">
             <SectionTitle>Featured Release</SectionTitle>
-            <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(150px,38%)_minmax(0,1fr)] sm:items-end sm:gap-5 lg:grid-cols-1 lg:items-start lg:gap-4">
-              <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-[200px] lg:max-w-[180px]">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
+              <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full">
                 {!hasFeaturedArtwork ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
                     <Music2 className="h-10 w-10 text-accent/80" />
@@ -462,25 +462,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     src={featuredRelease.artworkUrl}
                     alt={`${featuredRelease.title} artwork`}
                     fill
-                    sizes="(min-width: 1024px) 280px, 240px"
+                    sizes="(min-width: 1024px) 180px, (min-width: 640px) 42vw, 200px"
                     className="object-cover"
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
               </div>
-              <div className="min-w-0 pb-1 lg:w-full lg:min-w-0">
+              <div className="flex min-w-0 flex-col justify-center sm:py-0.5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
                   {featuredRelease.type}
                 </p>
-                <h2 className="mt-2 max-w-prose text-balance text-2xl font-black leading-[1.05] tracking-[-0.01em] text-foreground sm:text-3xl lg:max-w-none lg:text-[1.75rem] lg:leading-[1.08] xl:text-[1.875rem]">
+                <h2 className="mt-1.5 text-balance text-2xl font-black leading-[1.05] tracking-[-0.01em] text-foreground sm:mt-2 sm:text-[1.65rem] lg:text-[1.5rem] lg:leading-[1.08] xl:text-[1.625rem]">
                   {featuredRelease.title}
                 </h2>
-                <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:mt-2">
                   {featuredRelease.label} · {featuredReleaseYear}
                 </p>
                 <Button
                   asChild
-                  className="mt-5 h-11 rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-auto"
+                  className="mt-4 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-4 sm:w-auto lg:mt-3.5"
                 >
                   <a href={featuredRelease.platformUrl}>
                     Listen / Buy
