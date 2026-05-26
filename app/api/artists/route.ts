@@ -20,6 +20,7 @@ type SaveSocialLinkPayload = {
 type SaveFeaturedReleasePayload = {
   title: string
   label: string
+  credits?: string
   releaseDate: string
   type: string
   platformUrl: string
@@ -29,6 +30,7 @@ type SaveFeaturedReleasePayload = {
 type SaveSelectedReleasePayload = {
   title: string
   label: string
+  credits?: string
   releaseDate: string
   type: string
   platformUrl: string
@@ -360,6 +362,7 @@ export async function PATCH(request: Request) {
         artist_id: artistId,
         title: payload.featuredRelease.title.trim(),
         label: payload.featuredRelease.label.trim(),
+        credits: payload.featuredRelease.credits?.trim() || null,
         release_date: payload.featuredRelease.releaseDate,
         artwork_url: payload.featuredRelease.artworkUrl.trim(),
         platform_url: payload.featuredRelease.platformUrl.trim(),
@@ -389,6 +392,7 @@ export async function PATCH(request: Request) {
           artist_id: artistId,
           title: release.title.trim(),
           label: release.label.trim(),
+          credits: release.credits?.trim() || null,
           release_date: release.releaseDate,
           artwork_url: release.artworkUrl.trim(),
           platform_url: release.platformUrl.trim(),

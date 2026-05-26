@@ -43,6 +43,7 @@ type SocialLinkFormState = {
 type FeaturedReleaseFormState = {
   title: string
   label: string
+  credits: string
   releaseDate: string
   type: string
   platformUrl: string
@@ -113,6 +114,7 @@ function getFeaturedReleaseFormState(artist: Artist): FeaturedReleaseFormState |
     ? {
         title: artist.featuredRelease.title,
         label: artist.featuredRelease.label,
+        credits: artist.featuredRelease.credits ?? "",
         releaseDate: toDateInputValue(artist.featuredRelease.releaseDate),
         type: artist.featuredRelease.type,
         platformUrl: artist.featuredRelease.platformUrl,
@@ -126,6 +128,7 @@ function getSelectedReleaseFormState(artist: Artist): SelectedReleaseFormState[]
     id: release.id,
     title: release.title,
     label: release.label,
+    credits: release.credits ?? "",
     releaseDate: toDateInputValue(release.releaseDate),
     type: release.type,
     platformUrl: release.platformUrl,
@@ -138,6 +141,7 @@ function createEmptySelectedRelease(): SelectedReleaseFormState {
     id: `new-${crypto.randomUUID()}`,
     title: "",
     label: "",
+    credits: "",
     releaseDate: new Date().toISOString().slice(0, 10),
     type: "single",
     platformUrl: "",
@@ -149,17 +153,18 @@ function mergeImportedReleaseFields<T extends FeaturedReleaseFormState>(
   current: T,
   result: ImportedReleaseMetadata,
 ): T {
-  const nextLabel = current.label.trim()
-    ? current.label
-    : result.provider === "spotify"
-      ? result.artist?.trim() || current.label
+  const nextLabel =
+    result.provider === "spotify"
+      ? current.label
       : result.label?.trim() || current.label
+  const nextCredits = result.artist?.trim() || current.credits
   const nextType = result.type != null ? normalizeReleaseType(result.type) : current.type
 
   return {
     ...current,
     title: result.title?.trim() || current.title,
     label: nextLabel,
+    credits: nextCredits,
     releaseDate: result.releaseDate ?? current.releaseDate,
     type: nextType,
     platformUrl: result.platformUrl,
@@ -289,6 +294,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             id: artist.featuredRelease?.id ?? "featured-release",
             title: featuredRelease.title.trim(),
             label: featuredRelease.label.trim(),
+            credits: featuredRelease.credits.trim() || undefined,
             releaseDate: featuredRelease.releaseDate,
             artworkUrl: featuredRelease.artworkUrl.trim(),
             platformUrl: featuredRelease.platformUrl.trim(),
@@ -299,6 +305,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         id: release.id,
         title: release.title.trim(),
         label: release.label.trim(),
+        credits: release.credits.trim() || undefined,
         releaseDate: release.releaseDate,
         artworkUrl: release.artworkUrl.trim(),
         platformUrl: release.platformUrl.trim(),
@@ -858,6 +865,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, label: event.target.value } : current))}
             />
           </div>
+          <div className="md:col-span-2">
+            <div className="space-y-1.5">
+              <label htmlFor="releaseCredits" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Credits
+              </label>
+              <Input
+                id="releaseCredits"
+                value={featuredRelease.credits}
+                placeholder="e.g. ANDRES:HERRERA, Seba Cortes"
+                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, credits: event.target.value } : current))}
+              />
+            </div>
+          </div>
           <div className="space-y-1.5">
             <label htmlFor="releaseDate" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
               Release Date
@@ -1018,6 +1038,28 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       )
                     }
                   />
+                </div>
+                <div className="md:col-span-2">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`selected-release-credits-${index}`}
+                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    >
+                      Credits
+                    </label>
+                    <Input
+                      id={`selected-release-credits-${index}`}
+                      value={release.credits}
+                      placeholder="e.g. ANDRES:HERRERA, Seba Cortes"
+                      onChange={(event) =>
+                        setSelectedReleases((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, credits: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label

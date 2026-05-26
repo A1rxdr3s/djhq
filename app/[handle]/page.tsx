@@ -78,6 +78,7 @@ type ReleaseRow = {
   id: string
   title: string
   label: string
+  credits: string | null
   release_date: string
   artwork_url: string
   platform_url: string
@@ -149,6 +150,7 @@ function mapReleaseRow(row: ReleaseRow): Release {
     id: row.id,
     title: row.title,
     label: row.label,
+    credits: row.credits ?? undefined,
     releaseDate: row.release_date,
     artworkUrl: row.artwork_url,
     platformUrl: row.platform_url,
@@ -193,7 +195,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<SocialLinkRow[]>(),
       supabase
         .from("releases")
-        .select("id, title, label, release_date, artwork_url, platform_url, type, is_featured")
+        .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured")
         .eq("artist_id", artistRow.id)
         .order("sort_order", { ascending: true })
         .order("release_date", { ascending: false })
@@ -483,6 +485,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <h2 className="mt-1.5 text-balance text-2xl font-black leading-[1.05] tracking-[-0.01em] text-foreground sm:mt-2 sm:text-[1.65rem] lg:text-[1.5rem] lg:leading-[1.08] xl:text-[1.625rem]">
                   {featuredRelease.title}
                 </h2>
+                {featuredRelease.credits ? (
+                  <p className="mt-1 text-xs text-muted-foreground/85 sm:mt-1.5">
+                    {featuredRelease.credits}
+                  </p>
+                ) : null}
                 <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:mt-2">
                   {featuredRelease.label} · {featuredReleaseYear}
                 </p>
@@ -636,6 +643,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <h3 className="mt-1 text-balance text-base font-bold leading-tight text-foreground">
                         {release.title}
                       </h3>
+                      {release.credits ? (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground/85">
+                          {release.credits}
+                        </p>
+                      ) : null}
                       <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                         {release.label} · {releaseYear}
                       </p>

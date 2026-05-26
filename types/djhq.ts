@@ -54,6 +54,8 @@ export interface Release {
   artworkUrl: string
   /** Primary platform URL for listening or purchase. */
   platformUrl: string
+  /** Optional artist/collaborator credits line (e.g. "ANDRES:HERRERA, Seba Cortes"). */
+  credits?: string
   /** Release format. */
   type: ReleaseType
 }
