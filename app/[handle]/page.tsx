@@ -606,7 +606,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <div className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
               {selectedReleases.map((release) => {
                 const releaseYear = new Date(release.releaseDate).getUTCFullYear()
-                const hasArtwork = release.artworkUrl.trim().length > 0
+                const hasArtwork = !!(release.artworkUrl?.trim())
 
                 return (
                   <article
