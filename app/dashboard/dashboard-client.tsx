@@ -868,12 +868,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="md:col-span-2">
             <div className="space-y-1.5">
               <label htmlFor="releaseCredits" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                Credits
+                Artists
               </label>
               <Input
                 id="releaseCredits"
                 value={featuredRelease.credits}
-                placeholder="e.g. ANDRES:HERRERA, Seba Cortes"
+                placeholder="e.g. Artist 1, Artist 2"
                 onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, credits: event.target.value } : current))}
               />
             </div>
@@ -1045,12 +1045,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       htmlFor={`selected-release-credits-${index}`}
                       className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
                     >
-                      Credits
+                      Artists
                     </label>
                     <Input
                       id={`selected-release-credits-${index}`}
                       value={release.credits}
-                      placeholder="e.g. ANDRES:HERRERA, Seba Cortes"
+                      placeholder="e.g. Artist 1, Artist 2"
                       onChange={(event) =>
                         setSelectedReleases((current) =>
                           current.map((item, itemIndex) =>

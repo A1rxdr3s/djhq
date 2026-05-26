@@ -136,6 +136,48 @@ async function getSpotifyOEmbedMetadata(url: URL) {
   return (await response.json()) as SpotifyOEmbedResponse
 }
 
+function extractArtistFromSpotifyDescription(text: string): string | null {
+  // "Song · 2024 · ARTIST · Listen on Spotify" — filter out non-artist segments
+  if (text.includes(" · ")) {
+    const filtered = text
+      .split(/\s*·\s*/)
+      .map((s) => s.trim())
+      .filter(
+        (s) =>
+          s.length > 0 &&
+          !/^(song|single|ep|album|compilation|playlist)$/i.test(s) &&
+          !/^\d{4}$/.test(s) &&
+          !/^listen(?: on spotify)?$/i.test(s),
+      )
+    if (filtered.length === 1) return filtered[0]
+    // Prefer whichever segment contains a comma (multiple artists)
+    const withComma = filtered.find((s) => s.includes(","))
+    if (withComma) return withComma
+  }
+
+  // "Listen to X on Spotify. ARTIST · Song · year"
+  const afterSpotify = text.match(/on\s+Spotify\.\s*([^·\n]+?)(?:\s*·|$)/i)
+  if (afterSpotify?.[1]?.trim()) return afterSpotify[1].trim()
+
+  return null
+}
+
+function extractSpotifyArtistCredits(html: string): string | null {
+  // Primary: Spotify embeds the clean credits string directly in this tag
+  const musicianDesc = getMetaContent(html, ["music:musician_description"])
+  if (musicianDesc?.trim()) return musicianDesc.trim()
+
+  // Fallback: description meta tags (require parsing)
+  const description = getMetaContent(html, ["og:description", "twitter:description", "description"])
+  if (description) {
+    const artist = extractArtistFromSpotifyDescription(description)
+    if (artist) return artist
+  }
+
+  // Last resort: page title
+  return extractArtistFromOpenGraphTitle(getPageTitle(html))
+}
+
 async function getOpenGraphMetadata(url: URL) {
   const response = await fetch(url.toString(), {
     headers: {
@@ -154,8 +196,9 @@ async function getOpenGraphMetadata(url: URL) {
   const html = await response.text()
   const title = getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html)
   const image = getMetaContent(html, ["og:image", "twitter:image"])
+  const artist = extractSpotifyArtistCredits(html)
 
-  return { title, image }
+  return { title, image, artist }
 }
 
 export async function importSpotifyReleaseMetadata(url: URL): Promise<ImportedReleaseMetadata> {
@@ -166,16 +209,15 @@ export async function importSpotifyReleaseMetadata(url: URL): Promise<ImportedRe
   }
 
   const oEmbedMetadata = await getSpotifyOEmbedMetadata(platformUrl)
-  const needsOpenGraphFallback = !oEmbedMetadata?.title || !oEmbedMetadata?.thumbnail_url
-  const openGraphMetadata = needsOpenGraphFallback ? await getOpenGraphMetadata(platformUrl) : null
+  // Fetch page HTML when oEmbed is incomplete or doesn't provide artist credits
+  const needsPageMetadata =
+    !oEmbedMetadata?.title || !oEmbedMetadata?.thumbnail_url || !oEmbedMetadata?.author_name?.trim()
+  const pageMetadata = needsPageMetadata ? await getOpenGraphMetadata(platformUrl) : null
 
-  const rawTitle = oEmbedMetadata?.title ?? openGraphMetadata?.title ?? null
-  const artist =
-    oEmbedMetadata?.author_name?.trim() ||
-    extractArtistFromOpenGraphTitle(openGraphMetadata?.title ?? null) ||
-    null
+  const rawTitle = oEmbedMetadata?.title ?? pageMetadata?.title ?? null
+  const artist = oEmbedMetadata?.author_name?.trim() || pageMetadata?.artist || null
   const title = cleanSpotifyTitle(rawTitle, artist)
-  const artworkUrl = oEmbedMetadata?.thumbnail_url ?? openGraphMetadata?.image ?? null
+  const artworkUrl = oEmbedMetadata?.thumbnail_url ?? pageMetadata?.image ?? null
 
   return {
     provider: "spotify",
