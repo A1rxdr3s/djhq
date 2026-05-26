@@ -142,8 +142,8 @@ function createEmptySelectedRelease(): SelectedReleaseFormState {
     title: "",
     label: "",
     credits: "",
-    releaseDate: new Date().toISOString().slice(0, 10),
-    type: "single",
+    releaseDate: "",
+    type: "",
     platformUrl: "",
     artworkUrl: "",
   }
