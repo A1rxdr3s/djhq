@@ -181,3 +181,14 @@ Avoid:
 - abstraction for abstraction’s sake
 - over-componentization
 - premature systemization
+
+---
+
+# Plan Gating Rules
+
+Pro-only features in the dashboard must:
+- Show the feature UI only when `artist.plan === "pro"`
+- Show a minimal upsell card for free users (not a modal, not a paywall overlay)
+- Be gated server-side in API routes — never trust client-only checks
+
+Free users must never see broken UI where a Pro feature would appear.

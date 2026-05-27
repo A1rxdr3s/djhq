@@ -55,6 +55,34 @@ No unnecessary dependencies should be introduced.
 
 ---
 
+# Subscription Plans
+
+Two plans: `"free"` and `"pro"`.
+
+Free users:
+- Public profile at `djhq.com/[handle]`
+
+Pro users:
+- Public profile at `djhq.com/[handle]` (always works)
+- Can connect a custom domain (e.g. `artistdomain.com`)
+
+---
+
+# Custom Domains (Pro)
+
+Approved direction:
+
+- Phase A (current): manual team-managed custom domains.
+  - DJHQ team adds domains in Vercel project settings and inserts rows into `custom_domains`.
+  - Next.js middleware at project root (`middleware.ts`) reads the request host and rewrites to `/[handle]`.
+  - No self-serve UI for adding domains yet.
+  - No automated DNS verification yet.
+- Phase B (future): self-serve dashboard domain management + Vercel API integration.
+
+The canonical `/[handle]` URL always works for all users, regardless of custom domain status.
+
+---
+
 # Design Direction
 
 The aesthetic should feel:
