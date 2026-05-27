@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
-import type { Artist, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
+import type { Artist, DjSet, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -86,6 +86,16 @@ type ReleaseRow = {
   is_featured: boolean
 }
 
+type DjSetRow = {
+  id: string
+  title: string
+  venue: string | null
+  set_date: string | null
+  image_url: string | null
+  platform_url: string
+  sort_order: number
+}
+
 type GigRow = {
   id: string
   date: string
@@ -146,6 +156,18 @@ function normalizeReleaseType(type: string): ReleaseType {
 }
 
 
+function formatReleaseDate(releaseDate: string): string | null {
+  if (!releaseDate) return null
+  const date = new Date(releaseDate)
+  if (isNaN(date.getTime())) return null
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+}
+
 function mapReleaseRow(row: ReleaseRow): Release {
   return {
     id: row.id,
@@ -187,7 +209,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       return null
     }
 
-    const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult] = await Promise.all([
+    const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult] = await Promise.all([
       supabase
         .from("social_links")
         .select("platform, label, url")
@@ -213,10 +235,31 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .eq("artist_id", artistRow.id)
         .order("sort_order", { ascending: true })
         .returns<GalleryImageRow[]>(),
+      supabase
+        .from("dj_sets")
+        .select("id, title, venue, set_date, image_url, platform_url, sort_order")
+        .eq("artist_id", artistRow.id)
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true })
+        .order("set_date", { ascending: false })
+        .limit(4)
+        .returns<DjSetRow[]>(),
     ])
 
-    if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error) {
-      throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error
+    if (
+      socialLinksResult.error ||
+      releasesResult.error ||
+      gigsResult.error ||
+      galleryImagesResult.error ||
+      djSetsResult.error
+    ) {
+      throw (
+        socialLinksResult.error ??
+        releasesResult.error ??
+        gigsResult.error ??
+        galleryImagesResult.error ??
+        djSetsResult.error
+      )
     }
 
     const releaseRows = releasesResult.data ?? []
@@ -251,6 +294,17 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         country: gig.country,
         ticketUrl: gig.ticket_url ?? undefined,
       })),
+      djSets: (djSetsResult.data ?? []).map(
+        (row): DjSet => ({
+          id: row.id,
+          title: row.title,
+          venue: row.venue ?? undefined,
+          setDate: row.set_date ?? undefined,
+          imageUrl: row.image_url ?? undefined,
+          platformUrl: row.platform_url,
+          sortOrder: row.sort_order,
+        }),
+      ),
       galleryImages: (galleryImagesResult.data ?? []).map((image) => ({
         id: image.id,
         imageUrl: image.image_url,
@@ -341,9 +395,18 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   if (!featuredRelease) {
     notFound()
   }
-  const selectedReleases = artist.selectedReleases
+  const selectedReleases = [...artist.selectedReleases].sort((a, b) => {
+    const timeA = a.releaseDate ? new Date(a.releaseDate).getTime() : null
+    const timeB = b.releaseDate ? new Date(b.releaseDate).getTime() : null
+    if (timeA === null && timeB === null) return 0
+    if (timeA === null) return 1
+    if (timeB === null) return -1
+    return timeB - timeA
+  })
   const upcomingGigs = artist.upcomingGigs.slice(0, 3)
   const photoPreview = artist.galleryImages.slice(0, 3)
+  const featuredSet = artist.djSets[0] ?? null
+  const recentSets = artist.djSets.slice(1, 4)
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -611,57 +674,135 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {selectedReleases.length > 0 ? (
           <section className="mt-8 lg:mt-10">
             <SectionTitle>Selected Releases</SectionTitle>
-            <div className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
-              {selectedReleases.map((release) => {
-                const releaseYear = release.releaseDate ? new Date(release.releaseDate).getUTCFullYear() : null
-                const hasArtwork = !!(release.artworkUrl?.trim())
+            <div className="relative mt-4">
+              <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
+                {selectedReleases.map((release) => {
+                  const formattedDate = formatReleaseDate(release.releaseDate)
+                  const hasArtwork = !!(release.artworkUrl?.trim())
 
-                return (
-                  <article
-                    key={release.id}
-                    className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
-                  >
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
-                      {hasArtwork ? (
-                        <Image
-                          src={release.artworkUrl}
-                          alt={`${release.title} artwork`}
-                          fill
-                          sizes="220px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.24),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                          <Music2 className="h-8 w-8 text-accent/75" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-                    </div>
-                    <div className="mt-3 min-w-0">
-                      <h3 className="text-balance text-base font-bold leading-tight text-foreground">
-                        {release.title}
-                      </h3>
-                      {release.credits ? (
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground/85">
-                          {release.credits}
+                  return (
+                    <article
+                      key={release.id}
+                      className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
+                    >
+                      <div className="relative aspect-square overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
+                        {hasArtwork ? (
+                          <Image
+                            src={release.artworkUrl}
+                            alt={`${release.title} artwork`}
+                            fill
+                            sizes="220px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.24),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                            <Music2 className="h-8 w-8 text-accent/75" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                      </div>
+                      <div className="mt-3 min-w-0">
+                        <h3 className="text-balance text-base font-bold leading-tight text-foreground">
+                          {release.title}
+                        </h3>
+                        {release.credits ? (
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground/85">
+                            {release.credits}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                          {release.label}{formattedDate ? ` · ${formattedDate}` : ""}
                         </p>
-                      ) : null}
-                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                        {release.label}{releaseYear ? ` · ${releaseYear}` : ""}
-                      </p>
+                        <a
+                          href={release.platformUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent/80"
+                        >
+                          Listen
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-background/80 sm:w-20" />
+            </div>
+          </section>
+        ) : null}
+
+        {featuredSet ? (
+          <section className="mt-8 lg:mt-10">
+            <SectionTitle>Latest DJ Sets</SectionTitle>
+            <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25">
+              <a
+                href={featuredSet.platformUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.03] sm:gap-5 sm:p-5"
+              >
+                <div className="relative aspect-square w-[88px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[100px]">
+                  {featuredSet.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={featuredSet.imageUrl}
+                      alt={`${featuredSet.title} thumbnail`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                      <Play className="h-7 w-7 text-accent/70" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Latest Set</p>
+                  <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
+                    {featuredSet.title}
+                  </h3>
+                  {(featuredSet.venue ?? featuredSet.setDate) ? (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {[featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
+                    </p>
+                  ) : null}
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
+                    Play
+                    <ExternalLink className="h-3 w-3" />
+                  </span>
+                </div>
+              </a>
+              {recentSets.length > 0 ? (
+                <div className="border-t border-white/[0.06] px-4 pb-2 sm:px-5">
+                  <p className="pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/35">
+                    Recent
+                  </p>
+                  <div className="divide-y divide-white/[0.04]">
+                    {recentSets.map((set, index) => (
                       <a
-                        href={release.platformUrl}
+                        key={set.id}
+                        href={set.platformUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent/80"
+                        className="flex items-center gap-3 py-3 transition-colors hover:text-foreground"
                       >
-                        Listen
-                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/25">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground/85">{set.title}</p>
+                          {(set.venue ?? set.setDate) ? (
+                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                              {[set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
+                            </p>
+                          ) : null}
+                        </div>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/50" />
                       </a>
-                    </div>
-                  </article>
-                )
-              })}
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
         ) : null}

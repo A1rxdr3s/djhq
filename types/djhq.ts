@@ -79,6 +79,26 @@ export interface Gig {
 }
 
 /**
+ * Recorded or broadcast DJ set shown on the profile.
+ */
+export interface DjSet {
+  /** Stable unique identifier. */
+  id: string
+  /** Set title (e.g. "Live at Fabric" or "DJHQ Radio 012"). */
+  title: string
+  /** Venue or broadcast name. */
+  venue?: string
+  /** Recording or air date in ISO-8601 format. */
+  setDate?: string
+  /** Optional cover/thumbnail image URL. */
+  imageUrl?: string
+  /** Platform URL (SoundCloud, YouTube, Mixcloud, RA, etc.). */
+  platformUrl: string
+  /** Display sort position. */
+  sortOrder: number
+}
+
+/**
  * Press/gallery image metadata for profile previews.
  */
 export interface GalleryImage {
@@ -152,6 +172,8 @@ export interface Artist {
   selectedReleases: Release[]
   /** Upcoming gigs for the profile. */
   upcomingGigs: Gig[]
+  /** Recorded DJ sets shown on the profile. */
+  djSets: DjSet[]
   /** Gallery preview images. */
   galleryImages: GalleryImage[]
   /** Booking configuration and contact info. */

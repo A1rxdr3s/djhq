@@ -227,6 +227,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       country: gig.country,
       ticketUrl: gig.ticket_url ?? undefined,
     })),
+    djSets: [],
     galleryImages: (galleryImagesResult.data ?? []).map((image) => ({
       id: image.id,
       imageUrl: image.image_url,
