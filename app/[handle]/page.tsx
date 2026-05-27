@@ -705,113 +705,118 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </section>
         ) : null}
 
-        {featuredSet ? (
-          <section className="mt-8 lg:mt-10">
-            <SectionTitle>Latest DJ Sets</SectionTitle>
-            <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25">
-              <a
-                href={featuredSet.platformUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.03] sm:gap-5 sm:p-5"
-              >
-                <div className="relative aspect-square w-[120px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[140px]">
-                  {featuredSet.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={featuredSet.imageUrl}
-                      alt={`${featuredSet.title} thumbnail`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                      <Play className="h-7 w-7 text-accent/70" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Latest DJ Set</p>
-                  <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
-                    {cleanDjSetTitle(featuredSet.title, artist.artistName)}
-                  </h3>
-                  {(featuredSet.venue ?? featuredSet.setDate) ? (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {[featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
-                    </p>
-                  ) : null}
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
-                    Play
-                    <ExternalLink className="h-3 w-3" />
-                  </span>
-                </div>
-              </a>
-              {recentSets.length > 0 ? (
-                <div className="border-t border-white/[0.06] px-4 pb-2 sm:px-5">
-                  <p className="pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/35">
-                    Recent
-                  </p>
-                  <div className="divide-y divide-white/[0.04]">
-                    {recentSets.map((set, index) => (
-                      <a
-                        key={set.id}
-                        href={set.platformUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 py-2.5 transition-colors hover:text-foreground"
-                      >
-                        <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/25">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground/85">{cleanDjSetTitle(set.title, artist.artistName)}</p>
-                          {(set.venue ?? set.setDate) ? (
-                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                              {[set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
-                            </p>
-                          ) : null}
-                        </div>
-                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/50" />
-                      </a>
-                    ))}
+        <div className="mt-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)] lg:items-start lg:gap-10">
+          {featuredSet ? (
+            <section>
+              <SectionTitle>Latest DJ Sets</SectionTitle>
+              <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25">
+                <a
+                  href={featuredSet.platformUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.03] sm:gap-5 sm:p-5"
+                >
+                  <div className="relative aspect-square w-[120px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[140px]">
+                    {featuredSet.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={featuredSet.imageUrl}
+                        alt={`${featuredSet.title} thumbnail`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                        <Play className="h-7 w-7 text-accent/70" />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ) : null}
+                  <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Latest DJ Set</p>
+                    <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
+                      {cleanDjSetTitle(featuredSet.title, artist.artistName)}
+                    </h3>
+                    {(featuredSet.venue ?? featuredSet.setDate) ? (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {[featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
+                      </p>
+                    ) : null}
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
+                      Play
+                      <ExternalLink className="h-3 w-3" />
+                    </span>
+                  </div>
+                </a>
+                {recentSets.length > 0 ? (
+                  <div className="border-t border-white/[0.06] px-4 pb-2 sm:px-5">
+                    <p className="pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/35">
+                      Recent
+                    </p>
+                    <div className="divide-y divide-white/[0.04]">
+                      {recentSets.map((set, index) => (
+                        <a
+                          key={set.id}
+                          href={set.platformUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 py-2.5 transition-colors hover:text-foreground"
+                        >
+                          <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/25">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-foreground/85">{cleanDjSetTitle(set.title, artist.artistName)}</p>
+                            {(set.venue ?? set.setDate) ? (
+                              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                {[set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
+                              </p>
+                            ) : null}
+                          </div>
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/50" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
+          <section className={cn(
+            "relative overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-5 shadow-lg shadow-black/25 sm:p-6",
+            featuredSet ? "mt-8 lg:mt-0" : "lg:col-span-2",
+          )}>
+            <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.012]" />
+            <div className="relative">
+              <SectionTitle>Booking</SectionTitle>
+              <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl">
+                Bring {artist.artistName} to your next room.
+              </p>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Press kit, photos, and booking contact for promoters and venues.
+              </p>
+              <div className="mt-5 flex flex-col gap-3">
+                {hasPressKit ? (
+                  <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
+                    <a href={artist.pressKit.downloadUrl}>
+                      <Download className="h-4 w-4" />
+                      Download press kit
+                    </a>
+                  </Button>
+                ) : (
+                  <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
+                    <a href={`mailto:${artist.bookingInfo.email}`}>
+                      <Mail className="h-4 w-4" />
+                      Book this artist
+                    </a>
+                  </Button>
+                )}
+                <a href={`mailto:${artist.bookingInfo.email}`} className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground">
+                  {artist.bookingInfo.email}
+                </a>
+              </div>
             </div>
           </section>
-        ) : null}
-
-        <section className="mt-8 lg:mt-10 relative overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-5 shadow-lg shadow-black/25 sm:p-6">
-          <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.012]" />
-          <div className="relative">
-            <SectionTitle>Booking</SectionTitle>
-            <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl">
-              Bring {artist.artistName} to your next room.
-            </p>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Press kit, photos, and booking contact for promoters and venues.
-            </p>
-            <div className="mt-5 flex flex-col gap-3">
-              {hasPressKit ? (
-                <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
-                  <a href={artist.pressKit.downloadUrl}>
-                    <Download className="h-4 w-4" />
-                    Download press kit
-                  </a>
-                </Button>
-              ) : (
-                <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
-                  <a href={`mailto:${artist.bookingInfo.email}`}>
-                    <Mail className="h-4 w-4" />
-                    Book this artist
-                  </a>
-                </Button>
-              )}
-              <a href={`mailto:${artist.bookingInfo.email}`} className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground">
-                {artist.bookingInfo.email}
-              </a>
-            </div>
-          </div>
-        </section>
+        </div>
 
         <footer className="py-10 text-center sm:py-12">
           <Link
