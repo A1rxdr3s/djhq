@@ -5,6 +5,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import {
+  ChevronRight,
   Download,
   ExternalLink,
   Globe,
@@ -680,7 +681,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </div>
 
         {selectedReleases.length > 0 ? (
-          <section className="mt-8 lg:mt-10">
+          <section className="mt-10 lg:mt-12">
             <SectionTitle>Selected Releases</SectionTitle>
             <div className="relative mt-4">
               <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
@@ -735,17 +736,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   )
                 })}
               </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-background/80 sm:w-20" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex w-20 items-center justify-end bg-gradient-to-r from-transparent to-background/85 pr-2 sm:w-28 sm:pr-3">
+                <ChevronRight className="h-4 w-4 text-foreground/20" />
+              </div>
             </div>
           </section>
         ) : null}
 
         {(featuredVideo ?? featuredSet) ? (
-          <div className="mt-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(340px,1fr)] lg:items-start lg:gap-6">
-            {featuredVideo ? (
-              <section className={cn(!featuredSet && "lg:col-span-2")}>
-                <SectionTitle>Featured Videos</SectionTitle>
-                <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25">
+          <section className="mt-10 lg:mt-14">
+            <SectionTitle>Live Performance</SectionTitle>
+            <div
+              className={cn(
+                "mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25",
+                featuredVideo && featuredSet &&
+                  "lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(340px,1fr)] lg:divide-x lg:divide-white/[0.06]",
+              )}
+            >
+              {featuredVideo ? (
+                <div>
                   <a
                     href={featuredVideo.platformUrl}
                     target="_blank"
@@ -831,13 +840,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </div>
                   ) : null}
                 </div>
-              </section>
-            ) : null}
+              ) : null}
 
-            {featuredSet ? (
-              <section className={cn(featuredVideo ? "mt-6 lg:mt-0" : "lg:col-span-2")}>
-                <SectionTitle>Latest DJ Sets</SectionTitle>
-                <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25">
+              {featuredSet ? (
+                <div className={cn(featuredVideo && "border-t border-white/[0.06] lg:border-t-0")}>
                   <a
                     href={featuredSet.platformUrl}
                     target="_blank"
@@ -906,22 +912,24 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </div>
                   ) : null}
                 </div>
-              </section>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          </section>
         ) : null}
 
-        <section className="mt-8 lg:mt-10 relative overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-5 shadow-lg shadow-black/25 sm:p-6">
+        <section className="relative mt-12 overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-6 shadow-lg shadow-black/25 sm:p-8 lg:mt-16 lg:p-10">
           <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.012]" />
-          <div className="relative">
-            <SectionTitle>Booking</SectionTitle>
-            <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl">
-              Bring {artist.artistName} to your next room.
-            </p>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Press kit, photos, and booking contact for promoters and venues.
-            </p>
-            <div className="mt-5 flex flex-col gap-3">
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
+            <div className="lg:max-w-xl">
+              <SectionTitle>Booking</SectionTitle>
+              <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl lg:text-[1.75rem]">
+                Bring {artist.artistName} to your next room.
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground lg:mt-3">
+                Press kit, photos, and booking contact for promoters and venues.
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3 lg:shrink-0 lg:items-end">
               {hasPressKit ? (
                 <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
                   <a href={artist.pressKit.downloadUrl}>
@@ -937,7 +945,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </a>
                 </Button>
               )}
-              <a href={`mailto:${artist.bookingInfo.email}`} className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground">
+              <a href={`mailto:${artist.bookingInfo.email}`} className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground lg:text-right">
                 {artist.bookingInfo.email}
               </a>
             </div>
