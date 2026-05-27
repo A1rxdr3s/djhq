@@ -304,10 +304,11 @@ function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetada
 
 type DashboardClientProps = {
   initialArtist: Artist
+  isAdmin?: boolean
   statusMessage?: string
 }
 
-export default function DashboardClient({ initialArtist, statusMessage }: DashboardClientProps) {
+export default function DashboardClient({ initialArtist, isAdmin = false, statusMessage }: DashboardClientProps) {
   const [artist, setArtist] = useState<Artist>(initialArtist)
   const initialSocialLinks = getSocialLinkFormState(artist)
   const initialFeaturedRelease = getFeaturedReleaseFormState(artist)
@@ -350,6 +351,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [addDomainError, setAddDomainError] = useState("")
   const [isVerifyingDomainId, setIsVerifyingDomainId] = useState<string | null>(null)
   const [isRemovingDomainId, setIsRemovingDomainId] = useState<string | null>(null)
+  const [isActivatingDomainId, setIsActivatingDomainId] = useState<string | null>(null)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -2377,6 +2379,30 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
+  async function handleActivateDomain(domainId: string) {
+    setIsActivatingDomainId(domainId)
+
+    try {
+      const response = await fetch(`/api/custom-domains/${domainId}/activate-as-admin`, {
+        method: "POST",
+      })
+
+      if (response.ok) {
+        setCustomDomains((current) =>
+          current.map((d) =>
+            d.id === domainId
+              ? { ...d, status: "active", addedToVercelAt: new Date().toISOString() }
+              : d,
+          ),
+        )
+      }
+    } catch {
+      // Silently fail — status badge remains as verified
+    } finally {
+      setIsActivatingDomainId(null)
+    }
+  }
+
   async function handleRemoveDomain(domainId: string) {
     setIsRemovingDomainId(domainId)
 
@@ -2561,7 +2587,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             )}
 
-            {/* verified — show routing DNS instructions, no activate button */}
+            {/* verified — show routing DNS instructions + admin activate button */}
             {activeDomain.status === "verified" && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground/60">
@@ -2582,7 +2608,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </p>
                   </>
                 )}
-                <div className="pt-1">
+                <div className="flex items-center gap-3 pt-1">
+                  {isAdmin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => void handleActivateDomain(activeDomain.id)}
+                      disabled={isActivatingDomainId === activeDomain.id}
+                      className="bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      {isActivatingDomainId === activeDomain.id ? "Activating…" : "Activate domain"}
+                    </Button>
+                  )}
                   <button
                     type="button"
                     onClick={() => void handleRemoveDomain(activeDomain.id)}
