@@ -168,6 +168,19 @@ function formatReleaseDate(releaseDate: string): string | null {
   })
 }
 
+// Strips raw scraped noise from SoundCloud/platform titles for editorial display.
+// Removes leading "ARTIST –/—/- " prefix and trailing " by ARTIST" or " –/—/- ARTIST".
+// Deterministic regex only — no AI, no heuristics.
+function cleanDjSetTitle(title: string, artistName: string): string {
+  if (!title.trim()) return title
+  const escaped = artistName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  let cleaned = title.trim()
+  cleaned = cleaned.replace(new RegExp(`^${escaped}\\s*[–—-]\\s+`, "i"), "").trim()
+  cleaned = cleaned.replace(new RegExp(`\\s+by\\s+${escaped}\\s*$`, "i"), "").trim()
+  cleaned = cleaned.replace(new RegExp(`\\s*[–—-]\\s*${escaped}\\s*$`, "i"), "").trim()
+  return cleaned || title.trim()
+}
+
 function mapReleaseRow(row: ReleaseRow): Release {
   return {
     id: row.id,
@@ -743,7 +756,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 rel="noopener noreferrer"
                 className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.03] sm:gap-5 sm:p-5"
               >
-                <div className="relative aspect-square w-[88px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[100px]">
+                <div className="relative aspect-square w-[120px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[140px]">
                   {featuredSet.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -758,9 +771,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   )}
                 </div>
                 <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Latest Set</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Latest DJ Set</p>
                   <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
-                    {featuredSet.title}
+                    {cleanDjSetTitle(featuredSet.title, artist.artistName)}
                   </h3>
                   {(featuredSet.venue ?? featuredSet.setDate) ? (
                     <p className="mt-0.5 text-xs text-muted-foreground">
@@ -785,13 +798,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         href={set.platformUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 py-3 transition-colors hover:text-foreground"
+                        className="flex items-center gap-3 py-2.5 transition-colors hover:text-foreground"
                       >
                         <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/25">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground/85">{set.title}</p>
+                          <p className="truncate text-sm font-medium text-foreground/85">{cleanDjSetTitle(set.title, artist.artistName)}</p>
                           {(set.venue ?? set.setDate) ? (
                             <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
                               {[set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
