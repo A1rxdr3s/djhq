@@ -32,6 +32,7 @@ export const mockArtist: Artist = {
   },
   selectedReleases: [],
   djSets: [],
+  videos: [],
   upcomingGigs: [
     {
       id: "gig_space_miami_2026_06_14",

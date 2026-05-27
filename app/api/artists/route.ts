@@ -54,6 +54,15 @@ type SaveDjSetPayload = {
   isPublished: boolean
 }
 
+type SaveVideoPayload = {
+  title: string
+  venue?: string
+  videoDate?: string
+  thumbnailUrl?: string
+  platformUrl: string
+  isPublished: boolean
+}
+
 type SaveArtistPayload = {
   artistId: string
   isPublished: boolean
@@ -63,6 +72,7 @@ type SaveArtistPayload = {
   selectedReleases: SaveSelectedReleasePayload[]
   gigs: SaveGigPayload[]
   djSets: SaveDjSetPayload[]
+  videos: SaveVideoPayload[]
 }
 
 type CreateArtistPayload = {
@@ -141,6 +151,12 @@ function validatePayload(payload: SaveArtistPayload) {
 
   if (invalidDjSet) {
     return "Each DJ set must include a title and platform URL."
+  }
+
+  const invalidVideo = payload.videos.find((video) => !video.title.trim() || !video.platformUrl.trim())
+
+  if (invalidVideo) {
+    return "Each video must include a title and platform URL."
   }
 
   const invalidSelectedRelease = payload.selectedReleases.find(
@@ -468,6 +484,31 @@ export async function PATCH(request: Request) {
 
       if (insertDjSetsError) {
         throw insertDjSetsError
+      }
+    }
+
+    const { error: deleteVideosError } = await supabase.from("videos").delete().eq("artist_id", artistId)
+
+    if (deleteVideosError) {
+      throw deleteVideosError
+    }
+
+    if (payload.videos.length > 0) {
+      const { error: insertVideosError } = await supabase.from("videos").insert(
+        payload.videos.map((video, index) => ({
+          artist_id: artistId,
+          title: video.title.trim(),
+          venue: video.venue?.trim() || null,
+          video_date: video.videoDate || null,
+          thumbnail_url: video.thumbnailUrl?.trim() || null,
+          platform_url: video.platformUrl.trim(),
+          sort_order: index + 1,
+          is_published: video.isPublished,
+        })),
+      )
+
+      if (insertVideosError) {
+        throw insertVideosError
       }
     }
 

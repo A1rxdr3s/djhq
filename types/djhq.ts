@@ -101,6 +101,28 @@ export interface DjSet {
 }
 
 /**
+ * Video shown on the public artist profile (YouTube/Vimeo performance content).
+ */
+export interface Video {
+  /** Stable unique identifier. */
+  id: string
+  /** Video title (e.g. "Live at Fabric" or "Aftermovie – Watergate Berlin"). */
+  title: string
+  /** Venue or event name. */
+  venue?: string
+  /** Recording or event date in ISO-8601 format. */
+  videoDate?: string
+  /** Thumbnail image URL. */
+  thumbnailUrl?: string
+  /** Platform URL (YouTube, Vimeo, etc.). */
+  platformUrl: string
+  /** Display sort position. */
+  sortOrder: number
+  /** Whether the video is visible on the public profile. */
+  isPublished: boolean
+}
+
+/**
  * Press/gallery image metadata for profile previews.
  */
 export interface GalleryImage {
@@ -176,6 +198,8 @@ export interface Artist {
   upcomingGigs: Gig[]
   /** Recorded DJ sets shown on the profile. */
   djSets: DjSet[]
+  /** Featured videos shown on the profile. */
+  videos: Video[]
   /** Gallery preview images. */
   galleryImages: GalleryImage[]
   /** Booking configuration and contact info. */

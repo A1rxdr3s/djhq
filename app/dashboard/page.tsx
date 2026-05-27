@@ -3,7 +3,7 @@ import DashboardClient from "./dashboard-client"
 import OnboardingForm from "./onboarding-form"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import type { Artist, ReleaseType, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
+import type { Artist, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 
 const mvpArtistHandle = "andresherrera"
 
@@ -71,6 +71,17 @@ type DjSetRow = {
   venue: string | null
   set_date: string | null
   image_url: string | null
+  platform_url: string
+  sort_order: number
+  is_published: boolean
+}
+
+type VideoRow = {
+  id: string
+  title: string
+  venue: string | null
+  video_date: string | null
+  thumbnail_url: string | null
   platform_url: string
   sort_order: number
   is_published: boolean
@@ -154,7 +165,7 @@ async function claimSeededArtist(supabase: SupabaseAdminClient, artistId: string
 }
 
 async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow: ArtistRow): Promise<Artist> {
-  const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult] = await Promise.all([
+  const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult, videosResult] = await Promise.all([
     supabase
       .from("social_links")
       .select("platform, label, url")
@@ -186,10 +197,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<DjSetRow[]>(),
+    supabase
+      .from("videos")
+      .select("id, title, venue, video_date, thumbnail_url, platform_url, sort_order, is_published")
+      .eq("artist_id", artistRow.id)
+      .order("sort_order", { ascending: true })
+      .returns<VideoRow[]>(),
   ])
 
-  if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error || djSetsResult.error) {
-    throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error ?? djSetsResult.error
+  if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error || djSetsResult.error || videosResult.error) {
+    throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error ?? djSetsResult.error ?? videosResult.error
   }
 
   const releaseRows = releasesResult.data ?? []
@@ -253,6 +270,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       platformUrl: set.platform_url,
       sortOrder: set.sort_order,
       isPublished: set.is_published,
+    })),
+    videos: (videosResult.data ?? []).map((video): Video => ({
+      id: video.id,
+      title: video.title,
+      venue: video.venue ?? undefined,
+      videoDate: video.video_date ?? undefined,
+      thumbnailUrl: video.thumbnail_url ?? undefined,
+      platformUrl: video.platform_url,
+      sortOrder: video.sort_order,
+      isPublished: video.is_published,
     })),
     galleryImages: (galleryImagesResult.data ?? []).map((image) => ({
       id: image.id,

@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowDown, ArrowUp, Calendar, ExternalLink, Globe, LogOut, Mail, Plus, Save, Trash2 } from "lucide-react"
-import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform } from "@/types/djhq"
+import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +19,7 @@ const navItems = [
   { id: "selected-releases", label: "Selected Releases" },
   { id: "gigs", label: "Gigs" },
   { id: "dj-sets", label: "DJ Sets" },
+  { id: "videos", label: "Videos" },
   { id: "gallery", label: "Gallery" },
   { id: "booking", label: "Booking" },
   { id: "publish", label: "Publish" },
@@ -83,6 +84,22 @@ type ImportedReleaseMetadata = {
   type: string | null
   platformUrl: string
   artworkUrl: string | null
+}
+
+type ImportedVideoMetadata = {
+  title: string | null
+  thumbnailUrl: string | null
+  platformUrl: string
+}
+
+type VideoFormState = {
+  id: string
+  title: string
+  venue: string
+  videoDate: string
+  thumbnailUrl: string
+  platformUrl: string
+  isPublished: boolean
 }
 
 const socialPlatforms: SocialPlatform[] = [
@@ -228,6 +245,39 @@ function createEmptyDjSet(): DjSetFormState {
   }
 }
 
+function getVideoFormState(artist: Artist): VideoFormState[] {
+  return artist.videos.map((video) => ({
+    id: video.id,
+    title: video.title,
+    venue: video.venue ?? "",
+    videoDate: video.videoDate ? toDateInputValue(video.videoDate) : "",
+    thumbnailUrl: video.thumbnailUrl ?? "",
+    platformUrl: video.platformUrl,
+    isPublished: video.isPublished,
+  }))
+}
+
+function createEmptyVideo(): VideoFormState {
+  return {
+    id: `new-${crypto.randomUUID()}`,
+    title: "",
+    venue: "",
+    videoDate: "",
+    thumbnailUrl: "",
+    platformUrl: "",
+    isPublished: true,
+  }
+}
+
+function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetadata): VideoFormState {
+  return {
+    ...current,
+    title: result.title?.trim() || current.title,
+    thumbnailUrl: result.thumbnailUrl?.trim() || current.thumbnailUrl,
+    platformUrl: result.platformUrl || current.platformUrl,
+  }
+}
+
 type DashboardClientProps = {
   initialArtist: Artist
   statusMessage?: string
@@ -252,12 +302,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const initialDjSets = getDjSetFormState(artist)
   const [djSets, setDjSets] = useState(initialDjSets)
+  const initialVideos = getVideoFormState(artist)
+  const [videos, setVideos] = useState(initialVideos)
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isImportingReleaseMetadata, setIsImportingReleaseMetadata] = useState(false)
   const [importingSelectedReleaseIndex, setImportingSelectedReleaseIndex] = useState<number | null>(null)
   const [importingDjSetIndex, setImportingDjSetIndex] = useState<number | null>(null)
+  const [importingVideoIndex, setImportingVideoIndex] = useState<number | null>(null)
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
   const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false)
   const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
@@ -279,7 +332,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
   const isGigsDirty = JSON.stringify(upcomingGigs) !== JSON.stringify(initialUpcomingGigs)
   const isDjSetsDirty = JSON.stringify(djSets) !== JSON.stringify(initialDjSets)
-  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty
+  const isVideosDirty = JSON.stringify(videos) !== JSON.stringify(initialVideos)
+  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty
   const completionItems = [
     "Core profile info",
     "Music and social links",
@@ -317,6 +371,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         selectedReleases,
         gigs: upcomingGigs,
         djSets,
+        videos,
       }),
     })
 
@@ -379,6 +434,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         sortOrder: index + 1,
         isPublished: set.isPublished,
       })),
+      videos: videos.map((video, index): Video => ({
+        id: video.id,
+        title: video.title.trim(),
+        venue: video.venue.trim() || undefined,
+        videoDate: video.videoDate || undefined,
+        thumbnailUrl: video.thumbnailUrl.trim() || undefined,
+        platformUrl: video.platformUrl.trim(),
+        sortOrder: index + 1,
+        isPublished: video.isPublished,
+      })),
       updatedAt: new Date().toISOString(),
     }
 
@@ -394,6 +459,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
     setUpcomingGigs(getGigFormState(savedArtist))
     setDjSets(getDjSetFormState(savedArtist))
+    setVideos(getVideoFormState(savedArtist))
     setGalleryImages(savedArtist.galleryImages)
     setSaveMessage(successMessage)
   }
@@ -585,6 +651,68 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function handleMoveDjSet(index: number, direction: "up" | "down") {
     setDjSets((current) => {
+      const nextIndex = direction === "up" ? index - 1 : index + 1
+
+      if (nextIndex < 0 || nextIndex >= current.length) {
+        return current
+      }
+
+      const next = [...current]
+      const [item] = next.splice(index, 1)
+      next.splice(nextIndex, 0, item)
+      return next
+    })
+  }
+
+  async function handleImportVideoMetadata(index: number) {
+    const video = videos[index]
+
+    if (!video?.platformUrl.trim()) {
+      setSaveMessage("Paste a YouTube URL first.")
+      return
+    }
+
+    setImportingVideoIndex(index)
+    setSaveMessage("")
+
+    try {
+      const response = await fetch("/api/import/video-metadata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: video.platformUrl }),
+      })
+
+      const result = (await response.json()) as ImportedVideoMetadata & { error?: string }
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Unable to import video metadata. Please verify the URL and try again.")
+      }
+
+      setVideos((current) =>
+        current.map((item, i) => (i === index ? mergeVideoMetadata(item, result) : item)),
+      )
+      setSaveMessage("Video metadata imported. Review and save changes.")
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to import video metadata. Please verify the URL and try again."
+      setSaveMessage(message)
+    } finally {
+      setImportingVideoIndex(null)
+    }
+  }
+
+  function handleAddVideo() {
+    setVideos((current) => [...current, createEmptyVideo()])
+  }
+
+  function handleRemoveVideo(index: number) {
+    setVideos((current) => current.filter((_, i) => i !== index))
+  }
+
+  function handleMoveVideo(index: number, direction: "up" | "down") {
+    setVideos((current) => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
 
       if (nextIndex < 0 || nextIndex >= current.length) {
@@ -1584,6 +1712,189 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  function renderVideos() {
+    return (
+      <Card className="border-border bg-card/70 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>Videos</CardTitle>
+          <CardDescription>YouTube performance videos shown on your public profile. First video is featured.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {videos.map((video, index) => (
+            <div key={video.id} className="rounded-md border border-border bg-secondary/30 p-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Video {index + 1}</p>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleMoveVideo(index, "up")}
+                    disabled={index === 0 || isSaving || isPublishing || importingVideoIndex !== null}
+                    className="h-7 px-2"
+                  >
+                    <ArrowUp className="h-3.5 w-3.5" />
+                    Move up
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleMoveVideo(index, "down")}
+                    disabled={index === videos.length - 1 || isSaving || isPublishing || importingVideoIndex !== null}
+                    className="h-7 px-2"
+                  >
+                    <ArrowDown className="h-3.5 w-3.5" />
+                    Move down
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRemoveVideo(index)}
+                    disabled={isSaving || isPublishing || importingVideoIndex !== null}
+                    className="h-7 px-2"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`video-title-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Title
+                  </label>
+                  <Input
+                    id={`video-title-${index}`}
+                    value={video.title}
+                    onChange={(event) =>
+                      setVideos((current) =>
+                        current.map((item, i) => (i === index ? { ...item, title: event.target.value } : item)),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`video-venue-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Venue / Event
+                  </label>
+                  <Input
+                    id={`video-venue-${index}`}
+                    value={video.venue}
+                    onChange={(event) =>
+                      setVideos((current) =>
+                        current.map((item, i) => (i === index ? { ...item, venue: event.target.value } : item)),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`video-date-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Date
+                  </label>
+                  <Input
+                    id={`video-date-${index}`}
+                    type="date"
+                    value={video.videoDate}
+                    onChange={(event) =>
+                      setVideos((current) =>
+                        current.map((item, i) => (i === index ? { ...item, videoDate: event.target.value } : item)),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`video-platform-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Platform URL
+                  </label>
+                  <Input
+                    id={`video-platform-${index}`}
+                    value={video.platformUrl}
+                    onChange={(event) =>
+                      setVideos((current) =>
+                        current.map((item, i) => (i === index ? { ...item, platformUrl: event.target.value } : item)),
+                      )
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleImportVideoMetadata(index)}
+                    disabled={importingVideoIndex === index || isSaving || isPublishing}
+                    className="border-border bg-background/70"
+                  >
+                    {importingVideoIndex === index ? "Fetching..." : "Import metadata"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Paste a youtube.com link. Title and thumbnail are filled from public YouTube data when available.
+                  </p>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`video-thumbnail-${index}`}
+                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    >
+                      Thumbnail URL
+                    </label>
+                    <Input
+                      id={`video-thumbnail-${index}`}
+                      value={video.thumbnailUrl}
+                      onChange={(event) =>
+                        setVideos((current) =>
+                          current.map((item, i) => (i === index ? { ...item, thumbnailUrl: event.target.value } : item)),
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="md:col-span-2 flex items-center gap-2">
+                  <input
+                    id={`video-published-${index}`}
+                    type="checkbox"
+                    checked={video.isPublished}
+                    onChange={(event) =>
+                      setVideos((current) =>
+                        current.map((item, i) => (i === index ? { ...item, isPublished: event.target.checked } : item)),
+                      )
+                    }
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  <label htmlFor={`video-published-${index}`} className="text-sm text-foreground">
+                    Show on public profile
+                  </label>
+                </div>
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddVideo}
+            disabled={isSaving || isPublishing || importingVideoIndex !== null}
+            className="border-border bg-background/70"
+          >
+            <Plus className="h-4 w-4" />
+            Add video
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
   function renderGallery() {
     return (
       <Card className="border-border bg-card/70 backdrop-blur-sm">
@@ -1783,6 +2094,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderGigs()
       case "dj-sets":
         return renderDjSets()
+      case "videos":
+        return renderVideos()
       case "gallery":
         return renderGallery()
       case "booking":
@@ -1842,6 +2155,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 isPublishing ||
                 isImportingReleaseMetadata ||
                 importingSelectedReleaseIndex !== null ||
+                importingVideoIndex !== null ||
                 isUploadingHeroImage ||
                 isUploadingGalleryImage
               }

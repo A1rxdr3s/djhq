@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
-import type { Artist, DjSet, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
+import type { Artist, DjSet, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -92,6 +92,16 @@ type DjSetRow = {
   venue: string | null
   set_date: string | null
   image_url: string | null
+  platform_url: string
+  sort_order: number
+}
+
+type VideoRow = {
+  id: string
+  title: string
+  venue: string | null
+  video_date: string | null
+  thumbnail_url: string | null
   platform_url: string
   sort_order: number
 }
@@ -222,7 +232,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       return null
     }
 
-    const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult] = await Promise.all([
+    const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult, videosResult] = await Promise.all([
       supabase
         .from("social_links")
         .select("platform, label, url")
@@ -257,6 +267,15 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .order("set_date", { ascending: false })
         .limit(4)
         .returns<DjSetRow[]>(),
+      supabase
+        .from("videos")
+        .select("id, title, venue, video_date, thumbnail_url, platform_url, sort_order")
+        .eq("artist_id", artistRow.id)
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true })
+        .order("video_date", { ascending: false })
+        .limit(3)
+        .returns<VideoRow[]>(),
     ])
 
     if (
@@ -264,14 +283,16 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       releasesResult.error ||
       gigsResult.error ||
       galleryImagesResult.error ||
-      djSetsResult.error
+      djSetsResult.error ||
+      videosResult.error
     ) {
       throw (
         socialLinksResult.error ??
         releasesResult.error ??
         gigsResult.error ??
         galleryImagesResult.error ??
-        djSetsResult.error
+        djSetsResult.error ??
+        videosResult.error
       )
     }
 
@@ -314,6 +335,18 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
           venue: row.venue ?? undefined,
           setDate: row.set_date ?? undefined,
           imageUrl: row.image_url ?? undefined,
+          platformUrl: row.platform_url,
+          sortOrder: row.sort_order,
+          isPublished: true,
+        }),
+      ),
+      videos: (videosResult.data ?? []).map(
+        (row): Video => ({
+          id: row.id,
+          title: row.title,
+          venue: row.venue ?? undefined,
+          videoDate: row.video_date ?? undefined,
+          thumbnailUrl: row.thumbnail_url ?? undefined,
           platformUrl: row.platform_url,
           sortOrder: row.sort_order,
           isPublished: true,
@@ -421,6 +454,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 4)
+  const featuredVideo = artist.videos[0] ?? null
+  const secondaryVideos = artist.videos.slice(1, 3)
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -701,6 +736,100 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 })}
               </div>
               <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-background/80 sm:w-20" />
+            </div>
+          </section>
+        ) : null}
+
+        {featuredVideo ? (
+          <section className="mt-8 lg:mt-10">
+            <SectionTitle>Featured Videos</SectionTitle>
+            <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25">
+              <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(260px,0.7fr)] lg:divide-x lg:divide-white/[0.06]">
+                <a
+                  href={featuredVideo.platformUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block p-4 transition-colors hover:bg-white/[0.02] sm:p-5"
+                >
+                  <div className="relative aspect-video overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
+                    {featuredVideo.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={featuredVideo.thumbnailUrl}
+                        alt={`${featuredVideo.title} thumbnail`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                        <Play className="h-10 w-10 text-accent/60" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+                      <Play className="h-10 w-10 text-white/80" />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Featured Video</p>
+                    <h3 className="mt-1 text-balance text-base font-bold leading-tight text-foreground sm:text-lg">
+                      {featuredVideo.title}
+                    </h3>
+                    {(featuredVideo.venue ?? featuredVideo.videoDate) ? (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {[featuredVideo.venue, formatReleaseDate(featuredVideo.videoDate ?? "")].filter(Boolean).join(" · ")}
+                      </p>
+                    ) : null}
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
+                      Watch
+                      <ExternalLink className="h-3 w-3" />
+                    </span>
+                  </div>
+                </a>
+                {secondaryVideos.length > 0 ? (
+                  <div className="divide-y divide-white/[0.06] border-t border-white/[0.06] lg:border-t-0">
+                    {secondaryVideos.map((video) => (
+                      <a
+                        key={video.id}
+                        href={video.platformUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex gap-3 p-4 transition-colors hover:bg-white/[0.02]"
+                      >
+                        <div className="relative aspect-video w-[88px] shrink-0 overflow-hidden rounded-lg bg-secondary shadow-sm shadow-black/25 sm:w-[96px]">
+                          {video.thumbnailUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={video.thumbnailUrl}
+                              alt={`${video.title} thumbnail`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                              <Play className="h-4 w-4 text-accent/60" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+                            <Play className="h-4 w-4 text-white/80" />
+                          </div>
+                        </div>
+                        <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                          <p className="line-clamp-2 text-sm font-medium leading-tight text-foreground/85 group-hover:text-foreground">
+                            {video.title}
+                          </p>
+                          {(video.venue ?? video.videoDate) ? (
+                            <p className="truncate text-[11px] text-muted-foreground">
+                              {[video.venue, formatReleaseDate(video.videoDate ?? "")].filter(Boolean).join(" · ")}
+                            </p>
+                          ) : null}
+                          <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-accent/70">
+                            Watch
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </section>
         ) : null}
