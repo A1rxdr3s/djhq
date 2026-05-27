@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowDown, ArrowUp, Calendar, ExternalLink, Globe, LogOut, Mail, Plus, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Calendar, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
 import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -337,6 +337,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
   const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
   const [isReorderingGallery, setIsReorderingGallery] = useState(false)
+  const [savedRecently, setSavedRecently] = useState(false)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -352,15 +353,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const isDjSetsDirty = JSON.stringify(djSets) !== JSON.stringify(initialDjSets)
   const isVideosDirty = JSON.stringify(videos) !== JSON.stringify(initialVideos)
   const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty
-  const completionItems = [
-    "Core profile info",
-    "Music and social links",
-    "Featured release",
-    "Selected releases",
-    "Upcoming gigs",
-    "Gallery preview",
-    "Booking and press kit",
-  ]
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
@@ -484,10 +476,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   async function handleSaveChanges() {
     setIsSaving(true)
+    setSavedRecently(false)
     setSaveMessage("")
 
     try {
-      await persistArtistChanges(artist.isPublished, "Changes saved to Supabase.")
+      await persistArtistChanges(artist.isPublished, "Changes saved.")
+      setSavedRecently(true)
+      setTimeout(() => setSavedRecently(false), 2500)
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to save changes."
       setSaveMessage(message)
@@ -920,6 +915,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderOverview() {
     const releaseCount = artist.selectedReleases.length + (artist.featuredRelease ? 1 : 0)
+    const completionChecks = [
+      { label: "Name & handle", done: !!artist.artistName && !!artist.handle },
+      { label: "Bio & location", done: !!artist.shortBio && !!artist.location },
+      { label: "Social links", done: artist.socialLinks.length > 0 },
+      { label: "Featured release", done: !!artist.featuredRelease },
+      { label: "Selected releases", done: artist.selectedReleases.length > 0 },
+      { label: "DJ sets", done: artist.djSets.length > 0 },
+      { label: "Videos", done: artist.videos.length > 0 },
+      { label: "Gallery images", done: artist.galleryImages.length > 0 },
+      { label: "Hero image", done: !!artist.heroImageUrl && !artist.heroImageUrl.includes("dj-hero") && !artist.heroImageUrl.includes("placeholder") },
+    ]
+    const completionDone = completionChecks.filter((c) => c.done).length
+    const completionPct = Math.round((completionDone / completionChecks.length) * 100)
+
     return (
       <div className="space-y-4">
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
@@ -968,13 +977,53 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           ))}
         </div>
 
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Last updated</p>
+            <p className="mt-1 text-sm text-foreground/70">
+              {new Date(artist.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Visibility</p>
+            <p className="mt-1 text-sm text-foreground/70">
+              {artist.isPublished ? "Public — visible to anyone" : "Draft — not publicly visible"}
+            </p>
+          </div>
+          {(artist.featuredRelease || artist.selectedReleases[0]) && (
+            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Latest release</p>
+              <p className="mt-1 truncate text-sm text-foreground/70">
+                {artist.featuredRelease?.title ?? artist.selectedReleases[0]?.title}
+              </p>
+            </div>
+          )}
+          {artist.videos[0] && (
+            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Latest video</p>
+              <p className="mt-1 truncate text-sm text-foreground/70">{artist.videos[0].title}</p>
+            </div>
+          )}
+        </div>
+
         <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Profile Checklist</p>
-          <div className="mt-3 space-y-2.5">
-            {completionItems.map((item) => (
-              <div key={item} className="flex items-center gap-2.5 text-sm text-foreground/70">
-                <div className="h-1 w-1 shrink-0 rounded-full bg-accent/40" />
-                {item}
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Profile completeness</p>
+            <p className="text-sm font-bold tabular-nums text-foreground">{completionPct}%</p>
+          </div>
+          <div className="mt-3 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
+            <div
+              className="h-full rounded-full bg-accent/50 transition-all duration-500"
+              style={{ width: `${completionPct}%` }}
+            />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+            {completionChecks.map((check) => (
+              <div key={check.label} className="flex items-center gap-1.5">
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${check.done ? "bg-accent/60" : "bg-white/[0.08]"}`} />
+                <span className={`text-xs ${check.done ? "text-foreground/60" : "text-muted-foreground/35"}`}>
+                  {check.label}
+                </span>
               </div>
             ))}
           </div>
@@ -1259,11 +1308,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           {selectedReleases.map((release, index) => (
             <div key={release.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent">
-                    {index + 1}
-                  </span>
-                  <span className="text-xs text-muted-foreground/50">Release</span>
+                <div className="flex items-center gap-2.5">
+                  {release.artworkUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={release.artworkUrl} alt="" className="h-9 w-9 shrink-0 rounded object-cover opacity-90" />
+                  ) : (
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
+                      <Music className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium leading-none text-foreground">{release.title || <span className="text-muted-foreground/30">Untitled</span>}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Release {index + 1}</p>
+                  </div>
                 </div>
                 <div className="flex gap-0.5">
                   <Button
@@ -1454,6 +1511,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
+          {selectedReleases.length === 0 && (
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
+              <Music className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+              <p className="text-sm font-medium text-muted-foreground/50">No releases in catalog</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">Add releases to showcase your discography on your profile.</p>
+            </div>
+          )}
           <button
             type="button"
             onClick={handleAddSelectedRelease}
@@ -1562,6 +1626,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
+          {upcomingGigs.length === 0 && (
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
+              <Calendar className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+              <p className="text-sm font-medium text-muted-foreground/50">No upcoming gigs</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">Your confirmed shows will appear here.</p>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -1578,11 +1649,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           {djSets.map((set, index) => (
             <div key={set.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent">
-                    {index + 1}
-                  </span>
-                  <span className="text-xs text-muted-foreground/50">Set</span>
+                <div className="flex items-center gap-2.5">
+                  {set.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={set.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded object-cover opacity-90" />
+                  ) : (
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
+                      <Headphones className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium leading-none text-foreground">{set.title || <span className="text-muted-foreground/30">Untitled</span>}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Set {index + 1}{index === 0 ? " · Featured" : ""}</p>
+                  </div>
                 </div>
                 <div className="flex gap-0.5">
                   <Button
@@ -1738,6 +1817,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
+          {djSets.length === 0 && (
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
+              <Headphones className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+              <p className="text-sm font-medium text-muted-foreground/50">No sets added</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">Paste a SoundCloud link to import your recorded sets.</p>
+            </div>
+          )}
           <button
             type="button"
             onClick={handleAddDjSet}
@@ -1763,11 +1849,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           {videos.map((video, index) => (
             <div key={video.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent">
-                    {index + 1}
-                  </span>
-                  <span className="text-xs text-muted-foreground/50">Video</span>
+                <div className="flex items-center gap-2.5">
+                  {video.thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={video.thumbnailUrl} alt="" className="h-9 w-16 shrink-0 rounded object-cover opacity-90" />
+                  ) : (
+                    <span className="flex h-9 w-16 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
+                      <Play className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium leading-none text-foreground">{video.title || <span className="text-muted-foreground/30">Untitled</span>}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Video {index + 1}{index === 0 ? " · Featured" : ""}</p>
+                  </div>
                 </div>
                 <div className="flex gap-0.5">
                   <Button
@@ -1923,6 +2017,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
+          {videos.length === 0 && (
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
+              <Play className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+              <p className="text-sm font-medium text-muted-foreground/50">No videos added</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">Paste a YouTube link to import your performance videos.</p>
+            </div>
+          )}
           <button
             type="button"
             onClick={handleAddVideo}
@@ -2233,15 +2334,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               isUploadingGalleryImage
             }
             onClick={handleSaveChanges}
-            className="bg-accent text-accent-foreground hover:bg-accent/90"
+            className={`relative transition-all duration-200 ${
+              isSaving
+                ? "bg-accent/60 text-accent-foreground/70"
+                : isSaveDirty
+                  ? "bg-accent text-accent-foreground shadow-sm shadow-accent/20 hover:bg-accent/90"
+                  : "bg-accent text-accent-foreground hover:bg-accent/90"
+            }`}
           >
+            {isSaveDirty && !isSaving && (
+              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-foreground ring-[1.5px] ring-background" />
+            )}
             <Save className="h-4 w-4" />
-            {isSaving ? "Saving…" : "Save"}
+            {isSaving ? "Saving…" : savedRecently && !isSaveDirty ? "Saved" : "Save"}
           </Button>
         </div>
         {(saveMessage || statusMessage) ? (
           <div className="border-t border-white/[0.04] px-4 py-1.5 sm:px-6">
-            <p className="text-xs text-muted-foreground">{saveMessage || statusMessage}</p>
+            <p className={`text-xs ${saveMessage && !saveMessage.startsWith("Changes") && !saveMessage.startsWith("Release") && !saveMessage.startsWith("DJ set") && !saveMessage.startsWith("Video") && !saveMessage.startsWith("Gallery") ? "text-destructive/70" : "text-muted-foreground"}`}>
+              {saveMessage || statusMessage}
+            </p>
           </div>
         ) : null}
       </header>
@@ -2280,13 +2392,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         type="button"
                         aria-pressed={activeSection === item.id}
                         onClick={() => setActiveSection(item.id)}
-                        className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                        className={`relative w-full rounded-md py-2 text-left text-sm transition-all duration-150 ${
                           activeSection === item.id
-                            ? "bg-accent/10 font-medium text-accent"
+                            ? "bg-accent/[0.08] font-medium text-foreground"
                             : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
                         }`}
                       >
-                        {item.label}
+                        {activeSection === item.id && (
+                          <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-accent" />
+                        )}
+                        <span className="block px-3">{item.label}</span>
                       </button>
                     ))}
                   </div>
