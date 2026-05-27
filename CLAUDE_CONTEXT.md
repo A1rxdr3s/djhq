@@ -70,16 +70,29 @@ Pro users:
 
 # Custom Domains (Pro)
 
-Approved direction:
+Current state: Phase C (automatic Vercel provisioning).
 
-- Phase A (current): manual team-managed custom domains.
-  - DJHQ team adds domains in Vercel project settings and inserts rows into `custom_domains`.
-  - Next.js middleware at project root (`middleware.ts`) reads the request host and rewrites to `/[handle]`.
-  - No self-serve UI for adding domains yet.
-  - No automated DNS verification yet.
-- Phase B (future): self-serve dashboard domain management + Vercel API integration.
+Lifecycle:
+1. Pro user adds an apex domain in the dashboard.
+2. Domain row created with `status = pending`. TXT + CNAME DNS records shown.
+3. User adds TXT ownership record to their DNS.
+4. User clicks "Check verification" in the dashboard.
+5. `POST /api/custom-domains/verify` resolves the TXT record server-side.
+   - TXT not found → `status = error`, user retries.
+   - TXT found → calls `addDomainToVercel(domain)` from `lib/vercel-domains.ts`.
+     - Vercel succeeds → `status = active`, domain is live.
+     - Vercel fails → `status = error` with provisioning error message, user retries.
+6. Middleware serves requests for `status = active` domains only.
 
 The canonical `/[handle]` URL always works for all users, regardless of custom domain status.
+
+Manual recovery routes (`/api/custom-domains/[id]/activate` and `/activate-as-admin`) are
+kept for internal use only — they are not surfaced in the normal dashboard UI.
+
+Required env vars (server-only):
+- `VERCEL_API_TOKEN`
+- `VERCEL_PROJECT_ID`
+- `VERCEL_TEAM_ID` (optional, for team-scoped projects)
 
 ---
 

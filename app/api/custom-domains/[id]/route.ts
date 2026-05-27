@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { removeDomainFromVercel } from "@/lib/vercel-domains"
 
 type DomainRow = {
   id: string
+  domain: string
   status: string
   artist_id: string
 }
@@ -35,7 +37,7 @@ export async function DELETE(
 
   const { data: domainRow, error: domainError } = await admin
     .from("custom_domains")
-    .select("id, status, artist_id")
+    .select("id, domain, status, artist_id")
     .eq("id", id)
     .maybeSingle<DomainRow>()
 
@@ -66,7 +68,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Not authorized." }, { status: 403 })
   }
 
-  // Soft-delete — row kept for audit trail. DJHQ team will remove from Vercel manually.
+  // Best-effort Vercel cleanup — never blocks the request if it fails
+  await removeDomainFromVercel(domainRow.domain)
+
+  // Soft-delete — row kept for audit trail
   const { error: updateError } = await admin
     .from("custom_domains")
     .update({

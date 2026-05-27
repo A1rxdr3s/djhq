@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server"
-import { resolveTxt, resolve4, resolveCname } from "dns/promises"
+import { resolveTxt } from "dns/promises"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { addDomainToVercel } from "@/lib/vercel-domains"
 
-const VERCEL_IPV4 = "76.76.21.21"
-const VERCEL_CNAME = "cname.vercel-dns.com"
 const MAX_ATTEMPTS_PER_HOUR = 10
 
 type DomainRow = {
@@ -20,20 +19,6 @@ type DomainRow = {
 type ArtistRow = {
   owner_user_id: string | null
   plan: string
-}
-
-async function checkRoutingDns(domain: string): Promise<boolean> {
-  try {
-    const aRecords = await resolve4(domain)
-    if (aRecords.includes(VERCEL_IPV4)) return true
-  } catch { /* not an A record — try CNAME */ }
-
-  try {
-    const cnames = await resolveCname(domain)
-    if (cnames.some((c) => c.replace(/\.$/, "") === VERCEL_CNAME)) return true
-  } catch { /* no CNAME */ }
-
-  return false
 }
 
 export async function POST(request: Request) {
@@ -137,36 +122,50 @@ export async function POST(request: Request) {
     // DNS query failed or record doesn't exist — treat as not found
   }
 
-  if (txtFound) {
-    const routingDnsOk = await checkRoutingDns(domainRow.domain)
+  if (!txtFound) {
+    const errorMessage =
+      "TXT record not found. Add the record to your DNS and allow up to 48 hours for propagation, then try again."
 
     await admin
       .from("custom_domains")
+      .update({ status: "error", error_message: errorMessage })
+      .eq("id", domainId)
+
+    return NextResponse.json({ success: false, status: "error", error: errorMessage }, { status: 400 })
+  }
+
+  // TXT ownership verified — attempt immediate Vercel provisioning
+  const verifiedAt = new Date().toISOString()
+  const vercelResult = await addDomainToVercel(domainRow.domain)
+
+  if (vercelResult.ok) {
+    await admin
+      .from("custom_domains")
       .update({
-        status: "verified",
-        verified_at: new Date().toISOString(),
+        status: "active",
+        verified_at: verifiedAt,
+        added_to_vercel_at: new Date().toISOString(),
         error_message: null,
       })
       .eq("id", domainId)
 
-    return NextResponse.json({
-      status: "verified",
-      routingDnsOk,
-      message: "DNS ownership verified. Your domain is queued for activation by the DJHQ team.",
-    })
+    return NextResponse.json({ success: true, status: "active" })
   }
 
-  // TXT not found — set error, never leave stuck at verifying
-  const errorMessage =
-    "TXT record not found. Check your DNS settings and allow up to 48 hours for propagation."
+  // Vercel provisioning failed — surface error clearly so user can retry
+  const vercelError = `Provisioning failed: ${vercelResult.error} — please try again or contact support.`
 
   await admin
     .from("custom_domains")
     .update({
       status: "error",
-      error_message: errorMessage,
+      verified_at: verifiedAt,
+      error_message: vercelError,
     })
     .eq("id", domainId)
 
-  return NextResponse.json({ error: errorMessage, status: "error" }, { status: 400 })
+  return NextResponse.json(
+    { success: false, status: "error", error: vercelError },
+    { status: 500 },
+  )
 }

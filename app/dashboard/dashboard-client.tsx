@@ -304,11 +304,10 @@ function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetada
 
 type DashboardClientProps = {
   initialArtist: Artist
-  isAdmin?: boolean
   statusMessage?: string
 }
 
-export default function DashboardClient({ initialArtist, isAdmin = false, statusMessage }: DashboardClientProps) {
+export default function DashboardClient({ initialArtist, statusMessage }: DashboardClientProps) {
   const [artist, setArtist] = useState<Artist>(initialArtist)
   const initialSocialLinks = getSocialLinkFormState(artist)
   const initialFeaturedRelease = getFeaturedReleaseFormState(artist)
@@ -351,7 +350,6 @@ export default function DashboardClient({ initialArtist, isAdmin = false, status
   const [addDomainError, setAddDomainError] = useState("")
   const [isVerifyingDomainId, setIsVerifyingDomainId] = useState<string | null>(null)
   const [isRemovingDomainId, setIsRemovingDomainId] = useState<string | null>(null)
-  const [isActivatingDomainId, setIsActivatingDomainId] = useState<string | null>(null)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -2379,30 +2377,6 @@ export default function DashboardClient({ initialArtist, isAdmin = false, status
     }
   }
 
-  async function handleActivateDomain(domainId: string) {
-    setIsActivatingDomainId(domainId)
-
-    try {
-      const response = await fetch(`/api/custom-domains/${domainId}/activate-as-admin`, {
-        method: "POST",
-      })
-
-      if (response.ok) {
-        setCustomDomains((current) =>
-          current.map((d) =>
-            d.id === domainId
-              ? { ...d, status: "active", addedToVercelAt: new Date().toISOString() }
-              : d,
-          ),
-        )
-      }
-    } catch {
-      // Silently fail — status badge remains as verified
-    } finally {
-      setIsActivatingDomainId(null)
-    }
-  }
-
   async function handleRemoveDomain(domainId: string) {
     setIsRemovingDomainId(domainId)
 
@@ -2587,39 +2561,22 @@ export default function DashboardClient({ initialArtist, isAdmin = false, status
               </div>
             )}
 
-            {/* verified — show routing DNS instructions + admin activate button */}
+            {/* verified — legacy/transitional state; retry triggers Vercel provisioning */}
             {activeDomain.status === "verified" && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground/60">
-                  Ownership verified. DJHQ will activate this domain after final configuration (typically 24–48 hours).
+                  Ownership verified. Click retry to complete activation.
                 </p>
-                {activeDomain.routingRecord && (
-                  <>
-                    <p className="text-xs text-muted-foreground/60">
-                      While you wait, point your domain to DJHQ:
-                    </p>
-                    {dnsTable([
-                      { label: "Type", value: activeDomain.routingRecord.type },
-                      { label: "Name", value: activeDomain.routingRecord.name },
-                      { label: "Value", value: activeDomain.routingRecord.value },
-                    ])}
-                    <p className="text-[11px] text-muted-foreground/40">
-                      If using Cloudflare, keep the record set to DNS-only (grey cloud) while your domain is being validated.
-                    </p>
-                  </>
-                )}
-                <div className="flex items-center gap-3 pt-1">
-                  {isAdmin && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => void handleActivateDomain(activeDomain.id)}
-                      disabled={isActivatingDomainId === activeDomain.id}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                      {isActivatingDomainId === activeDomain.id ? "Activating…" : "Activate domain"}
-                    </Button>
-                  )}
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => void handleVerifyDomain(activeDomain.id)}
+                    disabled={isVerifyingDomainId === activeDomain.id}
+                    className="bg-secondary text-foreground hover:bg-secondary/80"
+                  >
+                    {isVerifyingDomainId === activeDomain.id ? "Checking…" : "Retry activation"}
+                  </Button>
                   <button
                     type="button"
                     onClick={() => void handleRemoveDomain(activeDomain.id)}

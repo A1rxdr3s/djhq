@@ -146,7 +146,7 @@ Pro-gated features in the dashboard show an upsell card for free users instead o
 
 # Custom Domains
 
-Status: Phase A implemented (manual team management).
+Status: Phase C — fully automated self-serve flow with Vercel API provisioning.
 
 ## Database
 
@@ -156,7 +156,8 @@ Key fields:
 - `id` UUID PK
 - `artist_id` UUID FK → artists
 - `domain` TEXT UNIQUE (e.g. `"artistdomain.com"`)
-- `status` TEXT — `pending | verified | active | error | suspended | removed`
+- `status` TEXT — `pending | verifying | active | error | suspended | removed`
+  - `verified` is a legacy/recovery-only status, not produced by the normal flow.
 - `verification_token` TEXT
 - `verified_at`, `added_to_vercel_at`, `removed_at` TIMESTAMPTZ
 - `error_message` TEXT
@@ -165,7 +166,7 @@ Index on `(domain)` where `status = 'active'` for fast middleware lookups.
 
 ## Routing
 
-File: `middleware.ts` at project root (does not exist yet in Phase A — create it when implementing).
+File: `middleware.ts` at project root.
 
 Logic:
 1. Read `Host` header from incoming request.
@@ -176,19 +177,38 @@ Logic:
 
 The canonical `/[handle]` route is never modified and always works independently.
 
-## Phase A (current)
+## API Routes
 
-- Domains manually added by DJHQ team in Vercel project settings.
-- Team inserts rows into `custom_domains` with `status = 'active'`.
-- No dashboard UI for domain management.
-- Dashboard shows a read-only "Custom Domain" section for Pro users.
+| Route | Method | Purpose |
+|---|---|---|
+| `/api/custom-domains` | POST | Add domain → `status=pending`, issue TXT token |
+| `/api/custom-domains/verify` | POST | Check TXT → call Vercel API → `active` or `error` |
+| `/api/custom-domains/[id]` | DELETE | Remove domain, call Vercel cleanup, soft-delete |
+| `/api/custom-domains/[id]/activate` | POST | **Legacy recovery** — Bearer token, sets `verified→active` |
+| `/api/custom-domains/[id]/activate-as-admin` | POST | **Legacy recovery** — session auth via `DJHQ_ADMIN_USER_IDS` |
 
-## Phase B (future)
+## Vercel Integration
 
-- Self-serve dashboard UI: add, verify, remove custom domain.
-- Vercel API integration for programmatic domain registration.
-- Automated DNS TXT verification flow.
-- New env vars required: `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID`.
+File: `lib/vercel-domains.ts` (server-only).
+
+Functions:
+- `addDomainToVercel(domain)` — registers domain in Vercel project, returns `{ ok, domain }` or `{ ok: false, error }`.
+- `removeDomainFromVercel(domain)` — best-effort cleanup, never throws.
+
+Required env vars (server-only, no `NEXT_PUBLIC_` prefix):
+- `VERCEL_API_TOKEN`
+- `VERCEL_PROJECT_ID`
+- `VERCEL_TEAM_ID` (optional, for team-scoped projects)
+
+## Normal User Lifecycle
+
+```
+add domain → pending → [user adds TXT] → verify → active
+                                         ↓ (TXT missing / Vercel error)
+                                        error → retry verify
+```
+
+Normal users never wait for manual DJHQ activation when Vercel env vars are configured.
 
 ---
 
