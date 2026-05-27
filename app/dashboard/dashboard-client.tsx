@@ -158,7 +158,12 @@ function mergeImportedReleaseFields<T extends FeaturedReleaseFormState>(
       ? current.label
       : result.label?.trim() || current.label
   const nextCredits = result.artist?.trim() || current.credits
-  const nextType = result.type != null ? normalizeReleaseType(result.type) : current.type
+  // Only apply imported type when it's conclusive ("album", "EP"). "single" is ambiguous
+  // (a track URL could belong to an EP or album), so leave the current value unchanged.
+  const nextType =
+    result.type === "album" || result.type === "ep" || result.type === "EP"
+      ? normalizeReleaseType(result.type)
+      : current.type
 
   return {
     ...current,
