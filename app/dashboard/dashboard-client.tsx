@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
+// Canonical app host used for display copy. Controlled by NEXT_PUBLIC_APP_URL in production.
+const APP_DISPLAY_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.vercel.app")
+  .replace(/^https?:\/\//, "")
+  .replace(/\/$/, "")
+
 type NavGroup = { label: string; items: { id: string; label: string }[] }
 
 const navGroups: NavGroup[] = [
@@ -40,6 +45,7 @@ const navGroups: NavGroup[] = [
     label: "Publishing",
     items: [
       { id: "booking", label: "Booking" },
+      { id: "custom-domain", label: "Custom Domain" },
       { id: "publish", label: "Publish" },
     ],
   },
@@ -960,7 +966,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs text-accent/70 transition-colors duration-150 hover:text-accent"
               >
-                djhq.com{publicProfileUrl}
+                {APP_DISPLAY_HOST}{publicProfileUrl}
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -2270,6 +2276,139 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  function renderCustomDomain() {
+    const isPro = artist.plan === "pro"
+
+    if (!isPro) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
+            <p className="mt-1 text-sm text-muted-foreground/60">Connect your own domain to your DJHQ profile.</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Pro feature</p>
+            <h3 className="mt-2 text-sm font-semibold text-foreground">Available on Pro</h3>
+            <p className="mt-2 text-sm text-muted-foreground/60">
+              Upgrade to Pro to connect a custom domain like{" "}
+              <span className="font-mono text-foreground/70">yourname.com</span> to your DJHQ profile.
+            </p>
+            <a
+              href="mailto:hello@djhq.com"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Contact us to upgrade
+            </a>
+          </div>
+        </div>
+      )
+    }
+
+    const domains = artist.customDomains
+
+    if (domains.length === 0) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
+            <p className="mt-1 text-sm text-muted-foreground/60">Connect your own domain to your DJHQ profile.</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-6">
+            <Globe className="mb-3 h-5 w-5 text-muted-foreground/30" />
+            <p className="text-sm font-semibold text-foreground">No custom domain configured</p>
+            <p className="mt-2 text-sm text-muted-foreground/60">
+              Contact DJHQ to connect a custom domain to your profile. Once configured, your profile will be accessible at your own domain while{" "}
+              <span className="font-mono text-foreground/60">{APP_DISPLAY_HOST}/{artist.handle}</span> continues to work.
+            </p>
+            <a
+              href="mailto:hello@djhq.com"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Contact us to set up your domain
+            </a>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Your custom domain configuration managed by DJHQ.</p>
+        </div>
+        <div className="space-y-3">
+          {domains.map((domain) => {
+            const statusStyles: Record<string, string> = {
+              active: "border-accent/20 bg-accent/10 text-accent",
+              verified: "border-white/[0.08] bg-secondary/40 text-muted-foreground",
+              pending: "border-white/[0.08] bg-secondary/40 text-muted-foreground",
+              verifying: "border-white/[0.08] bg-secondary/40 text-muted-foreground",
+              error: "border-destructive/20 bg-destructive/10 text-destructive/80",
+              suspended: "border-destructive/20 bg-destructive/10 text-destructive/80",
+              removed: "border-white/[0.06] bg-secondary/20 text-muted-foreground/40",
+            }
+            const statusDotStyles: Record<string, string> = {
+              active: "bg-accent",
+              verified: "bg-muted-foreground/40",
+              pending: "bg-muted-foreground/30",
+              verifying: "bg-muted-foreground/40",
+              error: "bg-destructive/60",
+              suspended: "bg-destructive/60",
+              removed: "bg-muted-foreground/20",
+            }
+
+            return (
+              <div key={domain.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09]">
+                <div className="flex items-start gap-3">
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/40" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-sm font-medium text-foreground">{domain.domain}</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${statusStyles[domain.status] ?? statusStyles.pending}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${statusDotStyles[domain.status] ?? statusDotStyles.pending}`} />
+                        {domain.status}
+                      </span>
+                    </div>
+                    {domain.errorMessage && (
+                      <p className="mt-2 text-xs text-destructive/70">{domain.errorMessage}</p>
+                    )}
+                    {domain.status === "active" && (
+                      <div className="mt-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-3">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">DNS</p>
+                        <p className="mt-1.5 text-xs text-muted-foreground/60">
+                          Your domain is live. Point an A record to{" "}
+                          <span className="font-mono text-foreground/70">76.76.21.21</span> or a CNAME to{" "}
+                          <span className="font-mono text-foreground/70">cname.vercel-dns.com</span>.
+                        </p>
+                      </div>
+                    )}
+                    {domain.status === "pending" && (
+                      <p className="mt-3 text-xs text-muted-foreground/50">
+                        Your domain is being configured by the DJHQ team. This typically takes 24–48 hours.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Note</p>
+          <p className="mt-1 text-xs text-muted-foreground/50">
+            Your canonical DJHQ URL{" "}
+            <span className="font-mono text-foreground/50">{APP_DISPLAY_HOST}/{artist.handle}</span> always remains active regardless of custom domain status.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   function renderActiveSection() {
     switch (activeSection) {
       case "overview":
@@ -2292,6 +2431,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderGallery()
       case "booking":
         return renderBooking()
+      case "custom-domain":
+        return renderCustomDomain()
       case "publish":
         return renderPublish()
       default:

@@ -27,6 +27,40 @@ export type SocialPlatform =
 export type ISODateString = string
 
 /**
+ * Lifecycle status of a custom domain entry.
+ */
+export type CustomDomainStatus =
+  | "pending"
+  | "verifying"
+  | "verified"
+  | "active"
+  | "error"
+  | "suspended"
+  | "removed"
+
+/**
+ * Custom domain linked to a Pro artist profile.
+ */
+export interface CustomDomain {
+  /** Stable unique identifier. */
+  id: string
+  /** The fully-qualified domain name (e.g. "artistname.com"). */
+  domain: string
+  /** Current lifecycle status. */
+  status: CustomDomainStatus
+  /** Error detail when status is "error". */
+  errorMessage?: string
+  /** Timestamp when the domain was verified. */
+  verifiedAt?: ISODateString
+  /** Timestamp when the domain was added to Vercel. */
+  addedToVercelAt?: ISODateString
+  /** Timestamp when the domain was removed. */
+  removedAt?: ISODateString
+  /** Record creation timestamp. */
+  createdAt: ISODateString
+}
+
+/**
  * Public social or music link displayed on the artist profile.
  */
 export interface SocialLink {
@@ -208,6 +242,8 @@ export interface Artist {
   pressKit: PressKit
   /** Current active subscription plan. */
   plan: SubscriptionPlan
+  /** Custom domains linked to this profile (Pro only). */
+  customDomains: CustomDomain[]
   /** Whether the profile is publicly visible. */
   isPublished: boolean
   /** Record creation timestamp. */

@@ -3,7 +3,7 @@ import DashboardClient from "./dashboard-client"
 import OnboardingForm from "./onboarding-form"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import type { Artist, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, CustomDomainStatus, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 
 const mvpArtistHandle = "andresherrera"
 
@@ -87,7 +87,32 @@ type VideoRow = {
   is_published: boolean
 }
 
+type CustomDomainRow = {
+  id: string
+  domain: string
+  status: string
+  error_message: string | null
+  verified_at: string | null
+  added_to_vercel_at: string | null
+  removed_at: string | null
+  created_at: string
+}
+
 type SupabaseAdminClient = ReturnType<typeof createSupabaseAdminClient>
+
+const customDomainStatuses = new Set<string>([
+  "pending",
+  "verifying",
+  "verified",
+  "active",
+  "error",
+  "suspended",
+  "removed",
+])
+
+function normalizeCustomDomainStatus(status: string): CustomDomainStatus {
+  return customDomainStatuses.has(status) ? (status as CustomDomainStatus) : "pending"
+}
 
 const socialPlatforms: SocialPlatform[] = [
   "beatport",
@@ -165,7 +190,7 @@ async function claimSeededArtist(supabase: SupabaseAdminClient, artistId: string
 }
 
 async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow: ArtistRow): Promise<Artist> {
-  const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult, videosResult] = await Promise.all([
+  const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult, videosResult, customDomainsResult] = await Promise.all([
     supabase
       .from("social_links")
       .select("platform, label, url")
@@ -203,10 +228,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<VideoRow[]>(),
+    supabase
+      .from("custom_domains")
+      .select("id, domain, status, error_message, verified_at, added_to_vercel_at, removed_at, created_at")
+      .eq("artist_id", artistRow.id)
+      .order("created_at", { ascending: false })
+      .returns<CustomDomainRow[]>(),
   ])
 
-  if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error || djSetsResult.error || videosResult.error) {
-    throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error ?? djSetsResult.error ?? videosResult.error
+  if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error || djSetsResult.error || videosResult.error || customDomainsResult.error) {
+    throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error ?? djSetsResult.error ?? videosResult.error ?? customDomainsResult.error
   }
 
   const releaseRows = releasesResult.data ?? []
@@ -297,6 +328,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       assetsIncluded: artistRow.press_kit_assets ?? [],
     },
     plan: normalizePlan(artistRow.plan),
+    customDomains: (customDomainsResult.data ?? []).map((d) => ({
+      id: d.id,
+      domain: d.domain,
+      status: normalizeCustomDomainStatus(d.status),
+      errorMessage: d.error_message ?? undefined,
+      verifiedAt: d.verified_at ?? undefined,
+      addedToVercelAt: d.added_to_vercel_at ?? undefined,
+      removedAt: d.removed_at ?? undefined,
+      createdAt: d.created_at,
+    })),
     isPublished: artistRow.is_published,
     createdAt: artistRow.created_at,
     updatedAt: artistRow.updated_at,

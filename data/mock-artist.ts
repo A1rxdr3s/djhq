@@ -90,6 +90,7 @@ export const mockArtist: Artist = {
     assetsIncluded: ["Short bio", "Press photos", "Featured release links", "Upcoming gigs", "Technical rider"],
   },
   plan: "pro",
+  customDomains: [],
   isPublished: true,
   createdAt: "2026-05-01T12:00:00.000Z",
   updatedAt: "2026-05-20T15:30:00.000Z",

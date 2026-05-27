@@ -369,6 +369,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         assetsIncluded: artistRow.press_kit_assets ?? [],
       },
       plan: normalizePlan(artistRow.plan),
+      customDomains: [],
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
