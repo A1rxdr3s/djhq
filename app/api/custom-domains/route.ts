@@ -59,12 +59,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Custom domains require a Pro plan." }, { status: 403 })
   }
 
-  // One domain per artist: no existing non-removed row
+  // One domain per artist: no existing live (non-removed) row.
+  // Filter on removed_at IS NULL to match the partial unique index semantics.
   const { data: existing, error: existingError } = await admin
     .from("custom_domains")
     .select("id, status")
     .eq("artist_id", artistId)
-    .neq("status", "removed")
+    .is("removed_at", null)
     .maybeSingle<{ id: string; status: string }>()
 
   if (existingError) {
@@ -78,12 +79,13 @@ export async function POST(request: Request) {
     )
   }
 
-  // Domain availability: not claimed by any other artist (non-removed)
+  // Domain availability: not claimed by any other live (non-removed) row.
+  // Filter on removed_at IS NULL to match the partial unique index semantics.
   const { data: taken, error: takenError } = await admin
     .from("custom_domains")
     .select("id")
     .eq("domain", domain)
-    .neq("status", "removed")
+    .is("removed_at", null)
     .maybeSingle<{ id: string }>()
 
   if (takenError) {
@@ -109,7 +111,19 @@ export async function POST(request: Request) {
     .select("id, domain, status, created_at")
     .single<{ id: string; domain: string; status: string; created_at: string }>()
 
-  if (insertError || !row) {
+  if (insertError) {
+    // 23505 = unique_violation: the domain is live under another artist despite the pre-check.
+    // This can happen under a race condition; surface a clear conflict message.
+    if (insertError.code === "23505") {
+      return NextResponse.json(
+        { error: "This domain is already connected to another DJHQ profile." },
+        { status: 409 },
+      )
+    }
+    return NextResponse.json({ error: "Unable to add domain." }, { status: 500 })
+  }
+
+  if (!row) {
     return NextResponse.json({ error: "Unable to add domain." }, { status: 500 })
   }
 
