@@ -72,17 +72,28 @@ Pro users:
 
 Current state: Phase C (automatic Vercel provisioning).
 
-Lifecycle:
+Lifecycle (two-phase: ownership → routing):
 1. Pro user adds an apex domain in the dashboard.
-2. Domain row created with `status = pending`. TXT + CNAME DNS records shown.
-3. User adds TXT ownership record to their DNS.
-4. User clicks "Check verification" in the dashboard.
-5. `POST /api/custom-domains/verify` resolves the TXT record server-side.
+2. Domain row created with `status = pending`. Dashboard shows TXT ownership record.
+3. User adds TXT record to their DNS, clicks "Check verification".
+4. `POST /api/custom-domains/verify` resolves the TXT record server-side.
    - TXT not found → `status = error`, user retries.
-   - TXT found → calls `addDomainToVercel(domain)` from `lib/vercel-domains.ts`.
-     - Vercel succeeds → `status = active`, domain is live.
-     - Vercel fails → `status = error` with provisioning error message, user retries.
-6. Middleware serves requests for `status = active` domains only.
+   - TXT found → `status = verified`. Dashboard now shows routing DNS instructions.
+5. User adds CNAME (or A record for apex) pointing to Vercel, clicks "Check connection".
+6. `POST /api/custom-domains/[id]/check-connection` checks routing DNS then provisions.
+   - Routing DNS not pointing at Vercel → status stays `verified`, routing error shown, user retries.
+   - Routing DNS correct → calls `addDomainToVercel(domain)`.
+     - Vercel succeeds → `status = active`, domain is live immediately.
+     - Vercel fails → `status = error` with provisioning error, "Retry connection" shown.
+7. Middleware serves requests for `status = active` domains only.
+
+Status semantics:
+- `pending`  — waiting for TXT ownership check
+- `verified` — TXT confirmed, waiting for routing DNS to propagate and pass check
+- `active`   — routing confirmed, provisioned in Vercel, middleware serving traffic
+- `error`    — TXT check failed (show TXT table + retry verify) OR
+               Vercel provisioning failed (show retry connection)
+- `suspended`/`removed` — admin or soft-delete states
 
 The canonical `/[handle]` URL always works for all users, regardless of custom domain status.
 

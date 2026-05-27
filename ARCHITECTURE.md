@@ -182,7 +182,8 @@ The canonical `/[handle]` route is never modified and always works independently
 | Route | Method | Purpose |
 |---|---|---|
 | `/api/custom-domains` | POST | Add domain → `status=pending`, issue TXT token |
-| `/api/custom-domains/verify` | POST | Check TXT → call Vercel API → `active` or `error` |
+| `/api/custom-domains/verify` | POST | Check TXT ownership → `status=verified` or `error` |
+| `/api/custom-domains/[id]/check-connection` | POST | Check routing DNS → call Vercel API → `active` or `error` |
 | `/api/custom-domains/[id]` | DELETE | Remove domain, call Vercel cleanup, soft-delete |
 | `/api/custom-domains/[id]/activate` | POST | **Legacy recovery** — Bearer token, sets `verified→active` |
 | `/api/custom-domains/[id]/activate-as-admin` | POST | **Legacy recovery** — session auth via `DJHQ_ADMIN_USER_IDS` |
@@ -203,10 +204,24 @@ Required env vars (server-only, no `NEXT_PUBLIC_` prefix):
 ## Normal User Lifecycle
 
 ```
-add domain → pending → [user adds TXT] → verify → active
-                                         ↓ (TXT missing / Vercel error)
-                                        error → retry verify
+add domain → pending
+               ↓ (user adds TXT record, clicks "Check verification")
+             verify route checks TXT
+               ├─ TXT missing → error  → retry verify
+               └─ TXT found  → verified
+                                 ↓ (user adds CNAME/A, clicks "Check connection")
+                               check-connection route checks routing DNS
+                                 ├─ DNS wrong        → stays verified, routing error shown
+                                 └─ DNS correct      → addDomainToVercel()
+                                                         ├─ Vercel ok   → active (live)
+                                                         └─ Vercel fail → error → retry connection
 ```
+
+Status semantics:
+- `pending`   — awaiting TXT ownership verification
+- `verified`  — TXT confirmed, awaiting routing DNS
+- `active`    — fully live; middleware serves traffic
+- `error`     — retryable: TXT failed (show TXT table) or provisioning failed (show retry connection)
 
 Normal users never wait for manual DJHQ activation when Vercel env vars are configured.
 

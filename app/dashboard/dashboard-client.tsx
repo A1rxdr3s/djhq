@@ -349,6 +349,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isAddingDomain, setIsAddingDomain] = useState(false)
   const [addDomainError, setAddDomainError] = useState("")
   const [isVerifyingDomainId, setIsVerifyingDomainId] = useState<string | null>(null)
+  const [isCheckingConnectionId, setIsCheckingConnectionId] = useState<string | null>(null)
   const [isRemovingDomainId, setIsRemovingDomainId] = useState<string | null>(null)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
@@ -2377,6 +2378,40 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
+  async function handleCheckConnection(domainId: string) {
+    setIsCheckingConnectionId(domainId)
+
+    try {
+      const response = await fetch(`/api/custom-domains/${domainId}/check-connection`, {
+        method: "POST",
+      })
+
+      const result = (await response.json()) as {
+        success?: boolean
+        status?: string
+        routingDnsOk?: boolean
+        error?: string
+      }
+
+      setCustomDomains((current) =>
+        current.map((d) => {
+          if (d.id !== domainId) return d
+          const nextStatus = (result.status as typeof d.status | undefined) ?? d.status
+          return {
+            ...d,
+            status: nextStatus,
+            errorMessage: result.error ?? undefined,
+            addedToVercelAt: nextStatus === "active" ? new Date().toISOString() : d.addedToVercelAt,
+          }
+        }),
+      )
+    } catch {
+      // Silently fail — status badge remains, user can retry
+    } finally {
+      setIsCheckingConnectionId(null)
+    }
+  }
+
   async function handleRemoveDomain(domainId: string) {
     setIsRemovingDomainId(domainId)
 
@@ -2516,8 +2551,36 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <p className="mt-3 text-xs text-destructive/70">{activeDomain.errorMessage}</p>
             )}
 
-            {/* pending / error — show TXT instructions + verify button */}
-            {(activeDomain.status === "pending" || activeDomain.status === "error") && activeDomain.verificationRecord && (
+            {/* error from provisioning failure — routing DNS was ok but Vercel call failed */}
+            {activeDomain.status === "error" && activeDomain.errorMessage?.startsWith("Provisioning") && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-muted-foreground/60">
+                  Retry after a few minutes or contact support if the issue persists.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => void handleCheckConnection(activeDomain.id)}
+                    disabled={isCheckingConnectionId === activeDomain.id}
+                    className="bg-secondary text-foreground hover:bg-secondary/80"
+                  >
+                    {isCheckingConnectionId === activeDomain.id ? "Checking…" : "Retry connection"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveDomain(activeDomain.id)}
+                    disabled={isRemovingDomainId === activeDomain.id}
+                    className="text-xs text-muted-foreground/40 transition-colors hover:text-destructive/70 disabled:pointer-events-none"
+                  >
+                    {isRemovingDomainId === activeDomain.id ? "Removing…" : "Remove"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* pending or TXT-ownership error — show TXT record and verify button */}
+            {(activeDomain.status === "pending" || (activeDomain.status === "error" && !activeDomain.errorMessage?.startsWith("Provisioning"))) && activeDomain.verificationRecord && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground/60">
                   Add this TXT record to your DNS to verify ownership:
@@ -2561,21 +2624,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             )}
 
-            {/* verified — legacy/transitional state; retry triggers Vercel provisioning */}
+            {/* verified — ownership confirmed, waiting for routing DNS */}
             {activeDomain.status === "verified" && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground/60">
-                  Ownership verified. Click retry to complete activation.
+                  ✓ Ownership verified. Now point your domain to DJHQ:
+                </p>
+                {activeDomain.routingRecord && dnsTable([
+                  { label: "Type", value: activeDomain.routingRecord.type },
+                  { label: "Name", value: activeDomain.routingRecord.name },
+                  { label: "Value", value: activeDomain.routingRecord.value },
+                ])}
+                <p className="text-[11px] text-muted-foreground/40">
+                  If using Cloudflare, set this record to DNS-only (grey cloud) while connecting.
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => void handleVerifyDomain(activeDomain.id)}
-                    disabled={isVerifyingDomainId === activeDomain.id}
+                    onClick={() => void handleCheckConnection(activeDomain.id)}
+                    disabled={isCheckingConnectionId === activeDomain.id}
                     className="bg-secondary text-foreground hover:bg-secondary/80"
                   >
-                    {isVerifyingDomainId === activeDomain.id ? "Checking…" : "Retry activation"}
+                    {isCheckingConnectionId === activeDomain.id ? "Checking…" : "Check connection"}
                   </Button>
                   <button
                     type="button"

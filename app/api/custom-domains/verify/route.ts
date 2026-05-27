@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { resolveTxt } from "dns/promises"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import { addDomainToVercel } from "@/lib/vercel-domains"
 
 const MAX_ATTEMPTS_PER_HOUR = 10
 
@@ -78,8 +77,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Custom domains require a Pro plan." }, { status: 403 })
   }
 
-  // Only pending, error, or verified can be re-verified
-  if (!["pending", "error", "verified"].includes(domainRow.status)) {
+  // Only pending and error domains need TXT ownership verification.
+  // Verified domains proceed to routing DNS check via check-connection.
+  if (!["pending", "error"].includes(domainRow.status)) {
     return NextResponse.json(
       { error: `Cannot verify a domain with status "${domainRow.status}".` },
       { status: 409 },
@@ -134,38 +134,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, status: "error", error: errorMessage }, { status: 400 })
   }
 
-  // TXT ownership verified — attempt immediate Vercel provisioning
-  const verifiedAt = new Date().toISOString()
-  const vercelResult = await addDomainToVercel(domainRow.domain)
-
-  if (vercelResult.ok) {
-    await admin
-      .from("custom_domains")
-      .update({
-        status: "active",
-        verified_at: verifiedAt,
-        added_to_vercel_at: new Date().toISOString(),
-        error_message: null,
-      })
-      .eq("id", domainId)
-
-    return NextResponse.json({ success: true, status: "active" })
-  }
-
-  // Vercel provisioning failed — surface error clearly so user can retry
-  const vercelError = `Provisioning failed: ${vercelResult.error} — please try again or contact support.`
-
+  // TXT ownership confirmed — mark verified and prompt user to add routing DNS.
+  // Routing DNS check and Vercel provisioning happen in check-connection.
   await admin
     .from("custom_domains")
     .update({
-      status: "error",
-      verified_at: verifiedAt,
-      error_message: vercelError,
+      status: "verified",
+      verified_at: new Date().toISOString(),
+      error_message: null,
     })
     .eq("id", domainId)
 
-  return NextResponse.json(
-    { success: false, status: "error", error: vercelError },
-    { status: 500 },
-  )
+  return NextResponse.json({ success: true, status: "verified" })
 }
