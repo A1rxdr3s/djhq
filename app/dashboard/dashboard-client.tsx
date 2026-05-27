@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowDown, ArrowUp, Calendar, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Calendar, Check, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
 import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -932,35 +932,48 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-4">
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Artist Profile</p>
-          <h2 className="mt-2 text-xl font-bold text-foreground">{artist.artistName}</h2>
-          <p className="mt-0.5 font-mono text-sm text-muted-foreground">@{artist.handle}</p>
-          <div className="mt-3 flex items-center gap-3">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                artist.isPublished
-                  ? "border-accent/20 bg-accent/10 text-accent"
-                  : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
+          <div className="flex items-start gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Artist Profile</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">{artist.artistName}</h2>
+              <p className="mt-0.5 font-mono text-sm text-muted-foreground">@{artist.handle}</p>
+              <div className="mt-3 flex items-center gap-3">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                    artist.isPublished
+                      ? "border-accent/20 bg-accent/10 text-accent"
+                      : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
+                  />
+                  {artist.isPublished ? "Published" : "Draft"}
+                </span>
+                <span className="rounded-full border border-white/[0.06] bg-secondary/30 px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  {artist.plan}
+                </span>
+              </div>
+              <a
+                href={publicProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs text-accent/70 transition-colors duration-150 hover:text-accent"
+              >
+                djhq.com{publicProfileUrl}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            {artist.featuredRelease?.artworkUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={artist.featuredRelease.artworkUrl}
+                alt={artist.featuredRelease.title}
+                className="h-[72px] w-[72px] shrink-0 rounded-lg object-cover opacity-80 ring-1 ring-white/[0.08]"
+                loading="lazy"
               />
-              {artist.isPublished ? "Published" : "Draft"}
-            </span>
-            <span className="rounded-full border border-white/[0.06] bg-secondary/30 px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-              {artist.plan}
-            </span>
+            )}
           </div>
-          <a
-            href={publicProfileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs text-accent/70 transition-colors hover:text-accent"
-          >
-            djhq.com{publicProfileUrl}
-            <ExternalLink className="h-3 w-3" />
-          </a>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -970,58 +983,74 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             { label: "DJ Sets", value: artist.djSets.length },
             { label: "Videos", value: artist.videos.length },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-card/30 p-4 text-center">
-              <p className="text-2xl font-bold tabular-nums text-foreground">{stat.value}</p>
+            <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-card/30 p-3 text-center transition-colors duration-150 hover:border-white/[0.09]">
+              <p className="text-xl font-bold tabular-nums text-foreground">{stat.value}</p>
               <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/50">{stat.label}</p>
             </div>
           ))}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
             <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Last updated</p>
-            <p className="mt-1 text-sm text-foreground/70">
+            <p className="mt-0.5 text-xs text-foreground/70">
               {new Date(artist.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
             </p>
           </div>
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
             <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Visibility</p>
-            <p className="mt-1 text-sm text-foreground/70">
-              {artist.isPublished ? "Public — visible to anyone" : "Draft — not publicly visible"}
+            <p className="mt-0.5 text-xs text-foreground/70">
+              {artist.isPublished ? "Public · visible to anyone" : "Draft · not publicly visible"}
             </p>
           </div>
           {(artist.featuredRelease || artist.selectedReleases[0]) && (
-            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Latest release</p>
-              <p className="mt-1 truncate text-sm text-foreground/70">
+            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Featured release</p>
+              <p className="mt-0.5 truncate text-xs text-foreground/70">
                 {artist.featuredRelease?.title ?? artist.selectedReleases[0]?.title}
               </p>
             </div>
           )}
           {artist.videos[0] && (
-            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Latest video</p>
-              <p className="mt-1 truncate text-sm text-foreground/70">{artist.videos[0].title}</p>
+              <p className="mt-0.5 truncate text-xs text-foreground/70">{artist.videos[0].title}</p>
             </div>
           )}
         </div>
 
         <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Profile completeness</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Profile completeness</p>
+              {completionPct === 100 && (
+                <span className="flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent/70">
+                  <Check className="h-2.5 w-2.5" />
+                  Complete
+                </span>
+              )}
+            </div>
             <p className="text-sm font-bold tabular-nums text-foreground">{completionPct}%</p>
           </div>
           <div className="mt-3 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
             <div
-              className="h-full rounded-full bg-accent/50 transition-all duration-500"
+              className={`h-full rounded-full transition-all duration-700 ${
+                completionPct === 100
+                  ? "bg-accent/70 shadow-[0_0_8px_1px_hsl(var(--accent)/0.25)]"
+                  : "bg-accent/50"
+              }`}
               style={{ width: `${completionPct}%` }}
             />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
             {completionChecks.map((check) => (
               <div key={check.label} className="flex items-center gap-1.5">
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${check.done ? "bg-accent/60" : "bg-white/[0.08]"}`} />
-                <span className={`text-xs ${check.done ? "text-foreground/60" : "text-muted-foreground/35"}`}>
+                {check.done ? (
+                  <Check className="h-3 w-3 shrink-0 text-accent/60" />
+                ) : (
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/[0.08]" />
+                )}
+                <span className={`text-xs ${check.done ? "text-foreground/55" : "text-muted-foreground/35"}`}>
                   {check.label}
                 </span>
               </div>
@@ -1039,7 +1068,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <h2 className="text-base font-semibold text-foreground">Profile</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">Core identity shown on your public artist page.</p>
         </div>
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-1.5">
               <label htmlFor="artistName" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
@@ -1120,7 +1149,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
         <div className="space-y-3">
           {socialLinks.map((link, index) => (
-            <div key={`${link.platform}-${index}`} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+            <div key={`${link.platform}-${index}`} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-1.5">
                   <label
@@ -1198,7 +1227,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <h2 className="text-base font-semibold text-foreground">Featured Release</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">The primary release shown at the top of your profile.</p>
         </div>
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-1.5">
               <label htmlFor="releaseTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
@@ -1306,12 +1335,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
         <div className="space-y-3">
           {selectedReleases.map((release, index) => (
-            <div key={release.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+            <div key={release.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   {release.artworkUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={release.artworkUrl} alt="" className="h-9 w-9 shrink-0 rounded object-cover opacity-90" />
+                    <img src={release.artworkUrl} alt="" className="h-9 w-9 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
                   ) : (
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
                       <Music className="h-3.5 w-3.5" />
@@ -1358,7 +1387,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 border-t border-white/[0.04] pt-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`selected-release-title-${index}`}
@@ -1512,8 +1541,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           ))}
           {selectedReleases.length === 0 && (
-            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
-              <Music className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
+              <Music className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
               <p className="text-sm font-medium text-muted-foreground/50">No releases in catalog</p>
               <p className="mt-1 text-xs text-muted-foreground/30">Add releases to showcase your discography on your profile.</p>
             </div>
@@ -1541,7 +1570,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
         <div className="space-y-3">
           {upcomingGigs.map((gig, index) => (
-            <div key={gig.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+            <div key={gig.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
               <div className="mb-3 flex items-center gap-2">
                 <Calendar className="h-4 w-4 shrink-0 text-accent/60" />
                 <Input
@@ -1627,8 +1656,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           ))}
           {upcomingGigs.length === 0 && (
-            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
-              <Calendar className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
+              <Calendar className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
               <p className="text-sm font-medium text-muted-foreground/50">No upcoming gigs</p>
               <p className="mt-1 text-xs text-muted-foreground/30">Your confirmed shows will appear here.</p>
             </div>
@@ -1647,12 +1676,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
         <div className="space-y-3">
           {djSets.map((set, index) => (
-            <div key={set.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+            <div key={set.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   {set.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={set.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded object-cover opacity-90" />
+                    <img src={set.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
                   ) : (
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
                       <Headphones className="h-3.5 w-3.5" />
@@ -1699,7 +1728,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 border-t border-white/[0.04] pt-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`djset-title-${index}`}
@@ -1818,8 +1847,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           ))}
           {djSets.length === 0 && (
-            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
-              <Headphones className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
+              <Headphones className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
               <p className="text-sm font-medium text-muted-foreground/50">No sets added</p>
               <p className="mt-1 text-xs text-muted-foreground/30">Paste a SoundCloud link to import your recorded sets.</p>
             </div>
@@ -1847,12 +1876,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
         <div className="space-y-3">
           {videos.map((video, index) => (
-            <div key={video.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+            <div key={video.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   {video.thumbnailUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={video.thumbnailUrl} alt="" className="h-9 w-16 shrink-0 rounded object-cover opacity-90" />
+                    <img src={video.thumbnailUrl} alt="" className="h-9 w-16 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
                   ) : (
                     <span className="flex h-9 w-16 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
                       <Play className="h-3.5 w-3.5" />
@@ -1899,7 +1928,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 border-t border-white/[0.04] pt-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`video-title-${index}`}
@@ -2018,8 +2047,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           ))}
           {videos.length === 0 && (
-            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
-              <Play className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
+              <Play className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
               <p className="text-sm font-medium text-muted-foreground/50">No videos added</p>
               <p className="mt-1 text-xs text-muted-foreground/30">Paste a YouTube link to import your performance videos.</p>
             </div>
@@ -2173,7 +2202,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <h2 className="text-base font-semibold text-foreground">Booking</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">Contact details shown to promoters and venues.</p>
         </div>
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="grid gap-5 md:grid-cols-2">
             <ReadOnlyField label="Booking Email" value={artist.bookingInfo.email} />
             <ReadOnlyField label="Booking URL" value={artist.bookingInfo.bookingUrl ?? "Not set"} />
@@ -2195,7 +2224,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <h2 className="text-base font-semibold text-foreground">Publish</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">Control whether your profile is visible to the public.</p>
         </div>
-        <div className="space-y-5 rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+        <div className="space-y-5 rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="flex items-center gap-3">
             <span
               className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
@@ -2345,7 +2374,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {isSaveDirty && !isSaving && (
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-foreground ring-[1.5px] ring-background" />
             )}
-            <Save className="h-4 w-4" />
+            {savedRecently && !isSaveDirty && !isSaving ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
             {isSaving ? "Saving…" : savedRecently && !isSaveDirty ? "Saved" : "Save"}
           </Button>
         </div>
@@ -2358,18 +2391,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         ) : null}
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <div className="-mx-4 mb-4 flex gap-1 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6">
+        <div className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
           {navGroups.flatMap((group) => group.items).map((item) => (
             <button
               key={item.id}
               type="button"
               aria-pressed={activeSection === item.id}
               onClick={() => setActiveSection(item.id)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs transition-colors ${
+              className={`shrink-0 rounded-full px-3.5 py-2 text-xs transition-colors duration-150 ${
                 activeSection === item.id
                   ? "bg-accent/10 font-medium text-accent"
-                  : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
+                  : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
               }`}
             >
               {item.label}
@@ -2379,10 +2412,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         <div className="flex gap-8">
           <aside className="hidden w-[176px] shrink-0 lg:block">
-            <nav className="sticky top-20 space-y-4">
+            <nav className="sticky top-20 space-y-3">
               {navGroups.map((group) => (
                 <div key={group.label}>
-                  <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/35">
+                  <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/30">
                     {group.label}
                   </p>
                   <div className="space-y-0.5">
@@ -2392,14 +2425,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         type="button"
                         aria-pressed={activeSection === item.id}
                         onClick={() => setActiveSection(item.id)}
-                        className={`relative w-full rounded-md py-2 text-left text-sm transition-all duration-150 ${
+                        className={`relative w-full rounded-md py-1.5 text-left text-sm transition-all duration-150 ${
                           activeSection === item.id
                             ? "bg-accent/[0.08] font-medium text-foreground"
                             : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
                         }`}
                       >
                         {activeSection === item.id && (
-                          <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-accent" />
+                          <span className="absolute inset-y-0.5 left-0 w-0.5 rounded-full bg-accent" />
                         )}
                         <span className="block px-3">{item.label}</span>
                       </button>
