@@ -145,36 +145,6 @@ function normalizeReleaseType(type: string): ReleaseType {
   return type === "album" ? "album" : "single"
 }
 
-const RELEASE_GROUP_ORDER = ["Albums", "EPs", "Singles", "Remixes", "Other Releases"] as const
-type ReleaseGroupLabel = (typeof RELEASE_GROUP_ORDER)[number]
-
-function getReleaseGroupLabel(type: string): ReleaseGroupLabel {
-  const t = type.toLowerCase().trim()
-  if (t === "album" || t === "lp") return "Albums"
-  if (t === "ep") return "EPs"
-  if (t === "single" || t === "song" || t === "track") return "Singles"
-  if (t === "remix") return "Remixes"
-  return "Other Releases"
-}
-
-function groupReleasesByType(releases: Release[]): Array<{ label: ReleaseGroupLabel; releases: Release[] }> {
-  const groups = new Map<ReleaseGroupLabel, Release[]>()
-
-  for (const release of releases) {
-    const label = getReleaseGroupLabel(release.type)
-    const existing = groups.get(label)
-    if (existing) {
-      existing.push(release)
-    } else {
-      groups.set(label, [release])
-    }
-  }
-
-  return RELEASE_GROUP_ORDER.filter((label) => groups.has(label)).map((label) => ({
-    label,
-    releases: groups.get(label)!,
-  }))
-}
 
 function mapReleaseRow(row: ReleaseRow): Release {
   return {
@@ -372,8 +342,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     notFound()
   }
   const selectedReleases = artist.selectedReleases
-  const releaseGroups = groupReleasesByType(selectedReleases)
-  const isMultiGroup = releaseGroups.length > 1
   const upcomingGigs = artist.upcomingGigs.slice(0, 3)
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
@@ -643,70 +611,58 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {selectedReleases.length > 0 ? (
           <section className="mt-8 lg:mt-10">
             <SectionTitle>Selected Releases</SectionTitle>
-            {releaseGroups.map((group, groupIndex) => (
-              <div key={group.label} className={groupIndex > 0 ? "mt-7 sm:mt-8" : "mt-4"}>
-                {isMultiGroup ? (
-                  <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.24em] text-foreground/45">
-                    {group.label}
-                  </p>
-                ) : null}
-                <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
-                  {group.releases.map((release) => {
-                    const releaseYear = new Date(release.releaseDate).getUTCFullYear()
-                    const hasArtwork = !!(release.artworkUrl?.trim())
+            <div className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
+              {selectedReleases.map((release) => {
+                const releaseYear = release.releaseDate ? new Date(release.releaseDate).getUTCFullYear() : null
+                const hasArtwork = !!(release.artworkUrl?.trim())
 
-                    return (
-                      <article
-                        key={release.id}
-                        className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
+                return (
+                  <article
+                    key={release.id}
+                    className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
+                      {hasArtwork ? (
+                        <Image
+                          src={release.artworkUrl}
+                          alt={`${release.title} artwork`}
+                          fill
+                          sizes="220px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.24),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                          <Music2 className="h-8 w-8 text-accent/75" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                    </div>
+                    <div className="mt-3 min-w-0">
+                      <h3 className="text-balance text-base font-bold leading-tight text-foreground">
+                        {release.title}
+                      </h3>
+                      {release.credits ? (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground/85">
+                          {release.credits}
+                        </p>
+                      ) : null}
+                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {release.label}{releaseYear ? ` · ${releaseYear}` : ""}
+                      </p>
+                      <a
+                        href={release.platformUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent/80"
                       >
-                        <div className="relative aspect-square overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
-                          {hasArtwork ? (
-                            <Image
-                              src={release.artworkUrl}
-                              alt={`${release.title} artwork`}
-                              fill
-                              sizes="220px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.24),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                              <Music2 className="h-8 w-8 text-accent/75" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-                        </div>
-                        <div className="mt-3 min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">
-                            {release.type}
-                          </p>
-                          <h3 className="mt-1 text-balance text-base font-bold leading-tight text-foreground">
-                            {release.title}
-                          </h3>
-                          {release.credits ? (
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground/85">
-                              {release.credits}
-                            </p>
-                          ) : null}
-                          <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                            {release.label} · {releaseYear}
-                          </p>
-                          <a
-                            href={release.platformUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent/80"
-                          >
-                            Listen
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+                        Listen
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
           </section>
         ) : null}
 
