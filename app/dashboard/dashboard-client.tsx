@@ -2391,6 +2391,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         status?: string
         routingDnsOk?: boolean
         error?: string
+        dnsTarget?: string | null
       }
 
       setCustomDomains((current) =>
@@ -2402,6 +2403,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             status: nextStatus,
             errorMessage: result.error ?? undefined,
             addedToVercelAt: nextStatus === "active" ? new Date().toISOString() : d.addedToVercelAt,
+            routingRecord: result.dnsTarget
+              ? { type: "CNAME" as const, name: "@", value: result.dnsTarget }
+              : d.routingRecord,
           }
         }),
       )

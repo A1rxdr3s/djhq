@@ -8,8 +8,11 @@
 // Flow:
 //   1. addDomainToVercel — registers the domain in the Vercel project (idempotent).
 //   2. checkDomainConfigVercel — asks Vercel whether routing DNS is correct.
+//      - Returns recommendedCname (cnames[0]) and misconfigured flag.
 //      - misconfigured: false → status = active (live).
 //      - misconfigured: true or null (API unavailable) → status stays verified, surface routing error.
+//      - recommendedCname is always saved to dns_target when present, so the dashboard
+//        can show the project-specific CNAME target instead of the generic fallback.
 //   This avoids fragile IP allowlists that break with Cloudflare CNAME flattening and
 //   Vercel's geolocation-based CDN IPs.
 
@@ -18,10 +21,15 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { addDomainToVercel, checkDomainConfigVercel } from "@/lib/vercel-domains"
 
-const ROUTING_ERROR =
-  "We could not confirm the Vercel DNS target yet. " +
-  "Make sure your apex CNAME points to cname.vercel-dns.com and is DNS-only in Cloudflare, " +
-  "then try again. DNS changes can take up to 48 hours to propagate."
+const FALLBACK_CNAME = "cname.vercel-dns.com"
+
+function routingError(cnameTarget: string): string {
+  return (
+    "We could not confirm the Vercel DNS target yet. " +
+    `Make sure your apex CNAME points to ${cnameTarget} and is DNS-only in Cloudflare, ` +
+    "then try again. DNS changes can take up to 48 hours to propagate."
+  )
+}
 
 type DomainRow = {
   id: string
@@ -121,8 +129,11 @@ export async function POST(
   }
 
   // Step 2: ask Vercel whether routing DNS resolves correctly for this domain.
-  // This handles Cloudflare apex CNAME flattening and all geolocation-based CDN IPs transparently.
+  // Also captures the project-specific recommended CNAME target (cnames[0]) to save
+  // as dns_target so the dashboard shows the correct target instead of the generic fallback.
   const configResult = await checkDomainConfigVercel(domainRow.domain)
+  const recommendedCname = configResult?.recommendedCname ?? null
+  const cnameTarget = recommendedCname ?? FALLBACK_CNAME
 
   if (configResult !== null && !configResult.misconfigured) {
     await admin
@@ -131,21 +142,29 @@ export async function POST(
         status: "active",
         added_to_vercel_at: new Date().toISOString(),
         error_message: null,
+        ...(recommendedCname ? { dns_target: recommendedCname } : {}),
       })
       .eq("id", id)
 
-    return NextResponse.json({ success: true, status: "active" })
+    return NextResponse.json({ success: true, status: "active", dnsTarget: recommendedCname })
   }
 
   // Vercel reports domain as misconfigured or config API was unreachable — keep status=verified
-  // and surface a routing error. The user retries once DNS propagates.
+  // and surface a routing error. Save dns_target even on failure so the retry instructions
+  // show the correct project-specific CNAME target.
+  const error = routingError(cnameTarget)
+
   await admin
     .from("custom_domains")
-    .update({ status: "verified", error_message: ROUTING_ERROR })
+    .update({
+      status: "verified",
+      error_message: error,
+      ...(recommendedCname ? { dns_target: recommendedCname } : {}),
+    })
     .eq("id", id)
 
   return NextResponse.json(
-    { success: false, routingDnsOk: false, error: ROUTING_ERROR },
+    { success: false, routingDnsOk: false, error, dnsTarget: recommendedCname },
     { status: 400 },
   )
 }

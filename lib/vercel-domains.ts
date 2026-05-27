@@ -62,7 +62,7 @@ export async function addDomainToVercel(domain: string): Promise<AddDomainResult
 
 export async function checkDomainConfigVercel(
   domain: string,
-): Promise<{ misconfigured: boolean } | null> {
+): Promise<{ misconfigured: boolean; recommendedCname: string | null } | null> {
   const token = process.env.VERCEL_API_TOKEN
   const teamId = process.env.VERCEL_TEAM_ID
 
@@ -76,8 +76,11 @@ export async function checkDomainConfigVercel(
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) return null
-    const json = (await res.json()) as { misconfigured?: boolean }
-    return { misconfigured: json.misconfigured ?? true }
+    const json = (await res.json()) as { misconfigured?: boolean; cnames?: string[] }
+    return {
+      misconfigured: json.misconfigured ?? true,
+      recommendedCname: json.cnames?.[0] ?? null,
+    }
   } catch {
     return null
   }
