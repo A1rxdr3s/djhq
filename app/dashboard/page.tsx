@@ -41,6 +41,7 @@ type ReleaseRow = {
   id: string
   title: string
   label: string
+  credits: string | null
   release_date: string
   artwork_url: string
   platform_url: string
@@ -151,7 +152,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<SocialLinkRow[]>(),
     supabase
       .from("releases")
-      .select("id, title, label, release_date, artwork_url, platform_url, type, is_featured")
+      .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .order("release_date", { ascending: false })
@@ -201,6 +202,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
           id: featuredReleaseRow.id,
           title: featuredReleaseRow.title,
           label: featuredReleaseRow.label,
+          credits: featuredReleaseRow.credits ?? undefined,
           releaseDate: featuredReleaseRow.release_date,
           artworkUrl: featuredReleaseRow.artwork_url,
           platformUrl: featuredReleaseRow.platform_url,
@@ -211,6 +213,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       id: release.id,
       title: release.title,
       label: release.label,
+      credits: release.credits ?? undefined,
       releaseDate: release.release_date,
       artworkUrl: release.artwork_url,
       platformUrl: release.platform_url,
