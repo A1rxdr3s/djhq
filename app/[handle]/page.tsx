@@ -642,47 +642,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="relative overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-5 shadow-lg shadow-black/25 sm:p-6 lg:col-start-2 lg:row-start-3">
-            <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.012]" />
-            <div className="relative">
-              <SectionTitle>Booking</SectionTitle>
-              <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl">
-                Bring {artist.artistName} to your next room.
-              </p>
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Press kit, photos, and booking contact for promoters and venues.
-              </p>
-              <div className="mt-5 flex flex-col gap-3">
-                {hasPressKit ? (
-                  <Button
-                    asChild
-                    className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8"
-                  >
-                    <a href={artist.pressKit.downloadUrl}>
-                      <Download className="h-4 w-4" />
-                      Download press kit
-                    </a>
-                  </Button>
-                ) : (
-                  <Button
-                    asChild
-                    className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8"
-                  >
-                    <a href={`mailto:${artist.bookingInfo.email}`}>
-                      <Mail className="h-4 w-4" />
-                      Book this artist
-                    </a>
-                  </Button>
-                )}
-                <a
-                  href={`mailto:${artist.bookingInfo.email}`}
-                  className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground"
-                >
-                  {artist.bookingInfo.email}
-                </a>
-              </div>
-            </div>
-          </section>
         </div>
 
         {selectedReleases.length > 0 ? (
@@ -820,6 +779,39 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
         ) : null}
+
+        <section className="mt-8 lg:mt-10 relative overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-5 shadow-lg shadow-black/25 sm:p-6">
+          <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.012]" />
+          <div className="relative">
+            <SectionTitle>Booking</SectionTitle>
+            <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl">
+              Bring {artist.artistName} to your next room.
+            </p>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Press kit, photos, and booking contact for promoters and venues.
+            </p>
+            <div className="mt-5 flex flex-col gap-3">
+              {hasPressKit ? (
+                <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
+                  <a href={artist.pressKit.downloadUrl}>
+                    <Download className="h-4 w-4" />
+                    Download press kit
+                  </a>
+                </Button>
+              ) : (
+                <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
+                  <a href={`mailto:${artist.bookingInfo.email}`}>
+                    <Mail className="h-4 w-4" />
+                    Book this artist
+                  </a>
+                </Button>
+              )}
+              <a href={`mailto:${artist.bookingInfo.email}`} className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground">
+                {artist.bookingInfo.email}
+              </a>
+            </div>
+          </div>
+        </section>
 
         <footer className="py-10 text-center sm:py-12">
           <Link
