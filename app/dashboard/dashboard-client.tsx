@@ -344,6 +344,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
   const [isReorderingGallery, setIsReorderingGallery] = useState(false)
   const [savedRecently, setSavedRecently] = useState(false)
+  const [customDomains, setCustomDomains] = useState(initialArtist.customDomains)
+  const [domainInput, setDomainInput] = useState("")
+  const [isAddingDomain, setIsAddingDomain] = useState(false)
+  const [addDomainError, setAddDomainError] = useState("")
+  const [isVerifyingDomainId, setIsVerifyingDomainId] = useState<string | null>(null)
+  const [isRemovingDomainId, setIsRemovingDomainId] = useState<string | null>(null)
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -2276,15 +2282,164 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  async function handleAddDomain() {
+    setAddDomainError("")
+    setIsAddingDomain(true)
+
+    try {
+      const response = await fetch("/api/custom-domains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artistId: artist.id, domain: domainInput }),
+      })
+
+      const result = (await response.json()) as {
+        id?: string
+        domain?: string
+        status?: string
+        verificationRecord?: { type: string; name: string; value: string }
+        routingRecord?: { type: string; name: string; value: string }
+        error?: string
+      }
+
+      if (!response.ok || !result.id) {
+        setAddDomainError(result.error ?? "Unable to add domain.")
+        return
+      }
+
+      setCustomDomains([
+        {
+          id: result.id,
+          domain: result.domain ?? domainInput.trim().toLowerCase(),
+          status: "pending",
+          createdAt: new Date().toISOString(),
+          verificationAttempts: 0,
+          verificationRecord: result.verificationRecord
+            ? { type: result.verificationRecord.type as "TXT", name: result.verificationRecord.name, value: result.verificationRecord.value }
+            : undefined,
+          routingRecord: result.routingRecord
+            ? { type: result.routingRecord.type as "CNAME", name: result.routingRecord.name, value: result.routingRecord.value }
+            : undefined,
+        },
+      ])
+      setDomainInput("")
+    } catch {
+      setAddDomainError("Unable to add domain. Please try again.")
+    } finally {
+      setIsAddingDomain(false)
+    }
+  }
+
+  async function handleVerifyDomain(domainId: string) {
+    setIsVerifyingDomainId(domainId)
+
+    try {
+      const response = await fetch("/api/custom-domains/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domainId }),
+      })
+
+      const result = (await response.json()) as {
+        status?: string
+        routingDnsOk?: boolean
+        message?: string
+        error?: string
+      }
+
+      const nextStatus = result.status ?? (response.ok ? "verified" : "error")
+
+      setCustomDomains((current) =>
+        current.map((d) =>
+          d.id === domainId
+            ? {
+                ...d,
+                status: nextStatus as typeof d.status,
+                errorMessage: !response.ok ? (result.error ?? undefined) : undefined,
+                verifiedAt: nextStatus === "verified" ? new Date().toISOString() : d.verifiedAt,
+                routingDnsOk: result.routingDnsOk,
+                verificationAttempts: d.verificationAttempts + 1,
+                lastVerificationAttemptAt: new Date().toISOString(),
+              }
+            : d,
+        ),
+      )
+    } catch {
+      setCustomDomains((current) =>
+        current.map((d) =>
+          d.id === domainId
+            ? { ...d, status: "error", errorMessage: "Unable to check DNS. Please try again." }
+            : d,
+        ),
+      )
+    } finally {
+      setIsVerifyingDomainId(null)
+    }
+  }
+
+  async function handleRemoveDomain(domainId: string) {
+    setIsRemovingDomainId(domainId)
+
+    try {
+      const response = await fetch(`/api/custom-domains/${domainId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setCustomDomains((current) => current.filter((d) => d.id !== domainId))
+      }
+    } catch {
+      // Silently fail — user can retry
+    } finally {
+      setIsRemovingDomainId(null)
+    }
+  }
+
   function renderCustomDomain() {
     const isPro = artist.plan === "pro"
+
+    const statusBadge = (status: string) => {
+      const styles: Record<string, string> = {
+        active:    "border-accent/20 bg-accent/10 text-accent",
+        verified:  "border-white/[0.08] bg-secondary/40 text-muted-foreground",
+        pending:   "border-white/[0.08] bg-secondary/40 text-muted-foreground",
+        verifying: "border-white/[0.08] bg-secondary/40 text-muted-foreground/60",
+        error:     "border-destructive/20 bg-destructive/10 text-destructive/80",
+        suspended: "border-destructive/20 bg-destructive/10 text-destructive/80",
+      }
+      const dots: Record<string, string> = {
+        active:    "bg-accent",
+        verified:  "bg-muted-foreground/50",
+        pending:   "bg-muted-foreground/30",
+        verifying: "bg-muted-foreground/30",
+        error:     "bg-destructive/60",
+        suspended: "bg-destructive/60",
+      }
+      return (
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${styles[status] ?? styles.pending}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${dots[status] ?? dots.pending}`} />
+          {status}
+        </span>
+      )
+    }
+
+    const dnsTable = (rows: { label: string; value: string }[]) => (
+      <div className="mt-3 overflow-hidden rounded-lg border border-white/[0.05] bg-white/[0.02]">
+        {rows.map(({ label, value }) => (
+          <div key={label} className="flex items-start gap-4 border-b border-white/[0.04] px-3 py-2 last:border-0">
+            <span className="w-12 shrink-0 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">{label}</span>
+            <span className="break-all font-mono text-xs text-foreground/75">{value}</span>
+          </div>
+        ))}
+      </div>
+    )
 
     if (!isPro) {
       return (
         <div className="space-y-6">
           <div>
             <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
-            <p className="mt-1 text-sm text-muted-foreground/60">Connect your own domain to your DJHQ profile.</p>
+            <p className="mt-1 text-sm text-muted-foreground/60">Connect an apex domain you own to your DJHQ profile.</p>
           </div>
           <div className="rounded-xl border border-white/[0.06] bg-card/30 p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Pro feature</p>
@@ -2305,104 +2460,194 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       )
     }
 
-    const domains = artist.customDomains
-
-    if (domains.length === 0) {
-      return (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
-            <p className="mt-1 text-sm text-muted-foreground/60">Connect your own domain to your DJHQ profile.</p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-6">
-            <Globe className="mb-3 h-5 w-5 text-muted-foreground/30" />
-            <p className="text-sm font-semibold text-foreground">No custom domain configured</p>
-            <p className="mt-2 text-sm text-muted-foreground/60">
-              Contact DJHQ to connect a custom domain to your profile. Once configured, your profile will be accessible at your own domain while{" "}
-              <span className="font-mono text-foreground/60">{APP_DISPLAY_HOST}/{artist.handle}</span> continues to work.
-            </p>
-            <a
-              href="mailto:hello@djhq.com"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70"
-            >
-              <Mail className="h-3.5 w-3.5" />
-              Contact us to set up your domain
-            </a>
-          </div>
-        </div>
-      )
-    }
+    const activeDomain = customDomains[0] ?? null
 
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Your custom domain configuration managed by DJHQ.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Connect an apex domain you own to your DJHQ profile.</p>
         </div>
-        <div className="space-y-3">
-          {domains.map((domain) => {
-            const statusStyles: Record<string, string> = {
-              active: "border-accent/20 bg-accent/10 text-accent",
-              verified: "border-white/[0.08] bg-secondary/40 text-muted-foreground",
-              pending: "border-white/[0.08] bg-secondary/40 text-muted-foreground",
-              verifying: "border-white/[0.08] bg-secondary/40 text-muted-foreground",
-              error: "border-destructive/20 bg-destructive/10 text-destructive/80",
-              suspended: "border-destructive/20 bg-destructive/10 text-destructive/80",
-              removed: "border-white/[0.06] bg-secondary/20 text-muted-foreground/40",
-            }
-            const statusDotStyles: Record<string, string> = {
-              active: "bg-accent",
-              verified: "bg-muted-foreground/40",
-              pending: "bg-muted-foreground/30",
-              verifying: "bg-muted-foreground/40",
-              error: "bg-destructive/60",
-              suspended: "bg-destructive/60",
-              removed: "bg-muted-foreground/20",
-            }
 
-            return (
-              <div key={domain.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09]">
-                <div className="flex items-start gap-3">
-                  <Globe className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/40" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-mono text-sm font-medium text-foreground">{domain.domain}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${statusStyles[domain.status] ?? statusStyles.pending}`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${statusDotStyles[domain.status] ?? statusDotStyles.pending}`} />
-                        {domain.status}
-                      </span>
-                    </div>
-                    {domain.errorMessage && (
-                      <p className="mt-2 text-xs text-destructive/70">{domain.errorMessage}</p>
-                    )}
-                    {domain.status === "active" && (
-                      <div className="mt-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">DNS</p>
-                        <p className="mt-1.5 text-xs text-muted-foreground/60">
-                          Your domain is live. Point an A record to{" "}
-                          <span className="font-mono text-foreground/70">76.76.21.21</span> or a CNAME to{" "}
-                          <span className="font-mono text-foreground/70">cname.vercel-dns.com</span>.
-                        </p>
-                      </div>
-                    )}
-                    {domain.status === "pending" && (
-                      <p className="mt-3 text-xs text-muted-foreground/50">
-                        Your domain is being configured by the DJHQ team. This typically takes 24–48 hours.
-                      </p>
-                    )}
-                  </div>
+        {/* Add domain form — only shown when no domain exists */}
+        {!activeDomain && (
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09]">
+            <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Add domain</p>
+            <div className="flex gap-2">
+              <Input
+                value={domainInput}
+                onChange={(e) => { setDomainInput(e.target.value); setAddDomainError("") }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !isAddingDomain) void handleAddDomain() }}
+                placeholder="yourartistdomain.com"
+                disabled={isAddingDomain}
+                className="font-mono text-sm"
+              />
+              <Button
+                type="button"
+                onClick={() => void handleAddDomain()}
+                disabled={isAddingDomain || !domainInput.trim()}
+                className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {isAddingDomain ? "Adding…" : "Add domain"}
+              </Button>
+            </div>
+            {addDomainError && (
+              <p className="mt-2 text-xs text-destructive/70">{addDomainError}</p>
+            )}
+            <p className="mt-3 text-xs text-muted-foreground/40">
+              Apex domains only (e.g. <span className="font-mono">yourname.com</span>). Subdomains and www are not yet supported.
+            </p>
+          </div>
+        )}
+
+        {/* Domain status card */}
+        {activeDomain && (
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <Globe className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                <span className="font-mono text-sm font-medium text-foreground">{activeDomain.domain}</span>
+              </div>
+              {statusBadge(activeDomain.status)}
+            </div>
+
+            {/* Error message */}
+            {activeDomain.errorMessage && (
+              <p className="mt-3 text-xs text-destructive/70">{activeDomain.errorMessage}</p>
+            )}
+
+            {/* pending / error — show TXT instructions + verify button */}
+            {(activeDomain.status === "pending" || activeDomain.status === "error") && activeDomain.verificationRecord && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-muted-foreground/60">
+                  Add this TXT record to your DNS to verify ownership:
+                </p>
+                {dnsTable([
+                  { label: "Type", value: activeDomain.verificationRecord.type },
+                  { label: "Name", value: activeDomain.verificationRecord.name },
+                  { label: "Value", value: activeDomain.verificationRecord.value },
+                ])}
+                <p className="text-[11px] text-muted-foreground/40">
+                  DNS changes can take up to 48 hours to propagate.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => void handleVerifyDomain(activeDomain.id)}
+                    disabled={isVerifyingDomainId === activeDomain.id}
+                    className="bg-secondary text-foreground hover:bg-secondary/80"
+                  >
+                    {isVerifyingDomainId === activeDomain.id ? "Checking…" : "Check verification"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveDomain(activeDomain.id)}
+                    disabled={isRemovingDomainId === activeDomain.id}
+                    className="text-xs text-muted-foreground/40 transition-colors hover:text-destructive/70 disabled:pointer-events-none"
+                  >
+                    {isRemovingDomainId === activeDomain.id ? "Removing…" : "Remove"}
+                  </button>
                 </div>
               </div>
-            )
-          })}
-        </div>
+            )}
+
+            {/* verifying — transient, buttons disabled */}
+            {activeDomain.status === "verifying" && (
+              <div className="mt-4 flex items-center gap-2">
+                <Button type="button" size="sm" disabled className="bg-secondary text-foreground/50">
+                  Checking…
+                </Button>
+              </div>
+            )}
+
+            {/* verified — show routing DNS instructions, no activate button */}
+            {activeDomain.status === "verified" && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-muted-foreground/60">
+                  Ownership verified. DJHQ will activate this domain after final configuration (typically 24–48 hours).
+                </p>
+                {activeDomain.routingRecord && (
+                  <>
+                    <p className="text-xs text-muted-foreground/60">
+                      While you wait, point your domain to DJHQ:
+                    </p>
+                    {dnsTable([
+                      { label: "Type", value: activeDomain.routingRecord.type },
+                      { label: "Name", value: activeDomain.routingRecord.name },
+                      { label: "Value", value: activeDomain.routingRecord.value },
+                    ])}
+                    <p className="text-[11px] text-muted-foreground/40">
+                      If using Cloudflare, keep the record set to DNS-only (grey cloud) while your domain is being validated.
+                    </p>
+                  </>
+                )}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveDomain(activeDomain.id)}
+                    disabled={isRemovingDomainId === activeDomain.id}
+                    className="text-xs text-muted-foreground/40 transition-colors hover:text-destructive/70 disabled:pointer-events-none"
+                  >
+                    {isRemovingDomainId === activeDomain.id ? "Removing…" : "Remove domain"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* active — live confirmation */}
+            {activeDomain.status === "active" && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-muted-foreground/60">
+                  Your profile is live at{" "}
+                  <a
+                    href={`https://${activeDomain.domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-accent/80 transition-colors hover:text-accent"
+                  >
+                    {activeDomain.domain}
+                  </a>
+                  .
+                </p>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveDomain(activeDomain.id)}
+                    disabled={isRemovingDomainId === activeDomain.id}
+                    className="text-xs text-muted-foreground/40 transition-colors hover:text-destructive/70 disabled:pointer-events-none"
+                  >
+                    {isRemovingDomainId === activeDomain.id ? "Removing…" : "Remove domain"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* suspended */}
+            {activeDomain.status === "suspended" && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-muted-foreground/60">
+                  This domain is suspended. Contact DJHQ to reactivate it.
+                </p>
+                <a
+                  href="mailto:hello@djhq.com"
+                  className="inline-flex items-center gap-1.5 text-xs text-accent/70 transition-colors hover:text-accent"
+                >
+                  <Mail className="h-3 w-3" />
+                  Contact support
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Canonical URL note */}
         <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Note</p>
           <p className="mt-1 text-xs text-muted-foreground/50">
             Your canonical DJHQ URL{" "}
-            <span className="font-mono text-foreground/50">{APP_DISPLAY_HOST}/{artist.handle}</span> always remains active regardless of custom domain status.
+            <span className="font-mono text-foreground/50">{APP_DISPLAY_HOST}/{artist.handle}</span>{" "}
+            always remains active regardless of custom domain status.
           </p>
         </div>
       </div>

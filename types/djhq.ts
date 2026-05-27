@@ -39,6 +39,15 @@ export type CustomDomainStatus =
   | "removed"
 
 /**
+ * Formatted DNS record shown to the user (no raw token exposed).
+ */
+export interface DnsRecord {
+  type: "TXT" | "CNAME" | "A"
+  name: string
+  value: string
+}
+
+/**
  * Custom domain linked to a Pro artist profile.
  */
 export interface CustomDomain {
@@ -58,6 +67,16 @@ export interface CustomDomain {
   removedAt?: ISODateString
   /** Record creation timestamp. */
   createdAt: ISODateString
+  /** Formatted TXT record the user must add to prove DNS ownership. */
+  verificationRecord?: DnsRecord
+  /** Routing record the user must add for traffic to reach DJHQ. */
+  routingRecord?: DnsRecord
+  /** Number of TXT verification attempts made. */
+  verificationAttempts: number
+  /** Timestamp of the last verification attempt. */
+  lastVerificationAttemptAt?: ISODateString
+  /** Whether the routing DNS (A/CNAME) currently points to Vercel. */
+  routingDnsOk?: boolean
 }
 
 /**

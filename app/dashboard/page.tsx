@@ -91,11 +91,15 @@ type CustomDomainRow = {
   id: string
   domain: string
   status: string
+  verification_token: string | null
   error_message: string | null
   verified_at: string | null
   added_to_vercel_at: string | null
   removed_at: string | null
   created_at: string
+  verification_attempts: number
+  last_verification_attempt_at: string | null
+  dns_target: string | null
 }
 
 type SupabaseAdminClient = ReturnType<typeof createSupabaseAdminClient>
@@ -230,8 +234,9 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<VideoRow[]>(),
     supabase
       .from("custom_domains")
-      .select("id, domain, status, error_message, verified_at, added_to_vercel_at, removed_at, created_at")
+      .select("id, domain, status, verification_token, error_message, verified_at, added_to_vercel_at, removed_at, created_at, verification_attempts, last_verification_attempt_at, dns_target")
       .eq("artist_id", artistRow.id)
+      .neq("status", "removed")
       .order("created_at", { ascending: false })
       .returns<CustomDomainRow[]>(),
   ])
@@ -337,6 +342,20 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       addedToVercelAt: d.added_to_vercel_at ?? undefined,
       removedAt: d.removed_at ?? undefined,
       createdAt: d.created_at,
+      verificationAttempts: d.verification_attempts,
+      lastVerificationAttemptAt: d.last_verification_attempt_at ?? undefined,
+      verificationRecord: d.verification_token
+        ? {
+            type: "TXT" as const,
+            name: `_djhq.${d.domain}`,
+            value: `djhq-verify=${d.verification_token}`,
+          }
+        : undefined,
+      routingRecord: {
+        type: "CNAME" as const,
+        name: "@",
+        value: d.dns_target ?? "cname.vercel-dns.com",
+      },
     })),
     isPublished: artistRow.is_published,
     createdAt: artistRow.created_at,
