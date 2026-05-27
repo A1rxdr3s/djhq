@@ -741,97 +741,95 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         ) : null}
 
         {(featuredVideo ?? featuredSet) ? (
-          <div className="mt-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)] lg:items-start lg:gap-6">
+          <div className="mt-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(340px,1fr)] lg:items-start lg:gap-6">
             {featuredVideo ? (
               <section className={cn(!featuredSet && "lg:col-span-2")}>
                 <SectionTitle>Featured Videos</SectionTitle>
                 <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25">
-                  <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(260px,0.7fr)] lg:divide-x lg:divide-white/[0.06]">
-                    <a
-                      href={featuredVideo.platformUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group block p-4 transition-colors hover:bg-white/[0.02] sm:p-5"
-                    >
-                      <div className="relative aspect-video overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
-                        {featuredVideo.thumbnailUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={featuredVideo.thumbnailUrl}
-                            alt={`${featuredVideo.title} thumbnail`}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                            <Play className="h-10 w-10 text-accent/60" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
-                          <Play className="h-10 w-10 text-white/80" />
+                  <a
+                    href={featuredVideo.platformUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.02] sm:gap-5 sm:p-5"
+                  >
+                    <div className="relative aspect-video w-[140px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[180px]">
+                      {featuredVideo.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={featuredVideo.thumbnailUrl}
+                          alt={`${featuredVideo.title} thumbnail`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                          <Play className="h-8 w-8 text-accent/60" />
                         </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Play className="h-8 w-8 text-white/80" />
                       </div>
-                      <div className="mt-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Featured Video</p>
-                        <h3 className="mt-1 text-balance text-base font-bold leading-tight text-foreground sm:text-lg">
-                          {featuredVideo.title}
-                        </h3>
-                        {(featuredVideo.venue ?? featuredVideo.videoDate) ? (
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {[featuredVideo.venue, formatReleaseDate(featuredVideo.videoDate ?? "")].filter(Boolean).join(" · ")}
-                          </p>
-                        ) : null}
-                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
-                          Watch
-                          <ExternalLink className="h-3 w-3" />
-                        </span>
-                      </div>
-                    </a>
-                    {secondaryVideos.length > 0 ? (
-                      <div className="divide-y divide-white/[0.06] border-t border-white/[0.06] lg:border-t-0">
-                        {secondaryVideos.map((video) => (
-                          <a
-                            key={video.id}
-                            href={video.platformUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group flex gap-3 p-4 transition-colors hover:bg-white/[0.02]"
-                          >
-                            <div className="relative aspect-video w-[88px] shrink-0 overflow-hidden rounded-lg bg-secondary shadow-sm shadow-black/25 sm:w-[96px]">
-                              {video.thumbnailUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={video.thumbnailUrl}
-                                  alt={`${video.title} thumbnail`}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                                  <Play className="h-4 w-4 text-accent/60" />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
-                                <Play className="h-4 w-4 text-white/80" />
+                    </div>
+                    <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Featured Video</p>
+                      <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
+                        {featuredVideo.title}
+                      </h3>
+                      {(featuredVideo.venue ?? featuredVideo.videoDate) ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {[featuredVideo.venue, formatReleaseDate(featuredVideo.videoDate ?? "")].filter(Boolean).join(" · ")}
+                        </p>
+                      ) : null}
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
+                        Watch
+                        <ExternalLink className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </a>
+                  {secondaryVideos.length > 0 ? (
+                    <div className="divide-y divide-white/[0.06] border-t border-white/[0.06]">
+                      {secondaryVideos.map((video) => (
+                        <a
+                          key={video.id}
+                          href={video.platformUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex gap-3 p-4 transition-colors hover:bg-white/[0.02]"
+                        >
+                          <div className="relative aspect-video w-[88px] shrink-0 overflow-hidden rounded-lg bg-secondary shadow-sm shadow-black/25 sm:w-[96px]">
+                            {video.thumbnailUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={video.thumbnailUrl}
+                                alt={`${video.title} thumbnail`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                                <Play className="h-4 w-4 text-accent/60" />
                               </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+                              <Play className="h-4 w-4 text-white/80" />
                             </div>
-                            <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                              <p className="line-clamp-2 text-sm font-medium leading-tight text-foreground/85 group-hover:text-foreground">
-                                {video.title}
+                          </div>
+                          <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                            <p className="line-clamp-2 text-sm font-medium leading-tight text-foreground/85 group-hover:text-foreground">
+                              {video.title}
+                            </p>
+                            {(video.venue ?? video.videoDate) ? (
+                              <p className="truncate text-[11px] text-muted-foreground">
+                                {[video.venue, formatReleaseDate(video.videoDate ?? "")].filter(Boolean).join(" · ")}
                               </p>
-                              {(video.venue ?? video.videoDate) ? (
-                                <p className="truncate text-[11px] text-muted-foreground">
-                                  {[video.venue, formatReleaseDate(video.videoDate ?? "")].filter(Boolean).join(" · ")}
-                                </p>
-                              ) : null}
-                              <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-accent/70">
-                                Watch
-                                <ExternalLink className="h-2.5 w-2.5" />
-                              </span>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
+                            ) : null}
+                            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-accent/70">
+                              Watch
+                              <ExternalLink className="h-2.5 w-2.5" />
+                            </span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </section>
             ) : null}
@@ -846,7 +844,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     rel="noopener noreferrer"
                     className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.03] sm:gap-5 sm:p-5"
                   >
-                    <div className="relative aspect-square w-[120px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[140px]">
+                    <div className="relative aspect-square w-[100px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[120px]">
                       {featuredSet.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
