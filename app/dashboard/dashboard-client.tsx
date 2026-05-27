@@ -5,33 +5,51 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowDown, ArrowUp, Calendar, ExternalLink, Globe, LogOut, Mail, Plus, Save, Trash2 } from "lucide-react"
 import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
-const navItems = [
-  { id: "overview", label: "Overview" },
-  { id: "profile", label: "Profile" },
-  { id: "links", label: "Links" },
-  { id: "featured-release", label: "Featured Release" },
-  { id: "selected-releases", label: "Selected Releases" },
-  { id: "gigs", label: "Gigs" },
-  { id: "dj-sets", label: "DJ Sets" },
-  { id: "videos", label: "Videos" },
-  { id: "gallery", label: "Gallery" },
-  { id: "booking", label: "Booking" },
-  { id: "publish", label: "Publish" },
-] as const
+type NavGroup = { label: string; items: { id: string; label: string }[] }
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Profile",
+    items: [
+      { id: "overview", label: "Overview" },
+      { id: "profile", label: "Profile" },
+      { id: "links", label: "Links" },
+      { id: "gallery", label: "Gallery" },
+    ],
+  },
+  {
+    label: "Music",
+    items: [
+      { id: "featured-release", label: "Featured Release" },
+      { id: "selected-releases", label: "Selected Releases" },
+    ],
+  },
+  {
+    label: "Live",
+    items: [
+      { id: "gigs", label: "Gigs" },
+      { id: "dj-sets", label: "DJ Sets" },
+      { id: "videos", label: "Videos" },
+    ],
+  },
+  {
+    label: "Publishing",
+    items: [
+      { id: "booking", label: "Booking" },
+      { id: "publish", label: "Publish" },
+    ],
+  },
+]
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
-      <div className="min-h-10 rounded-md border border-border bg-secondary/35 px-3 py-2 text-sm text-foreground">
-        {value}
-      </div>
+    <div>
+      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{label}</p>
+      <p className="mt-1 text-sm text-foreground/80">{value || "—"}</p>
     </div>
   )
 }
@@ -901,89 +919,117 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderOverview() {
+    const releaseCount = artist.selectedReleases.length + (artist.featuredRelease ? 1 : 0)
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Overview</CardTitle>
-          <CardDescription>Private control panel preview for your public DJHQ profile.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <ReadOnlyField label="Artist Name" value={artist.artistName} />
-          <ReadOnlyField label="Handle" value={`@${artist.handle}`} />
-          <ReadOnlyField label="Plan" value={artist.plan.toUpperCase()} />
-          <ReadOnlyField label="Public URL" value={publicProfileUrl} />
-          <ReadOnlyField label="Publish Status" value={artist.isPublished ? "Published" : "Draft"} />
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Completion Checklist</p>
-            <div className="space-y-2 rounded-md border border-border bg-secondary/35 px-3 py-2">
-              {completionItems.map((item) => (
-                <p key={item} className="text-sm text-foreground">
-                  {item}
-                </p>
-              ))}
-            </div>
+      <div className="space-y-4">
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Artist Profile</p>
+          <h2 className="mt-2 text-xl font-bold text-foreground">{artist.artistName}</h2>
+          <p className="mt-0.5 font-mono text-sm text-muted-foreground">@{artist.handle}</p>
+          <div className="mt-3 flex items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                artist.isPublished
+                  ? "border-accent/20 bg-accent/10 text-accent"
+                  : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
+              />
+              {artist.isPublished ? "Published" : "Draft"}
+            </span>
+            <span className="rounded-full border border-white/[0.06] bg-secondary/30 px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+              {artist.plan}
+            </span>
           </div>
-        </CardContent>
-      </Card>
+          <a
+            href={publicProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs text-accent/70 transition-colors hover:text-accent"
+          >
+            djhq.com{publicProfileUrl}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "Releases", value: releaseCount },
+            { label: "Gigs", value: artist.upcomingGigs.length },
+            { label: "DJ Sets", value: artist.djSets.length },
+            { label: "Videos", value: artist.videos.length },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-card/30 p-4 text-center">
+              <p className="text-2xl font-bold tabular-nums text-foreground">{stat.value}</p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/50">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Profile Checklist</p>
+          <div className="mt-3 space-y-2.5">
+            {completionItems.map((item) => (
+              <div key={item} className="flex items-center gap-2.5 text-sm text-foreground/70">
+                <div className="h-1 w-1 shrink-0 rounded-full bg-accent/40" />
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     )
   }
 
   function renderProfile() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-1.5">
-            <label htmlFor="artistName" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Artist Name
-            </label>
-            <Input id="artistName" value={artistName} onChange={(event) => setArtistName(event.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="handle" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Handle
-            </label>
-            <Input id="handle" value={handle} onChange={(event) => setHandle(event.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="genres" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Genres
-            </label>
-            <Input id="genres" value={genres} onChange={(event) => setGenres(event.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="location" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Location
-            </label>
-            <Input id="location" value={location} onChange={(event) => setLocation(event.target.value)} />
-          </div>
-          <div className="md:col-span-2">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Profile</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Core identity shown on your public artist page.</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+          <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-1.5">
-              <label htmlFor="shortBio" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <label htmlFor="artistName" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Artist Name
+              </label>
+              <Input id="artistName" value={artistName} onChange={(event) => setArtistName(event.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="handle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Handle
+              </label>
+              <Input id="handle" value={handle} onChange={(event) => setHandle(event.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="genres" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Genres
+              </label>
+              <Input id="genres" value={genres} onChange={(event) => setGenres(event.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="location" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Location
+              </label>
+              <Input id="location" value={location} onChange={(event) => setLocation(event.target.value)} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="shortBio" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                 Short Bio
               </label>
               <Textarea id="shortBio" value={shortBio} onChange={(event) => setShortBio(event.target.value)} />
             </div>
-          </div>
-          <div className="md:col-span-2">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="heroImageUrl"
-                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-              >
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="heroImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                 Hero Image URL
               </label>
               <Input id="heroImageUrl" value={heroImageUrl} onChange={(event) => setHeroImageUrl(event.target.value)} />
             </div>
-          </div>
-          <div className="md:col-span-2">
-            <div className="space-y-2">
-              <label
-                htmlFor="heroImageFile"
-                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-              >
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="heroImageFile" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                 Upload Hero Image
               </label>
               <Input
@@ -1003,89 +1049,92 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
               {heroImageUrl ? (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Hero Preview</p>
-                  <div className="relative aspect-[16/7] overflow-hidden rounded-md border border-border bg-secondary/40">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Hero Preview</p>
+                  <div className="relative aspect-[16/7] overflow-hidden rounded-lg border border-white/[0.06] bg-secondary/40">
                     <Image src={heroImageUrl} alt={`${artistName || "Artist"} hero preview`} fill className="object-cover" />
                   </div>
                 </div>
               ) : null}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   function renderLinks() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Links</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Links</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Social platforms and external links shown on your profile.</p>
+        </div>
+        <div className="space-y-3">
           {socialLinks.map((link, index) => (
-            <div key={`${link.platform}-${index}`} className="grid gap-2 rounded-md border border-border bg-secondary/30 p-3 md:grid-cols-3">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor={`link-platform-${index}`}
-                  className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                >
-                  Platform
-                </label>
-                <Input
-                  id={`link-platform-${index}`}
-                  value={link.platform}
-                  onChange={(event) =>
-                    setSocialLinks((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, platform: event.target.value } : item,
-                      ),
-                    )
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label
-                  htmlFor={`link-label-${index}`}
-                  className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                >
-                  Label
-                </label>
-                <Input
-                  id={`link-label-${index}`}
-                  value={link.label}
-                  onChange={(event) =>
-                    setSocialLinks((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, label: event.target.value } : item,
-                      ),
-                    )
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label
-                  htmlFor={`link-url-${index}`}
-                  className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                >
-                  URL
-                </label>
-                <Input
-                  id={`link-url-${index}`}
-                  value={link.url}
-                  onChange={(event) =>
-                    setSocialLinks((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, url: event.target.value } : item,
-                      ),
-                    )
-                  }
-                />
+            <div key={`${link.platform}-${index}`} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`link-platform-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                  >
+                    Platform
+                  </label>
+                  <Input
+                    id={`link-platform-${index}`}
+                    value={link.platform}
+                    onChange={(event) =>
+                      setSocialLinks((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, platform: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`link-label-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                  >
+                    Label
+                  </label>
+                  <Input
+                    id={`link-label-${index}`}
+                    value={link.label}
+                    onChange={(event) =>
+                      setSocialLinks((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, label: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`link-url-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                  >
+                    URL
+                  </label>
+                  <Input
+                    id={`link-url-${index}`}
+                    value={link.url}
+                    onChange={(event) =>
+                      setSocialLinks((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, url: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
+                </div>
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
@@ -1095,34 +1144,35 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
 
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Featured Release</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-1.5">
-            <label htmlFor="releaseTitle" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Title
-            </label>
-            <Input
-              id="releaseTitle"
-              value={featuredRelease.title}
-              onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, title: event.target.value } : current))}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="releaseLabel" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Label
-            </label>
-            <Input
-              id="releaseLabel"
-              value={featuredRelease.label}
-              onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, label: event.target.value } : current))}
-            />
-          </div>
-          <div className="md:col-span-2">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Featured Release</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">The primary release shown at the top of your profile.</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+          <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-1.5">
-              <label htmlFor="releaseCredits" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <label htmlFor="releaseTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Title
+              </label>
+              <Input
+                id="releaseTitle"
+                value={featuredRelease.title}
+                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, title: event.target.value } : current))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="releaseLabel" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Label
+              </label>
+              <Input
+                id="releaseLabel"
+                value={featuredRelease.label}
+                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, label: event.target.value } : current))}
+              />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="releaseCredits" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                 Artists
               </label>
               <Input
@@ -1132,33 +1182,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, credits: event.target.value } : current))}
               />
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="releaseDate" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Release Date
-            </label>
-            <Input
-              id="releaseDate"
-              type="date"
-              value={featuredRelease.releaseDate}
-              onChange={(event) =>
-                setFeaturedRelease((current) => (current ? { ...current, releaseDate: event.target.value } : current))
-              }
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="releaseType" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Type
-            </label>
-            <Input
-              id="releaseType"
-              value={featuredRelease.type}
-              onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, type: event.target.value } : current))}
-            />
-          </div>
-          <div className="md:col-span-2">
             <div className="space-y-1.5">
-              <label htmlFor="releasePlatformUrl" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <label htmlFor="releaseDate" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Release Date
+              </label>
+              <Input
+                id="releaseDate"
+                type="date"
+                value={featuredRelease.releaseDate}
+                onChange={(event) =>
+                  setFeaturedRelease((current) => (current ? { ...current, releaseDate: event.target.value } : current))
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="releaseType" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Type
+              </label>
+              <Input
+                id="releaseType"
+                value={featuredRelease.type}
+                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, type: event.target.value } : current))}
+              />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="releasePlatformUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                 Platform URL
               </label>
               <Input
@@ -1182,10 +1230,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 Spotify data when available; Label, date, and type usually need manual entry.
               </p>
             </div>
-          </div>
-          <div className="md:col-span-2">
-            <div className="space-y-1.5">
-              <label htmlFor="releaseArtworkUrl" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="releaseArtworkUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
                 Artwork URL
               </label>
               <Input
@@ -1197,61 +1243,61 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   function renderSelectedReleases() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Selected Releases</CardTitle>
-          <CardDescription>Catalog releases shown in the public profile carousel. Featured Release stays separate.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Selected Releases</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Catalog releases shown in the public profile carousel. Featured Release stays separate.</p>
+        </div>
+        <div className="space-y-3">
           {selectedReleases.map((release, index) => (
-            <div key={release.id} className="rounded-md border border-border bg-secondary/30 p-3">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Release {index + 1}</p>
-                <div className="flex flex-wrap items-center gap-1">
+            <div key={release.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent">
+                    {index + 1}
+                  </span>
+                  <span className="text-xs text-muted-foreground/50">Release</span>
+                </div>
+                <div className="flex gap-0.5">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleMoveSelectedRelease(index, "up")}
                     disabled={index === 0 || isSaving || isPublishing || importingSelectedReleaseIndex !== null}
-                    className="h-7 px-2"
+                    title="Move up"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
-                    Move up
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleMoveSelectedRelease(index, "down")}
-                    disabled={
-                      index === selectedReleases.length - 1 ||
-                      isSaving ||
-                      isPublishing ||
-                      importingSelectedReleaseIndex !== null
-                    }
-                    className="h-7 px-2"
+                    disabled={index === selectedReleases.length - 1 || isSaving || isPublishing || importingSelectedReleaseIndex !== null}
+                    title="Move down"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
-                    Move down
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveSelectedRelease(index)}
                     disabled={isSaving || isPublishing || importingSelectedReleaseIndex !== null}
-                    className="h-7 px-2"
+                    title="Remove"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Remove
                   </Button>
                 </div>
               </div>
@@ -1259,7 +1305,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`selected-release-title-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Title
                   </label>
@@ -1278,7 +1324,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`selected-release-label-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Label
                   </label>
@@ -1294,32 +1340,30 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     }
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={`selected-release-credits-${index}`}
-                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                    >
-                      Artists
-                    </label>
-                    <Input
-                      id={`selected-release-credits-${index}`}
-                      value={release.credits}
-                      placeholder="e.g. Artist 1, Artist 2"
-                      onChange={(event) =>
-                        setSelectedReleases((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, credits: event.target.value } : item,
-                          ),
-                        )
-                      }
-                    />
-                  </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label
+                    htmlFor={`selected-release-credits-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                  >
+                    Artists
+                  </label>
+                  <Input
+                    id={`selected-release-credits-${index}`}
+                    value={release.credits}
+                    placeholder="e.g. Artist 1, Artist 2"
+                    onChange={(event) =>
+                      setSelectedReleases((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, credits: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`selected-release-date-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Release Date
                   </label>
@@ -1339,7 +1383,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`selected-release-type-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Type
                   </label>
@@ -1355,94 +1399,91 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     }
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={`selected-release-platform-${index}`}
-                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                    >
-                      Platform URL
-                    </label>
-                    <Input
-                      id={`selected-release-platform-${index}`}
-                      value={release.platformUrl}
-                      onChange={(event) =>
-                        setSelectedReleases((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, platformUrl: event.target.value } : item,
-                          ),
-                        )
-                      }
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleImportSelectedReleaseMetadata(index)}
-                      disabled={
-                        importingSelectedReleaseIndex === index ||
-                        isSaving ||
-                        isPublishing ||
-                        isImportingReleaseMetadata
-                      }
-                      className="border-border bg-background/70"
-                    >
-                      {importingSelectedReleaseIndex === index ? "Fetching..." : "Import metadata"}
-                    </Button>
-                  </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label
+                    htmlFor={`selected-release-platform-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                  >
+                    Platform URL
+                  </label>
+                  <Input
+                    id={`selected-release-platform-${index}`}
+                    value={release.platformUrl}
+                    onChange={(event) =>
+                      setSelectedReleases((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, platformUrl: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleImportSelectedReleaseMetadata(index)}
+                    disabled={
+                      importingSelectedReleaseIndex === index ||
+                      isSaving ||
+                      isPublishing ||
+                      isImportingReleaseMetadata
+                    }
+                    className="border-border bg-background/70"
+                  >
+                    {importingSelectedReleaseIndex === index ? "Fetching..." : "Import metadata"}
+                  </Button>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={`selected-release-artwork-${index}`}
-                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                    >
-                      Artwork URL
-                    </label>
-                    <Input
-                      id={`selected-release-artwork-${index}`}
-                      value={release.artworkUrl}
-                      onChange={(event) =>
-                        setSelectedReleases((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, artworkUrl: event.target.value } : item,
-                          ),
-                        )
-                      }
-                    />
-                  </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label
+                    htmlFor={`selected-release-artwork-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
+                  >
+                    Artwork URL
+                  </label>
+                  <Input
+                    id={`selected-release-artwork-${index}`}
+                    value={release.artworkUrl}
+                    onChange={(event) =>
+                      setSelectedReleases((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, artworkUrl: event.target.value } : item,
+                        ),
+                      )
+                    }
+                  />
                 </div>
               </div>
             </div>
           ))}
-          <Button
+          <button
             type="button"
-            variant="outline"
             onClick={handleAddSelectedRelease}
             disabled={isSaving || isPublishing || importingSelectedReleaseIndex !== null}
-            className="border-border bg-background/70"
+            className="flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70 disabled:pointer-events-none disabled:opacity-40"
           >
             <Plus className="h-4 w-4" />
             Add release
-          </Button>
-        </CardContent>
-      </Card>
+          </button>
+        </div>
+      </div>
     )
   }
 
   function renderGigs() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Gigs</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Gigs</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Upcoming shows displayed on your public profile.</p>
+        </div>
+        <div className="space-y-3">
           {upcomingGigs.map((gig, index) => (
-            <div key={gig.id} className="rounded-md border border-border bg-secondary/30 p-3">
+            <div key={gig.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-accent" />
+                <Calendar className="h-4 w-4 shrink-0 text-accent/60" />
                 <Input
                   id={`gig-venue-${index}`}
                   value={gig.venue}
+                  placeholder="Venue name"
                   onChange={(event) =>
                     setUpcomingGigs((current) =>
                       current.map((item, itemIndex) =>
@@ -1452,9 +1493,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   }
                 />
               </div>
-              <div className="grid gap-2 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-3">
                 <div className="space-y-1.5">
-                  <label htmlFor={`gig-date-${index}`} className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  <label htmlFor={`gig-date-${index}`} className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                     Date
                   </label>
                   <Input
@@ -1471,7 +1512,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor={`gig-city-${index}`} className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  <label htmlFor={`gig-city-${index}`} className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                     City
                   </label>
                   <Input
@@ -1487,10 +1528,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label
-                    htmlFor={`gig-country-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                  >
+                  <label htmlFor={`gig-country-${index}`} className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                     Country
                   </label>
                   <Input
@@ -1506,8 +1544,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   />
                 </div>
               </div>
-              <div className="mt-2 space-y-1.5">
-                <label htmlFor={`gig-ticket-${index}`} className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <div className="mt-3 space-y-1.5">
+                <label htmlFor={`gig-ticket-${index}`} className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                   Ticket URL
                 </label>
                 <Input
@@ -1524,56 +1562,61 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   function renderDjSets() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>DJ Sets</CardTitle>
-          <CardDescription>Recorded or broadcast sets shown on your public profile. First set is featured.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">DJ Sets</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Recorded or broadcast sets shown on your public profile. First set is featured.</p>
+        </div>
+        <div className="space-y-3">
           {djSets.map((set, index) => (
-            <div key={set.id} className="rounded-md border border-border bg-secondary/30 p-3">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Set {index + 1}</p>
-                <div className="flex flex-wrap items-center gap-1">
+            <div key={set.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent">
+                    {index + 1}
+                  </span>
+                  <span className="text-xs text-muted-foreground/50">Set</span>
+                </div>
+                <div className="flex gap-0.5">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleMoveDjSet(index, "up")}
                     disabled={index === 0 || isSaving || isPublishing || importingDjSetIndex !== null}
-                    className="h-7 px-2"
+                    title="Move up"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
-                    Move up
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleMoveDjSet(index, "down")}
                     disabled={index === djSets.length - 1 || isSaving || isPublishing || importingDjSetIndex !== null}
-                    className="h-7 px-2"
+                    title="Move down"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
-                    Move down
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveDjSet(index)}
                     disabled={isSaving || isPublishing || importingDjSetIndex !== null}
-                    className="h-7 px-2"
+                    title="Remove"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Remove
                   </Button>
                 </div>
               </div>
@@ -1581,7 +1624,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`djset-title-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Title
                   </label>
@@ -1598,7 +1641,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`djset-venue-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Venue / Event
                   </label>
@@ -1615,7 +1658,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`djset-date-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Date
                   </label>
@@ -1633,7 +1676,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`djset-platform-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Platform URL
                   </label>
@@ -1659,26 +1702,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     Paste a soundcloud.com link. Title, artwork, and platform URL are filled from public SoundCloud data when available.
                   </p>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={`djset-image-${index}`}
-                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                    >
-                      Thumbnail URL
-                    </label>
-                    <Input
-                      id={`djset-image-${index}`}
-                      value={set.imageUrl}
-                      onChange={(event) =>
-                        setDjSets((current) =>
-                          current.map((item, i) => (i === index ? { ...item, imageUrl: event.target.value } : item)),
-                        )
-                      }
-                    />
-                  </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label
+                    htmlFor={`djset-image-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
+                  >
+                    Thumbnail URL
+                  </label>
+                  <Input
+                    id={`djset-image-${index}`}
+                    value={set.imageUrl}
+                    onChange={(event) =>
+                      setDjSets((current) =>
+                        current.map((item, i) => (i === index ? { ...item, imageUrl: event.target.value } : item)),
+                      )
+                    }
+                  />
                 </div>
-                <div className="md:col-span-2 flex items-center gap-2">
+                <div className="flex items-center gap-2 md:col-span-2">
                   <input
                     id={`djset-published-${index}`}
                     type="checkbox"
@@ -1697,66 +1738,70 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
-          <Button
+          <button
             type="button"
-            variant="outline"
             onClick={handleAddDjSet}
             disabled={isSaving || isPublishing || importingDjSetIndex !== null}
-            className="border-border bg-background/70"
+            className="flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70 disabled:pointer-events-none disabled:opacity-40"
           >
             <Plus className="h-4 w-4" />
             Add set
-          </Button>
-        </CardContent>
-      </Card>
+          </button>
+        </div>
+      </div>
     )
   }
 
   function renderVideos() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Videos</CardTitle>
-          <CardDescription>YouTube performance videos shown on your public profile. First video is featured.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Videos</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">YouTube performance videos shown on your public profile. First video is featured.</p>
+        </div>
+        <div className="space-y-3">
           {videos.map((video, index) => (
-            <div key={video.id} className="rounded-md border border-border bg-secondary/30 p-3">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Video {index + 1}</p>
-                <div className="flex flex-wrap items-center gap-1">
+            <div key={video.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 sm:p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent">
+                    {index + 1}
+                  </span>
+                  <span className="text-xs text-muted-foreground/50">Video</span>
+                </div>
+                <div className="flex gap-0.5">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleMoveVideo(index, "up")}
                     disabled={index === 0 || isSaving || isPublishing || importingVideoIndex !== null}
-                    className="h-7 px-2"
+                    title="Move up"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
-                    Move up
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleMoveVideo(index, "down")}
                     disabled={index === videos.length - 1 || isSaving || isPublishing || importingVideoIndex !== null}
-                    className="h-7 px-2"
+                    title="Move down"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
-                    Move down
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveVideo(index)}
                     disabled={isSaving || isPublishing || importingVideoIndex !== null}
-                    className="h-7 px-2"
+                    title="Remove"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Remove
                   </Button>
                 </div>
               </div>
@@ -1764,7 +1809,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`video-title-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Title
                   </label>
@@ -1781,7 +1826,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`video-venue-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Venue / Event
                   </label>
@@ -1798,7 +1843,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`video-date-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Date
                   </label>
@@ -1816,7 +1861,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`video-platform-${index}`}
-                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
                     Platform URL
                   </label>
@@ -1842,26 +1887,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     Paste a youtube.com link. Title and thumbnail are filled from public YouTube data when available.
                   </p>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={`video-thumbnail-${index}`}
-                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-                    >
-                      Thumbnail URL
-                    </label>
-                    <Input
-                      id={`video-thumbnail-${index}`}
-                      value={video.thumbnailUrl}
-                      onChange={(event) =>
-                        setVideos((current) =>
-                          current.map((item, i) => (i === index ? { ...item, thumbnailUrl: event.target.value } : item)),
-                        )
-                      }
-                    />
-                  </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label
+                    htmlFor={`video-thumbnail-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
+                  >
+                    Thumbnail URL
+                  </label>
+                  <Input
+                    id={`video-thumbnail-${index}`}
+                    value={video.thumbnailUrl}
+                    onChange={(event) =>
+                      setVideos((current) =>
+                        current.map((item, i) => (i === index ? { ...item, thumbnailUrl: event.target.value } : item)),
+                      )
+                    }
+                  />
                 </div>
-                <div className="md:col-span-2 flex items-center gap-2">
+                <div className="flex items-center gap-2 md:col-span-2">
                   <input
                     id={`video-published-${index}`}
                     type="checkbox"
@@ -1880,40 +1923,40 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
-          <Button
+          <button
             type="button"
-            variant="outline"
             onClick={handleAddVideo}
             disabled={isSaving || isPublishing || importingVideoIndex !== null}
-            className="border-border bg-background/70"
+            className="flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70 disabled:pointer-events-none disabled:opacity-40"
           >
             <Plus className="h-4 w-4" />
             Add video
-          </Button>
-        </CardContent>
-      </Card>
+          </button>
+        </div>
+      </div>
     )
   }
 
   function renderGallery() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Gallery</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Gallery</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Press and event photography shown on your public profile.</p>
+        </div>
+        <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
             {galleryImages.map((image, index) => (
               <div key={image.id} className="space-y-2">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-md border border-border bg-secondary/40">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-white/[0.06] bg-secondary/40">
                   <Image src={image.imageUrl} alt={image.altText} fill sizes="200px" className="object-cover" />
                 </div>
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-1">
                   <p className="truncate text-xs text-muted-foreground">{image.altText}</p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-0.5">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleReorderGalleryImage(index, "up")}
                       disabled={
@@ -1924,14 +1967,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         isSaving ||
                         isPublishing
                       }
-                      className="h-7 px-2"
+                      title="Move up"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                     >
                       <ArrowUp className="h-3.5 w-3.5" />
-                      Move up
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleReorderGalleryImage(index, "down")}
                       disabled={
@@ -1942,14 +1985,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         isSaving ||
                         isPublishing
                       }
-                      className="h-7 px-2"
+                      title="Move down"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                     >
                       <ArrowDown className="h-3.5 w-3.5" />
-                      Move down
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteGalleryImage(image.id)}
                       disabled={
@@ -1959,122 +2002,141 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         isSaving ||
                         isPublishing
                       }
-                      className="h-7 px-2"
+                      title="Delete"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {deletingGalleryImageId === image.id ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="space-y-3 rounded-md border border-border bg-secondary/30 p-3">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="galleryImageFile"
-                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4 sm:p-5">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="galleryImageFile"
+                  className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                >
+                  Upload Gallery Image
+                </label>
+                <Input
+                  id="galleryImageFile"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => setGalleryImageFile(event.target.files?.[0] ?? null)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="galleryImageAltText"
+                  className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                >
+                  Alt Text
+                </label>
+                <Input
+                  id="galleryImageAltText"
+                  value={galleryImageAltText}
+                  onChange={(event) => setGalleryImageAltText(event.target.value)}
+                  placeholder="Live set photo, press portrait, or stage moment"
+                />
+              </div>
+              <Button
+                type="button"
+                onClick={handleUploadGalleryImage}
+                disabled={
+                  !galleryImageFile ||
+                  isUploadingGalleryImage ||
+                  isReorderingGallery ||
+                  isSaving ||
+                  isPublishing ||
+                  !!deletingGalleryImageId
+                }
+                className="bg-secondary text-foreground hover:bg-secondary/80"
               >
-                Upload Gallery Image
-              </label>
-              <Input
-                id="galleryImageFile"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(event) => setGalleryImageFile(event.target.files?.[0] ?? null)}
-              />
+                {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}
+              </Button>
+              <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
             </div>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="galleryImageAltText"
-                className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
-              >
-                Alt Text
-              </label>
-              <Input
-                id="galleryImageAltText"
-                value={galleryImageAltText}
-                onChange={(event) => setGalleryImageAltText(event.target.value)}
-                placeholder="Live set photo, press portrait, or stage moment"
-              />
-            </div>
-            <Button
-              type="button"
-              onClick={handleUploadGalleryImage}
-              disabled={
-                !galleryImageFile ||
-                isUploadingGalleryImage ||
-                isReorderingGallery ||
-                isSaving ||
-                isPublishing ||
-                !!deletingGalleryImageId
-              }
-              className="bg-secondary text-foreground hover:bg-secondary/80"
-            >
-              {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}
-            </Button>
-            <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   function renderBooking() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Booking</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-2 md:grid-cols-2">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Booking</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Contact details shown to promoters and venues.</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+          <div className="grid gap-5 md:grid-cols-2">
             <ReadOnlyField label="Booking Email" value={artist.bookingInfo.email} />
             <ReadOnlyField label="Booking URL" value={artist.bookingInfo.bookingUrl ?? "Not set"} />
-          </div>
-          <div className="grid gap-2 md:grid-cols-2">
             <ReadOnlyField label="Press Kit Enabled" value={artist.pressKit.enabled ? "Yes" : "No"} />
-            <ReadOnlyField label="Press Kit URL" value={artist.pressKit.downloadUrl} />
+            <ReadOnlyField label="Press Kit URL" value={artist.pressKit.downloadUrl || "Not set"} />
+            <div className="md:col-span-2">
+              <ReadOnlyField label="Assets Included" value={artist.pressKit.assetsIncluded.join(", ") || "—"} />
+            </div>
           </div>
-          <ReadOnlyField label="Assets Included" value={artist.pressKit.assetsIncluded.join(", ")} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   function renderPublish() {
     return (
-      <Card className="border-border bg-card/70 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Publish</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Badge variant={artist.isPublished ? "default" : "secondary"}>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Publish</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Control whether your profile is visible to the public.</p>
+        </div>
+        <div className="space-y-5 rounded-xl border border-white/[0.06] bg-card/40 p-5 sm:p-6">
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                artist.isPublished
+                  ? "border-accent/20 bg-accent/10 text-accent"
+                  : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
+              />
               {artist.isPublished ? "Published" : "Draft"}
-            </Badge>
-            <span className="text-sm text-muted-foreground">{publicProfileUrl}</span>
+            </span>
+            <span className="font-mono text-sm text-muted-foreground/60">{publicProfileUrl}</span>
           </div>
-          <div className="rounded-md border border-border bg-secondary/35 p-3 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Control whether your profile is visible at {publicProfileUrl}.
-          </div>
+          </p>
           <Button
             type="button"
             disabled={isPublishing || isSaving}
             onClick={handleTogglePublish}
-            className={artist.isPublished ? "bg-secondary text-foreground hover:bg-secondary/80" : "bg-accent text-accent-foreground hover:bg-accent/90"}
+            className={
+              artist.isPublished
+                ? "bg-secondary text-foreground hover:bg-secondary/80"
+                : "bg-accent text-accent-foreground hover:bg-accent/90"
+            }
           >
             {isPublishing ? "Updating..." : artist.isPublished ? "Unpublish profile" : "Publish profile"}
           </Button>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Globe className="h-3.5 w-3.5" />
-            Profile visibility updates immediately after publishing changes.
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Globe className="h-3.5 w-3.5" />
+              Profile visibility updates immediately after publishing changes.
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Mail className="h-3.5 w-3.5" />
+              Only the profile owner can publish or unpublish this artist.
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Mail className="h-3.5 w-3.5" />
-            Only the profile owner can publish or unpublish this artist.
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
@@ -2114,83 +2176,126 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.035] blur-[120px]" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6 flex flex-col gap-4 rounded-xl border border-border bg-card/70 p-4 backdrop-blur-sm lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-accent">
-                <span className="text-sm font-bold text-accent-foreground">DJ</span>
-              </div>
-              <span className="text-lg font-bold tracking-tight text-foreground">DJHQ</span>
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/90 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent">
+              <span className="text-xs font-bold text-accent-foreground">DJ</span>
+            </div>
+            <span className="text-sm font-bold tracking-tight text-foreground">DJHQ</span>
+          </Link>
+          <span className="select-none text-border">/</span>
+          <p className="min-w-0 truncate text-sm text-muted-foreground">{artist.artistName}</p>
+          <div className="flex-1" />
+          <span
+            className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium sm:inline-flex ${
+              artist.isPublished
+                ? "border-accent/20 bg-accent/10 text-accent"
+                : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
+            />
+            {artist.isPublished ? "Published" : "Draft"}
+          </span>
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="hidden text-muted-foreground hover:text-foreground sm:inline-flex"
+          >
+            <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" />
+              View
             </Link>
-            <span className="text-muted-foreground">/</span>
-            <p className="text-sm font-semibold text-foreground">Dashboard</p>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:block">Sign out</span>
+          </Button>
+          <Button
+            size="sm"
+            disabled={
+              !isSaveDirty ||
+              isSaving ||
+              isPublishing ||
+              isImportingReleaseMetadata ||
+              importingSelectedReleaseIndex !== null ||
+              importingVideoIndex !== null ||
+              isUploadingHeroImage ||
+              isUploadingGalleryImage
+            }
+            onClick={handleSaveChanges}
+            className="bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving ? "Saving…" : "Save"}
+          </Button>
+        </div>
+        {(saveMessage || statusMessage) ? (
+          <div className="border-t border-white/[0.04] px-4 py-1.5 sm:px-6">
+            <p className="text-xs text-muted-foreground">{saveMessage || statusMessage}</p>
           </div>
+        ) : null}
+      </header>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={artist.isPublished ? "default" : "secondary"}>
-              {artist.isPublished ? "Published" : "Draft"}
-            </Badge>
-            <Button asChild variant="outline" size="sm" className="border-border bg-background/70">
-              <Link href={publicProfileUrl}>
-                <ExternalLink className="h-4 w-4" />
-                View profile
-              </Link>
-            </Button>
-            <Button
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <div className="-mx-4 mb-4 flex gap-1 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+          {navGroups.flatMap((group) => group.items).map((item) => (
+            <button
+              key={item.id}
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              className="border-border bg-background/70"
+              aria-pressed={activeSection === item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs transition-colors ${
+                activeSection === item.id
+                  ? "bg-accent/10 font-medium text-accent"
+                  : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
+              }`}
             >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </Button>
-            <Button
-              size="sm"
-              disabled={
-                !isSaveDirty ||
-                isSaving ||
-                isPublishing ||
-                isImportingReleaseMetadata ||
-                importingSelectedReleaseIndex !== null ||
-                importingVideoIndex !== null ||
-                isUploadingHeroImage ||
-                isUploadingGalleryImage
-              }
-              onClick={handleSaveChanges}
-              className="bg-accent text-accent-foreground"
-            >
-              <Save className="h-4 w-4" />
-              {isSaving ? "Saving..." : "Save changes"}
-            </Button>
-          </div>
-          {saveMessage ? <p className="text-xs text-muted-foreground">{saveMessage}</p> : null}
-          {statusMessage ? <p className="text-xs text-muted-foreground">{statusMessage}</p> : null}
-        </header>
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-        <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <Card className="h-fit border-border bg-card/70 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-sm">Sections</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-pressed={activeSection === item.id}
-                  onClick={() => setActiveSection(item.id)}
-                  className="w-full rounded-md border border-border/50 bg-secondary/25 px-3 py-2 text-left text-sm text-foreground"
-                >
-                  {item.label}
-                </button>
+        <div className="flex gap-8">
+          <aside className="hidden w-[176px] shrink-0 lg:block">
+            <nav className="sticky top-20 space-y-4">
+              {navGroups.map((group) => (
+                <div key={group.label}>
+                  <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/35">
+                    {group.label}
+                  </p>
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        aria-pressed={activeSection === item.id}
+                        onClick={() => setActiveSection(item.id)}
+                        className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                          activeSection === item.id
+                            ? "bg-accent/10 font-medium text-accent"
+                            : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
-            </CardContent>
-          </Card>
+            </nav>
+          </aside>
 
-          <div className="space-y-4">{renderActiveSection()}</div>
+          <div className="min-w-0 flex-1">{renderActiveSection()}</div>
         </div>
       </div>
     </main>
