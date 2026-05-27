@@ -45,6 +45,15 @@ type SaveGigPayload = {
   ticketUrl?: string
 }
 
+type SaveDjSetPayload = {
+  title: string
+  venue?: string
+  setDate?: string
+  imageUrl?: string
+  platformUrl: string
+  isPublished: boolean
+}
+
 type SaveArtistPayload = {
   artistId: string
   isPublished: boolean
@@ -53,6 +62,7 @@ type SaveArtistPayload = {
   featuredRelease: SaveFeaturedReleasePayload
   selectedReleases: SaveSelectedReleasePayload[]
   gigs: SaveGigPayload[]
+  djSets: SaveDjSetPayload[]
 }
 
 type CreateArtistPayload = {
@@ -125,6 +135,12 @@ function validatePayload(payload: SaveArtistPayload) {
 
   if (invalidGig) {
     return "Each gig must include venue, date, city, and country."
+  }
+
+  const invalidDjSet = payload.djSets.find((set) => !set.title.trim() || !set.platformUrl.trim())
+
+  if (invalidDjSet) {
+    return "Each DJ set must include a title and platform URL."
   }
 
   const invalidSelectedRelease = payload.selectedReleases.find(
@@ -427,6 +443,31 @@ export async function PATCH(request: Request) {
 
       if (insertGigsError) {
         throw insertGigsError
+      }
+    }
+
+    const { error: deleteDjSetsError } = await supabase.from("dj_sets").delete().eq("artist_id", artistId)
+
+    if (deleteDjSetsError) {
+      throw deleteDjSetsError
+    }
+
+    if (payload.djSets.length > 0) {
+      const { error: insertDjSetsError } = await supabase.from("dj_sets").insert(
+        payload.djSets.map((set, index) => ({
+          artist_id: artistId,
+          title: set.title.trim(),
+          venue: set.venue?.trim() || null,
+          set_date: set.setDate || null,
+          image_url: set.imageUrl?.trim() || null,
+          platform_url: set.platformUrl.trim(),
+          sort_order: index + 1,
+          is_published: set.isPublished,
+        })),
+      )
+
+      if (insertDjSetsError) {
+        throw insertDjSetsError
       }
     }
 

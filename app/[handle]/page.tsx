@@ -303,6 +303,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
           imageUrl: row.image_url ?? undefined,
           platformUrl: row.platform_url,
           sortOrder: row.sort_order,
+          isPublished: true,
         }),
       ),
       galleryImages: (galleryImagesResult.data ?? []).map((image) => ({

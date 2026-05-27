@@ -96,6 +96,8 @@ export interface DjSet {
   platformUrl: string
   /** Display sort position. */
   sortOrder: number
+  /** Whether the set is visible on the public profile. */
+  isPublished: boolean
 }
 
 /**

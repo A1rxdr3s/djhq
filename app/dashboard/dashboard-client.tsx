@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowDown, ArrowUp, Calendar, ExternalLink, Globe, LogOut, Mail, Plus, Save, Trash2 } from "lucide-react"
-import type { Artist, GalleryImage, ReleaseType, SocialPlatform } from "@/types/djhq"
+import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform } from "@/types/djhq"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +18,7 @@ const navItems = [
   { id: "featured-release", label: "Featured Release" },
   { id: "selected-releases", label: "Selected Releases" },
   { id: "gigs", label: "Gigs" },
+  { id: "dj-sets", label: "DJ Sets" },
   { id: "gallery", label: "Gallery" },
   { id: "booking", label: "Booking" },
   { id: "publish", label: "Publish" },
@@ -61,6 +62,16 @@ type GigFormState = {
   city: string
   country: string
   ticketUrl?: string
+}
+
+type DjSetFormState = {
+  id: string
+  title: string
+  venue: string
+  setDate: string
+  imageUrl: string
+  platformUrl: string
+  isPublished: boolean
 }
 
 type ImportedReleaseMetadata = {
@@ -183,6 +194,30 @@ function getGigFormState(artist: Artist): GigFormState[] {
   }))
 }
 
+function getDjSetFormState(artist: Artist): DjSetFormState[] {
+  return artist.djSets.map((set) => ({
+    id: set.id,
+    title: set.title,
+    venue: set.venue ?? "",
+    setDate: set.setDate ? toDateInputValue(set.setDate) : "",
+    imageUrl: set.imageUrl ?? "",
+    platformUrl: set.platformUrl,
+    isPublished: set.isPublished,
+  }))
+}
+
+function createEmptyDjSet(): DjSetFormState {
+  return {
+    id: `new-${crypto.randomUUID()}`,
+    title: "",
+    venue: "",
+    setDate: "",
+    imageUrl: "",
+    platformUrl: "",
+    isPublished: true,
+  }
+}
+
 type DashboardClientProps = {
   initialArtist: Artist
   statusMessage?: string
@@ -205,6 +240,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
+  const initialDjSets = getDjSetFormState(artist)
+  const [djSets, setDjSets] = useState(initialDjSets)
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -230,7 +267,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
   const isGigsDirty = JSON.stringify(upcomingGigs) !== JSON.stringify(initialUpcomingGigs)
-  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty
+  const isDjSetsDirty = JSON.stringify(djSets) !== JSON.stringify(initialDjSets)
+  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty
   const completionItems = [
     "Core profile info",
     "Music and social links",
@@ -267,6 +305,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         featuredRelease,
         selectedReleases,
         gigs: upcomingGigs,
+        djSets,
       }),
     })
 
@@ -319,6 +358,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         country: gig.country.trim(),
         ticketUrl: gig.ticketUrl?.trim() || undefined,
       })),
+      djSets: djSets.map((set, index): DjSet => ({
+        id: set.id,
+        title: set.title.trim(),
+        venue: set.venue.trim() || undefined,
+        setDate: set.setDate || undefined,
+        imageUrl: set.imageUrl.trim() || undefined,
+        platformUrl: set.platformUrl.trim(),
+        sortOrder: index + 1,
+        isPublished: set.isPublished,
+      })),
       updatedAt: new Date().toISOString(),
     }
 
@@ -333,6 +382,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
     setUpcomingGigs(getGigFormState(savedArtist))
+    setDjSets(getDjSetFormState(savedArtist))
     setGalleryImages(savedArtist.galleryImages)
     setSaveMessage(successMessage)
   }
@@ -458,6 +508,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function handleMoveSelectedRelease(index: number, direction: "up" | "down") {
     setSelectedReleases((current) => {
+      const nextIndex = direction === "up" ? index - 1 : index + 1
+
+      if (nextIndex < 0 || nextIndex >= current.length) {
+        return current
+      }
+
+      const next = [...current]
+      const [item] = next.splice(index, 1)
+      next.splice(nextIndex, 0, item)
+      return next
+    })
+  }
+
+  function handleAddDjSet() {
+    setDjSets((current) => [...current, createEmptyDjSet()])
+  }
+
+  function handleRemoveDjSet(index: number) {
+    setDjSets((current) => current.filter((_, i) => i !== index))
+  }
+
+  function handleMoveDjSet(index: number, direction: "up" | "down") {
+    setDjSets((current) => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
 
       if (nextIndex < 0 || nextIndex >= current.length) {
@@ -1274,6 +1347,177 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  function renderDjSets() {
+    return (
+      <Card className="border-border bg-card/70 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>DJ Sets</CardTitle>
+          <CardDescription>Recorded or broadcast sets shown on your public profile. First set is featured.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {djSets.map((set, index) => (
+            <div key={set.id} className="rounded-md border border-border bg-secondary/30 p-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Set {index + 1}</p>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleMoveDjSet(index, "up")}
+                    disabled={index === 0 || isSaving || isPublishing}
+                    className="h-7 px-2"
+                  >
+                    <ArrowUp className="h-3.5 w-3.5" />
+                    Move up
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleMoveDjSet(index, "down")}
+                    disabled={index === djSets.length - 1 || isSaving || isPublishing}
+                    className="h-7 px-2"
+                  >
+                    <ArrowDown className="h-3.5 w-3.5" />
+                    Move down
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRemoveDjSet(index)}
+                    disabled={isSaving || isPublishing}
+                    className="h-7 px-2"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`djset-title-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Title
+                  </label>
+                  <Input
+                    id={`djset-title-${index}`}
+                    value={set.title}
+                    onChange={(event) =>
+                      setDjSets((current) =>
+                        current.map((item, i) => (i === index ? { ...item, title: event.target.value } : item)),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`djset-venue-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Venue / Event
+                  </label>
+                  <Input
+                    id={`djset-venue-${index}`}
+                    value={set.venue}
+                    onChange={(event) =>
+                      setDjSets((current) =>
+                        current.map((item, i) => (i === index ? { ...item, venue: event.target.value } : item)),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`djset-date-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Date
+                  </label>
+                  <Input
+                    id={`djset-date-${index}`}
+                    type="date"
+                    value={set.setDate}
+                    onChange={(event) =>
+                      setDjSets((current) =>
+                        current.map((item, i) => (i === index ? { ...item, setDate: event.target.value } : item)),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`djset-platform-${index}`}
+                    className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                  >
+                    Platform URL
+                  </label>
+                  <Input
+                    id={`djset-platform-${index}`}
+                    value={set.platformUrl}
+                    onChange={(event) =>
+                      setDjSets((current) =>
+                        current.map((item, i) => (i === index ? { ...item, platformUrl: event.target.value } : item)),
+                      )
+                    }
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`djset-image-${index}`}
+                      className="text-xs font-medium uppercase tracking-widest text-muted-foreground"
+                    >
+                      Thumbnail URL
+                    </label>
+                    <Input
+                      id={`djset-image-${index}`}
+                      value={set.imageUrl}
+                      onChange={(event) =>
+                        setDjSets((current) =>
+                          current.map((item, i) => (i === index ? { ...item, imageUrl: event.target.value } : item)),
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="md:col-span-2 flex items-center gap-2">
+                  <input
+                    id={`djset-published-${index}`}
+                    type="checkbox"
+                    checked={set.isPublished}
+                    onChange={(event) =>
+                      setDjSets((current) =>
+                        current.map((item, i) => (i === index ? { ...item, isPublished: event.target.checked } : item)),
+                      )
+                    }
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  <label htmlFor={`djset-published-${index}`} className="text-sm text-foreground">
+                    Show on public profile
+                  </label>
+                </div>
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddDjSet}
+            disabled={isSaving || isPublishing}
+            className="border-border bg-background/70"
+          >
+            <Plus className="h-4 w-4" />
+            Add set
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
   function renderGallery() {
     return (
       <Card className="border-border bg-card/70 backdrop-blur-sm">
@@ -1471,6 +1715,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderSelectedReleases()
       case "gigs":
         return renderGigs()
+      case "dj-sets":
+        return renderDjSets()
       case "gallery":
         return renderGallery()
       case "booking":

@@ -65,6 +65,17 @@ type GalleryImageRow = {
   sort_order: number
 }
 
+type DjSetRow = {
+  id: string
+  title: string
+  venue: string | null
+  set_date: string | null
+  image_url: string | null
+  platform_url: string
+  sort_order: number
+  is_published: boolean
+}
+
 type SupabaseAdminClient = ReturnType<typeof createSupabaseAdminClient>
 
 const socialPlatforms: SocialPlatform[] = [
@@ -143,7 +154,7 @@ async function claimSeededArtist(supabase: SupabaseAdminClient, artistId: string
 }
 
 async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow: ArtistRow): Promise<Artist> {
-  const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult] = await Promise.all([
+  const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult] = await Promise.all([
     supabase
       .from("social_links")
       .select("platform, label, url")
@@ -169,10 +180,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>(),
+    supabase
+      .from("dj_sets")
+      .select("id, title, venue, set_date, image_url, platform_url, sort_order, is_published")
+      .eq("artist_id", artistRow.id)
+      .order("sort_order", { ascending: true })
+      .returns<DjSetRow[]>(),
   ])
 
-  if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error) {
-    throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error
+  if (socialLinksResult.error || releasesResult.error || gigsResult.error || galleryImagesResult.error || djSetsResult.error) {
+    throw socialLinksResult.error ?? releasesResult.error ?? gigsResult.error ?? galleryImagesResult.error ?? djSetsResult.error
   }
 
   const releaseRows = releasesResult.data ?? []
@@ -227,7 +244,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       country: gig.country,
       ticketUrl: gig.ticket_url ?? undefined,
     })),
-    djSets: [],
+    djSets: (djSetsResult.data ?? []).map((set) => ({
+      id: set.id,
+      title: set.title,
+      venue: set.venue ?? undefined,
+      setDate: set.set_date ?? undefined,
+      imageUrl: set.image_url ?? undefined,
+      platformUrl: set.platform_url,
+      sortOrder: set.sort_order,
+      isPublished: set.is_published,
+    })),
     galleryImages: (galleryImagesResult.data ?? []).map((image) => ({
       id: image.id,
       imageUrl: image.image_url,
