@@ -33,7 +33,9 @@ export function inferSpotifyReleaseType(url: URL): ReleaseType | null {
     return null
   }
 
-  return match[1] === "album" ? "album" : "single"
+  // Album URLs conclusively indicate an album release.
+  // Track URLs are ambiguous (the track could belong to an EP or album), so return null.
+  return match[1] === "album" ? "album" : null
 }
 
 export function cleanSpotifyTitle(title: string | null, artistName?: string | null) {
@@ -162,6 +164,21 @@ function extractArtistFromSpotifyDescription(text: string): string | null {
   return null
 }
 
+function extractReleaseDateFromHtml(html: string): string | null {
+  // Primary: Spotify embeds the release date directly in this tag (YYYY-MM-DD)
+  const metaDate = getMetaContent(html, ["music:release_date"])
+  if (metaDate) {
+    const match = metaDate.trim().match(/^(\d{4}-\d{2}-\d{2})/)
+    if (match?.[1]) return match[1]
+  }
+
+  // Fallback: JSON-LD structured data
+  const jsonLdMatch = html.match(/"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})/)
+  if (jsonLdMatch?.[1]) return jsonLdMatch[1]
+
+  return null
+}
+
 function extractSpotifyArtistCredits(html: string): string | null {
   // Primary: Spotify embeds the clean credits string directly in this tag
   const musicianDesc = getMetaContent(html, ["music:musician_description"])
@@ -197,8 +214,9 @@ async function getOpenGraphMetadata(url: URL) {
   const title = getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html)
   const image = getMetaContent(html, ["og:image", "twitter:image"])
   const artist = extractSpotifyArtistCredits(html)
+  const releaseDate = extractReleaseDateFromHtml(html)
 
-  return { title, image, artist }
+  return { title, image, artist, releaseDate }
 }
 
 export async function importSpotifyReleaseMetadata(url: URL): Promise<ImportedReleaseMetadata> {
@@ -208,23 +226,25 @@ export async function importSpotifyReleaseMetadata(url: URL): Promise<ImportedRe
     throw new Error("Unsupported Spotify URL. Use an open.spotify.com track or album link.")
   }
 
-  const oEmbedMetadata = await getSpotifyOEmbedMetadata(platformUrl)
-  // Fetch page HTML when oEmbed is incomplete or doesn't provide artist credits
-  const needsPageMetadata =
-    !oEmbedMetadata?.title || !oEmbedMetadata?.thumbnail_url || !oEmbedMetadata?.author_name?.trim()
-  const pageMetadata = needsPageMetadata ? await getOpenGraphMetadata(platformUrl) : null
+  // Fetch oEmbed (title/artwork) and page HTML (date/credits) in parallel.
+  // Page HTML is always needed since oEmbed doesn't expose release date.
+  const [oEmbedMetadata, pageMetadata] = await Promise.all([
+    getSpotifyOEmbedMetadata(platformUrl),
+    getOpenGraphMetadata(platformUrl),
+  ])
 
   const rawTitle = oEmbedMetadata?.title ?? pageMetadata?.title ?? null
   const artist = oEmbedMetadata?.author_name?.trim() || pageMetadata?.artist || null
   const title = cleanSpotifyTitle(rawTitle, artist)
   const artworkUrl = oEmbedMetadata?.thumbnail_url ?? pageMetadata?.image ?? null
+  const releaseDate = pageMetadata?.releaseDate ?? null
 
   return {
     provider: "spotify",
     title,
     artist,
     label: null,
-    releaseDate: null,
+    releaseDate,
     type: inferSpotifyReleaseType(platformUrl),
     platformUrl: platformUrl.toString(),
     artworkUrl,
