@@ -1,6 +1,6 @@
 export type ReleaseType = "single" | "ep" | "album"
 
-export type ReleaseProvider = "beatport" | "spotify"
+export type ReleaseProvider = "beatport" | "spotify" | "soundcloud"
 
 /**
  * Normalized release metadata from a public platform URL.

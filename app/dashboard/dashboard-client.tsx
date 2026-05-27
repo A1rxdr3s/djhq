@@ -75,7 +75,7 @@ type DjSetFormState = {
 }
 
 type ImportedReleaseMetadata = {
-  provider: "beatport" | "spotify"
+  provider: "beatport" | "spotify" | "soundcloud"
   title: string | null
   artist: string | null
   label: string | null
@@ -183,6 +183,16 @@ function mergeImportedReleaseFields<T extends FeaturedReleaseFormState>(
   }
 }
 
+function mergeDjSetMetadata(current: DjSetFormState, result: ImportedReleaseMetadata): DjSetFormState {
+  return {
+    ...current,
+    title: result.title?.trim() || current.title,
+    imageUrl: result.artworkUrl?.trim() || current.imageUrl,
+    platformUrl: result.platformUrl || current.platformUrl,
+    setDate: result.releaseDate ?? current.setDate,
+  }
+}
+
 function getGigFormState(artist: Artist): GigFormState[] {
   return artist.upcomingGigs.map((gig) => ({
     id: gig.id,
@@ -247,6 +257,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isPublishing, setIsPublishing] = useState(false)
   const [isImportingReleaseMetadata, setIsImportingReleaseMetadata] = useState(false)
   const [importingSelectedReleaseIndex, setImportingSelectedReleaseIndex] = useState<number | null>(null)
+  const [importingDjSetIndex, setImportingDjSetIndex] = useState<number | null>(null)
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
   const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false)
   const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
@@ -519,6 +530,49 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       next.splice(nextIndex, 0, item)
       return next
     })
+  }
+
+  async function handleImportDjSetMetadata(index: number) {
+    const set = djSets[index]
+
+    if (!set?.platformUrl.trim()) {
+      setSaveMessage("Paste a SoundCloud URL first.")
+      return
+    }
+
+    setImportingDjSetIndex(index)
+    setSaveMessage("")
+
+    try {
+      const response = await fetch("/api/import/dj-set-metadata", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: set.platformUrl,
+        }),
+      })
+
+      const result = (await response.json()) as ImportedReleaseMetadata & { error?: string }
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Unable to import DJ set metadata. Please verify the URL and try again.")
+      }
+
+      setDjSets((current) =>
+        current.map((item, i) => (i === index ? mergeDjSetMetadata(item, result) : item)),
+      )
+      setSaveMessage("DJ set metadata imported. Review and save changes.")
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to import DJ set metadata. Please verify the URL and try again."
+      setSaveMessage(message)
+    } finally {
+      setImportingDjSetIndex(null)
+    }
   }
 
   function handleAddDjSet() {
@@ -1365,7 +1419,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     variant="outline"
                     size="sm"
                     onClick={() => handleMoveDjSet(index, "up")}
-                    disabled={index === 0 || isSaving || isPublishing}
+                    disabled={index === 0 || isSaving || isPublishing || importingDjSetIndex !== null}
                     className="h-7 px-2"
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
@@ -1376,7 +1430,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     variant="outline"
                     size="sm"
                     onClick={() => handleMoveDjSet(index, "down")}
-                    disabled={index === djSets.length - 1 || isSaving || isPublishing}
+                    disabled={index === djSets.length - 1 || isSaving || isPublishing || importingDjSetIndex !== null}
                     className="h-7 px-2"
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
@@ -1387,7 +1441,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     variant="outline"
                     size="sm"
                     onClick={() => handleRemoveDjSet(index)}
-                    disabled={isSaving || isPublishing}
+                    disabled={isSaving || isPublishing || importingDjSetIndex !== null}
                     className="h-7 px-2"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -1464,6 +1518,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       )
                     }
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleImportDjSetMetadata(index)}
+                    disabled={importingDjSetIndex === index || isSaving || isPublishing}
+                    className="border-border bg-background/70"
+                  >
+                    {importingDjSetIndex === index ? "Fetching..." : "Import metadata"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Paste a soundcloud.com link. Title, artwork, and platform URL are filled from public SoundCloud data when available.
+                  </p>
                 </div>
                 <div className="md:col-span-2">
                   <div className="space-y-1.5">
@@ -1507,7 +1573,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             type="button"
             variant="outline"
             onClick={handleAddDjSet}
-            disabled={isSaving || isPublishing}
+            disabled={isSaving || isPublishing || importingDjSetIndex !== null}
             className="border-border bg-background/70"
           >
             <Plus className="h-4 w-4" />
