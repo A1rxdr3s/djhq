@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { resolveTxt } from "dns/promises"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { addDomainToVercel, checkDomainConfigVercel } from "@/lib/vercel-domains"
 
 const MAX_ATTEMPTS_PER_HOUR = 10
 
@@ -134,16 +135,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, status: "error", error: errorMessage }, { status: 400 })
   }
 
-  // TXT ownership confirmed — mark verified and prompt user to add routing DNS.
-  // Routing DNS check and Vercel provisioning happen in check-connection.
+  // TXT ownership confirmed — register the domain in Vercel and fetch the project-specific
+  // CNAME target so the verified dashboard state shows the correct DNS instruction immediately.
+  // Both Vercel calls are best-effort: a failure here does not block verification.
+  // Routing DNS validation and final activation remain the responsibility of check-connection.
+  let dnsTarget: string | null = null
+  try {
+    const vercelResult = await addDomainToVercel(domainRow.domain)
+    if (vercelResult.ok) {
+      const configResult = await checkDomainConfigVercel(domainRow.domain)
+      dnsTarget = configResult?.recommendedCname ?? null
+    }
+  } catch {
+    // Best-effort — verification is not contingent on Vercel API availability.
+  }
+
   await admin
     .from("custom_domains")
     .update({
       status: "verified",
       verified_at: new Date().toISOString(),
       error_message: null,
+      ...(dnsTarget ? { dns_target: dnsTarget } : {}),
     })
     .eq("id", domainId)
 
-  return NextResponse.json({ success: true, status: "verified" })
+  return NextResponse.json({ success: true, status: "verified", dnsTarget })
 }

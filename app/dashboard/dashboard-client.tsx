@@ -2346,6 +2346,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         routingDnsOk?: boolean
         message?: string
         error?: string
+        dnsTarget?: string | null
       }
 
       const nextStatus = result.status ?? (response.ok ? "verified" : "error")
@@ -2361,6 +2362,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 routingDnsOk: result.routingDnsOk,
                 verificationAttempts: d.verificationAttempts + 1,
                 lastVerificationAttemptAt: new Date().toISOString(),
+                routingRecord: result.dnsTarget
+                  ? { type: "CNAME" as const, name: "@", value: result.dnsTarget }
+                  : d.routingRecord,
               }
             : d,
         ),
