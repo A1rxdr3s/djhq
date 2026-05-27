@@ -1,33 +1,27 @@
 // POST /api/custom-domains/[id]/check-connection
 //
-// Phase 2 of domain onboarding: verify routing DNS then provision in Vercel.
+// Phase 2 of domain onboarding: provision in Vercel then verify routing via Vercel config API.
 // Called after the user has already confirmed TXT ownership (status = verified).
 // Also accepts status = error where verified_at is set, so users can retry
 // after a provisioning failure without re-doing TXT verification.
 //
 // Flow:
-//   1. Check CNAME → *.vercel-dns.com  (standard non-Cloudflare setup)
-//   2. Check A records (Cloudflare CNAME flattening and apex providers that don't allow CNAMEs):
-//      - All resolved A records must be known Vercel IPs.
-//      - Mixed Vercel + non-Vercel IPs → surface "mixed records" error, do not pass.
-//   If DNS not pointing at Vercel → keep status=verified, surface error, do not call Vercel.
-//   If DNS is correct             → addDomainToVercel → active (or error on provisioning failure).
+//   1. addDomainToVercel — registers the domain in the Vercel project (idempotent).
+//   2. checkDomainConfigVercel — asks Vercel whether routing DNS is correct.
+//      - misconfigured: false → status = active (live).
+//      - misconfigured: true or null (API unavailable) → status stays verified, surface routing error.
+//   This avoids fragile IP allowlists that break with Cloudflare CNAME flattening and
+//   Vercel's geolocation-based CDN IPs.
 
 import { NextResponse } from "next/server"
-import { resolve4, resolveCname } from "dns/promises"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import { addDomainToVercel } from "@/lib/vercel-domains"
+import { addDomainToVercel, checkDomainConfigVercel } from "@/lib/vercel-domains"
 
-// Known Vercel A-record targets for apex domains (Cloudflare CNAME flattening resolves to these).
-// Do not expand to a full /24 range — only add IPs that Vercel explicitly publishes.
-const VERCEL_A_RECORDS = new Set(["76.76.21.21", "76.76.21.22", "76.76.21.93"])
-// All Vercel CNAME targets share this suffix.
-const VERCEL_CNAME_SUFFIX = ".vercel-dns.com"
-
-type RoutingDnsResult =
-  | { ok: true }
-  | { ok: false; error: string }
+const ROUTING_ERROR =
+  "We could not confirm the Vercel DNS target yet. " +
+  "Make sure your apex CNAME points to cname.vercel-dns.com and is DNS-only in Cloudflare, " +
+  "then try again. DNS changes can take up to 48 hours to propagate."
 
 type DomainRow = {
   id: string
@@ -40,58 +34,6 @@ type DomainRow = {
 type ArtistRow = {
   owner_user_id: string | null
   plan: string
-}
-
-async function checkRoutingDns(domain: string): Promise<RoutingDnsResult> {
-  // Try CNAME first — covers non-Cloudflare setups and subdomains.
-  // Cloudflare CNAME flattening at the apex returns no CNAME in external DNS, so we
-  // fall through to A record resolution below for those cases.
-  try {
-    const cnames = await resolveCname(domain)
-    if (cnames.some((r) => r === "cname.vercel-dns.com" || r.endsWith(VERCEL_CNAME_SUFFIX))) {
-      return { ok: true }
-    }
-  } catch {
-    // ENODATA / ENOTFOUND — not a CNAME or not resolvable as one; fall through.
-  }
-
-  // Try A records — covers Cloudflare CNAME flattening and providers that don't allow apex CNAMEs.
-  // Reject mixed sets: if any A record is not a known Vercel IP, old records are still present.
-  try {
-    const aRecords = await resolve4(domain)
-    if (aRecords.length > 0) {
-      const vercel = aRecords.filter((r) => VERCEL_A_RECORDS.has(r))
-      const nonVercel = aRecords.filter((r) => !VERCEL_A_RECORDS.has(r))
-
-      if (vercel.length > 0 && nonVercel.length === 0) {
-        return { ok: true }
-      }
-
-      if (vercel.length > 0 && nonVercel.length > 0) {
-        return {
-          ok: false,
-          error:
-            "Your domain has mixed DNS records. Remove the old A or CNAME records " +
-            "that don't point to Vercel, then keep only the Vercel DNS target.",
-        }
-      }
-    }
-  } catch {
-    // Not resolvable as A record.
-  }
-
-  return {
-    ok: false,
-    error:
-      "Routing DNS not detected. In your DNS provider, set a CNAME record: " +
-      "Name @ → Value cname.vercel-dns.com. " +
-      "If your provider doesn't support apex CNAMEs (e.g. some non-Cloudflare providers), " +
-      "use an A record pointing to 76.76.21.21 instead. " +
-      "Cloudflare users: CNAME flattening is expected — external DNS will show A records, " +
-      "which is normal and correct. " +
-      "Remove any old A or CNAME records pointing elsewhere before retrying. " +
-      "DNS changes can take up to 48 hours to propagate.",
-  }
 }
 
 export async function POST(
@@ -161,28 +103,28 @@ export async function POST(
     return NextResponse.json({ error: "Custom domains require a Pro plan." }, { status: 403 })
   }
 
-  // Check routing DNS.
-  const routingResult = await checkRoutingDns(domainRow.domain)
+  // Step 1: register the domain in Vercel (idempotent — 409 from Vercel is treated as success).
+  const vercelResult = await addDomainToVercel(domainRow.domain)
 
-  if (!routingResult.ok) {
+  if (!vercelResult.ok) {
+    const provisioningError = `Provisioning failed: ${vercelResult.error} — please try again or contact support.`
+
     await admin
       .from("custom_domains")
-      .update({
-        status: "verified",
-        error_message: routingResult.error,
-      })
+      .update({ status: "error", error_message: provisioningError })
       .eq("id", id)
 
     return NextResponse.json(
-      { success: false, routingDnsOk: false, error: routingResult.error },
-      { status: 400 },
+      { success: false, status: "error", error: provisioningError },
+      { status: 500 },
     )
   }
 
-  // Routing DNS is correct — provision the domain in Vercel.
-  const vercelResult = await addDomainToVercel(domainRow.domain)
+  // Step 2: ask Vercel whether routing DNS resolves correctly for this domain.
+  // This handles Cloudflare apex CNAME flattening and all geolocation-based CDN IPs transparently.
+  const configResult = await checkDomainConfigVercel(domainRow.domain)
 
-  if (vercelResult.ok) {
+  if (configResult !== null && !configResult.misconfigured) {
     await admin
       .from("custom_domains")
       .update({
@@ -195,19 +137,15 @@ export async function POST(
     return NextResponse.json({ success: true, status: "active" })
   }
 
-  // Vercel provisioning failed — surface error and let user retry.
-  const provisioningError = `Provisioning failed: ${vercelResult.error} — please try again or contact support.`
-
+  // Vercel reports domain as misconfigured or config API was unreachable — keep status=verified
+  // and surface a routing error. The user retries once DNS propagates.
   await admin
     .from("custom_domains")
-    .update({
-      status: "error",
-      error_message: provisioningError,
-    })
+    .update({ status: "verified", error_message: ROUTING_ERROR })
     .eq("id", id)
 
   return NextResponse.json(
-    { success: false, status: "error", error: provisioningError },
-    { status: 500 },
+    { success: false, routingDnsOk: false, error: ROUTING_ERROR },
+    { status: 400 },
   )
 }

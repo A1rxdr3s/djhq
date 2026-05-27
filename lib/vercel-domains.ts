@@ -60,6 +60,29 @@ export async function addDomainToVercel(domain: string): Promise<AddDomainResult
   return { ok: false, error: errorMsg }
 }
 
+export async function checkDomainConfigVercel(
+  domain: string,
+): Promise<{ misconfigured: boolean } | null> {
+  const token = process.env.VERCEL_API_TOKEN
+  const teamId = process.env.VERCEL_TEAM_ID
+
+  if (!token) return null
+
+  const url = new URL(`https://api.vercel.com/v6/domains/${encodeURIComponent(domain)}/config`)
+  if (teamId) url.searchParams.set("teamId", teamId)
+
+  try {
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return null
+    const json = (await res.json()) as { misconfigured?: boolean }
+    return { misconfigured: json.misconfigured ?? true }
+  } catch {
+    return null
+  }
+}
+
 export async function removeDomainFromVercel(domain: string): Promise<void> {
   const token = process.env.VERCEL_API_TOKEN
   const projectId = process.env.VERCEL_PROJECT_ID
