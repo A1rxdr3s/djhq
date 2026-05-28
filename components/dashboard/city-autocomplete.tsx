@@ -21,7 +21,7 @@ export function CityAutocomplete({ value, onChange, onSelect, onBlur }: CityAuto
   const results = searchCities(value)
   const showDropdown = open && results.length > 0
 
-  // Close on outside click
+  // Close on outside pointer — covers clicks and taps outside the combobox.
   useEffect(() => {
     function handlePointerDown(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -37,6 +37,7 @@ export function CityAutocomplete({ value, onChange, onSelect, onBlur }: CityAuto
       onChange(option.city)
       onSelect(option)
       setOpen(false)
+      setActiveIndex(-1)
     },
     [onChange, onSelect],
   )
@@ -67,6 +68,7 @@ export function CityAutocomplete({ value, onChange, onSelect, onBlur }: CityAuto
         break
       case "Escape":
         setOpen(false)
+        setActiveIndex(-1)
         e.preventDefault()
         break
     }
@@ -82,6 +84,11 @@ export function CityAutocomplete({ value, onChange, onSelect, onBlur }: CityAuto
           placeholder="City"
           autoComplete="off"
           spellCheck={false}
+          role="combobox"
+          aria-expanded={showDropdown}
+          aria-haspopup="listbox"
+          aria-autocomplete="list"
+          aria-controls="city-autocomplete-listbox"
           onChange={(e) => {
             onChange(e.target.value)
             setActiveIndex(-1)
@@ -90,7 +97,11 @@ export function CityAutocomplete({ value, onChange, onSelect, onBlur }: CityAuto
           onFocus={() => {
             if (results.length > 0) setOpen(true)
           }}
-          onBlur={() => onBlur?.(value)}
+          onBlur={() => {
+            // Defer close so onPointerDown on dropdown items fires before the dropdown unmounts.
+            setTimeout(() => setOpen(false), 150)
+            onBlur?.(value)
+          }}
           onKeyDown={handleKeyDown}
           className={cn(
             "h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025]",
@@ -103,40 +114,50 @@ export function CityAutocomplete({ value, onChange, onSelect, onBlur }: CityAuto
       </div>
 
       {showDropdown && (
+        // Outer div: rounded clip + visual chrome. Inner div: scrollable content.
         <div
-          role="listbox"
           className={cn(
             "absolute left-0 right-0 top-full z-50 mt-1",
             "overflow-hidden rounded-xl border border-white/[0.09]",
-            "bg-[hsl(var(--card))] shadow-2xl shadow-black/50",
+            "shadow-2xl shadow-black/50",
           )}
         >
-          {results.map((city, i) => (
-            <div
-              key={`${city.city}-${city.countryCode}`}
-              role="option"
-              aria-selected={i === activeIndex}
-              // onPointerDown keeps focus in the input (same pattern as VenueAutocomplete)
-              onPointerDown={(e) => {
-                e.preventDefault()
-                handleSelect(city)
-              }}
-              onPointerEnter={() => setActiveIndex(i)}
-              className={cn(
-                "flex cursor-default select-none items-center gap-3 px-3.5 py-2.5",
-                "border-b border-white/[0.04] last:border-0",
-                "transition-colors duration-75",
-                i === activeIndex
-                  ? "bg-white/[0.07] text-foreground"
-                  : "text-foreground/80 hover:bg-white/[0.04]",
-              )}
-            >
-              <p className="min-w-0 flex-1 truncate text-[13px] font-semibold">{city.city}</p>
-              <span className="shrink-0 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
-                {city.countryCode}
-              </span>
-            </div>
-          ))}
+          <div
+            id="city-autocomplete-listbox"
+            role="listbox"
+            className="max-h-[264px] overflow-y-auto bg-[hsl(var(--card))]"
+          >
+            {results.map((city, i) => (
+              <div
+                key={`${city.city}-${city.countryCode}`}
+                role="option"
+                aria-selected={i === activeIndex}
+                // onPointerDown keeps focus in the input — same pattern as VenueAutocomplete.
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  handleSelect(city)
+                }}
+                onPointerEnter={() => setActiveIndex(i)}
+                className={cn(
+                  "flex cursor-default select-none items-center gap-3 px-3.5 py-2.5",
+                  "border-b border-white/[0.04] last:border-0",
+                  "transition-colors duration-75",
+                  i === activeIndex
+                    ? "bg-white/[0.07] text-foreground"
+                    : "text-foreground/80 hover:bg-white/[0.04]",
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold">{city.city}</p>
+                  <p className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground/45">
+                    {city.country}
+                    <span className="mx-1.5 text-muted-foreground/25">·</span>
+                    {city.countryCode}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
