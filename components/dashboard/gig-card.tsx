@@ -5,8 +5,11 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, ChevronDown, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { VenueAutocomplete } from "./venue-autocomplete"
+import { CityAutocomplete } from "./city-autocomplete"
 import { TicketProviderBadge } from "./ticket-provider-badge"
+import { findCityExact } from "@/lib/city-data"
 import type { VenueEntry } from "@/lib/venue-data"
+import type { CityOption } from "@/lib/city-data"
 
 export type GigEntry = {
   id: string
@@ -69,6 +72,9 @@ export function GigCard({
   initialExpanded = false,
 }: GigCardProps) {
   const [expanded, setExpanded] = useState(initialExpanded)
+  // overflow: hidden is required during the height animation but clips autocomplete dropdowns
+  // when fully expanded. Switch to overflow: visible once the enter animation completes.
+  const [formAnimating, setFormAnimating] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -88,6 +94,27 @@ export function GigCard({
 
   function handleVenueSelect(entry: VenueEntry) {
     onChange({ ...gig, venue: entry.name, city: entry.city, country: entry.country })
+  }
+
+  function handleCitySelect(option: CityOption) {
+    // Dropdown selection: always fill city and country code.
+    onChange({ ...gig, city: option.city, country: option.countryCode })
+  }
+
+  function handleCityBlur(typedValue: string) {
+    // Autofill-on-blur: only fill country when it is currently empty.
+    // This handles manually typed "Concepcion" → auto-fills "CL".
+    if (!typedValue.trim() || gig.country) return
+    const match = findCityExact(typedValue)
+    if (match) {
+      onChange({ ...gig, city: typedValue, country: match.countryCode })
+    }
+  }
+
+  function handleToggle() {
+    // Begin animation: clip overflow to prevent content flash during height transition.
+    setFormAnimating(true)
+    setExpanded((v) => !v)
   }
 
   function handleDeleteClick(e: React.MouseEvent) {
@@ -113,7 +140,7 @@ export function GigCard({
         {/* Toggle region: date tile + venue/location summary */}
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={handleToggle}
           aria-expanded={expanded}
           aria-label="Toggle show details"
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-0.5 py-0.5 text-left"
@@ -200,7 +227,9 @@ export function GigCard({
         </div>
       </div>
 
-      {/* Collapsible edit form */}
+      {/* Collapsible edit form.
+          overflow switches to "visible" after the enter animation so that
+          autocomplete dropdowns are not clipped by the height-animating container. */}
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
@@ -208,7 +237,12 @@ export function GigCard({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.18, ease: EASE }}
-            style={{ overflow: "hidden" }}
+            style={{ overflow: formAnimating ? "hidden" : "visible" }}
+            onAnimationComplete={() => {
+              // Reset after enter animation so dropdowns can escape the container.
+              // On exit, the element is removed by AnimatePresence — no cleanup needed.
+              if (expanded) setFormAnimating(false)
+            }}
           >
             <div className="space-y-2 border-t border-white/[0.04] px-2.5 pb-2.5 pt-2.5">
               {/* Row 1: venue autocomplete + date */}
@@ -227,13 +261,13 @@ export function GigCard({
                 />
               </div>
 
-              {/* Row 2: city + country + ticket URL */}
+              {/* Row 2: city autocomplete + country + ticket URL */}
               <div className="flex items-center gap-2">
-                <input
+                <CityAutocomplete
                   value={gig.city}
-                  placeholder="City"
-                  onChange={(e) => set("city", e.target.value)}
-                  className={field("w-28 shrink-0")}
+                  onChange={(v) => set("city", v)}
+                  onSelect={handleCitySelect}
+                  onBlur={handleCityBlur}
                 />
                 <input
                   value={gig.country}
