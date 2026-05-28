@@ -622,7 +622,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="lg:col-start-1 lg:row-start-1">
+          {upcomingGigs.length > 0 ? <GigsSection gigs={upcomingGigs} /> : null}
+
+          <section className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <SectionTitle>Press Photos</SectionTitle>
             <div className="mt-4 grid grid-cols-5 grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:h-[480px]">
               {photoPreview.map((photo, index) => (
@@ -653,12 +655,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </section>
 
         </div>
-
-        {upcomingGigs.length > 0 ? (
-          <div className="mt-10 lg:mt-12">
-            <GigsSection gigs={upcomingGigs} />
-          </div>
-        ) : null}
 
         {selectedReleases.length > 0 ? (
           <section className="mt-10 lg:mt-12">
