@@ -18,8 +18,7 @@ function parseGigDate(dateStr: string) {
 // Selects up to 3 gigs for display.
 // Prefers upcoming gigs; backfills with the most-recent past gigs when fewer
 // than 3 upcoming exist. Input must be sorted ascending by date (as the DB provides).
-// Output is also ascending: past gigs always precede upcoming gigs chronologically,
-// so no secondary sort is required.
+// Output is also ascending: past gigs always precede upcoming gigs chronologically.
 function selectGigsForDisplay(
   gigs: Gig[],
   today: string,
@@ -42,12 +41,12 @@ const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
 const container = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.06 } },
+  visible: { transition: { staggerChildren: 0.05 } },
 }
 
 const item = {
-  hidden: { opacity: 0, y: 6 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.32, ease: EASE } },
+  hidden: { opacity: 0, y: 5 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: EASE } },
 }
 
 type GigsSectionProps = {
@@ -71,7 +70,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
       </h2>
 
       <motion.div
-        className="mt-4 flex flex-col gap-1"
+        className="mt-3 flex flex-col gap-0.5"
         variants={container}
         initial="hidden"
         whileInView="visible"
@@ -85,19 +84,19 @@ export function GigsSection({ gigs }: GigsSectionProps) {
             <motion.div key={gig.id} variants={item}>
               <div
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5",
+                  "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5",
                   "border transition-colors duration-200",
                   isNext
                     ? "border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04]"
                     : isPast
                     ? "border-transparent"
-                    : "border-transparent hover:bg-white/[0.03]",
+                    : "border-transparent hover:bg-white/[0.025]",
                 )}
               >
-                {/* Date tile — day prominent, month small */}
+                {/* Date tile — day prominent, month small accent */}
                 <div
                   className={cn(
-                    "flex h-10 w-8 shrink-0 flex-col items-center justify-center rounded-lg border",
+                    "flex h-9 w-7 shrink-0 flex-col items-center justify-center rounded-md border",
                     isPast
                       ? "border-white/[0.04] bg-transparent"
                       : "border-white/[0.07] bg-white/[0.025]",
@@ -105,60 +104,55 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                 >
                   <span
                     className={cn(
-                      "text-[14px] font-black leading-none",
-                      isPast ? "text-foreground/30" : "text-foreground/80",
+                      "text-[13px] font-black leading-none",
+                      isPast ? "text-foreground/28" : "text-foreground/80",
                     )}
                   >
                     {day}
                   </span>
                   <span
                     className={cn(
-                      "mt-0.5 text-[6.5px] font-bold uppercase tracking-widest",
-                      isPast
-                        ? "text-muted-foreground/20"
-                        : isNext
-                        ? "text-accent/65"
-                        : "text-muted-foreground/35",
+                      "mt-0.5 text-[6px] font-bold uppercase tracking-widest",
+                      // All upcoming months use accent — past months are muted.
+                      isPast ? "text-muted-foreground/20" : "text-accent/60",
                     )}
                   >
                     {month}
                   </span>
                 </div>
 
-                {/* Show info */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-1.5">
-                    {isNext && (
-                      <span className="shrink-0 text-[7px] font-bold uppercase tracking-[0.28em] text-accent/65">
-                        Next
-                      </span>
-                    )}
-                    <p
-                      className={cn(
-                        "truncate text-[13px] font-semibold leading-tight",
-                        isPast ? "text-foreground/38" : "text-foreground/85",
-                      )}
-                    >
-                      {gig.venue}
-                    </p>
-                  </div>
-                  <p
+                {/* Single-line info: [NEXT] venue  ·  city CC */}
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  {isNext && (
+                    <span className="shrink-0 text-[7px] font-bold uppercase tracking-[0.28em] text-accent/65">
+                      Next
+                    </span>
+                  )}
+                  <span
                     className={cn(
-                      "mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em]",
-                      isPast ? "text-foreground/18" : "text-foreground/30",
+                      "min-w-0 flex-1 truncate text-[12.5px] font-semibold leading-none",
+                      isPast ? "text-foreground/35" : "text-foreground/82",
                     )}
                   >
-                    {gig.city}
-                    {gig.country && (
-                      <>
-                        <span className="mx-1 text-foreground/12">·</span>
-                        {gig.country}
-                      </>
-                    )}
-                  </p>
+                    {gig.venue}
+                  </span>
+                  {(gig.city || gig.country) && (
+                    <span
+                      className={cn(
+                        "shrink-0 text-[9.5px] font-medium uppercase tracking-[0.1em]",
+                        isPast ? "text-foreground/16" : "text-foreground/28",
+                      )}
+                    >
+                      {gig.city}
+                      {gig.city && gig.country && (
+                        <span className="mx-1 opacity-40">·</span>
+                      )}
+                      {gig.country}
+                    </span>
+                  )}
                 </div>
 
-                {/* Ticket link */}
+                {/* Ticket link — subtle, secondary */}
                 {gig.ticketUrl ? (
                   <a
                     href={gig.ticketUrl}
@@ -168,14 +162,14 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                     className={cn(
                       "shrink-0 transition-colors duration-200",
                       isPast
-                        ? "text-muted-foreground/20 hover:text-muted-foreground/40"
-                        : "text-accent/35 hover:text-accent/80",
+                        ? "text-muted-foreground/18 hover:text-muted-foreground/38"
+                        : "text-accent/35 hover:text-accent/75",
                     )}
                   >
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3 w-3" />
                   </a>
                 ) : (
-                  <span className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="h-3 w-3 shrink-0" aria-hidden="true" />
                 )}
               </div>
             </motion.div>

@@ -4,8 +4,9 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowDown, ArrowUp, Check, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
 import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -239,7 +240,7 @@ function mergeDjSetMetadata(current: DjSetFormState, result: ImportedReleaseMeta
   }
 }
 
-// Sorts gigs chronologically: upcoming dates first (ascending), past dates after,
+// Sorts gigs: upcoming ascending first, then past gigs descending (most recent past first),
 // invalid/empty dates last. YYYY-MM-DD strings compare correctly as plain strings.
 function sortGigsByDate(gigs: GigFormState[]): GigFormState[] {
   const today = new Date().toISOString().slice(0, 10)
@@ -250,6 +251,9 @@ function sortGigsByDate(gigs: GigFormState[]): GigFormState[] {
     const aPast = a.date < today
     const bPast = b.date < today
     if (aPast !== bPast) return aPast ? 1 : -1
+    // Both past: most recent first (descending)
+    if (aPast && bPast) return a.date > b.date ? -1 : a.date < b.date ? 1 : 0
+    // Both upcoming: nearest first (ascending)
     return a.date < b.date ? -1 : a.date > b.date ? 1 : 0
   })
 }
@@ -334,11 +338,12 @@ type GigAnimatedRowProps = {
   gig: GigFormState
   isNew: boolean
   newGigId: string | null
+  isPast: boolean
   onChange: (updated: GigFormState) => void
   onDelete: () => void
 }
 
-function GigAnimatedRow({ gig, isNew, newGigId, onChange, onDelete }: GigAnimatedRowProps) {
+function GigAnimatedRow({ gig, isNew, newGigId, isPast, onChange, onDelete }: GigAnimatedRowProps) {
   const [animating, setAnimating] = useState(isNew)
 
   function handleDelete() {
@@ -362,6 +367,7 @@ function GigAnimatedRow({ gig, isNew, newGigId, onChange, onDelete }: GigAnimate
         onChange={onChange}
         onDelete={handleDelete}
         initialExpanded={gig.id === newGigId}
+        isPast={isPast}
       />
     </motion.div>
   )
@@ -390,6 +396,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [newGigId, setNewGigId] = useState<string | null>(null)
+  const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    return initialUpcomingGigs.filter((g) => g.date && g.date < today).length <= 5
+  })
   const initialDjSets = getDjSetFormState(artist)
   const [djSets, setDjSets] = useState(initialDjSets)
   const initialVideos = getVideoFormState(artist)
@@ -1665,13 +1675,25 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
 
   function renderGigs() {
+    const today = new Date().toISOString().slice(0, 10)
+    const upcoming = upcomingGigs.filter((g) => g.date && g.date >= today)
+    const past = upcomingGigs.filter((g) => !g.date || g.date < today)
+
+    function handleGigChange(updated: GigFormState) {
+      setUpcomingGigs((current) =>
+        sortGigsByDate(current.map((g) => (g.id === updated.id ? updated : g))),
+      )
+    }
+
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-foreground">Gigs</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/55">Shows on your public profile.</p>
+            <p className="mt-0.5 text-sm text-muted-foreground/55">
+              Up to 3 upcoming shows appear on your public profile.
+            </p>
           </div>
           <button
             type="button"
@@ -1683,46 +1705,99 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </button>
         </div>
 
-        {/* Gig list with animated insertion / removal */}
-        <div className="flex flex-col gap-2">
-          <AnimatePresence initial={false}>
-            {upcomingGigs.map((gig) => (
-              <GigAnimatedRow
-                key={gig.id}
-                gig={gig}
-                isNew={gig.id === newGigId}
-                newGigId={newGigId}
-                onChange={(updated) =>
-                  setUpcomingGigs((current) =>
-                    sortGigsByDate(current.map((g) => (g.id === updated.id ? updated : g))),
-                  )
-                }
-                onDelete={() => handleDeleteGig(gig.id)}
-              />
-            ))}
-          </AnimatePresence>
+        {/* Upcoming section */}
+        <div className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/35">
+            Upcoming
+          </p>
+          <div className="flex flex-col gap-2">
+            <AnimatePresence initial={false}>
+              {upcoming.map((gig) => (
+                <GigAnimatedRow
+                  key={gig.id}
+                  gig={gig}
+                  isNew={gig.id === newGigId}
+                  newGigId={newGigId}
+                  isPast={false}
+                  onChange={handleGigChange}
+                  onDelete={() => handleDeleteGig(gig.id)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {upcoming.length === 0 && (
+            <div className="flex flex-col items-center rounded-2xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
+              <div className="mb-3 flex h-10 w-8 shrink-0 flex-col items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03]">
+                <span className="text-sm font-black leading-none text-foreground/18">—</span>
+                <span className="mt-0.5 text-[7px] font-bold uppercase tracking-widest text-accent/20">
+                  JUN
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-foreground/45">No upcoming shows</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">
+                Add a show to display it on your public profile.
+              </p>
+              <button
+                type="button"
+                onClick={handleAddGig}
+                className="mt-4 rounded-lg border border-white/[0.07] bg-white/[0.03] px-4 py-2 text-xs font-semibold text-foreground/60 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/80"
+              >
+                Add your first show
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Empty state */}
-        {upcomingGigs.length === 0 && (
-          <div className="flex flex-col items-center rounded-2xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
-            <div className="mb-4 flex h-12 w-9 flex-col items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03]">
-              <span className="text-base font-black leading-none text-foreground/18">—</span>
-              <span className="mt-0.5 text-[7px] font-bold uppercase tracking-widest text-accent/20">
-                JUN
-              </span>
-            </div>
-            <p className="text-sm font-semibold text-foreground/45">No shows added yet</p>
-            <p className="mt-1 text-xs text-muted-foreground/30">
-              Add upcoming shows to display them on your profile.
-            </p>
+        {/* Past section — collapsible when many entries */}
+        {past.length > 0 && (
+          <div className="space-y-2">
             <button
               type="button"
-              onClick={handleAddGig}
-              className="mt-4 rounded-lg border border-white/[0.07] bg-white/[0.03] px-4 py-2 text-xs font-semibold text-foreground/60 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/80"
+              onClick={() => setPastGigsExpanded((v) => !v)}
+              className="flex w-full items-center gap-2 text-left"
             >
-              Add your first show
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/35">
+                Past
+              </p>
+              <span className="text-[10px] font-medium tabular-nums text-muted-foreground/20">
+                {past.length}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "ml-auto h-3 w-3 text-muted-foreground/20 transition-transform duration-200",
+                  pastGigsExpanded && "rotate-180",
+                )}
+              />
             </button>
+
+            <AnimatePresence initial={false}>
+              {pastGigsExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div className="flex flex-col gap-2">
+                    <AnimatePresence initial={false}>
+                      {past.map((gig) => (
+                        <GigAnimatedRow
+                          key={gig.id}
+                          gig={gig}
+                          isNew={gig.id === newGigId}
+                          newGigId={newGigId}
+                          isPast={true}
+                          onChange={handleGigChange}
+                          onDelete={() => handleDeleteGig(gig.id)}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>

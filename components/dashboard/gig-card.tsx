@@ -28,6 +28,7 @@ type GigCardProps = {
   onChange: (updated: GigEntry) => void
   onDelete: () => void
   initialExpanded?: boolean
+  isPast?: boolean
 }
 
 // Framer Motion v12 requires a tuple literal for the ease array.
@@ -76,6 +77,7 @@ export function GigCard({
   onChange,
   onDelete,
   initialExpanded = false,
+  isPast = false,
 }: GigCardProps) {
   const [expanded, setExpanded] = useState(initialExpanded)
   // overflow: hidden is required during the height animation but clips autocomplete dropdowns
@@ -145,8 +147,11 @@ export function GigCard({
   return (
     <div
       className={cn(
-        "group/card rounded-xl border border-white/[0.06] bg-card/35",
-        "transition-colors duration-150 hover:border-white/[0.09]",
+        "group/card rounded-xl border bg-card/35",
+        "transition-colors duration-150",
+        isPast
+          ? "border-white/[0.04] hover:border-white/[0.07]"
+          : "border-white/[0.06] hover:border-white/[0.09]",
       )}
     >
       {/* Header — always visible. Left area toggles expand; controls stay separate. */}
@@ -163,10 +168,10 @@ export function GigCard({
           <div className="flex h-10 w-8 shrink-0 flex-col items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03]">
             {datePreview ? (
               <>
-                <span className="text-[13px] font-black leading-none text-foreground/75">
+                <span className={cn("text-[13px] font-black leading-none", isPast ? "text-foreground/35" : "text-foreground/75")}>
                   {datePreview.day}
                 </span>
-                <span className="mt-0.5 text-[6.5px] font-bold uppercase tracking-widest text-accent/55">
+                <span className={cn("mt-0.5 text-[6.5px] font-bold uppercase tracking-widest", isPast ? "text-muted-foreground/20" : "text-accent/55")}>
                   {datePreview.month}
                 </span>
               </>
@@ -177,10 +182,10 @@ export function GigCard({
 
           {/* Venue + location */}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold leading-tight text-foreground/80">
+            <p className={cn("truncate text-[13px] font-semibold leading-tight", isPast ? "text-foreground/45" : "text-foreground/80")}>
               {gig.venue ? gig.venue : <span className="font-normal text-muted-foreground/30">Venue</span>}
             </p>
-            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/40">
+            <p className={cn("mt-0.5 truncate text-[11px]", isPast ? "text-muted-foreground/25" : "text-muted-foreground/40")}>
               {locationStr || <span className="text-muted-foreground/18">Location</span>}
             </p>
           </div>
