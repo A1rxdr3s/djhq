@@ -314,6 +314,62 @@ function createEmptyVideo(): VideoFormState {
   }
 }
 
+// Resizes and re-encodes a File to WebP (JPEG fallback) at max 2000×2000, quality 0.82.
+// Runs entirely in the browser — no server round-trip for the image bytes.
+function compressGalleryImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new globalThis.Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      const MAX = 2000
+      let { width, height } = img
+      if (width > MAX || height > MAX) {
+        if (width >= height) {
+          height = Math.round((height * MAX) / width)
+          width = MAX
+        } else {
+          width = Math.round((width * MAX) / height)
+          height = MAX
+        }
+      }
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext("2d")
+      if (!ctx) {
+        reject(new Error("Canvas unavailable."))
+        return
+      }
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (webpBlob) => {
+          if (webpBlob) {
+            resolve(webpBlob)
+            return
+          }
+          // WebP not supported — fall back to JPEG.
+          canvas.toBlob(
+            (jpegBlob) => {
+              if (jpegBlob) resolve(jpegBlob)
+              else reject(new Error("Unable to compress image."))
+            },
+            "image/jpeg",
+            0.82,
+          )
+        },
+        "image/webp",
+        0.82,
+      )
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("Unable to load image for compression."))
+    }
+    img.src = objectUrl
+  })
+}
+
 function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetadata): VideoFormState {
   return {
     ...current,
@@ -415,6 +471,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
   const [galleryImageFile, setGalleryImageFile] = useState<File | null>(null)
   const [galleryImageAltText, setGalleryImageAltText] = useState("")
+  const [galleryFileError, setGalleryFileError] = useState("")
   const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
   const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
   const [isReorderingGallery, setIsReorderingGallery] = useState(false)
@@ -912,20 +969,53 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setSaveMessage("")
 
     try {
-      const formData = new FormData()
-      formData.append("artistId", artist.id)
-      formData.append("file", galleryImageFile)
-      formData.append("altText", galleryImageAltText)
+      // Step 1: compress client-side — no large payload ever leaves the browser via API route.
+      const compressedBlob = await compressGalleryImage(galleryImageFile)
 
+      // Step 2: get a signed upload URL from the server (lightweight JSON, no file).
+      const signedUrlParams = new URLSearchParams({
+        artistId: artist.id,
+        fileName: galleryImageFile.name,
+      })
+      const signedUrlResponse = await fetch(`/api/artists/gallery-image?${signedUrlParams.toString()}`)
+      const signedUrlResult = (await signedUrlResponse.json()) as {
+        error?: string
+        signedUrl?: string
+        token?: string
+        filePath?: string
+      }
+
+      if (!signedUrlResponse.ok || !signedUrlResult.signedUrl || !signedUrlResult.token || !signedUrlResult.filePath) {
+        throw new Error(signedUrlResult.error ?? "Unable to get upload URL.")
+      }
+
+      // Step 3: upload compressed blob directly to Supabase Storage — bypasses Vercel function limits.
+      const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+      const { error: uploadError } = await supabaseClient.storage
+        .from("artist-gallery")
+        .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, compressedBlob, {
+          contentType: "image/webp",
+        })
+
+      if (uploadError) {
+        throw new Error(uploadError.message)
+      }
+
+      // Step 4: register the uploaded file in the database (tiny JSON payload).
       const response = await fetch("/api/artists/gallery-image", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artistId: artist.id,
+          filePath: signedUrlResult.filePath,
+          altText: galleryImageAltText,
+        }),
       })
 
       const result = (await response.json()) as { error?: string; galleryImage?: GalleryImage }
 
       if (!response.ok || !result.galleryImage) {
-        throw new Error(result.error ?? "Unable to upload gallery image.")
+        throw new Error(result.error ?? "Unable to register gallery image.")
       }
 
       setGalleryImages((current) => [...current, result.galleryImage as GalleryImage])
@@ -2371,8 +2461,21 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   id="galleryImageFile"
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => setGalleryImageFile(event.target.files?.[0] ?? null)}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null
+                    if (file && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                      setGalleryFileError("Only JPEG, PNG, and WEBP images are supported.")
+                      setGalleryImageFile(null)
+                      event.target.value = ""
+                      return
+                    }
+                    setGalleryFileError("")
+                    setGalleryImageFile(file)
+                  }}
                 />
+                {galleryFileError && (
+                  <p className="text-xs text-destructive/80">{galleryFileError}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <label
@@ -2403,7 +2506,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               >
                 {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}
               </Button>
-              <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
+              <p className="text-xs text-muted-foreground">
+                Accepted formats: JPG, PNG, WEBP. Recommended size: up to 20 MB. Images are compressed and resized to max 2000 × 2000 px before upload.
+              </p>
             </div>
           </div>
         </div>

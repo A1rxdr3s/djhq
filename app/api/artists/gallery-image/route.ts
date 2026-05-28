@@ -2,9 +2,6 @@ import { NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 
-const maxFileSizeBytes = 5 * 1024 * 1024
-const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"])
-
 type ArtistOwnershipRow = {
   id: string
   owner_user_id: string | null
@@ -31,28 +28,6 @@ function sanitizeFileName(fileName: string) {
   return baseName.replace(/-+/g, "-").replace(/^-+|-+$/g, "")
 }
 
-function resolveImageExtension(fileName: string, mimeType: string) {
-  const nameExtension = fileName.split(".").pop()?.toLowerCase()
-
-  if (nameExtension === "jpg" || nameExtension === "jpeg") {
-    return "jpg"
-  }
-
-  if (nameExtension === "png" || nameExtension === "webp") {
-    return nameExtension
-  }
-
-  if (mimeType === "image/png") {
-    return "png"
-  }
-
-  if (mimeType === "image/webp") {
-    return "webp"
-  }
-
-  return "jpg"
-}
-
 function getDefaultAltText(fileName: string) {
   const sanitizedFileName = sanitizeFileName(fileName || "artist-gallery-image")
   return sanitizedFileName.replace(/\.(jpg|jpeg|png|webp)$/i, "").replace(/-/g, " ") || "Artist gallery image"
@@ -74,7 +49,10 @@ function getStoragePathFromImageUrl(imageUrl: string) {
   }
 }
 
-export async function POST(request: Request) {
+// GET /api/artists/gallery-image?artistId=...&fileName=...
+// Returns a signed upload URL. The client uploads the compressed image blob directly
+// to Supabase Storage using this URL — the file never passes through a Vercel function.
+export async function GET(request: Request) {
   const authClient = await createSupabaseServerClient()
   const {
     data: { user },
@@ -84,32 +62,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 })
   }
 
-  let formData: FormData
+  const { searchParams } = new URL(request.url)
+  const artistId = searchParams.get("artistId")?.trim()
+  const fileName = searchParams.get("fileName")?.trim()
 
-  try {
-    formData = await request.formData()
-  } catch {
-    return badRequest("Invalid form data payload.")
+  if (!artistId) {
+    return badRequest("artistId is required.")
   }
 
-  const artistId = formData.get("artistId")
-  const file = formData.get("file")
-  const altText = formData.get("altText")
-
-  if (typeof artistId !== "string" || !artistId.trim()) {
-    return badRequest("Artist id is required.")
-  }
-
-  if (!(file instanceof File)) {
-    return badRequest("Gallery image file is required.")
-  }
-
-  if (!allowedImageTypes.has(file.type)) {
-    return badRequest("Only JPEG, PNG, and WEBP images are allowed.")
-  }
-
-  if (file.size > maxFileSizeBytes) {
-    return badRequest("Gallery image must be 5MB or smaller.")
+  if (!fileName) {
+    return badRequest("fileName is required.")
   }
 
   try {
@@ -120,9 +82,7 @@ export async function POST(request: Request) {
       .eq("id", artistId)
       .maybeSingle<ArtistOwnershipRow>()
 
-    if (artistError) {
-      throw artistError
-    }
+    if (artistError) throw artistError
 
     if (!artist) {
       return NextResponse.json({ error: "Artist not found." }, { status: 404 })
@@ -132,21 +92,86 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
     }
 
-    const extension = resolveImageExtension(file.name, file.type)
-    const sanitizedOriginalName = sanitizeFileName(file.name || "gallery-image")
-    const baseName = sanitizedOriginalName.replace(/\.(jpg|jpeg|png|webp)$/i, "") || "gallery-image"
+    const sanitized = sanitizeFileName(fileName)
+    const baseName = sanitized.replace(/\.(jpg|jpeg|png|webp)$/i, "") || "gallery-image"
     const timestamp = Date.now()
-    const filePath = `artists/${artist.id}/gallery/${timestamp}-${baseName}.${extension}`
-    const fileBuffer = Buffer.from(await file.arrayBuffer())
+    // Always .webp — client compresses to WebP before upload.
+    const filePath = `artists/${artist.id}/gallery/${timestamp}-${baseName}.webp`
 
-    const { error: uploadError } = await supabase.storage.from("artist-gallery").upload(filePath, fileBuffer, {
-      contentType: file.type,
-      cacheControl: "3600",
-      upsert: false,
-    })
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from("artist-gallery")
+      .createSignedUploadUrl(filePath)
 
-    if (uploadError) {
-      throw uploadError
+    if (signedError) throw signedError
+
+    return NextResponse.json({ signedUrl: signedData.signedUrl, token: signedData.token, filePath })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to generate upload URL."
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+// POST /api/artists/gallery-image
+// Accepts JSON { artistId, filePath, altText } after the client has already uploaded
+// the image blob directly to Supabase Storage. Registers the new row in gallery_images.
+type RegisterGalleryImagePayload = {
+  artistId?: string
+  filePath?: string
+  altText?: string
+}
+
+export async function POST(request: Request) {
+  const authClient = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 })
+  }
+
+  let payload: RegisterGalleryImagePayload
+
+  try {
+    payload = (await request.json()) as RegisterGalleryImagePayload
+  } catch {
+    return badRequest("Invalid JSON payload.")
+  }
+
+  const artistId = payload.artistId?.trim()
+  const filePath = payload.filePath?.trim()
+  const altText = payload.altText?.trim()
+
+  if (!artistId) {
+    return badRequest("Artist id is required.")
+  }
+
+  if (!filePath) {
+    return badRequest("filePath is required.")
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data: artist, error: artistError } = await supabase
+      .from("artists")
+      .select("id, owner_user_id")
+      .eq("id", artistId)
+      .maybeSingle<ArtistOwnershipRow>()
+
+    if (artistError) throw artistError
+
+    if (!artist) {
+      return NextResponse.json({ error: "Artist not found." }, { status: 404 })
+    }
+
+    if (artist.owner_user_id !== user.id) {
+      return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
+    }
+
+    // Ensure the filePath belongs to this artist (path prefix guard).
+    const expectedPrefix = `artists/${artist.id}/gallery/`
+    if (!filePath.startsWith(expectedPrefix)) {
+      return badRequest("Invalid file path.")
     }
 
     const {
@@ -161,13 +186,10 @@ export async function POST(request: Request) {
       .limit(1)
       .maybeSingle<GallerySortOrderRow>()
 
-    if (latestImageError) {
-      throw latestImageError
-    }
+    if (latestImageError) throw latestImageError
 
     const nextSortOrder = (latestImage?.sort_order ?? 0) + 1
-    const imageAltText =
-      typeof altText === "string" && altText.trim() ? altText.trim() : getDefaultAltText(file.name)
+    const imageAltText = altText || getDefaultAltText(filePath.split("/").pop() ?? "gallery-image")
 
     const { data: createdImage, error: createImageError } = await supabase
       .from("gallery_images")
@@ -180,9 +202,7 @@ export async function POST(request: Request) {
       .select("id, image_url, alt_text, sort_order")
       .single<GalleryImageRow>()
 
-    if (createImageError) {
-      throw createImageError
-    }
+    if (createImageError) throw createImageError
 
     return NextResponse.json(
       {
@@ -196,7 +216,7 @@ export async function POST(request: Request) {
       { status: 201 },
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to upload gallery image."
+    const message = error instanceof Error ? error.message : "Unable to register gallery image."
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -248,9 +268,7 @@ export async function DELETE(request: Request) {
       .eq("id", artistId)
       .maybeSingle<ArtistOwnershipRow>()
 
-    if (artistError) {
-      throw artistError
-    }
+    if (artistError) throw artistError
 
     if (!artist) {
       return NextResponse.json({ error: "Artist not found." }, { status: 404 })
@@ -267,9 +285,7 @@ export async function DELETE(request: Request) {
       .eq("artist_id", artist.id)
       .maybeSingle<GalleryImageRow>()
 
-    if (galleryImageError) {
-      throw galleryImageError
-    }
+    if (galleryImageError) throw galleryImageError
 
     if (!galleryImage) {
       return NextResponse.json({ error: "Gallery image not found." }, { status: 404 })
@@ -291,9 +307,7 @@ export async function DELETE(request: Request) {
       .eq("id", galleryImage.id)
       .eq("artist_id", artist.id)
 
-    if (deleteRowError) {
-      throw deleteRowError
-    }
+    if (deleteRowError) throw deleteRowError
 
     return NextResponse.json({ success: true, galleryImageId: galleryImage.id, storageDeleted }, { status: 200 })
   } catch (error) {
@@ -343,9 +357,7 @@ export async function PATCH(request: Request) {
       .eq("id", artistId)
       .maybeSingle<ArtistOwnershipRow>()
 
-    if (artistError) {
-      throw artistError
-    }
+    if (artistError) throw artistError
 
     if (!artist) {
       return NextResponse.json({ error: "Artist not found." }, { status: 404 })
@@ -361,9 +373,7 @@ export async function PATCH(request: Request) {
       .eq("artist_id", artist.id)
       .returns<GalleryImageRow[]>()
 
-    if (existingImagesError) {
-      throw existingImagesError
-    }
+    if (existingImagesError) throw existingImagesError
 
     const existingImageIds = (existingImages ?? []).map((image) => image.id)
 
@@ -384,9 +394,7 @@ export async function PATCH(request: Request) {
     const updateResults = await Promise.all(updates)
     const updateError = updateResults.find((result) => result.error)?.error
 
-    if (updateError) {
-      throw updateError
-    }
+    if (updateError) throw updateError
 
     const { data: reorderedImages, error: reorderedImagesError } = await supabase
       .from("gallery_images")
@@ -395,9 +403,7 @@ export async function PATCH(request: Request) {
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>()
 
-    if (reorderedImagesError) {
-      throw reorderedImagesError
-    }
+    if (reorderedImagesError) throw reorderedImagesError
 
     return NextResponse.json(
       {
