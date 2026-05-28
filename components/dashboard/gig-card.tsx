@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowDown, ArrowUp, ChevronDown, Trash2 } from "lucide-react"
+import { ChevronDown, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { VenueAutocomplete } from "./venue-autocomplete"
 import { CityAutocomplete } from "./city-autocomplete"
@@ -27,10 +27,6 @@ type GigCardProps = {
   gig: GigEntry
   onChange: (updated: GigEntry) => void
   onDelete: () => void
-  onMoveUp: () => void
-  onMoveDown: () => void
-  isFirst: boolean
-  isLast: boolean
   initialExpanded?: boolean
 }
 
@@ -79,10 +75,6 @@ export function GigCard({
   gig,
   onChange,
   onDelete,
-  onMoveUp,
-  onMoveDown,
-  isFirst,
-  isLast,
   initialExpanded = false,
 }: GigCardProps) {
   const [expanded, setExpanded] = useState(initialExpanded)
@@ -216,26 +208,8 @@ export function GigCard({
           />
         </button>
 
-        {/* Reorder + delete controls */}
-        <div className="flex shrink-0 items-center gap-0.5 pl-1">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onMoveUp() }}
-            disabled={isFirst}
-            aria-label="Move show up"
-            className={cn(iconBtn, "disabled:pointer-events-none disabled:opacity-20")}
-          >
-            <ArrowUp className="h-3 w-3" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onMoveDown() }}
-            disabled={isLast}
-            aria-label="Move show down"
-            className={cn(iconBtn, "disabled:pointer-events-none disabled:opacity-20")}
-          >
-            <ArrowDown className="h-3 w-3" />
-          </button>
+        {/* Delete control */}
+        <div className="flex shrink-0 items-center pl-1">
           <button
             type="button"
             onClick={handleDeleteClick}

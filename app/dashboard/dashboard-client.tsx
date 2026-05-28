@@ -239,18 +239,35 @@ function mergeDjSetMetadata(current: DjSetFormState, result: ImportedReleaseMeta
   }
 }
 
+// Sorts gigs chronologically: upcoming dates first (ascending), past dates after,
+// invalid/empty dates last. YYYY-MM-DD strings compare correctly as plain strings.
+function sortGigsByDate(gigs: GigFormState[]): GigFormState[] {
+  const today = new Date().toISOString().slice(0, 10)
+  return [...gigs].sort((a, b) => {
+    if (!a.date && !b.date) return 0
+    if (!a.date) return 1
+    if (!b.date) return -1
+    const aPast = a.date < today
+    const bPast = b.date < today
+    if (aPast !== bPast) return aPast ? 1 : -1
+    return a.date < b.date ? -1 : a.date > b.date ? 1 : 0
+  })
+}
+
 function getGigFormState(artist: Artist): GigFormState[] {
-  return artist.upcomingGigs.map((gig) => ({
-    id: gig.id,
-    venue: gig.venue,
-    date: toDateInputValue(gig.date),
-    city: gig.city,
-    country: gig.country,
-    ticketUrl: gig.ticketUrl,
-    feeAmount: gig.feeAmount ?? null,
-    feeCurrency: gig.feeCurrency ?? null,
-    paymentStatus: gig.paymentStatus ?? null,
-  }))
+  return sortGigsByDate(
+    artist.upcomingGigs.map((gig) => ({
+      id: gig.id,
+      venue: gig.venue,
+      date: toDateInputValue(gig.date),
+      city: gig.city,
+      country: gig.country,
+      ticketUrl: gig.ticketUrl,
+      feeAmount: gig.feeAmount ?? null,
+      feeCurrency: gig.feeCurrency ?? null,
+      paymentStatus: gig.paymentStatus ?? null,
+    })),
+  )
 }
 
 function getDjSetFormState(artist: Artist): DjSetFormState[] {
@@ -315,20 +332,13 @@ function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetada
 // when the card is at rest, while still clipping correctly during height animations.
 type GigAnimatedRowProps = {
   gig: GigFormState
-  index: number
-  total: number
   isNew: boolean
   newGigId: string | null
   onChange: (updated: GigFormState) => void
   onDelete: () => void
-  onMoveUp: () => void
-  onMoveDown: () => void
 }
 
-function GigAnimatedRow({
-  gig, index, total, isNew, newGigId,
-  onChange, onDelete, onMoveUp, onMoveDown,
-}: GigAnimatedRowProps) {
+function GigAnimatedRow({ gig, isNew, newGigId, onChange, onDelete }: GigAnimatedRowProps) {
   const [animating, setAnimating] = useState(isNew)
 
   function handleDelete() {
@@ -351,10 +361,6 @@ function GigAnimatedRow({
         gig={gig}
         onChange={onChange}
         onDelete={handleDelete}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        isFirst={index === 0}
-        isLast={index === total - 1}
         initialExpanded={gig.id === newGigId}
       />
     </motion.div>
@@ -1642,10 +1648,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const d = new Date()
     d.setDate(d.getDate() + 28)
     setNewGigId(id)
-    setUpcomingGigs((current) => [
-      ...current,
-      { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined, feeAmount: null, feeCurrency: null, paymentStatus: null },
-    ])
+    setUpcomingGigs((current) =>
+      sortGigsByDate([
+        ...current,
+        { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined, feeAmount: null, feeCurrency: null, paymentStatus: null },
+      ]),
+    )
     setTimeout(() => {
       document.getElementById(`gig-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
     }, 150)
@@ -1655,17 +1663,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setUpcomingGigs((current) => current.filter((g) => g.id !== id))
   }
 
-  function handleMoveGig(id: string, direction: "up" | "down") {
-    setUpcomingGigs((current) => {
-      const idx = current.findIndex((g) => g.id === id)
-      if (idx === -1) return current
-      const swapIdx = direction === "up" ? idx - 1 : idx + 1
-      if (swapIdx < 0 || swapIdx >= current.length) return current
-      const next = [...current]
-      ;[next[idx], next[swapIdx]] = [next[swapIdx], next[idx]]
-      return next
-    })
-  }
 
   function renderGigs() {
     return (
@@ -1689,22 +1686,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Gig list with animated insertion / removal */}
         <div className="flex flex-col gap-2">
           <AnimatePresence initial={false}>
-            {upcomingGigs.map((gig, index) => (
+            {upcomingGigs.map((gig) => (
               <GigAnimatedRow
                 key={gig.id}
                 gig={gig}
-                index={index}
-                total={upcomingGigs.length}
                 isNew={gig.id === newGigId}
                 newGigId={newGigId}
                 onChange={(updated) =>
                   setUpcomingGigs((current) =>
-                    current.map((g) => (g.id === updated.id ? updated : g)),
+                    sortGigsByDate(current.map((g) => (g.id === updated.id ? updated : g))),
                   )
                 }
                 onDelete={() => handleDeleteGig(gig.id)}
-                onMoveUp={() => handleMoveGig(gig.id, "up")}
-                onMoveDown={() => handleMoveGig(gig.id, "down")}
               />
             ))}
           </AnimatePresence>

@@ -477,7 +477,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const selectedReleasesForDisplay = selectedReleases.filter(
     (release) => !isSameRelease(release, featuredRelease),
   )
-  const upcomingGigs = artist.upcomingGigs.slice(0, 4)
+  const upcomingGigs = artist.upcomingGigs
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 4)
