@@ -66,6 +66,14 @@ type SaveVideoPayload = {
   isPublished: boolean
 }
 
+type SaveBookingPayload = {
+  email: string
+  bookingUrl?: string | null
+  pressKitEnabled: boolean
+  pressKitUrl?: string | null
+  pressKitAssets: string[]
+}
+
 type SaveArtistPayload = {
   artistId: string
   isPublished: boolean
@@ -76,6 +84,7 @@ type SaveArtistPayload = {
   gigs: SaveGigPayload[]
   djSets: SaveDjSetPayload[]
   videos: SaveVideoPayload[]
+  booking: SaveBookingPayload
 }
 
 type CreateArtistPayload = {
@@ -353,6 +362,11 @@ export async function PATCH(request: Request) {
         short_bio: payload.profile.shortBio.trim(),
         hero_image_url: payload.profile.heroImageUrl.trim(),
         is_published: payload.isPublished,
+        booking_email: payload.booking.email.trim(),
+        booking_url: payload.booking.bookingUrl?.trim() || null,
+        press_kit_enabled: payload.booking.pressKitEnabled,
+        press_kit_download_url: payload.booking.pressKitUrl?.trim() || null,
+        press_kit_assets: payload.booking.pressKitAssets,
       })
       .eq("id", artistId)
 

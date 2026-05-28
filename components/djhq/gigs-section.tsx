@@ -41,12 +41,12 @@ const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
 const container = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.05 } },
+  visible: { transition: { staggerChildren: 0.06 } },
 }
 
 const item = {
-  hidden: { opacity: 0, y: 5 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: EASE } },
+  hidden: { opacity: 0, y: 6 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE } },
 }
 
 type GigsSectionProps = {
@@ -60,7 +60,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const selected = selectGigsForDisplay(gigs, today)
   if (selected.length === 0) return null
 
-  // First upcoming gig gets a subtly elevated surface — no label needed.
+  // First upcoming row carries a subtly elevated surface and tile — no label needed.
   const firstUpcomingIndex = selected.findIndex((s) => !s.isPast)
 
   return (
@@ -70,7 +70,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
       </h2>
 
       <motion.div
-        className="mt-3 flex flex-col gap-0.5"
+        className="mt-4 flex flex-col gap-2"
         variants={container}
         initial="hidden"
         whileInView="visible"
@@ -84,7 +84,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
             <motion.div key={gig.id} variants={item}>
               <div
                 className={cn(
-                  "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5",
+                  "group flex items-center gap-3 rounded-xl px-2.5 py-2",
                   "border transition-colors duration-200",
                   isNext
                     ? "border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.05]"
@@ -93,79 +93,80 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                     : "border-transparent hover:bg-white/[0.025]",
                 )}
               >
-                {/* Date tile — day prominent, month small accent */}
+                {/* Date tile — primary temporal anchor, enlarged calendar object */}
                 <div
                   className={cn(
-                    "flex h-9 w-7 shrink-0 flex-col items-center justify-center rounded-md border",
+                    "flex h-14 w-11 shrink-0 flex-col items-center justify-center rounded-lg border",
                     isPast
                       ? "border-white/[0.04] bg-transparent"
+                      : isNext
+                      ? "border-white/[0.10] bg-white/[0.04]"
                       : "border-white/[0.07] bg-white/[0.025]",
                   )}
                 >
                   <span
                     className={cn(
-                      "text-[13px] font-black leading-none",
-                      isPast ? "text-foreground/28" : "text-foreground/80",
+                      "text-[26px] font-black leading-none tracking-tight",
+                      isPast ? "text-foreground/22" : "text-foreground/82",
                     )}
                   >
                     {day}
                   </span>
                   <span
                     className={cn(
-                      "mt-0.5 text-[6px] font-bold uppercase tracking-widest",
-                      // All upcoming months use accent — past months are muted.
-                      isPast ? "text-muted-foreground/20" : "text-accent/60",
+                      "mt-0.5 text-[7px] font-bold uppercase tracking-[0.18em]",
+                      isPast ? "text-muted-foreground/18" : "text-accent/60",
                     )}
                   >
                     {month}
                   </span>
                 </div>
 
-                {/* Single-line info: venue  ·  city CC */}
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <span
+                {/* Two-line content stack: venue anchors top, location + ticket below */}
+                <div className="min-w-0 flex-1">
+                  <p
                     className={cn(
-                      "min-w-0 flex-1 truncate text-[12.5px] font-semibold leading-none",
-                      isPast ? "text-foreground/35" : "text-foreground/82",
+                      "truncate text-[13px] font-semibold leading-tight",
+                      isPast ? "text-foreground/30" : "text-foreground/85",
                     )}
                   >
                     {gig.venue}
-                  </span>
-                  {(gig.city || gig.country) && (
-                    <span
-                      className={cn(
-                        "shrink-0 text-[9.5px] font-medium uppercase tracking-[0.1em]",
-                        isPast ? "text-foreground/16" : "text-foreground/28",
-                      )}
-                    >
-                      {gig.city}
-                      {gig.city && gig.country && (
-                        <span className="mx-1 opacity-40">·</span>
-                      )}
-                      {gig.country}
-                    </span>
-                  )}
-                </div>
+                  </p>
 
-                {/* Ticket link — subtle, secondary */}
-                {gig.ticketUrl ? (
-                  <a
-                    href={gig.ticketUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Tickets for ${gig.venue}`}
-                    className={cn(
-                      "shrink-0 transition-colors duration-200",
-                      isPast
-                        ? "text-muted-foreground/18 hover:text-muted-foreground/38"
-                        : "text-accent/35 hover:text-accent/75",
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {(gig.city || gig.country) && (
+                      <span
+                        className={cn(
+                          "min-w-0 truncate text-[10px] font-medium uppercase tracking-[0.08em]",
+                          isPast ? "text-foreground/14" : "text-foreground/30",
+                        )}
+                      >
+                        {gig.city}
+                        {gig.city && gig.country && (
+                          <span className="mx-1 opacity-40">·</span>
+                        )}
+                        {gig.country}
+                      </span>
                     )}
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                ) : (
-                  <span className="h-3 w-3 shrink-0" aria-hidden="true" />
-                )}
+
+                    {gig.ticketUrl && (
+                      <a
+                        href={gig.ticketUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Tickets for ${gig.venue}`}
+                        className={cn(
+                          "shrink-0 transition-colors duration-200",
+                          isPast
+                            ? "text-muted-foreground/16 hover:text-muted-foreground/35"
+                            : "text-accent/38 hover:text-accent/75",
+                        )}
+                      >
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
             </motion.div>
           )

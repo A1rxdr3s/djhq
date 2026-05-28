@@ -54,14 +54,6 @@ const navGroups: NavGroup[] = [
   },
 ]
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{label}</p>
-      <p className="mt-1 text-sm text-foreground/80">{value || "—"}</p>
-    </div>
-  )
-}
 
 type SocialLinkFormState = {
   platform: string
@@ -396,6 +388,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [newGigId, setNewGigId] = useState<string | null>(null)
+  const [bookingEmail, setBookingEmail] = useState(initialArtist.bookingInfo.email)
+  const [bookingUrl, setBookingUrl] = useState(initialArtist.bookingInfo.bookingUrl ?? "")
+  const [pressKitEnabled, setPressKitEnabled] = useState(initialArtist.pressKit.enabled)
+  const [pressKitUrl, setPressKitUrl] = useState(initialArtist.pressKit.downloadUrl)
+  const [pressKitAssets, setPressKitAssets] = useState<string[]>(initialArtist.pressKit.assetsIncluded)
+  const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
     const today = new Date().toISOString().slice(0, 10)
     return initialUpcomingGigs.filter((g) => g.date && g.date < today).length <= 5
@@ -441,7 +439,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const isGigsDirty = JSON.stringify(upcomingGigs) !== JSON.stringify(initialUpcomingGigs)
   const isDjSetsDirty = JSON.stringify(djSets) !== JSON.stringify(initialDjSets)
   const isVideosDirty = JSON.stringify(videos) !== JSON.stringify(initialVideos)
-  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty
+  const isBookingDirty =
+    bookingEmail !== artist.bookingInfo.email ||
+    bookingUrl !== (artist.bookingInfo.bookingUrl ?? "") ||
+    pressKitEnabled !== artist.pressKit.enabled ||
+    pressKitUrl !== artist.pressKit.downloadUrl ||
+    JSON.stringify(pressKitAssets) !== JSON.stringify(artist.pressKit.assetsIncluded)
+  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
@@ -471,6 +475,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         gigs: upcomingGigs,
         djSets,
         videos,
+        booking: {
+          email: bookingEmail,
+          bookingUrl: bookingUrl || null,
+          pressKitEnabled,
+          pressKitUrl: pressKitUrl || null,
+          pressKitAssets,
+        },
       }),
     })
 
@@ -546,6 +557,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         sortOrder: index + 1,
         isPublished: video.isPublished,
       })),
+      bookingInfo: {
+        email: bookingEmail.trim(),
+        bookingUrl: bookingUrl.trim() || undefined,
+      },
+      pressKit: {
+        enabled: pressKitEnabled,
+        downloadUrl: pressKitUrl.trim(),
+        assetsIncluded: pressKitAssets,
+      },
       updatedAt: new Date().toISOString(),
     }
 
@@ -563,6 +583,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setDjSets(getDjSetFormState(savedArtist))
     setVideos(getVideoFormState(savedArtist))
     setGalleryImages(savedArtist.galleryImages)
+    setBookingEmail(savedArtist.bookingInfo.email)
+    setBookingUrl(savedArtist.bookingInfo.bookingUrl ?? "")
+    setPressKitEnabled(savedArtist.pressKit.enabled)
+    setPressKitUrl(savedArtist.pressKit.downloadUrl)
+    setPressKitAssets(savedArtist.pressKit.assetsIncluded)
     setSaveMessage(successMessage)
   }
 
@@ -2338,21 +2363,191 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  function handleAddAsset() {
+    const trimmed = newAssetInput.trim()
+    if (!trimmed) return
+    setPressKitAssets((current) =>
+      current.includes(trimmed) ? current : [...current, trimmed],
+    )
+    setNewAssetInput("")
+  }
+
+  function handleRemoveAsset(index: number) {
+    setPressKitAssets((current) => current.filter((_, i) => i !== index))
+  }
+
   function renderBooking() {
+    const emailInvalid = Boolean(bookingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingEmail))
+    const bookingUrlInvalid = Boolean(bookingUrl && !bookingUrl.startsWith("http"))
+    const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
+
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground">Booking</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Contact details shown to promoters and venues.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">
+            Contact details shown to promoters and venues.
+          </p>
         </div>
+
+        {/* Booking contact */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="grid gap-5 md:grid-cols-2">
-            <ReadOnlyField label="Booking Email" value={artist.bookingInfo.email} />
-            <ReadOnlyField label="Booking URL" value={artist.bookingInfo.bookingUrl ?? "Not set"} />
-            <ReadOnlyField label="Press Kit Enabled" value={artist.pressKit.enabled ? "Yes" : "No"} />
-            <ReadOnlyField label="Press Kit URL" value={artist.pressKit.downloadUrl || "Not set"} />
-            <div className="md:col-span-2">
-              <ReadOnlyField label="Assets Included" value={artist.pressKit.assetsIncluded.join(", ") || "—"} />
+            <div className="space-y-1.5">
+              <label htmlFor="bookingEmail" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Booking Email
+              </label>
+              <Input
+                id="bookingEmail"
+                type="email"
+                value={bookingEmail}
+                onChange={(e) => setBookingEmail(e.target.value)}
+                placeholder="booking@artist.com"
+              />
+              {emailInvalid && (
+                <p className="text-[10px] text-amber-400/60">Enter a valid email address.</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="bookingUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Booking URL
+              </label>
+              <Input
+                id="bookingUrl"
+                value={bookingUrl}
+                onChange={(e) => setBookingUrl(e.target.value)}
+                placeholder="https://artist.com/booking"
+              />
+              {bookingUrlInvalid && (
+                <p className="text-[10px] text-amber-400/60">Should start with https://</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Press Kit */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+          <div className="space-y-5">
+
+            {/* Header + toggle */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Press Kit</p>
+                <p className="mt-0.5 text-xs text-muted-foreground/45">
+                  Make your EPK available to media and promoters.
+                </p>
+              </div>
+              <div
+                role="group"
+                aria-label="Press kit enabled"
+                className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5"
+              >
+                <button
+                  type="button"
+                  onClick={() => setPressKitEnabled(true)}
+                  aria-pressed={pressKitEnabled}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                    pressKitEnabled
+                      ? "bg-accent/[0.15] text-accent/80"
+                      : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                  )}
+                >
+                  On
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPressKitEnabled(false)}
+                  aria-pressed={!pressKitEnabled}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                    !pressKitEnabled
+                      ? "bg-white/[0.06] text-foreground/60"
+                      : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                  )}
+                >
+                  Off
+                </button>
+              </div>
+            </div>
+
+            {/* Press kit URL + assets — dimmed when off */}
+            <div className={cn("space-y-5 transition-opacity duration-200", !pressKitEnabled && "pointer-events-none opacity-35")}>
+              <div className="space-y-1.5">
+                <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                  Press Kit URL
+                </label>
+                <Input
+                  id="pressKitUrl"
+                  value={pressKitUrl}
+                  onChange={(e) => setPressKitUrl(e.target.value)}
+                  placeholder="https://artist.com/epk"
+                  disabled={!pressKitEnabled}
+                />
+                {pressKitUrlInvalid && (
+                  <p className="text-[10px] text-amber-400/60">Should start with https://</p>
+                )}
+              </div>
+
+              {/* Assets chips */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                  Assets Included
+                </p>
+                {pressKitAssets.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {pressKitAssets.map((asset, i) => (
+                      <span
+                        key={i}
+                        className="flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-foreground/60"
+                      >
+                        {asset}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAsset(i)}
+                          aria-label={`Remove ${asset}`}
+                          className="leading-none text-muted-foreground/30 transition-colors duration-100 hover:text-foreground/60"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newAssetInput}
+                    onChange={(e) => setNewAssetInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleAddAsset()
+                      }
+                    }}
+                    placeholder="Add asset… e.g. Press photos"
+                    disabled={!pressKitEnabled}
+                    aria-label="New asset name"
+                    className={cn(
+                      "h-9 min-w-0 flex-1 rounded-lg border border-white/[0.07] bg-white/[0.025]",
+                      "px-3 text-sm font-medium text-foreground",
+                      "placeholder:text-muted-foreground/30",
+                      "outline-none transition-colors duration-150",
+                      "focus:border-white/[0.14] focus:bg-white/[0.04]",
+                      "disabled:cursor-not-allowed",
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddAsset}
+                    disabled={!pressKitEnabled || !newAssetInput.trim()}
+                    aria-label="Add asset"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.025] text-muted-foreground/40 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
