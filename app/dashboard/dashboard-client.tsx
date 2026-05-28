@@ -314,6 +314,13 @@ function createEmptyVideo(): VideoFormState {
   }
 }
 
+function getArtistInitialsPreview(artistName: string): string {
+  const parts = artistName.trim().split(/[\s:_-]+/).filter(Boolean)
+  if (!parts.length) return "DJ"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 // Resizes and re-encodes a File to WebP (JPEG fallback) at max 2000×2000, quality 0.82.
 // Runs entirely in the browser — no server round-trip for the image bytes.
 function compressGalleryImage(file: File): Promise<Blob> {
@@ -441,6 +448,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroImageUrl, setHeroImageUrl] = useState(initialArtist.heroImageUrl)
   const [heroTagline, setHeroTagline] = useState(initialArtist.heroTagline ?? "")
   const [showHeaderBranding, setShowHeaderBranding] = useState(initialArtist.showHeaderBranding)
+  const [browserTitle, setBrowserTitle] = useState(initialArtist.browserTitle ?? "")
+  const [faviconUrl, setFaviconUrl] = useState(initialArtist.faviconUrl ?? "")
+  const [faviconFile, setFaviconFile] = useState<File | null>(null)
+  const [isUploadingFavicon, setIsUploadingFavicon] = useState(false)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
@@ -493,7 +504,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     shortBio !== artist.shortBio ||
     heroImageUrl !== artist.heroImageUrl ||
     heroTagline !== (artist.heroTagline ?? "") ||
-    showHeaderBranding !== artist.showHeaderBranding
+    showHeaderBranding !== artist.showHeaderBranding ||
+    browserTitle !== (artist.browserTitle ?? "") ||
+    faviconUrl !== (artist.faviconUrl ?? "")
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -531,6 +544,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroImageUrl,
           heroTagline,
           showHeaderBranding,
+          browserTitle,
+          faviconUrl,
         },
         socialLinks,
         featuredRelease,
@@ -563,6 +578,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroImageUrl: heroImageUrl.trim(),
       heroTagline: heroTagline.trim() || undefined,
       showHeaderBranding,
+      browserTitle: browserTitle.trim() || undefined,
+      faviconUrl: faviconUrl.trim() || undefined,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -643,6 +660,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroImageUrl(savedArtist.heroImageUrl)
     setHeroTagline(savedArtist.heroTagline ?? "")
     setShowHeaderBranding(savedArtist.showHeaderBranding)
+    setBrowserTitle(savedArtist.browserTitle ?? "")
+    setFaviconUrl(savedArtist.faviconUrl ?? "")
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -1040,6 +1059,57 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
+  async function handleUploadFavicon() {
+    if (!faviconFile) {
+      setSaveMessage("Please select a favicon file to upload.")
+      return
+    }
+
+    setIsUploadingFavicon(true)
+    setSaveMessage("")
+
+    try {
+      const extMap: Record<string, string> = { "image/png": "png", "image/svg+xml": "svg", "image/webp": "webp" }
+      const fileExt = extMap[faviconFile.type] ?? "png"
+
+      const params = new URLSearchParams({ artistId: artist.id, type: "favicon", fileExt })
+      const signedUrlResponse = await fetch(`/api/artists/branding?${params.toString()}`)
+      const signedUrlResult = (await signedUrlResponse.json()) as {
+        error?: string
+        signedUrl?: string
+        token?: string
+        filePath?: string
+      }
+
+      if (!signedUrlResponse.ok || !signedUrlResult.signedUrl || !signedUrlResult.token || !signedUrlResult.filePath) {
+        throw new Error(signedUrlResult.error ?? "Unable to get upload URL.")
+      }
+
+      const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+      const { error: uploadError } = await supabaseClient.storage
+        .from("artist-gallery")
+        .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, faviconFile, {
+          contentType: faviconFile.type,
+          upsert: true,
+        })
+
+      if (uploadError) throw new Error(uploadError.message)
+
+      const { data: urlData } = supabaseClient.storage
+        .from("artist-gallery")
+        .getPublicUrl(signedUrlResult.filePath)
+
+      setFaviconUrl(urlData.publicUrl)
+      setFaviconFile(null)
+      setSaveMessage("Favicon uploaded. Save your profile to apply.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to upload favicon."
+      setSaveMessage(message)
+    } finally {
+      setIsUploadingFavicon(false)
+    }
+  }
+
   async function handleDeleteGalleryImage(galleryImageId: string) {
     setDeletingGalleryImageId(galleryImageId)
     setSaveMessage("")
@@ -1418,6 +1488,141 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
                 Pro only
               </span>
+            )}
+          </div>
+        </div>
+
+        {/* Browser Identity — Pro only */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Browser Identity
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground/45">
+                How your profile appears in browser tabs, bookmarks, and shared links.
+              </p>
+            </div>
+            {artist.plan !== "pro" && (
+              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
+                Pro only
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-5">
+            {/* Browser Title */}
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="browserTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                  Browser Title
+                </label>
+                <span className={cn(
+                  "text-[10px] tabular-nums transition-colors duration-150",
+                  browserTitle.length > 70 ? "text-amber-400/60" : "text-muted-foreground/30",
+                )}>
+                  {browserTitle.length}/80
+                </span>
+              </div>
+              <Input
+                id="browserTitle"
+                value={browserTitle}
+                maxLength={80}
+                placeholder={artist.plan === "pro" ? artist.artistName : `${artist.artistName} — DJHQ`}
+                disabled={artist.plan !== "pro"}
+                onChange={(event) => setBrowserTitle(event.target.value)}
+                className={artist.plan !== "pro" ? "opacity-40 cursor-not-allowed" : ""}
+              />
+
+              {/* Live browser tab preview */}
+              <div className="overflow-hidden rounded-lg border border-white/[0.06] bg-[#1a1a1a]">
+                <div className="flex h-9 items-end gap-0 px-2 pt-2">
+                  <div className="flex h-8 min-w-0 max-w-[240px] shrink items-center gap-2 rounded-t-lg border border-b-0 border-white/[0.12] bg-[#242424] px-2.5">
+                    <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-[#0a0a0a]">
+                      {faviconUrl && artist.plan === "pro" ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={faviconUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[7px] font-bold leading-none text-white/80">
+                          {artist.plan === "pro"
+                            ? getArtistInitialsPreview(artistName || artist.artistName)
+                            : "DJ"}
+                        </span>
+                      )}
+                    </div>
+                    <span className="truncate text-[10px] text-[#c8c8c8]">
+                      {artist.plan === "pro"
+                        ? (browserTitle.trim() || artistName || artist.artistName)
+                        : `${artistName || artist.artistName} — DJHQ`}
+                    </span>
+                  </div>
+                  <div className="ml-1 flex h-7 w-6 items-center justify-center text-[#555]">
+                    <span className="text-sm leading-none">+</span>
+                  </div>
+                </div>
+                <div className="flex h-7 items-center gap-2 border-t border-white/[0.06] bg-[#141414] px-3">
+                  <div className="flex shrink-0 gap-1">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#333]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#333]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#333]" />
+                  </div>
+                  <div className="flex h-4 flex-1 items-center rounded-sm bg-[#2a2a2a] px-2">
+                    <span className="truncate text-[9px] text-[#555]">
+                      {artist.handle}.djhq.com
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground/38">
+                {artist.plan === "pro"
+                  ? "Shown in browser tabs, bookmarks, and shared links. Leave blank to use your artist name."
+                  : "Upgrade to Pro to set a custom browser title without the DJHQ suffix."}
+              </p>
+            </div>
+
+            {/* Custom Favicon — Pro only */}
+            {artist.plan === "pro" && (
+              <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                  Custom Favicon
+                </p>
+                {faviconUrl ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/[0.08] bg-[#0a0a0a]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={faviconUrl} alt="Current favicon" className="h-8 w-8 object-contain" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] text-foreground/55">{faviconUrl.split("/").pop()}</p>
+                      <button
+                        type="button"
+                        onClick={() => setFaviconUrl("")}
+                        className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <Input
+                  id="faviconFile"
+                  type="file"
+                  accept="image/png,image/svg+xml,image/webp"
+                  onChange={(event) => setFaviconFile(event.target.files?.[0] ?? null)}
+                />
+                <Button
+                  type="button"
+                  onClick={handleUploadFavicon}
+                  disabled={!faviconFile || isUploadingFavicon || isSaving || isPublishing}
+                  className="bg-secondary text-foreground hover:bg-secondary/80"
+                >
+                  {isUploadingFavicon ? "Uploading..." : "Upload favicon"}
+                </Button>
+                <p className="text-[10px] text-muted-foreground/38">
+                  PNG, SVG, or WEBP. 512×512 recommended. Leave blank to use artist initials.
+                </p>
+              </div>
             )}
           </div>
         </div>

@@ -275,6 +275,10 @@ export interface Artist {
   isPublished: boolean
   /** Whether the DJHQ wordmark is shown in the profile header (Pro-only toggle; always true for free). */
   showHeaderBranding: boolean
+  /** Custom browser tab title (Pro only). Falls back to artistName without the DJHQ suffix. */
+  browserTitle?: string
+  /** Custom favicon URL for browser tabs (Pro only). Falls back to auto-generated initials favicon. */
+  faviconUrl?: string
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */

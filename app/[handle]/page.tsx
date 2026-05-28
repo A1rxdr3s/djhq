@@ -67,6 +67,8 @@ type ArtistRow = {
   press_kit_assets: string[] | null
   plan: string
   show_header_branding: boolean
+  browser_title: string | null
+  favicon_url: string | null
   is_published: boolean
   created_at: string
   updated_at: string
@@ -394,6 +396,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       plan: normalizePlan(artistRow.plan),
       customDomains: [],
       showHeaderBranding: artistRow.show_header_branding,
+      browserTitle: artistRow.browser_title ?? undefined,
+      faviconUrl: artistRow.favicon_url ?? undefined,
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -401,6 +405,13 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
   } catch {
     return getMockArtistFallback(normalizedHandle)
   }
+}
+
+function getArtistInitials(artistName: string): string {
+  const parts = artistName.trim().split(/[\s:_-]+/).filter(Boolean)
+  if (!parts.length) return "DJ"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
 export function generateStaticParams() {
@@ -417,12 +428,23 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     }
   }
 
+  const isPro = artist.plan === "pro"
+  const title = isPro
+    ? (artist.browserTitle?.trim() || artist.artistName)
+    : `${artist.artistName} — DJHQ`
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.com"
+  const faviconHref = isPro
+    ? (artist.faviconUrl?.trim() || `${appUrl}/api/favicon/${encodeURIComponent(getArtistInitials(artist.artistName))}`)
+    : "/favicon.ico"
+
   return {
     metadataBase: new URL("https://djhq.com"),
-    title: `${artist.artistName} - DJHQ`,
+    title,
     description: artist.shortBio,
+    icons: { icon: faviconHref },
     openGraph: {
-      title: `${artist.artistName} - DJHQ`,
+      title,
       description: artist.shortBio,
       images: [
         {
@@ -524,25 +546,20 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
-        {(() => {
-          const showBranding = artist.plan !== "pro" || artist.showHeaderBranding
-          return (
-            <header className={cn("mb-4 flex items-center sm:mb-5", showBranding ? "justify-between" : "justify-end")}>
-              {showBranding && (
-                <Link
-                  href="/"
-                  className="group flex items-center gap-2 text-foreground/28 transition-colors duration-200 hover:text-foreground/55"
-                >
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/45 transition-colors duration-200 group-hover:bg-accent/70" />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.28em]">DJHQ</span>
-                </Link>
-              )}
-              <span className="text-[11px] font-medium tracking-[0.05em] text-foreground/32">
-                @{artist.handle}
-              </span>
-            </header>
-          )
-        })()}
+        {(artist.plan !== "pro" || artist.showHeaderBranding) && (
+          <header className="mb-4 flex items-center justify-between sm:mb-5">
+            <Link
+              href="/"
+              className="group flex items-center gap-2 text-foreground/28 transition-colors duration-200 hover:text-foreground/55"
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/45 transition-colors duration-200 group-hover:bg-accent/70" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.28em]">DJHQ</span>
+            </Link>
+            <span className="text-[11px] font-medium tracking-[0.05em] text-foreground/32">
+              @{artist.handle}
+            </span>
+          </header>
+        )}
 
         <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
           <div className="relative min-h-[420px] sm:min-h-[520px] lg:min-h-[680px]">

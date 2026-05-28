@@ -28,6 +28,8 @@ type ArtistRow = {
   press_kit_assets: string[] | null
   plan: string
   show_header_branding: boolean
+  browser_title: string | null
+  favicon_url: string | null
   is_published: boolean
   created_at: string
   updated_at: string
@@ -367,6 +369,8 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       },
     })),
     showHeaderBranding: artistRow.show_header_branding,
+    browserTitle: artistRow.browser_title ?? undefined,
+    faviconUrl: artistRow.favicon_url ?? undefined,
     isPublished: artistRow.is_published,
     createdAt: artistRow.created_at,
     updatedAt: artistRow.updated_at,

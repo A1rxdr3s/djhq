@@ -91,6 +91,8 @@ export const mockArtist: Artist = {
     assetsIncluded: ["Short bio", "Press photos", "Featured release links", "Upcoming gigs", "Technical rider"],
   },
   plan: "pro",
+  browserTitle: "ANDRES:HERRERA — Official Site",
+  faviconUrl: "",
   customDomains: [],
   isPublished: true,
   showHeaderBranding: true,

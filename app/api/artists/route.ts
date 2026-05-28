@@ -11,6 +11,8 @@ type SaveProfilePayload = {
   heroImageUrl: string
   heroTagline: string
   showHeaderBranding: boolean
+  browserTitle: string
+  faviconUrl: string
 }
 
 type SaveSocialLinkPayload = {
@@ -365,6 +367,8 @@ export async function PATCH(request: Request) {
         hero_image_url: payload.profile.heroImageUrl.trim(),
         hero_tagline: payload.profile.heroTagline.trim() || null,
         show_header_branding: payload.profile.showHeaderBranding,
+        browser_title: payload.profile.browserTitle.trim() || null,
+        favicon_url: payload.profile.faviconUrl.trim() || null,
         is_published: payload.isPublished,
         booking_email: payload.booking.email.trim(),
         booking_url: payload.booking.bookingUrl?.trim() || null,
