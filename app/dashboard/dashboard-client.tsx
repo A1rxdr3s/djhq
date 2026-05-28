@@ -89,6 +89,9 @@ type GigFormState = {
   city: string
   country: string
   ticketUrl?: string
+  feeAmount?: number | null
+  feeCurrency?: string | null
+  paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
 }
 
 type DjSetFormState = {
@@ -244,6 +247,9 @@ function getGigFormState(artist: Artist): GigFormState[] {
     city: gig.city,
     country: gig.country,
     ticketUrl: gig.ticketUrl,
+    feeAmount: gig.feeAmount ?? null,
+    feeCurrency: gig.feeCurrency ?? null,
+    paymentStatus: gig.paymentStatus ?? null,
   }))
 }
 
@@ -302,6 +308,57 @@ function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetada
     thumbnailUrl: result.thumbnailUrl?.trim() || current.thumbnailUrl,
     platformUrl: result.platformUrl || current.platformUrl,
   }
+}
+
+// GigAnimatedRow wraps each card in a motion.div for enter/exit animations.
+// It manages overflow state so autocomplete dropdowns can escape the card bounds
+// when the card is at rest, while still clipping correctly during height animations.
+type GigAnimatedRowProps = {
+  gig: GigFormState
+  index: number
+  total: number
+  isNew: boolean
+  newGigId: string | null
+  onChange: (updated: GigFormState) => void
+  onDelete: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
+}
+
+function GigAnimatedRow({
+  gig, index, total, isNew, newGigId,
+  onChange, onDelete, onMoveUp, onMoveDown,
+}: GigAnimatedRowProps) {
+  const [animating, setAnimating] = useState(isNew)
+
+  function handleDelete() {
+    // Clip overflow before AnimatePresence starts the exit height animation.
+    setAnimating(true)
+    onDelete()
+  }
+
+  return (
+    <motion.div
+      id={`gig-${gig.id}`}
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      style={{ overflow: animating ? "hidden" : "visible" }}
+      onAnimationComplete={() => setAnimating(false)}
+    >
+      <GigCard
+        gig={gig}
+        onChange={onChange}
+        onDelete={handleDelete}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        isFirst={index === 0}
+        isLast={index === total - 1}
+        initialExpanded={gig.id === newGigId}
+      />
+    </motion.div>
+  )
 }
 
 type DashboardClientProps = {
@@ -449,6 +506,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         city: gig.city.trim(),
         country: gig.country.trim(),
         ticketUrl: gig.ticketUrl?.trim() || undefined,
+        feeAmount: gig.feeAmount ?? null,
+        feeCurrency: gig.feeCurrency?.trim() || null,
+        paymentStatus: gig.paymentStatus ?? null,
       })),
       djSets: djSets.map((set, index): DjSet => ({
         id: set.id,
@@ -1584,7 +1644,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setNewGigId(id)
     setUpcomingGigs((current) => [
       ...current,
-      { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined },
+      { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined, feeAmount: null, feeCurrency: null, paymentStatus: null },
     ])
     setTimeout(() => {
       document.getElementById(`gig-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
@@ -1630,30 +1690,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="flex flex-col gap-2">
           <AnimatePresence initial={false}>
             {upcomingGigs.map((gig, index) => (
-              <motion.div
+              <GigAnimatedRow
                 key={gig.id}
-                id={`gig-${gig.id}`}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                style={{ overflow: "hidden" }}
-              >
-                <GigCard
-                  gig={gig}
-                  onChange={(updated) =>
-                    setUpcomingGigs((current) =>
-                      current.map((g) => (g.id === updated.id ? updated : g)),
-                    )
-                  }
-                  onDelete={() => handleDeleteGig(gig.id)}
-                  onMoveUp={() => handleMoveGig(gig.id, "up")}
-                  onMoveDown={() => handleMoveGig(gig.id, "down")}
-                  isFirst={index === 0}
-                  isLast={index === upcomingGigs.length - 1}
-                  initialExpanded={gig.id === newGigId}
-                />
-              </motion.div>
+                gig={gig}
+                index={index}
+                total={upcomingGigs.length}
+                isNew={gig.id === newGigId}
+                newGigId={newGigId}
+                onChange={(updated) =>
+                  setUpcomingGigs((current) =>
+                    current.map((g) => (g.id === updated.id ? updated : g)),
+                  )
+                }
+                onDelete={() => handleDeleteGig(gig.id)}
+                onMoveUp={() => handleMoveGig(gig.id, "up")}
+                onMoveDown={() => handleMoveGig(gig.id, "down")}
+              />
             ))}
           </AnimatePresence>
         </div>

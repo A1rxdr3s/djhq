@@ -18,6 +18,9 @@ export type GigEntry = {
   city: string
   country: string
   ticketUrl?: string
+  feeAmount?: number | null
+  feeCurrency?: string | null
+  paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
 }
 
 type GigCardProps = {
@@ -33,6 +36,17 @@ type GigCardProps = {
 
 // Framer Motion v12 requires a tuple literal for the ease array.
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
+
+const PAYMENT_STATUSES = [
+  { value: "pending" as const,   label: "Pending",   activeClass: "bg-amber-500/[0.12] text-amber-400/80" },
+  { value: "partial" as const,   label: "Partial",   activeClass: "bg-sky-500/[0.12] text-sky-400/80" },
+  { value: "paid" as const,      label: "Paid",      activeClass: "bg-emerald-500/[0.12] text-emerald-400/80" },
+  { value: "cancelled" as const, label: "Cancelled", activeClass: "bg-red-500/[0.12] text-red-400/70" },
+]
+
+function formatFee(amount: number): string {
+  return amount % 1 === 0 ? String(amount) : amount.toFixed(2)
+}
 
 function formatGigDatePreview(date: string): { day: string; month: string } | null {
   if (!date) return null
@@ -88,6 +102,15 @@ export function GigCard({
   const datePreview = formatGigDatePreview(gig.date)
   const locationStr = [gig.city, gig.country].filter(Boolean).join(" · ")
 
+  // Fee header preview: "800 USD · pending" — shown only when fee or status is set.
+  const feePreviewParts = [
+    gig.feeAmount != null
+      ? `${formatFee(gig.feeAmount)}${gig.feeCurrency ? ` ${gig.feeCurrency}` : ""}`
+      : null,
+    gig.paymentStatus ?? null,
+  ].filter(Boolean)
+  const feePreview = feePreviewParts.length > 0 ? feePreviewParts.join(" · ") : null
+
   function set<K extends keyof GigEntry>(key: K, value: GigEntry[K]) {
     onChange({ ...gig, [key]: value })
   }
@@ -103,7 +126,6 @@ export function GigCard({
 
   function handleCityBlur(typedValue: string) {
     // Autofill-on-blur: only fill country when it is currently empty.
-    // This handles manually typed "Concepcion" → auto-fills "CL".
     if (!typedValue.trim() || gig.country) return
     const match = findCityExact(typedValue)
     if (match) {
@@ -175,6 +197,13 @@ export function GigCard({
           {gig.ticketUrl && (
             <span className="shrink-0">
               <TicketProviderBadge url={gig.ticketUrl} />
+            </span>
+          )}
+
+          {/* Fee preview — subdued secondary metadata */}
+          {feePreview && (
+            <span className="shrink-0 tabular-nums text-[10px] font-medium text-muted-foreground/25">
+              {feePreview}
             </span>
           )}
 
@@ -288,6 +317,64 @@ export function GigCard({
                       <TicketProviderBadge url={gig.ticketUrl} />
                     </span>
                   )}
+                </div>
+              </div>
+
+              {/* Row 3: optional fee tracking — private, not shown on public profile */}
+              <div className="flex flex-col gap-2 border-t border-white/[0.03] pt-2 sm:flex-row sm:items-center">
+                {/* Fee amount */}
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="any"
+                  value={gig.feeAmount != null ? gig.feeAmount : ""}
+                  placeholder="Fee"
+                  onChange={(e) => {
+                    const num = e.target.value === "" ? null : parseFloat(e.target.value)
+                    set("feeAmount", num != null && !isNaN(num) ? num : null)
+                  }}
+                  className={cn(
+                    field("sm:flex-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"),
+                  )}
+                />
+
+                {/* Currency */}
+                <input
+                  list={`gig-currencies-${gig.id}`}
+                  value={gig.feeCurrency ?? ""}
+                  placeholder="USD"
+                  maxLength={10}
+                  onChange={(e) => set("feeCurrency", e.target.value.toUpperCase() || null)}
+                  className={field("sm:w-20 sm:shrink-0 uppercase")}
+                />
+                <datalist id={`gig-currencies-${gig.id}`}>
+                  <option value="USD" />
+                  <option value="EUR" />
+                  <option value="GBP" />
+                  <option value="CLP" />
+                </datalist>
+
+                {/* Payment status — segmented control */}
+                <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+                  {PAYMENT_STATUSES.map(({ value: statusValue, label, activeClass }) => (
+                    <button
+                      key={statusValue}
+                      type="button"
+                      onClick={() =>
+                        set("paymentStatus", gig.paymentStatus === statusValue ? null : statusValue)
+                      }
+                      className={cn(
+                        "rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                        "transition-colors duration-100",
+                        gig.paymentStatus === statusValue
+                          ? activeClass
+                          : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

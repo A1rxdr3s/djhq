@@ -43,6 +43,9 @@ type SaveGigPayload = {
   city: string
   country: string
   ticketUrl?: string
+  feeAmount?: number | null
+  feeCurrency?: string | null
+  paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
 }
 
 type SaveDjSetPayload = {
@@ -454,6 +457,9 @@ export async function PATCH(request: Request) {
           city: gig.city.trim(),
           country: gig.country.trim(),
           ticket_url: gig.ticketUrl?.trim() || null,
+          fee_amount: gig.feeAmount ?? null,
+          fee_currency: gig.feeCurrency?.trim() || null,
+          payment_status: gig.paymentStatus ?? null,
         })),
       )
 

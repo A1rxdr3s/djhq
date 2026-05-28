@@ -129,6 +129,12 @@ export interface Gig {
   country: string
   /** Optional public ticket/event URL. */
   ticketUrl?: string
+  /** Internal: negotiated fee amount (not shown publicly). */
+  feeAmount?: number | null
+  /** Internal: ISO currency code for the fee (e.g. "USD", "CLP"). */
+  feeCurrency?: string | null
+  /** Internal: booking payment status. */
+  paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
 }
 
 /**

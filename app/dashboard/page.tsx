@@ -56,6 +56,9 @@ type GigRow = {
   city: string
   country: string
   ticket_url: string | null
+  fee_amount: string | null
+  fee_currency: string | null
+  payment_status: string | null
 }
 
 type GalleryImageRow = {
@@ -210,7 +213,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<ReleaseRow[]>(),
     supabase
       .from("gigs")
-      .select("id, date, venue, city, country, ticket_url")
+      .select("id, date, venue, city, country, ticket_url, fee_amount, fee_currency, payment_status")
       .eq("artist_id", artistRow.id)
       .order("date", { ascending: true })
       .returns<GigRow[]>(),
@@ -296,6 +299,9 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       city: gig.city,
       country: gig.country,
       ticketUrl: gig.ticket_url ?? undefined,
+      feeAmount: gig.fee_amount != null ? parseFloat(gig.fee_amount) : null,
+      feeCurrency: gig.fee_currency ?? null,
+      paymentStatus: (gig.payment_status ?? null) as "pending" | "partial" | "paid" | "cancelled" | null,
     })),
     djSets: (djSetsResult.data ?? []).map((set) => ({
       id: set.id,
