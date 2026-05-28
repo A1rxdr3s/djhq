@@ -326,6 +326,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
+  const [newGigId, setNewGigId] = useState<string | null>(null)
   const initialDjSets = getDjSetFormState(artist)
   const [djSets, setDjSets] = useState(initialDjSets)
   const initialVideos = getVideoFormState(artist)
@@ -1577,23 +1578,33 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function handleAddGig() {
+    const id = crypto.randomUUID()
     const d = new Date()
     d.setDate(d.getDate() + 28)
+    setNewGigId(id)
     setUpcomingGigs((current) => [
       ...current,
-      {
-        id: crypto.randomUUID(),
-        venue: "",
-        date: d.toISOString().slice(0, 10),
-        city: "",
-        country: "",
-        ticketUrl: undefined,
-      },
+      { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined },
     ])
+    setTimeout(() => {
+      document.getElementById(`gig-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    }, 150)
   }
 
   function handleDeleteGig(id: string) {
     setUpcomingGigs((current) => current.filter((g) => g.id !== id))
+  }
+
+  function handleMoveGig(id: string, direction: "up" | "down") {
+    setUpcomingGigs((current) => {
+      const idx = current.findIndex((g) => g.id === id)
+      if (idx === -1) return current
+      const swapIdx = direction === "up" ? idx - 1 : idx + 1
+      if (swapIdx < 0 || swapIdx >= current.length) return current
+      const next = [...current]
+      ;[next[idx], next[swapIdx]] = [next[swapIdx], next[idx]]
+      return next
+    })
   }
 
   function renderGigs() {
@@ -1618,9 +1629,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Gig list with animated insertion / removal */}
         <div className="flex flex-col gap-2">
           <AnimatePresence initial={false}>
-            {upcomingGigs.map((gig) => (
+            {upcomingGigs.map((gig, index) => (
               <motion.div
                 key={gig.id}
+                id={`gig-${gig.id}`}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
@@ -1635,6 +1647,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     )
                   }
                   onDelete={() => handleDeleteGig(gig.id)}
+                  onMoveUp={() => handleMoveGig(gig.id, "up")}
+                  onMoveDown={() => handleMoveGig(gig.id, "down")}
+                  isFirst={index === 0}
+                  isLast={index === upcomingGigs.length - 1}
+                  initialExpanded={gig.id === newGigId}
                 />
               </motion.div>
             ))}
@@ -1644,7 +1661,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Empty state */}
         {upcomingGigs.length === 0 && (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-white/[0.06] px-6 py-10 text-center">
-            {/* Miniature date tile — echoes the public profile gig widget */}
             <div className="mb-4 flex h-12 w-9 flex-col items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03]">
               <span className="text-base font-black leading-none text-foreground/18">—</span>
               <span className="mt-0.5 text-[7px] font-bold uppercase tracking-widest text-accent/20">

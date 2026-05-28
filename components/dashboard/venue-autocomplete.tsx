@@ -9,9 +9,10 @@ type VenueAutocompleteProps = {
   value: string
   onChange: (value: string) => void
   onSelect: (entry: VenueEntry) => void
+  autoFocus?: boolean
 }
 
-export function VenueAutocomplete({ value, onChange, onSelect }: VenueAutocompleteProps) {
+export function VenueAutocomplete({ value, onChange, onSelect, autoFocus }: VenueAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -83,6 +84,7 @@ export function VenueAutocomplete({ value, onChange, onSelect }: VenueAutocomple
           placeholder="Venue"
           autoComplete="off"
           spellCheck={false}
+          autoFocus={autoFocus}
           onChange={(e) => {
             onChange(e.target.value)
             setActiveIndex(-1)
