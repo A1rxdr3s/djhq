@@ -12,7 +12,6 @@ function parseGigDate(dateStr: string) {
   return {
     day: String(d.getUTCDate()).padStart(2, "0"),
     month: MONTHS[d.getUTCMonth()],
-    year: String(d.getUTCFullYear()),
   }
 }
 
@@ -36,7 +35,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   if (gigs.length === 0) return null
 
   const [next, ...rest] = gigs
-  const { day: nd, month: nm, year: ny } = parseGigDate(next.date)
+  const { day: nd, month: nm } = parseGigDate(next.date)
 
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:col-start-2 lg:row-start-2 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
@@ -51,47 +50,60 @@ export function GigsSection({ gigs }: GigsSectionProps) {
         whileInView="visible"
         viewport={{ once: true, margin: "-24px" }}
       >
-        {/* NEXT — first gig, lightly accented */}
+        {/* NEXT — date tile is the primary visual anchor */}
         <motion.div variants={row}>
           <div
             className={cn(
-              "group rounded-2xl border border-accent/[0.13] bg-accent/[0.05] p-4",
-              "transition-all duration-300 ease-out",
-              "hover:border-accent/[0.24] hover:bg-accent/[0.08]",
+              "group rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3.5",
+              "transition-colors duration-300 ease-out",
+              "hover:bg-white/[0.04]",
             )}
           >
-            <span className="text-[9px] font-bold uppercase tracking-[0.34em] text-accent/55">
+            {/* Category label — reads first but visually quiet */}
+            <span className="mb-2.5 block text-[8px] font-bold uppercase tracking-[0.36em] text-accent/50">
               Next
             </span>
 
-            <div className="mt-1.5 flex items-baseline gap-2">
-              <span className="text-[1.375rem] font-black leading-none tracking-tight text-foreground">
-                {nd}
-              </span>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/55">
-                {nm} {ny}
-              </span>
-            </div>
+            <div className="flex items-center gap-3.5">
+              {/* Date tile — the dominant visual element */}
+              <div
+                className={cn(
+                  "flex w-14 shrink-0 flex-col items-center rounded-xl",
+                  "border border-white/[0.08] bg-white/[0.05]",
+                  "py-3 transition-colors duration-300",
+                  "group-hover:border-white/[0.14]",
+                )}
+              >
+                <span className="text-[2.5rem] font-black leading-none tracking-[-0.04em] text-foreground">
+                  {nd}
+                </span>
+                <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.26em] text-accent">
+                  {nm}
+                </span>
+              </div>
 
-            <p className="mt-2 text-sm font-bold leading-tight text-foreground">{next.venue}</p>
-
-            <div className="mt-1.5 flex items-center justify-between gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground/38">
-                {next.city}
-                <span className="mx-1.5 text-foreground/20">·</span>
-                {next.country}
-              </span>
-              {next.ticketUrl ? (
-                <a
-                  href={next.ticketUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-colors duration-200 hover:text-accent"
-                >
-                  Tickets
-                  <ExternalLink className="h-2.5 w-2.5" />
-                </a>
-              ) : null}
+              {/* Show info — secondary to the date */}
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold leading-tight text-foreground/90">
+                  {next.venue}
+                </p>
+                <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-foreground/35">
+                  {next.city}
+                  <span className="mx-1.5 text-foreground/18">·</span>
+                  {next.country}
+                </p>
+                {next.ticketUrl ? (
+                  <a
+                    href={next.ticketUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent/60 transition-colors duration-200 hover:text-accent"
+                  >
+                    Tickets
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                ) : null}
+              </div>
             </div>
           </div>
         </motion.div>
@@ -103,11 +115,11 @@ export function GigsSection({ gigs }: GigsSectionProps) {
             <motion.div key={gig.id} variants={row}>
               <div
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5",
+                  "group flex items-center gap-4 rounded-xl px-3 py-2.5",
                   "transition-colors duration-200 hover:bg-white/[0.04]",
                 )}
               >
-                <span className="w-[3.25rem] shrink-0 font-mono text-[11px] font-semibold tabular-nums text-muted-foreground/55">
+                <span className="w-12 shrink-0 font-mono text-[11px] font-semibold tabular-nums text-muted-foreground/50">
                   {day} {month}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-tight text-foreground/80">
@@ -122,7 +134,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`Tickets for ${gig.venue}`}
-                    className="shrink-0 text-accent/45 transition-colors duration-200 hover:text-accent"
+                    className="shrink-0 text-accent/40 transition-colors duration-200 hover:text-accent"
                   >
                     <ExternalLink className="h-3 w-3" />
                   </a>
