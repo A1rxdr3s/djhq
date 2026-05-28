@@ -8,6 +8,7 @@ export const mockArtist: Artist = {
   artistName: "ANDRES:HERRERA",
   realName: "Andres Herrera",
   tagline: "Peak-time house and techno for modern club rooms.",
+  heroTagline: "Peak-time house and techno for modern club rooms.",
   genres: ["House", "Tech House", "Melodic Techno"],
   location: "Miami / Berlin",
   shortBio:

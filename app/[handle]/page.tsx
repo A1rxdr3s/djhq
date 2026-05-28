@@ -54,6 +54,7 @@ type ArtistRow = {
   artist_name: string
   real_name: string | null
   tagline: string | null
+  hero_tagline: string | null
   genres: string[] | null
   location: string
   short_bio: string
@@ -330,6 +331,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       artistName: artistRow.artist_name,
       realName: artistRow.real_name ?? undefined,
       tagline: artistRow.tagline ?? undefined,
+      heroTagline: artistRow.hero_tagline ?? undefined,
       genres: artistRow.genres ?? [],
       location: artistRow.location,
       shortBio: artistRow.short_bio,
@@ -488,6 +490,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
+  // heroTagline takes priority; falls back to the legacy tagline field for existing artists.
+  const displayHeroTagline = artist.heroTagline?.trim() || releaseTagline
   const hasFeaturedArtwork = featuredRelease.artworkUrl.trim().length > 0
   const hasPressKit =
     artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
@@ -574,9 +578,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <h1 className="max-w-full text-[clamp(1.85rem,7.8vw,2.85rem)] font-black uppercase leading-[0.94] tracking-[-0.02em] text-foreground drop-shadow-2xl sm:text-[clamp(2.5rem,6.2vw,4rem)] sm:leading-[0.92] lg:max-w-none lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap lg:text-[clamp(3.25rem,4.8vw,5.25rem)]">
                   {artist.artistName}
                 </h1>
-                {releaseTagline ? (
+                {displayHeroTagline ? (
                   <p className="mt-2 text-sm font-medium uppercase tracking-[0.14em] text-accent/90 sm:text-base">
-                    {releaseTagline}
+                    {displayHeroTagline}
                   </p>
                 ) : null}
                 <p className="mt-2 flex items-center gap-2 text-xs font-medium text-white/70 sm:mt-3 sm:text-sm">

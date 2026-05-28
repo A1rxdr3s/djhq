@@ -439,6 +439,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [location, setLocation] = useState(initialArtist.location)
   const [shortBio, setShortBio] = useState(initialArtist.shortBio)
   const [heroImageUrl, setHeroImageUrl] = useState(initialArtist.heroImageUrl)
+  const [heroTagline, setHeroTagline] = useState(initialArtist.heroTagline ?? "")
   const [showHeaderBranding, setShowHeaderBranding] = useState(initialArtist.showHeaderBranding)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
@@ -491,6 +492,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     location !== artist.location ||
     shortBio !== artist.shortBio ||
     heroImageUrl !== artist.heroImageUrl ||
+    heroTagline !== (artist.heroTagline ?? "") ||
     showHeaderBranding !== artist.showHeaderBranding
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
@@ -527,6 +529,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           location,
           shortBio,
           heroImageUrl,
+          heroTagline,
           showHeaderBranding,
         },
         socialLinks,
@@ -558,6 +561,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       location: location.trim(),
       shortBio: shortBio.trim(),
       heroImageUrl: heroImageUrl.trim(),
+      heroTagline: heroTagline.trim() || undefined,
       showHeaderBranding,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
@@ -637,6 +641,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setLocation(savedArtist.location)
     setShortBio(savedArtist.shortBio)
     setHeroImageUrl(savedArtist.heroImageUrl)
+    setHeroTagline(savedArtist.heroTagline ?? "")
     setShowHeaderBranding(savedArtist.showHeaderBranding)
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
@@ -1305,6 +1310,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 Location
               </label>
               <Input id="location" value={location} onChange={(event) => setLocation(event.target.value)} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="heroTagline" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                  Hero Tagline
+                </label>
+                <span className={cn(
+                  "text-[10px] tabular-nums transition-colors duration-150",
+                  heroTagline.length > 90
+                    ? "text-amber-400/60"
+                    : "text-muted-foreground/30",
+                )}>
+                  {heroTagline.length}/100
+                </span>
+              </div>
+              <Input
+                id="heroTagline"
+                value={heroTagline}
+                maxLength={100}
+                placeholder="Peak-time house music for underground dance floors."
+                onChange={(event) => setHeroTagline(event.target.value)}
+              />
+              <p className="text-[10px] text-muted-foreground/38">
+                Rendered above the bio in the public hero. Leave blank to omit.
+              </p>
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <label htmlFor="shortBio" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">

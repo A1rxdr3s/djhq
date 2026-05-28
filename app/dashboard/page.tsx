@@ -15,6 +15,7 @@ type ArtistRow = {
   artist_name: string
   real_name: string | null
   tagline: string | null
+  hero_tagline: string | null
   genres: string[] | null
   location: string
   short_bio: string
@@ -261,6 +262,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     artistName: artistRow.artist_name,
     realName: artistRow.real_name ?? undefined,
     tagline: artistRow.tagline ?? undefined,
+    heroTagline: artistRow.hero_tagline ?? undefined,
     genres: artistRow.genres ?? [],
     location: artistRow.location,
     shortBio: artistRow.short_bio,

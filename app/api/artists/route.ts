@@ -9,6 +9,7 @@ type SaveProfilePayload = {
   location: string
   shortBio: string
   heroImageUrl: string
+  heroTagline: string
   showHeaderBranding: boolean
 }
 
@@ -362,6 +363,7 @@ export async function PATCH(request: Request) {
         location: payload.profile.location.trim(),
         short_bio: payload.profile.shortBio.trim(),
         hero_image_url: payload.profile.heroImageUrl.trim(),
+        hero_tagline: payload.profile.heroTagline.trim() || null,
         show_header_branding: payload.profile.showHeaderBranding,
         is_published: payload.isPublished,
         booking_email: payload.booking.email.trim(),

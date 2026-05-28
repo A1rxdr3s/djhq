@@ -237,6 +237,8 @@ export interface Artist {
   realName?: string
   /** Optional short positioning line. */
   tagline?: string
+  /** Editable hero subtitle — editorial branding line shown beneath the artist name. */
+  heroTagline?: string
   /** Public genre tags. */
   genres: string[]
   /** Public location string. */
