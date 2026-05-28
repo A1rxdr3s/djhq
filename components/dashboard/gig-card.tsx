@@ -41,6 +41,14 @@ const PAYMENT_STATUSES = [
   { value: "cancelled" as const, label: "Cancelled", activeClass: "bg-red-500/[0.12] text-red-400/70" },
 ]
 
+// Restrained capsule tones for the collapsed header — less saturated than the segmented control.
+const STATUS_HEADER_CLASS: Record<NonNullable<GigEntry["paymentStatus"]>, string> = {
+  pending:   "bg-amber-500/[0.08] text-amber-400/55",
+  partial:   "bg-sky-500/[0.08] text-sky-400/55",
+  paid:      "bg-emerald-500/[0.08] text-emerald-400/60",
+  cancelled: "bg-red-500/[0.08] text-red-400/50",
+}
+
 function formatFee(amount: number): string {
   return amount % 1 === 0 ? String(amount) : amount.toFixed(2)
 }
@@ -68,7 +76,7 @@ function field(className?: string) {
 
 const iconBtn = cn(
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
-  "text-muted-foreground/25 transition-colors duration-150",
+  "text-muted-foreground/30 transition-colors duration-150",
   "hover:bg-white/[0.06] hover:text-foreground/60",
 )
 
@@ -95,15 +103,10 @@ export function GigCard({
 
   const datePreview = formatGigDatePreview(gig.date)
   const locationStr = [gig.city, gig.country].filter(Boolean).join(" · ")
-
-  // Fee header preview: "800 USD · pending" — shown only when fee or status is set.
-  const feePreviewParts = [
+  const feeAmountStr =
     gig.feeAmount != null
       ? `${formatFee(gig.feeAmount)}${gig.feeCurrency ? ` ${gig.feeCurrency}` : ""}`
-      : null,
-    gig.paymentStatus ?? null,
-  ].filter(Boolean)
-  const feePreview = feePreviewParts.length > 0 ? feePreviewParts.join(" · ") : null
+      : null
 
   function set<K extends keyof GigEntry>(key: K, value: GigEntry[K]) {
     onChange({ ...gig, [key]: value })
@@ -151,24 +154,24 @@ export function GigCard({
         "transition-colors duration-150",
         isPast
           ? "border-white/[0.04] hover:border-white/[0.07]"
-          : "border-white/[0.06] hover:border-white/[0.09]",
+          : "border-white/[0.07] hover:border-white/[0.11]",
       )}
     >
       {/* Header — always visible. Left area toggles expand; controls stay separate. */}
       <div className="flex items-center gap-1 px-2.5 py-2">
-        {/* Toggle region: date tile + venue/location summary */}
+        {/* Toggle region: date tile + venue/location + right meta cluster */}
         <button
           type="button"
           onClick={handleToggle}
           aria-expanded={expanded}
           aria-label="Toggle show details"
-          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-0.5 py-0.5 text-left"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-0.5 py-0.5 text-left"
         >
           {/* Mini date tile */}
           <div className="flex h-10 w-8 shrink-0 flex-col items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03]">
             {datePreview ? (
               <>
-                <span className={cn("text-[13px] font-black leading-none", isPast ? "text-foreground/35" : "text-foreground/75")}>
+                <span className={cn("text-[13px] font-black leading-none", isPast ? "text-foreground/35" : "text-foreground/80")}>
                   {datePreview.day}
                 </span>
                 <span className={cn("mt-0.5 text-[6.5px] font-bold uppercase tracking-widest", isPast ? "text-muted-foreground/20" : "text-accent/55")}>
@@ -182,7 +185,7 @@ export function GigCard({
 
           {/* Venue + location */}
           <div className="min-w-0 flex-1">
-            <p className={cn("truncate text-[13px] font-semibold leading-tight", isPast ? "text-foreground/45" : "text-foreground/80")}>
+            <p className={cn("truncate text-[13px] font-semibold leading-tight", isPast ? "text-foreground/45" : "text-foreground/88")}>
               {gig.venue ? gig.venue : <span className="font-normal text-muted-foreground/30">Venue</span>}
             </p>
             <p className={cn("mt-0.5 truncate text-[11px]", isPast ? "text-muted-foreground/25" : "text-muted-foreground/40")}>
@@ -190,31 +193,37 @@ export function GigCard({
             </p>
           </div>
 
-          {/* Ticket provider badge */}
-          {gig.ticketUrl && (
-            <span className="shrink-0">
-              <TicketProviderBadge url={gig.ticketUrl} />
-            </span>
-          )}
+          {/* Right meta cluster: ticket + fee capsule + status badge + chevron */}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {gig.ticketUrl && <TicketProviderBadge url={gig.ticketUrl} />}
 
-          {/* Fee preview — subdued secondary metadata */}
-          {feePreview && (
-            <span className="shrink-0 tabular-nums text-[10px] font-medium text-muted-foreground/25">
-              {feePreview}
-            </span>
-          )}
-
-          {/* Expand chevron */}
-          <ChevronDown
-            className={cn(
-              "h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-transform duration-200",
-              expanded && "rotate-180",
+            {feeAmountStr && (
+              <span className="rounded px-1.5 py-0.5 tabular-nums text-[10px] font-medium text-foreground/35 bg-white/[0.05]">
+                {feeAmountStr}
+              </span>
             )}
-          />
+
+            {gig.paymentStatus && (
+              <span className={cn("rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em]", STATUS_HEADER_CLASS[gig.paymentStatus])}>
+                {gig.paymentStatus}
+              </span>
+            )}
+
+            <ChevronDown
+              className={cn(
+                "h-3.5 w-3.5 text-muted-foreground/30 transition-transform duration-200",
+                expanded && "rotate-180",
+              )}
+            />
+          </div>
         </button>
 
-        {/* Delete control */}
-        <div className="flex shrink-0 items-center pl-1">
+        {/* Delete control — always visible on mobile, hover-revealed on desktop */}
+        <div className={cn(
+          "flex shrink-0 items-center pl-1",
+          "transition-opacity duration-150",
+          "opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 sm:focus-within:opacity-100",
+        )}>
           <button
             type="button"
             onClick={handleDeleteClick}

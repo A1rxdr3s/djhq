@@ -1707,10 +1707,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Upcoming section */}
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/35">
-            Upcoming
-          </p>
-          <div className="flex flex-col gap-2">
+          {/* Editorial header: label + extending hairline */}
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/45">
+              Upcoming
+            </span>
+            <span className="h-px flex-1 bg-white/[0.06]" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <AnimatePresence initial={false}>
               {upcoming.map((gig) => (
                 <GigAnimatedRow
@@ -1749,23 +1754,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           )}
         </div>
 
-        {/* Past section — collapsible when many entries */}
+        {/* Past section — collapsible, editorial header with hairline */}
         {past.length > 0 && (
           <div className="space-y-2">
             <button
               type="button"
               onClick={() => setPastGigsExpanded((v) => !v)}
-              className="flex w-full items-center gap-2 text-left"
+              className="flex w-full items-center gap-3 text-left"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/35">
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/30">
                 Past
-              </p>
-              <span className="text-[10px] font-medium tabular-nums text-muted-foreground/20">
+              </span>
+              <span className="tabular-nums text-[10px] font-medium text-foreground/20">
                 {past.length}
               </span>
+              <span className="h-px flex-1 bg-white/[0.04]" />
               <ChevronDown
                 className={cn(
-                  "ml-auto h-3 w-3 text-muted-foreground/20 transition-transform duration-200",
+                  "h-3 w-3 text-muted-foreground/25 transition-transform duration-200",
                   pastGigsExpanded && "rotate-180",
                 )}
               />
@@ -1780,7 +1786,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   style={{ overflow: "hidden" }}
                 >
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <AnimatePresence initial={false}>
                       {past.map((gig) => (
                         <GigAnimatedRow

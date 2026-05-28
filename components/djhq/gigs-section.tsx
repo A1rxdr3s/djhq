@@ -60,7 +60,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const selected = selectGigsForDisplay(gigs, today)
   if (selected.length === 0) return null
 
-  // NEXT label: only on the first upcoming gig in the display set.
+  // First upcoming gig gets a subtly elevated surface — no label needed.
   const firstUpcomingIndex = selected.findIndex((s) => !s.isPast)
 
   return (
@@ -87,7 +87,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5",
                   "border transition-colors duration-200",
                   isNext
-                    ? "border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04]"
+                    ? "border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.05]"
                     : isPast
                     ? "border-transparent"
                     : "border-transparent hover:bg-white/[0.025]",
@@ -121,13 +121,8 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   </span>
                 </div>
 
-                {/* Single-line info: [NEXT] venue  ·  city CC */}
+                {/* Single-line info: venue  ·  city CC */}
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  {isNext && (
-                    <span className="shrink-0 text-[7px] font-bold uppercase tracking-[0.28em] text-accent/65">
-                      Next
-                    </span>
-                  )}
                   <span
                     className={cn(
                       "min-w-0 flex-1 truncate text-[12.5px] font-semibold leading-none",
