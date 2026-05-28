@@ -65,6 +65,7 @@ type ArtistRow = {
   press_kit_download_url: string | null
   press_kit_assets: string[] | null
   plan: string
+  show_header_branding: boolean
   is_published: boolean
   created_at: string
   updated_at: string
@@ -390,6 +391,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       },
       plan: normalizePlan(artistRow.plan),
       customDomains: [],
+      showHeaderBranding: artistRow.show_header_branding,
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -518,15 +520,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
-        <header className="mb-5 flex items-center justify-between sm:mb-6">
-          <Link href="/" className="flex items-center gap-2.5 text-foreground/80 transition-colors hover:text-foreground">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/20 bg-accent/10">
-              <span className="text-xs font-bold text-accent">DJ</span>
-            </div>
-            <span className="text-sm font-semibold uppercase tracking-[0.18em]">DJHQ</span>
-          </Link>
-          <span className="font-mono text-[11px] text-muted-foreground/90">@{artist.handle}</span>
-        </header>
+        {(() => {
+          const showBranding = artist.plan !== "pro" || artist.showHeaderBranding
+          return (
+            <header className={cn("mb-4 flex items-center sm:mb-5", showBranding ? "justify-between" : "justify-end")}>
+              {showBranding && (
+                <Link
+                  href="/"
+                  className="group flex items-center gap-2 text-foreground/28 transition-colors duration-200 hover:text-foreground/55"
+                >
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/45 transition-colors duration-200 group-hover:bg-accent/70" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.28em]">DJHQ</span>
+                </Link>
+              )}
+              <span className="text-[11px] font-medium tracking-[0.05em] text-foreground/32">
+                @{artist.handle}
+              </span>
+            </header>
+          )
+        })()}
 
         <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
           <div className="relative min-h-[420px] sm:min-h-[520px] lg:min-h-[680px]">

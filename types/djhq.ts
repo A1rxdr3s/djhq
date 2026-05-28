@@ -271,6 +271,8 @@ export interface Artist {
   customDomains: CustomDomain[]
   /** Whether the profile is publicly visible. */
   isPublished: boolean
+  /** Whether the DJHQ wordmark is shown in the profile header (Pro-only toggle; always true for free). */
+  showHeaderBranding: boolean
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */

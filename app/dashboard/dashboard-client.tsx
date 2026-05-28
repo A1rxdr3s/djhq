@@ -383,6 +383,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [location, setLocation] = useState(initialArtist.location)
   const [shortBio, setShortBio] = useState(initialArtist.shortBio)
   const [heroImageUrl, setHeroImageUrl] = useState(initialArtist.heroImageUrl)
+  const [showHeaderBranding, setShowHeaderBranding] = useState(initialArtist.showHeaderBranding)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
@@ -432,7 +433,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     genres !== artist.genres.join(", ") ||
     location !== artist.location ||
     shortBio !== artist.shortBio ||
-    heroImageUrl !== artist.heroImageUrl
+    heroImageUrl !== artist.heroImageUrl ||
+    showHeaderBranding !== artist.showHeaderBranding
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -468,6 +470,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           location,
           shortBio,
           heroImageUrl,
+          showHeaderBranding,
         },
         socialLinks,
         featuredRelease,
@@ -498,6 +501,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       location: location.trim(),
       shortBio: shortBio.trim(),
       heroImageUrl: heroImageUrl.trim(),
+      showHeaderBranding,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -576,6 +580,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setLocation(savedArtist.location)
     setShortBio(savedArtist.shortBio)
     setHeroImageUrl(savedArtist.heroImageUrl)
+    setShowHeaderBranding(savedArtist.showHeaderBranding)
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -1251,6 +1256,49 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </div>
               ) : null}
             </div>
+          </div>
+        </div>
+
+        {/* DJHQ branding toggle — Pro only */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                DJHQ Branding
+              </p>
+              <p className="text-xs text-muted-foreground/45">
+                {artist.plan === "pro"
+                  ? "Show or hide the DJHQ wordmark in your public profile header."
+                  : "Upgrade to Pro to hide the DJHQ wordmark from your public profile."}
+              </p>
+            </div>
+            {artist.plan === "pro" ? (
+              <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+                {(["show", "hide"] as const).map((opt) => {
+                  const isActive = opt === "show" ? showHeaderBranding : !showHeaderBranding
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setShowHeaderBranding(opt === "show")}
+                      className={cn(
+                        "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                        "transition-colors duration-100",
+                        isActive
+                          ? "bg-white/[0.07] text-foreground/75"
+                          : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
+                Pro only
+              </span>
+            )}
           </div>
         </div>
       </div>

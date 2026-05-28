@@ -26,6 +26,7 @@ type ArtistRow = {
   press_kit_download_url: string | null
   press_kit_assets: string[] | null
   plan: string
+  show_header_branding: boolean
   is_published: boolean
   created_at: string
   updated_at: string
@@ -363,6 +364,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
         value: d.dns_target ?? "cname.vercel-dns.com",
       },
     })),
+    showHeaderBranding: artistRow.show_header_branding,
     isPublished: artistRow.is_published,
     createdAt: artistRow.created_at,
     updatedAt: artistRow.updated_at,

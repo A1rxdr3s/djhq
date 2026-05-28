@@ -92,6 +92,7 @@ export const mockArtist: Artist = {
   plan: "pro",
   customDomains: [],
   isPublished: true,
+  showHeaderBranding: true,
   createdAt: "2026-05-01T12:00:00.000Z",
   updatedAt: "2026-05-20T15:30:00.000Z",
 }
