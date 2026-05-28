@@ -25,6 +25,7 @@ import type { Artist, DjSet, Release, ReleaseType, SocialLink, SocialPlatform, S
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { GigsSection } from "@/components/djhq/gigs-section"
 
 type PublicProfilePageProps = {
   params: Promise<{
@@ -452,7 +453,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     if (timeB === null) return -1
     return timeB - timeA
   })
-  const upcomingGigs = artist.upcomingGigs.slice(0, 3)
+  const upcomingGigs = artist.upcomingGigs.slice(0, 4)
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 4)
@@ -621,35 +622,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
 
-          <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:col-start-2 lg:row-start-2 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
-            <SectionTitle>Upcoming Gigs</SectionTitle>
-            <div className="mt-4 divide-y divide-white/[0.06]">
-              {upcomingGigs.map((gig) => (
-                <div key={gig.id} className="flex flex-col gap-1 py-3.5 first:pt-0 last:pb-0 sm:py-4">
-                  <p className="text-sm font-semibold text-foreground">{gig.venue}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(gig.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}{" "}
-                    · {gig.city}, {gig.country}
-                  </p>
-                  {gig.ticketUrl ? (
-                    <a
-                      href={gig.ticketUrl}
-                      className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-accent transition-colors hover:text-accent/80"
-                    >
-                      Tickets
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          <section className="lg:col-start-1 lg:row-start-1">
             <SectionTitle>Press Photos</SectionTitle>
             <div className="mt-4 grid grid-cols-5 grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:h-[480px]">
               {photoPreview.map((photo, index) => (
@@ -680,6 +653,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </section>
 
         </div>
+
+        {upcomingGigs.length > 0 ? (
+          <div className="mt-10 lg:mt-12">
+            <GigsSection gigs={upcomingGigs} />
+          </div>
+        ) : null}
 
         {selectedReleases.length > 0 ? (
           <section className="mt-10 lg:mt-12">
