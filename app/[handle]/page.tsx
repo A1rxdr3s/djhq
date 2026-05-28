@@ -206,6 +206,25 @@ function mapReleaseRow(row: ReleaseRow): Release {
   }
 }
 
+// Editorial de-duplication: determines whether two Release objects represent the
+// same content. Used to prevent the featured release from also appearing in the
+// Selected Releases carousel. Presentation-layer only — no data is mutated.
+function isSameRelease(a: Release, b: Release | undefined): boolean {
+  if (!b) return false
+  // Primary: platform URL is the most stable cross-system identifier
+  const aUrl = a.platformUrl.trim()
+  const bUrl = b.platformUrl.trim()
+  if (aUrl && bUrl) return aUrl === bUrl
+  // Secondary: title + label
+  const aTitle = a.title.trim().toLowerCase()
+  const bTitle = b.title.trim().toLowerCase()
+  const aLabel = a.label.trim().toLowerCase()
+  const bLabel = b.label.trim().toLowerCase()
+  if (aTitle && bTitle && aLabel && bLabel) return aTitle === bTitle && aLabel === bLabel
+  // Last resort: title only
+  return aTitle.length > 0 && aTitle === bTitle
+}
+
 function getMockArtistFallback(handle: string) {
   return handle === mockArtist.handle ? mockArtist : null
 }
@@ -453,6 +472,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     if (timeB === null) return -1
     return timeB - timeA
   })
+  // Exclude the current featured release from the carousel to avoid showing the
+  // same content twice. Presentation-layer filter — underlying data is unchanged.
+  const selectedReleasesForDisplay = selectedReleases.filter(
+    (release) => !isSameRelease(release, featuredRelease),
+  )
   const upcomingGigs = artist.upcomingGigs.slice(0, 4)
   const photoPreview = artist.galleryImages.slice(0, 3)
   const featuredSet = artist.djSets[0] ?? null
@@ -656,12 +680,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         </div>
 
-        {selectedReleases.length > 0 ? (
+        {selectedReleasesForDisplay.length > 0 ? (
           <section className="mt-10 lg:mt-12">
             <SectionTitle>Selected Releases</SectionTitle>
             <div className="relative mt-4">
               <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
-                {selectedReleases.map((release) => {
+                {selectedReleasesForDisplay.map((release) => {
                   const formattedDate = formatReleaseDate(release.releaseDate)
                   const hasArtwork = !!(release.artworkUrl?.trim())
 
