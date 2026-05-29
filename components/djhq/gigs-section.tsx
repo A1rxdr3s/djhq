@@ -28,7 +28,6 @@ function selectGigsForDisplay(
 
   const selectedUpcoming = upcoming.slice(0, 3)
   const backfillCount = 3 - selectedUpcoming.length
-  // Past gigs are ascending — most recent are at the tail; slice from the end.
   const selectedPast = backfillCount > 0 ? past.slice(-backfillCount) : []
 
   return [
@@ -48,8 +47,6 @@ const item = {
   hidden: { opacity: 0, y: 6 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE } },
 }
-
-const iconLinkClass = "flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 text-white/45 hover:text-accent hover:scale-[1.03]"
 
 type GigsSectionProps = {
   gigs: Gig[]
@@ -151,9 +148,9 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   )}
                 </div>
 
-                {/* Icon actions — right-aligned, only rendered when links exist */}
+                {/* Icon action buttons — accent-colored circular, right-aligned */}
                 {hasActions && (
-                  <div className="flex shrink-0 items-center">
+                  <div className="flex shrink-0 items-center gap-2.5">
                     {gig.ticketUrl && (
                       <a
                         href={gig.ticketUrl}
@@ -161,11 +158,13 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                         rel="noopener noreferrer"
                         aria-label="Tickets"
                         className={cn(
-                          iconLinkClass,
-                          isPast && "text-white/20 hover:text-white/40",
+                          "flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-150",
+                          isPast
+                            ? "border-white/[0.08] bg-white/[0.02] text-white/25 hover:bg-white/[0.04] hover:text-white/40"
+                            : "border-accent/20 bg-accent/5 text-accent/90 hover:scale-[1.05] hover:border-accent/40 hover:bg-accent/10 hover:text-accent",
                         )}
                       >
-                        <Ticket className="h-4 w-4" />
+                        <Ticket className="h-5 w-5" />
                       </a>
                     )}
                     {gig.instagramUrl && (
@@ -175,11 +174,13 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                         rel="noopener noreferrer"
                         aria-label="Instagram"
                         className={cn(
-                          iconLinkClass,
-                          isPast && "text-white/20 hover:text-white/40",
+                          "flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-150",
+                          isPast
+                            ? "border-white/[0.08] bg-white/[0.02] text-white/25 hover:bg-white/[0.04] hover:text-white/40"
+                            : "border-accent/20 bg-accent/5 text-accent/90 hover:scale-[1.05] hover:border-accent/40 hover:bg-accent/10 hover:text-accent",
                         )}
                       >
-                        <Instagram className="h-4 w-4" />
+                        <Instagram className="h-5 w-5" />
                       </a>
                     )}
                   </div>

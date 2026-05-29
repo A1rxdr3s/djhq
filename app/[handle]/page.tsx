@@ -639,7 +639,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const logoReadability = isPro ? (artist.heroLogoReadability ?? "subtle") : "subtle"
   const contentSurface = isPro ? (artist.heroContentSurface ?? "soft") : "soft"
   const contentWidth = isPro ? (artist.heroContentWidth ?? "standard") : "standard"
-  const contentWidthClass = contentWidth === "compact" ? "max-w-2xl" : contentWidth === "wide" ? "max-w-5xl" : "max-w-3xl"
+  const contentWidthClass = contentWidth === "compact" ? "max-w-2xl" : contentWidth === "wide" ? "max-w-5xl" : "max-w-4xl"
   const logoPlacement = isPro ? (artist.heroLogoPlacement ?? "editorial") : "editorial"
   // Floating placements render the logo as an independent absolutely-positioned layer.
   const isFloatingPlacement = logoPlacement !== "editorial"
@@ -791,7 +791,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Tagline — primary artistic proposition */}
                   {displayHeroTagline ? (
                     <p
-                      className="mt-1.5 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2 sm:text-xl"
+                      className="mt-1.5 text-lg font-medium uppercase tracking-[0.09em] text-accent/90 sm:mt-2 sm:text-xl"
                       style={{ textShadow: `0 0 20px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
                     >
                       {displayHeroTagline}

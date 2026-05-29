@@ -1985,7 +1985,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const previewName = artistName.trim() || artist.artistName
     const isFloating = heroLogoPlacement !== "editorial"
     const previewLogoWidth = `min(80vw, ${Math.min(heroLogoScale * 3, 720)}px)`
-    const previewContentWidthClass = heroContentWidth === "compact" ? "max-w-2xl" : heroContentWidth === "wide" ? "max-w-5xl" : "max-w-3xl"
+    const previewContentWidthClass = heroContentWidth === "compact" ? "max-w-2xl" : heroContentWidth === "wide" ? "max-w-5xl" : "max-w-4xl"
     const previewTheme = getAccentTheme(accentTheme)
     const previewHasFloatingLogo = isFloating && !!(heroLogoUrl || null) && artist.plan === "pro" &&
       (heroIdentityMode === "logo" || heroIdentityMode === "both")
@@ -2224,7 +2224,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     )}
                     {heroTagline && (
                       <p
-                        className="mt-2 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2.5 sm:text-xl"
+                        className="mt-2 text-lg font-medium uppercase tracking-[0.09em] text-accent/90 sm:mt-2.5 sm:text-xl"
                         style={{ textShadow: `0 0 20px rgba(${previewTheme.glowRgb}, 0.15)` }}
                       >
                         {heroTagline}
