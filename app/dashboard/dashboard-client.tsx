@@ -2184,12 +2184,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* Genre pills */}
                   {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
-                    <div className="relative mb-3 flex flex-wrap gap-1.5 sm:mb-4">
+                    <div className="relative mb-3 flex flex-wrap gap-3 sm:mb-4">
                       {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
                         <span
                           key={genre}
-                          className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm"
-                          style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}
+                          className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md"
+                          style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}
                         >
                           {genre}
                         </span>

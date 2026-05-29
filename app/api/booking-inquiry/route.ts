@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     city,
     country,
     company,
+    attendance,
     message,
     website, // honeypot — silently succeed if filled
   } = body as Record<string, string | undefined>
@@ -132,6 +133,7 @@ export async function POST(request: Request) {
     `City / Country: ${city}, ${country}`,
     ``,
     `Club / Promoter / Production Company: ${company}`,
+    `Expected Attendance: ${attendance?.trim() || "Not specified"}`,
     ``,
     `Message:`,
     message?.trim() || "No message provided.",

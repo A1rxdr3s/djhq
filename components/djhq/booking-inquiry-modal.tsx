@@ -375,21 +375,22 @@ type FormState = {
   city: string
   country: string
   company: string
-  budget: string
+  attendance: string
   message: string
   website: string // honeypot
 }
 
 type ModalState = "idle" | "submitting" | "success" | "error"
 
-const BUDGET_OPTIONS = [
+const ATTENDANCE_OPTIONS = [
   { value: "", label: "Select a range" },
-  { value: "Under $1,000", label: "Under $1,000" },
-  { value: "$1,000 – $3,000", label: "$1,000 – $3,000" },
-  { value: "$3,000 – $5,000", label: "$3,000 – $5,000" },
-  { value: "$5,000 – $10,000", label: "$5,000 – $10,000" },
-  { value: "$10,000+", label: "$10,000+" },
-  { value: "Prefer not to say", label: "Prefer not to say" },
+  { value: "Under 100", label: "Under 100" },
+  { value: "100–300", label: "100–300" },
+  { value: "300–500", label: "300–500" },
+  { value: "500–1,000", label: "500–1,000" },
+  { value: "1,000–3,000", label: "1,000–3,000" },
+  { value: "3,000–5,000", label: "3,000–5,000" },
+  { value: "5,000+", label: "5,000+" },
 ]
 
 const INITIAL_FORM: FormState = {
@@ -402,7 +403,7 @@ const INITIAL_FORM: FormState = {
   city: "",
   country: "",
   company: "",
-  budget: "",
+  attendance: "",
   message: "",
   website: "",
 }
@@ -462,9 +463,8 @@ export function BookingInquiryModal({
           city: form.city,
           country: form.country,
           company: form.company,
-          message: form.budget
-            ? `[Budget: ${form.budget}]\n\n${form.message}`
-            : form.message,
+          attendance: form.attendance,
+          message: form.message,
           website: form.website,
         }),
       })
@@ -657,19 +657,19 @@ export function BookingInquiryModal({
                     />
                   </Field>
 
-                  {/* Row 5: Budget */}
-                  <Field label="Estimated Budget">
+                  {/* Row 5: Attendance */}
+                  <Field label="Expected Attendance">
                     <div className="relative">
                       <select
-                        value={form.budget}
-                        onChange={(e) => update("budget", e.target.value)}
+                        value={form.attendance}
+                        onChange={(e) => update("attendance", e.target.value)}
                         disabled={isSubmitting}
                         className={cn(
                           "h-11 w-full appearance-none rounded-md border border-white/[0.08] bg-white/[0.03] px-3 pr-9 text-[13px] transition-colors duration-150 focus:border-accent/40 focus:outline-none",
-                          form.budget ? "text-foreground" : "text-muted-foreground/40",
+                          form.attendance ? "text-foreground" : "text-muted-foreground/40",
                         )}
                       >
-                        {BUDGET_OPTIONS.map((o) => (
+                        {ATTENDANCE_OPTIONS.map((o) => (
                           <option key={o.value} value={o.value} className="bg-[#0c0c0c] text-foreground">
                             {o.label}
                           </option>
@@ -684,7 +684,7 @@ export function BookingInquiryModal({
                     <Textarea
                       value={form.message}
                       onChange={(e) => update("message", e.target.value)}
-                      placeholder="Lineup, expected attendance, technical notes, or any relevant details."
+                      placeholder="Lineup, technical requirements, or any other relevant details."
                       rows={3}
                       maxLength={2000}
                       disabled={isSubmitting}

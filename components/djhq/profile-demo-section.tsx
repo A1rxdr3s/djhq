@@ -46,10 +46,10 @@ export function ProfileDemoSection() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6 sm:bottom-8 sm:left-8 sm:right-8">
-              <div className="flex flex-wrap gap-2">
-                <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>House</span>
-                <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Tech House</span>
-                <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Producer</span>
+              <div className="flex flex-wrap gap-3">
+                <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>House</span>
+                <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Tech House</span>
+                <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Producer</span>
               </div>
               <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>

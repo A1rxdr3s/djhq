@@ -129,10 +129,10 @@ export function HeroSection() {
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/35 to-transparent" />
-                <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>House</span>
-                  <span className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Tech House</span>
-                  <span className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Producer</span>
+                <div className="absolute bottom-3 left-3 flex flex-wrap gap-3">
+                  <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>House</span>
+                  <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Tech House</span>
+                  <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Producer</span>
                 </div>
               </div>
 
