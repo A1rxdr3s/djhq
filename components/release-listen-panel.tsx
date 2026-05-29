@@ -21,9 +21,9 @@ export function ReleaseListenPanel({ release, platformLinks }: ReleaseListenPane
   return (
     <DialogPrimitive.Root>
       <DialogPrimitive.Trigger
-        className="mt-3 flex h-9 w-full items-center justify-center rounded-full border border-accent/30 bg-accent/10 px-4 text-[11px] font-semibold uppercase tracking-[0.10em] text-accent transition-all duration-150 hover:-translate-y-px hover:border-accent/50 hover:bg-accent/[0.15] focus:outline-none"
+        className="mt-3 flex h-9 w-fit items-center justify-center rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.10em] text-accent transition-all duration-150 hover:-translate-y-px hover:border-accent/60 hover:bg-accent/10 focus:outline-none"
       >
-        Listen
+        LISTEN ↗
       </DialogPrimitive.Trigger>
 
       <DialogPrimitive.Portal>

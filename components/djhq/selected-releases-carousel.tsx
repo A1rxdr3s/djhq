@@ -206,7 +206,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                     {badges.map((badge) => (
                       <span
                         key={badge}
-                        className="rounded-full border border-accent/25 bg-accent/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-accent/70"
+                        className="rounded-full border border-accent/20 bg-accent/[0.04] px-2 py-px text-[9px] font-semibold uppercase tracking-[0.12em] text-accent/80"
                       >
                         {badge}
                       </span>
@@ -221,14 +221,8 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                 <p className="mt-0.5 text-sm text-white/45 line-clamp-1">{release.credits ?? ""}</p>
 
                 <p className="mt-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/55">
-                  {release.label}
+                  {[release.label, releaseYear].filter(Boolean).join(" · ")}
                 </p>
-
-                {catalogDate ? (
-                  <p className="mt-0.5 text-[10px] uppercase tracking-[0.10em] text-foreground/30">
-                    {catalogDate}
-                  </p>
-                ) : null}
 
                 <ReleaseListenPanel release={release} platformLinks={platformLinks} />
               </div>
