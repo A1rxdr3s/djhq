@@ -15,16 +15,6 @@ function parseGigDate(dateStr: string) {
   }
 }
 
-// Convert ISO 3166-1 alpha-2 code to regional indicator flag emoji.
-// Maps "UK" → "GB" since venue data uses the non-standard abbreviation.
-function flag(iso: string): string {
-  const code = iso === "UK" ? "GB" : iso
-  if (!code || code.length !== 2) return iso
-  return [...code.toUpperCase()].map((c) =>
-    String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65),
-  ).join("")
-}
-
 // Selects up to 3 gigs for display.
 // Prefers upcoming gigs; backfills with the most-recent past gigs when fewer
 // than 3 upcoming exist. Input must be sorted ascending by date (as the DB provides).
@@ -97,6 +87,8 @@ export function GigsSection({ gigs }: GigsSectionProps) {
           const hasActions = !!(gig.ticketUrl || gig.instagramUrl)
           const statusConfig = gig.eventStatus ? STATUS_CONFIG[gig.eventStatus] : null
 
+          const locationStr = [gig.city, gig.country].filter(Boolean).join(" • ")
+
           return (
             <motion.div key={gig.id} variants={item}>
               <div
@@ -104,7 +96,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   "group flex items-center gap-3 rounded-xl px-2 py-2",
                   "border transition-colors duration-200",
                   isNext
-                    ? "border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.05]"
+                    ? "border-accent/25 bg-accent/[0.04] hover:bg-accent/[0.06]"
                     : isPast
                     ? "border-transparent"
                     : "border-transparent hover:bg-white/[0.025]",
@@ -117,7 +109,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                     isPast
                       ? "border-white/[0.04] bg-transparent"
                       : isNext
-                      ? "border-white/[0.10] bg-white/[0.04]"
+                      ? "border-accent/20 bg-accent/[0.06]"
                       : "border-white/[0.07] bg-white/[0.025]",
                   )}
                 >
@@ -163,31 +155,27 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                     )}
                   </div>
 
-                  {/* Club / room name — optional secondary label */}
+                  {/* Physical venue / room — mixed case, secondary weight */}
                   {gig.clubVenue && (
                     <p
                       className={cn(
-                        "mt-0.5 truncate text-xs uppercase tracking-[0.08em]",
-                        isPast ? "text-white/18" : "text-white/50",
+                        "mt-0.5 truncate text-sm leading-tight",
+                        isPast ? "text-white/18" : "text-white/60",
                       )}
                     >
                       {gig.clubVenue}
                     </p>
                   )}
 
-                  {/* Location: city · flag emoji */}
-                  {(gig.city || gig.country) && (
+                  {/* Location: CITY • CC — uppercase, country code only */}
+                  {locationStr && (
                     <p
                       className={cn(
                         "mt-0.5 truncate text-xs font-medium uppercase tracking-[0.08em]",
-                        isPast ? "text-white/14" : "text-white/55",
+                        isPast ? "text-white/14" : "text-white/50",
                       )}
                     >
-                      {gig.city}
-                      {gig.city && gig.country && (
-                        <span className="mx-1 opacity-50">·</span>
-                      )}
-                      {flag(gig.country)}
+                      {locationStr}
                     </p>
                   )}
                 </div>
