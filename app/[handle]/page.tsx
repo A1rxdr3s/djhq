@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import type { ReactNode } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -27,6 +26,7 @@ import { getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
+import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
@@ -529,11 +529,6 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
   }
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
-  return (
-    <h2 className="text-[10px] font-medium uppercase tracking-[0.28em] text-accent/70">{children}</h2>
-  )
-}
 
 function MainLink({ link }: { link: SocialLink }) {
   const Icon = socialIcons[link.platform]
@@ -817,7 +812,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           />
         <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-10">
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:col-start-2 lg:row-start-1 lg:p-4">
-            <SectionTitle>Featured Release</SectionTitle>
+            <SectionHeader>Featured Release</SectionHeader>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
               <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full">
                 {!hasFeaturedArtwork ? (
@@ -866,8 +861,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           {upcomingGigs.length > 0 ? <GigsSection gigs={upcomingGigs} /> : null}
 
           <section className="flex flex-col lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <SectionTitle>Moments</SectionTitle>
-            <p className="mt-1 text-xs text-white/45">Scenes from recent nights.</p>
+            <SectionHeader variant="primary">Moments</SectionHeader>
             <GallerySection images={galleryImages} />
           </section>
 
@@ -876,7 +870,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {selectedReleasesForDisplay.length > 0 ? (
           <section className="mt-10 lg:mt-12">
-            <SectionTitle>Releases</SectionTitle>
+            <SectionHeader variant="primary">Releases</SectionHeader>
             <div className="mt-4">
               <SelectedReleasesCarousel releases={selectedReleasesForDisplay} />
             </div>
@@ -885,7 +879,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {(featuredVideo ?? featuredSet) ? (
           <section className="mt-10 lg:mt-14">
-            <SectionTitle>Live Performance</SectionTitle>
+            <SectionHeader>Live Performance</SectionHeader>
             <div
               className={cn(
                 "mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25",

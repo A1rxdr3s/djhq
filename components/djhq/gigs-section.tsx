@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { SectionHeader } from "@/components/djhq/section-header"
 import { motion, AnimatePresence } from "framer-motion"
 import { Instagram, Ticket } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -204,7 +205,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const primaryGigs = hasUpcoming ? upcoming.slice(0, 3) : past.slice(0, 3)
   if (primaryGigs.length === 0) return null
 
-  const sectionTitle = hasUpcoming ? "Next Shows" : "Recent Shows"
+  const sectionTitle = hasUpcoming ? "Shows" : "Recent Shows"
   const PAST_PAGE = 10
   const visiblePast = showAllPast ? past : past.slice(0, PAST_PAGE)
   const hasMorePast = past.length > PAST_PAGE
@@ -212,9 +213,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
 
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:col-start-2 lg:row-start-2 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
-      <h2 className="text-[10px] font-medium uppercase tracking-[0.28em] text-accent/70">
-        {sectionTitle}
-      </h2>
+      <SectionHeader>{sectionTitle}</SectionHeader>
 
       {/* Primary shows */}
       <motion.div
