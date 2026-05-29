@@ -9,6 +9,12 @@ export type SubscriptionPlan = "free" | "pro"
 export type PerformanceType = "dj_set" | "live_set" | "vinyl_set" | "b2b" | "b3b" | "other"
 
 /**
+ * Visual blend style for the hero logo image.
+ * Controls opacity, filter warmth, drop shadow, and optional blend mode.
+ */
+export type HeroLogoStyle = "solid" | "soft" | "cinematic"
+
+/**
  * Hero logo position relative to artist name text.
  * Only applies when a logo is uploaded and identity mode includes logo.
  */
@@ -353,6 +359,8 @@ export interface Artist {
   heroLogoOffsetX?: number
   /** Vertical offset applied via CSS transform (px, -100 to +100). Pro only. */
   heroLogoOffsetY?: number
+  /** Visual blend style for the uploaded hero logo. Pro only. */
+  heroLogoStyle?: HeroLogoStyle
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */

@@ -81,6 +81,7 @@ type ArtistRow = {
   hero_logo_alignment: string | null
   hero_logo_offset_x: number | null
   hero_logo_offset_y: number | null
+  hero_logo_style: string | null
   is_published: boolean
   created_at: string
   updated_at: string
@@ -495,6 +496,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       heroLogoAlignment: (artistRow.hero_logo_alignment || "left") as "left" | "center" | "right",
       heroLogoOffsetX: artistRow.hero_logo_offset_x ?? 0,
       heroLogoOffsetY: artistRow.hero_logo_offset_y ?? 0,
+      heroLogoStyle: (artistRow.hero_logo_style || "solid") as "solid" | "soft" | "cinematic",
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -621,6 +623,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const logoAlignment = isPro ? (artist.heroLogoAlignment ?? "left") : "left"
   const logoOffsetX = isPro ? (artist.heroLogoOffsetX ?? 0) : 0
   const logoOffsetY = isPro ? (artist.heroLogoOffsetY ?? 0) : 0
+  const logoStyle = isPro ? (artist.heroLogoStyle ?? "solid") : "solid"
   const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
   const hasPressKit =
     artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
@@ -716,6 +719,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   heroLogoAlignment={logoAlignment}
                   heroLogoOffsetX={logoOffsetX}
                   heroLogoOffsetY={logoOffsetY}
+                  heroLogoStyle={logoStyle}
                   isPro={isPro}
                 />
 

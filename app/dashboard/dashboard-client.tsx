@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Trash2 } from "lucide-react"
-import type { Artist, DjSet, GalleryImage, HeroLogoLayout, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, DjSet, GalleryImage, HeroLogoLayout, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { Button } from "@/components/ui/button"
@@ -668,6 +668,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroLogoAlignment, setHeroLogoAlignment] = useState<"left" | "center" | "right">(initialArtist.heroLogoAlignment ?? "left")
   const [heroLogoOffsetX, setHeroLogoOffsetX] = useState(initialArtist.heroLogoOffsetX ?? 0)
   const [heroLogoOffsetY, setHeroLogoOffsetY] = useState(initialArtist.heroLogoOffsetY ?? 0)
+  const [heroLogoStyle, setHeroLogoStyle] = useState<HeroLogoStyle>(initialArtist.heroLogoStyle ?? "solid")
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const [previewScale, setPreviewScale] = useState(0.4)
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
@@ -755,7 +756,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroLogoLayout !== (artist.heroLogoLayout ?? "replace_text") ||
     heroLogoAlignment !== (artist.heroLogoAlignment ?? "left") ||
     heroLogoOffsetX !== (artist.heroLogoOffsetX ?? 0) ||
-    heroLogoOffsetY !== (artist.heroLogoOffsetY ?? 0)
+    heroLogoOffsetY !== (artist.heroLogoOffsetY ?? 0) ||
+    heroLogoStyle !== (artist.heroLogoStyle ?? "solid")
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -803,6 +805,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroLogoAlignment,
           heroLogoOffsetX,
           heroLogoOffsetY,
+          heroLogoStyle,
         },
         socialLinks,
         featuredRelease,
@@ -877,6 +880,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroLogoAlignment,
       heroLogoOffsetX,
       heroLogoOffsetY,
+      heroLogoStyle,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -998,6 +1002,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroLogoAlignment(savedArtist.heroLogoAlignment ?? "left")
     setHeroLogoOffsetX(savedArtist.heroLogoOffsetX ?? 0)
     setHeroLogoOffsetY(savedArtist.heroLogoOffsetY ?? 0)
+    setHeroLogoStyle(savedArtist.heroLogoStyle ?? "solid")
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -2053,6 +2058,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     heroLogoAlignment={heroLogoAlignment}
                     heroLogoOffsetX={heroLogoOffsetX}
                     heroLogoOffsetY={heroLogoOffsetY}
+                    heroLogoStyle={heroLogoStyle}
                     isPro={artist.plan === "pro"}
                     isPreview
                   />
@@ -2281,6 +2287,35 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
               <p className="text-[10px] text-muted-foreground/35">
                 Fine-tune logo position without affecting hero layout or spacing.
+              </p>
+            </div>
+
+            {/* Logo Visual Style */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Logo Visual Style
+              </p>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {(["solid", "soft", "cinematic"] as const).map((style) => (
+                  <button
+                    key={style}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroLogoStyle(style)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroLogoStyle === style
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Solid: full opacity, no blend. Soft: reduced opacity, glow. Cinematic: integrates into photography.
               </p>
             </div>
 

@@ -22,6 +22,7 @@ type SaveProfilePayload = {
   heroLogoAlignment: string
   heroLogoOffsetX: number
   heroLogoOffsetY: number
+  heroLogoStyle: string
 }
 
 type SaveSocialLinkPayload = {
@@ -406,6 +407,7 @@ export async function PATCH(request: Request) {
         hero_logo_alignment: ["left", "center", "right"].includes(payload.profile.heroLogoAlignment) ? payload.profile.heroLogoAlignment : "left",
         hero_logo_offset_x: Math.max(-100, Math.min(100, payload.profile.heroLogoOffsetX ?? 0)),
         hero_logo_offset_y: Math.max(-100, Math.min(100, payload.profile.heroLogoOffsetY ?? 0)),
+        hero_logo_style: ["solid", "soft", "cinematic"].includes(payload.profile.heroLogoStyle) ? payload.profile.heroLogoStyle : "solid",
         is_published: payload.isPublished,
         booking_email: payload.booking.email.trim(),
         booking_url: payload.booking.bookingUrl?.trim() || null,
