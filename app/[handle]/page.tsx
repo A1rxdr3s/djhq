@@ -26,6 +26,7 @@ import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
+import { GallerySection } from "@/components/djhq/gallery-section"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
@@ -576,7 +577,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     (release) => !isSameRelease(release, featuredRelease),
   )
   const upcomingGigs = artist.upcomingGigs
-  const photoPreview = artist.galleryImages.slice(0, 3)
+  const galleryImages = artist.galleryImages
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 4)
   const featuredVideo = artist.videos[0] ?? null
@@ -865,36 +866,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           {upcomingGigs.length > 0 ? <GigsSection gigs={upcomingGigs} /> : null}
 
           <section className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <SectionTitle>Press Photos</SectionTitle>
-            <div className="mt-4 grid grid-cols-5 grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:h-[480px]">
-              {photoPreview.map((photo, index) => (
-                <div
-                  key={photo.id}
-                  className={cn(
-                    "group relative overflow-hidden bg-secondary transition-transform duration-300 ease-out hover:-translate-y-0.5",
-                    index === 0
-                      ? "col-span-3 row-span-2 aspect-[4/5] rounded-2xl shadow-md shadow-black/25 hover:shadow-lg hover:shadow-black/35 lg:aspect-auto lg:rounded-[1.5rem]"
-                      : "col-span-2 aspect-[4/3] rounded-xl shadow-sm shadow-black/20 hover:shadow-md hover:shadow-black/30 lg:aspect-auto",
-                  )}
-                >
-                  <Image
-                    src={photo.imageUrl}
-                    alt={photo.altText}
-                    fill
-                    loading="eager"
-                    sizes={
-                      index === 0
-                        ? "(min-width: 1024px) 660px, (min-width: 768px) 45vw, 60vw"
-                        : "(min-width: 1024px) 390px, (min-width: 768px) 37vw, 40vw"
-                    }
-                    className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.018]"
-                    style={{ objectPosition: `${photo.focalX ?? 50}% ${photo.focalY ?? 50}%` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/[0.10]" />
-                </div>
-              ))}
-            </div>
+            <SectionTitle>Gallery</SectionTitle>
+            <GallerySection images={galleryImages} />
           </section>
 
         </div>
