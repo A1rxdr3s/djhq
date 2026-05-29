@@ -709,8 +709,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
               <div className={cn(
                 "relative",
-                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.14] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-4",
-                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.09] bg-black/[0.22] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-5 sm:py-4",
+                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.14] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-4",
+                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.09] bg-black/[0.22] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-5 sm:py-4",
               )}>
                 {/* Subtle vertical gradient inside the surface — improves readability without a card look */}
                 {contentSurface !== "none" && (
