@@ -8,6 +8,10 @@ import type { GalleryImage } from "@/types/djhq"
 
 const SLOT_INTERVAL_MS = 3_000
 const FADE_MS          = 900
+// Each slot advances by NUM_SLOTS positions per rotation, guaranteeing that
+// slots 0, 1, 2 always display images at offsets N, N+1, N+2 (mod n) — all
+// distinct whenever n > 3, both during and between transitions.
+const NUM_SLOTS        = 3
 
 interface GallerySectionProps {
   images: GalleryImage[]
@@ -21,13 +25,18 @@ export function GallerySection({ images }: GallerySectionProps) {
 
   // ── Per-slot double-buffer state ──────────────────────────────────────────
   //
-  // Each slot (0=featured, 1=top-right, 2=bottom-right) owns two permanently-
-  // rendered layers (A and B). Only one slot transitions at a time, triggered
-  // sequentially every SLOT_INTERVAL_MS: 0 → 1 → 2 → 0 → …
+  // Each slot owns Layer A and Layer B, both permanently in the DOM.
+  // Slots rotate sequentially: 0 → 1 → 2 → 0 → … every SLOT_INTERVAL_MS.
   //
-  // Arrays are length 3; slots beyond numSlots are never rendered.
+  // Advance per rotation = NUM_SLOTS (not 1).  Proof that slots are always
+  // distinct:  slot s fires k_s times → offset = s + 3·k_s.  For any two
+  // slots a ≠ b with |k_a − k_b| ≤ 1 (guaranteed by sequential firing),
+  // (O_a − O_b) mod n ≠ 0 for all n > 3.  Verified exhaustively for n = 4.
+  //
+  // initLayerA: slot s starts showing image s   (the initial window [0,1,2])
+  // initLayerB: slot s preloads image s+NUM_SLOTS (its first rotation target)
   const initLayerA = n > 0 ? [0, 1 % n, 2 % n] : [0, 0, 0]
-  const initLayerB = n > 0 ? [1 % n, 2 % n, 3 % n] : [0, 0, 0]
+  const initLayerB = n > 0 ? [3 % n, 4 % n, 5 % n] : [0, 0, 0]
 
   const [layerAOffsets,    setLayerAOffsets]    = useState<number[]>(initLayerA)
   const [layerBOffsets,    setLayerBOffsets]    = useState<number[]>(initLayerB)
@@ -76,14 +85,13 @@ export function GallerySection({ images }: GallerySectionProps) {
 
   // ── Sequential per-slot rotation (> 3 images only) ───────────────────────
   //
-  // Every SLOT_INTERVAL_MS the next slot in the sequence rotates independently.
-  // Slot 0 fires at t=0, slot 1 at t+3 s, slot 2 at t+6 s, then repeats.
-  // Each slot's back layer has the full idle period to preload before it
-  // comes to front, so no grey placeholder can appear.
+  // Every SLOT_INTERVAL_MS, the next slot in sequence rotates independently.
+  // The back layer preloads its target for the full idle period so it is
+  // already painted when it comes to front — no grey placeholder can appear.
   useEffect(() => {
     if (n <= 3) return
 
-    const numSlotsLocal = Math.min(n, 3)
+    const numSlotsLocal = Math.min(n, NUM_SLOTS)
 
     const interval = setInterval(() => {
       if (pausedRef.current || activeIndexRef.current !== null) return
@@ -91,32 +99,30 @@ export function GallerySection({ images }: GallerySectionProps) {
       const slot = currentSlotRef.current
       currentSlotRef.current = (slot + 1) % numSlotsLocal
 
-      // Skip if this slot is still settling from a previous rotation
       if (settleTimerRefs.current[slot] !== null) return
 
       // Step 1 — enable CSS transition for this slot
       setIsTransitionings((prev) => { const a = [...prev]; a[slot] = true; return a })
 
-      // Step 2 — one rAF later, flip front/back so browser animates from the
-      // just-established "from" state
+      // Step 2 — one rAF later, flip front/back so CSS sees a valid from-state
       requestAnimationFrame(() => {
         const nextFrontIsA = !frontIsAsRef.current[slot]
         setFrontIsAs((prev) => { const a = [...prev]; a[slot] = nextFrontIsA; return a })
         frontIsAsRef.current[slot] = nextFrontIsA
 
-        // Step 3 — settle: disable transition, preload next image into back layer
+        // Step 3 — settle: disable transition, preload next target into back layer
         settleTimerRefs.current[slot] = setTimeout(() => {
           settleTimerRefs.current[slot] = null
           setIsTransitionings((prev) => { const a = [...prev]; a[slot] = false; return a })
 
           if (nextFrontIsA) {
-            // A is now front → B is back → update B to next image
-            const newB = (layerAOffsetsRef.current[slot] + 1) % n
+            // A is now front → B is back → update B to A's offset + NUM_SLOTS
+            const newB = (layerAOffsetsRef.current[slot] + numSlotsLocal) % n
             setLayerBOffsets((prev) => { const a = [...prev]; a[slot] = newB; return a })
             layerBOffsetsRef.current[slot] = newB
           } else {
-            // B is now front → A is back → update A to next image
-            const newA = (layerBOffsetsRef.current[slot] + 1) % n
+            // B is now front → A is back → update A to B's offset + NUM_SLOTS
+            const newA = (layerBOffsetsRef.current[slot] + numSlotsLocal) % n
             setLayerAOffsets((prev) => { const a = [...prev]; a[slot] = newA; return a })
             layerAOffsetsRef.current[slot] = newA
           }
@@ -132,7 +138,7 @@ export function GallerySection({ images }: GallerySectionProps) {
   }, [n])
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const numSlots    = Math.min(n, 3)
+  const numSlots    = Math.min(n, NUM_SLOTS)
   const activePhoto = activeIndex !== null ? images[activeIndex] : null
 
   if (n === 0) return null
@@ -181,14 +187,14 @@ export function GallerySection({ images }: GallerySectionProps) {
 
           return (
             <button
-              // Keyed by slot — DOM node is STABLE across rotations.
               key={slot}
               type="button"
+              aria-label="View photo"
               onClick={() => setActiveIndex(lightboxIndex)}
               className={cn(
                 "group relative cursor-pointer overflow-hidden bg-secondary text-left",
-                "border border-white/10 transition-[transform,box-shadow,border-color] duration-200 ease-out",
-                "hover:-translate-y-0.5 hover:border-accent/70 hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_18%,transparent)]",
+                "border border-white/[0.06] transition-[transform,border-color,box-shadow] duration-200 ease-out",
+                "hover:-translate-y-0.5 hover:border-accent/45 hover:[box-shadow:0_0_18px_color-mix(in_srgb,var(--accent)_10%,transparent)]",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
                 slot === 0
                   ? "col-span-1 row-span-2 aspect-[4/5] rounded-2xl shadow-md shadow-black/25 lg:aspect-auto lg:rounded-[1.5rem]"
@@ -203,7 +209,7 @@ export function GallerySection({ images }: GallerySectionProps) {
                   fill
                   loading="eager"
                   sizes={sizesAttr}
-                  className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                  className="object-cover saturate-[0.97] transition-transform duration-200 ease-out group-hover:scale-[1.01]"
                   style={{ objectPosition: `${photoA.focalX ?? 50}% ${photoA.focalY ?? 50}%` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
@@ -217,7 +223,7 @@ export function GallerySection({ images }: GallerySectionProps) {
                   fill
                   loading="eager"
                   sizes={sizesAttr}
-                  className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                  className="object-cover saturate-[0.97] transition-transform duration-200 ease-out group-hover:scale-[1.01]"
                   style={{ objectPosition: `${photoB.focalX ?? 50}% ${photoB.focalY ?? 50}%` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
@@ -225,10 +231,10 @@ export function GallerySection({ images }: GallerySectionProps) {
 
               {/* ── Hover overlay — always above both image layers ── */}
               <div
-                className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-150 group-hover:bg-black/45 group-hover:opacity-100"
+                className="absolute inset-0 flex items-center justify-center bg-black/28 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 style={{ zIndex: 10 }}
               >
-                <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/87">
+                <span className="text-[9px] uppercase tracking-[0.18em] text-white/85">
                   View Photo ↗
                 </span>
               </div>

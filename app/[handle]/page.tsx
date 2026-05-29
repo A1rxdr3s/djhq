@@ -810,7 +810,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             aria-hidden
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
           />
-        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-10">
+        <div className="relative grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8">
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:col-start-2 lg:row-start-1 lg:p-4">
             <SectionHeader>Featured Release</SectionHeader>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
