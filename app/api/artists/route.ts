@@ -23,6 +23,10 @@ type SaveProfilePayload = {
   heroLogoOffsetX: number
   heroLogoOffsetY: number
   heroLogoStyle: string
+  heroLogoReadability: string
+  heroContentSurface: string
+  heroLogoPlacement: string
+  heroContentWidth: string
 }
 
 type SaveSocialLinkPayload = {
@@ -408,6 +412,10 @@ export async function PATCH(request: Request) {
         hero_logo_offset_x: Math.max(-100, Math.min(100, payload.profile.heroLogoOffsetX ?? 0)),
         hero_logo_offset_y: Math.max(-100, Math.min(100, payload.profile.heroLogoOffsetY ?? 0)),
         hero_logo_style: ["solid", "soft", "cinematic"].includes(payload.profile.heroLogoStyle) ? payload.profile.heroLogoStyle : "solid",
+        hero_logo_readability: ["none", "subtle", "strong"].includes(payload.profile.heroLogoReadability) ? payload.profile.heroLogoReadability : "subtle",
+        hero_content_surface: ["none", "soft", "strong"].includes(payload.profile.heroContentSurface) ? payload.profile.heroContentSurface : "soft",
+        hero_logo_placement: ["editorial", "top_center", "center", "custom"].includes(payload.profile.heroLogoPlacement) ? payload.profile.heroLogoPlacement : "editorial",
+        hero_content_width: ["compact", "standard", "wide"].includes(payload.profile.heroContentWidth) ? payload.profile.heroContentWidth : "standard",
         is_published: payload.isPublished,
         booking_email: payload.booking.email.trim(),
         booking_url: payload.booking.bookingUrl?.trim() || null,

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
-import type { HeroLogoLayout, HeroLogoStyle } from "@/types/djhq"
+import type { HeroLogoLayout, HeroLogoReadability, HeroLogoStyle } from "@/types/djhq"
+import { HeroLogoElement } from "./hero-logo-element"
 
 type HeroIdentityProps = {
   artistName: string
@@ -12,6 +13,7 @@ type HeroIdentityProps = {
   heroLogoOffsetX?: number
   heroLogoOffsetY?: number
   heroLogoStyle?: HeroLogoStyle
+  heroLogoReadability?: HeroLogoReadability
   isPro?: boolean
   // Only affects the name element tag for semantic HTML (h1 in public, p in preview).
   // All visual output — logo size, typography, spacing, alignment — is identical.
@@ -29,6 +31,7 @@ export function HeroIdentity({
   heroLogoOffsetX = 0,
   heroLogoOffsetY = 0,
   heroLogoStyle = "solid",
+  heroLogoReadability = "subtle",
   isPro = false,
   isPreview = false,
 }: HeroIdentityProps) {
@@ -74,40 +77,15 @@ export function HeroIdentity({
     }
   })()
 
-  // Base drop-shadow preserved across all styles (equivalent to drop-shadow-2xl).
-  // Sepia(0.10) shifts pure digital white toward a warmer #F7F4EE tone.
-  const baseFilter = "sepia(0.10) drop-shadow(0 25px 25px rgb(0 0 0 / 0.15))"
-
-  const logoStyleProps = ((): React.CSSProperties => {
-    switch (heroLogoStyle) {
-      case "soft":
-        return {
-          opacity: 0.90,
-          filter: `${baseFilter} drop-shadow(0 0 12px rgba(255,255,255,.12))`,
-        }
-      case "cinematic":
-        return {
-          opacity: 0.85,
-          filter: `${baseFilter} drop-shadow(0 0 18px rgba(255,255,255,.15))`,
-          mixBlendMode: "screen",
-        }
-      default: // solid
-        return { opacity: 1, filter: baseFilter }
-    }
-  })()
-
   const logoEl = showLogo && heroLogoUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={heroLogoUrl}
-      alt={artistName}
-      style={{
-        width: logoWidth,
-        height: "auto",
-        transform: `translate(${heroLogoOffsetX}px, ${heroLogoOffsetY}px)`,
-        ...logoStyleProps,
-      }}
-      className="object-contain"
+    <HeroLogoElement
+      logoUrl={heroLogoUrl}
+      artistName={artistName}
+      logoWidth={logoWidth}
+      heroLogoStyle={heroLogoStyle}
+      heroLogoReadability={heroLogoReadability}
+      offsetX={heroLogoOffsetX}
+      offsetY={heroLogoOffsetY}
     />
   ) : null
 

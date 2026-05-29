@@ -15,6 +15,30 @@ export type PerformanceType = "dj_set" | "live_set" | "vinyl_set" | "b2b" | "b3b
 export type HeroLogoStyle = "solid" | "soft" | "cinematic"
 
 /**
+ * Contrast protection treatment applied behind the hero logo.
+ * Keeps the mark readable against busy hero photography without adding a visible box.
+ */
+export type HeroLogoReadability = "none" | "subtle" | "strong"
+
+/**
+ * Atmospheric surface treatment behind the full hero content cluster.
+ * Lifts text, logo, and CTA off busy photography without a visible panel.
+ */
+export type HeroContentSurface = "none" | "soft" | "strong"
+
+/**
+ * Controls where the hero logo is positioned in the hero composition.
+ * "editorial" keeps it inside the content stack; other values float it as an independent layer.
+ */
+export type HeroLogoPlacement = "editorial" | "top_center" | "center" | "custom"
+
+/**
+ * Max-width constraint applied to the hero text content block.
+ * Gives artists control over how much of the hero width the content occupies.
+ */
+export type HeroContentWidth = "compact" | "standard" | "wide"
+
+/**
  * Hero logo position relative to artist name text.
  * Only applies when a logo is uploaded and identity mode includes logo.
  */
@@ -361,6 +385,14 @@ export interface Artist {
   heroLogoOffsetY?: number
   /** Visual blend style for the uploaded hero logo. Pro only. */
   heroLogoStyle?: HeroLogoStyle
+  /** Contrast-protection treatment behind the hero logo. Pro only. */
+  heroLogoReadability?: HeroLogoReadability
+  /** Atmospheric surface treatment behind the full hero content cluster. Pro only. */
+  heroContentSurface?: HeroContentSurface
+  /** Logo placement mode — editorial (content flow) or floating (independent layer). Pro only. */
+  heroLogoPlacement?: HeroLogoPlacement
+  /** Max-width of the hero text content block. Pro only. */
+  heroContentWidth?: HeroContentWidth
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */

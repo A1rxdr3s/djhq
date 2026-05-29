@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
+import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { ReleaseListenPanel } from "@/components/release-listen-panel"
 
 type PublicProfilePageProps = {
@@ -82,6 +83,10 @@ type ArtistRow = {
   hero_logo_offset_x: number | null
   hero_logo_offset_y: number | null
   hero_logo_style: string | null
+  hero_logo_readability: string | null
+  hero_content_surface: string | null
+  hero_logo_placement: string | null
+  hero_content_width: string | null
   is_published: boolean
   created_at: string
   updated_at: string
@@ -497,6 +502,10 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       heroLogoOffsetX: artistRow.hero_logo_offset_x ?? 0,
       heroLogoOffsetY: artistRow.hero_logo_offset_y ?? 0,
       heroLogoStyle: (artistRow.hero_logo_style || "solid") as "solid" | "soft" | "cinematic",
+      heroLogoReadability: (artistRow.hero_logo_readability || "subtle") as "none" | "subtle" | "strong",
+      heroContentSurface: (artistRow.hero_content_surface || "soft") as "none" | "soft" | "strong",
+      heroLogoPlacement: (artistRow.hero_logo_placement || "editorial") as "editorial" | "top_center" | "center" | "custom",
+      heroContentWidth: (artistRow.hero_content_width || "standard") as "compact" | "standard" | "wide",
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -624,6 +633,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const logoOffsetX = isPro ? (artist.heroLogoOffsetX ?? 0) : 0
   const logoOffsetY = isPro ? (artist.heroLogoOffsetY ?? 0) : 0
   const logoStyle = isPro ? (artist.heroLogoStyle ?? "solid") : "solid"
+  const logoReadability = isPro ? (artist.heroLogoReadability ?? "subtle") : "subtle"
+  const contentSurface = isPro ? (artist.heroContentSurface ?? "soft") : "soft"
+  const contentWidth = isPro ? (artist.heroContentWidth ?? "standard") : "standard"
+  const contentWidthClass = contentWidth === "compact" ? "max-w-2xl" : contentWidth === "wide" ? "max-w-5xl" : "max-w-3xl"
+  const logoPlacement = isPro ? (artist.heroLogoPlacement ?? "editorial") : "editorial"
+  // Floating placements render the logo as an independent absolutely-positioned layer.
+  const isFloatingPlacement = logoPlacement !== "editorial"
+  const hasFloatingLogo = isFloatingPlacement && !!artist.heroLogoUrl?.trim() &&
+    (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both")
+  // Logo width formula — shared with HeroLogoElement for floating layer
+  const logoWidth = `min(80vw, ${Math.min(logoScale * 3, 720)}px)`
+  // Floating logo transform: center the logo at its anchor point, then apply offsets
+  const floatingTransform = logoPlacement === "top_center"
+    ? `translate(calc(-50% + ${logoOffsetX}px), ${logoOffsetY}px)`
+    : `translate(calc(-50% + ${logoOffsetX}px), calc(-50% + ${logoOffsetY}px))`
   const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
   const hasPressKit =
     artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
@@ -689,14 +713,44 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
 
+            {/* Floating logo layer — renders before content area in DOM so it sits between
+                gradients and editorial content without requiring explicit z-index changes. */}
+            {hasFloatingLogo && (
+              <div
+                className="pointer-events-none absolute"
+                style={{
+                  top: logoPlacement === "top_center" ? "18%" : "50%",
+                  left: "50%",
+                  transform: floatingTransform,
+                }}
+              >
+                <HeroLogoElement
+                  logoUrl={artist.heroLogoUrl!}
+                  artistName={artist.artistName}
+                  logoWidth={logoWidth}
+                  heroLogoStyle={logoStyle}
+                  heroLogoReadability={logoReadability}
+                />
+              </div>
+            )}
+
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
               {/* Cinematic content fade — stronger bottom lift */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
 
-              <div className="relative">
+              <div className={cn(
+                "relative",
+                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.20] px-4 py-3 backdrop-blur-[3px] sm:px-5 sm:py-4",
+                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.35] px-4 py-3 backdrop-blur-[5px] sm:px-5 sm:py-4",
+              )}>
+                {/* Subtle vertical gradient inside the surface — improves readability without a card look */}
+                {contentSurface !== "none" && (
+                  <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.08] to-transparent" />
+                )}
+
                 {/* Genre pills — full-width, naturally left-aligned */}
                 {artist.genres.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-4">
+                  <div className="relative mb-3 flex flex-wrap gap-1.5 sm:mb-4">
                     {artist.genres.map((genre) => (
                       <Badge
                         key={genre}
@@ -708,35 +762,43 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 )}
 
-                {/* Hero identity — full-width context so center alignment works relative to the hero */}
-                <HeroIdentity
-                  artistName={artist.artistName}
-                  heroLogoUrl={artist.heroLogoUrl}
-                  heroIdentityMode={artist.heroIdentityMode ?? "text"}
-                  heroTextStyle={heroTextStyle}
-                  heroLogoScale={logoScale}
-                  heroLogoLayout={logoLayout}
-                  heroLogoAlignment={logoAlignment}
-                  heroLogoOffsetX={logoOffsetX}
-                  heroLogoOffsetY={logoOffsetY}
-                  heroLogoStyle={logoStyle}
-                  isPro={isPro}
-                />
+                {/* Hero identity — skipped for floating placements (logo rendered in floating layer above) */}
+                {!isFloatingPlacement && (
+                  <HeroIdentity
+                    artistName={artist.artistName}
+                    heroLogoUrl={artist.heroLogoUrl}
+                    heroIdentityMode={artist.heroIdentityMode ?? "text"}
+                    heroTextStyle={heroTextStyle}
+                    heroLogoScale={logoScale}
+                    heroLogoLayout={logoLayout}
+                    heroLogoAlignment={logoAlignment}
+                    heroLogoOffsetX={logoOffsetX}
+                    heroLogoOffsetY={logoOffsetY}
+                    heroLogoStyle={logoStyle}
+                    heroLogoReadability={logoReadability}
+                    isPro={isPro}
+                  />
+                )}
 
-                {/* Text content constrained for readability */}
-                <div className="max-w-3xl">
-                  {displayHeroTagline ? (
-                    <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
-                      {displayHeroTagline}
-                    </p>
-                  ) : null}
-
-                  <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-white/65 sm:mt-3 sm:text-sm">
+                {/* Text content block — width controlled by heroContentWidth */}
+                <div className={cn("relative", contentWidthClass)}>
+                  {/* Location — supporting metadata, rendered above tagline */}
+                  <p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3">
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
                     {artist.location}
                   </p>
 
-                  <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-[1.65] text-white/60 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-[0.9375rem]">
+                  {/* Tagline — primary brand statement */}
+                  {displayHeroTagline ? (
+                    <p
+                      className="mt-2 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2.5 sm:text-xl"
+                      style={{ textShadow: "0 0 20px rgba(0,255,180,.15)" }}
+                    >
+                      {displayHeroTagline}
+                    </p>
+                  ) : null}
+
+                  <p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">
                     {artist.shortBio}
                   </p>
 

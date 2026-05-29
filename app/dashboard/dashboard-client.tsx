@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Trash2 } from "lucide-react"
-import type { Artist, DjSet, GalleryImage, HeroLogoLayout, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { GigCard } from "@/components/dashboard/gig-card"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
+import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 
 // Natural dimensions of the virtual hero used for CSS-scale preview.
 // The preview container scales this viewport-equivalent canvas down to fit.
@@ -68,6 +69,7 @@ type HeroPreset = {
   label: string
   description: string
   heroIdentityMode: "text" | "logo" | "both"
+  heroLogoPlacement: HeroLogoPlacement
   heroLogoLayout: HeroLogoLayout
   heroLogoAlignment: "left" | "center" | "right"
   heroLogoScale: number
@@ -82,6 +84,7 @@ const HERO_PRESETS: HeroPreset[] = [
     label: "Editorial Center",
     description: "Balanced premium lockup",
     heroIdentityMode: "logo",
+    heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
     heroLogoAlignment: "center",
     heroLogoScale: 180,
@@ -94,6 +97,7 @@ const HERO_PRESETS: HeroPreset[] = [
     label: "Club Poster",
     description: "Large festival-style mark",
     heroIdentityMode: "logo",
+    heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
     heroLogoAlignment: "center",
     heroLogoScale: 230,
@@ -106,6 +110,7 @@ const HERO_PRESETS: HeroPreset[] = [
     label: "Left Lockup",
     description: "Editorial left-weighted layout",
     heroIdentityMode: "logo",
+    heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
     heroLogoAlignment: "left",
     heroLogoScale: 170,
@@ -118,6 +123,7 @@ const HERO_PRESETS: HeroPreset[] = [
     label: "Cinematic Wide",
     description: "Blends into photography",
     heroIdentityMode: "logo",
+    heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
     heroLogoAlignment: "center",
     heroLogoScale: 210,
@@ -130,6 +136,7 @@ const HERO_PRESETS: HeroPreset[] = [
     label: "Minimal Mark",
     description: "Quiet identity presence",
     heroIdentityMode: "logo",
+    heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
     heroLogoAlignment: "center",
     heroLogoScale: 120,
@@ -745,6 +752,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroLogoOffsetX, setHeroLogoOffsetX] = useState(initialArtist.heroLogoOffsetX ?? 0)
   const [heroLogoOffsetY, setHeroLogoOffsetY] = useState(initialArtist.heroLogoOffsetY ?? 0)
   const [heroLogoStyle, setHeroLogoStyle] = useState<HeroLogoStyle>(initialArtist.heroLogoStyle ?? "solid")
+  const [heroLogoReadability, setHeroLogoReadability] = useState<HeroLogoReadability>(initialArtist.heroLogoReadability ?? "subtle")
+  const [heroContentSurface, setHeroContentSurface] = useState<HeroContentSurface>(initialArtist.heroContentSurface ?? "soft")
+  const [heroLogoPlacement, setHeroLogoPlacement] = useState<HeroLogoPlacement>(initialArtist.heroLogoPlacement ?? "editorial")
+  const [heroContentWidth, setHeroContentWidth] = useState<HeroContentWidth>(initialArtist.heroContentWidth ?? "standard")
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const [previewScale, setPreviewScale] = useState(0.4)
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
@@ -833,7 +844,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroLogoAlignment !== (artist.heroLogoAlignment ?? "left") ||
     heroLogoOffsetX !== (artist.heroLogoOffsetX ?? 0) ||
     heroLogoOffsetY !== (artist.heroLogoOffsetY ?? 0) ||
-    heroLogoStyle !== (artist.heroLogoStyle ?? "solid")
+    heroLogoStyle !== (artist.heroLogoStyle ?? "solid") ||
+    heroLogoReadability !== (artist.heroLogoReadability ?? "subtle") ||
+    heroContentSurface !== (artist.heroContentSurface ?? "soft") ||
+    heroLogoPlacement !== (artist.heroLogoPlacement ?? "editorial") ||
+    heroContentWidth !== (artist.heroContentWidth ?? "standard")
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -882,6 +897,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroLogoOffsetX,
           heroLogoOffsetY,
           heroLogoStyle,
+          heroLogoReadability,
+          heroContentSurface,
+          heroLogoPlacement,
+          heroContentWidth,
         },
         socialLinks,
         featuredRelease,
@@ -957,6 +976,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroLogoOffsetX,
       heroLogoOffsetY,
       heroLogoStyle,
+      heroLogoReadability,
+      heroContentSurface,
+      heroLogoPlacement,
+      heroContentWidth,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -1079,6 +1102,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroLogoOffsetX(savedArtist.heroLogoOffsetX ?? 0)
     setHeroLogoOffsetY(savedArtist.heroLogoOffsetY ?? 0)
     setHeroLogoStyle(savedArtist.heroLogoStyle ?? "solid")
+    setHeroLogoReadability(savedArtist.heroLogoReadability ?? "subtle")
+    setHeroContentSurface(savedArtist.heroContentSurface ?? "soft")
+    setHeroLogoPlacement(savedArtist.heroLogoPlacement ?? "editorial")
+    setHeroContentWidth(savedArtist.heroContentWidth ?? "standard")
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -1950,6 +1977,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderProfile() {
     const previewName = artistName.trim() || artist.artistName
+    const isFloating = heroLogoPlacement !== "editorial"
+    const previewLogoWidth = `min(80vw, ${Math.min(heroLogoScale * 3, 720)}px)`
+    const previewContentWidthClass = heroContentWidth === "compact" ? "max-w-2xl" : heroContentWidth === "wide" ? "max-w-5xl" : "max-w-3xl"
+    const previewHasFloatingLogo = isFloating && !!(heroLogoUrl || null) && artist.plan === "pro" &&
+      (heroIdentityMode === "logo" || heroIdentityMode === "both")
+    const previewFloatingTransform = heroLogoPlacement === "top_center"
+      ? `translate(calc(-50% + ${heroLogoOffsetX}px), ${heroLogoOffsetY}px)`
+      : `translate(calc(-50% + ${heroLogoOffsetX}px), calc(-50% + ${heroLogoOffsetY}px))`
 
     return (
       <div className="space-y-6">
@@ -2105,13 +2140,41 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
 
+              {/* Floating logo layer — mirrors public hero; rendered between gradients and content */}
+              {previewHasFloatingLogo && (
+                <div
+                  className="pointer-events-none absolute"
+                  style={{
+                    top: heroLogoPlacement === "top_center" ? "18%" : "50%",
+                    left: "50%",
+                    transform: previewFloatingTransform,
+                  }}
+                >
+                  <HeroLogoElement
+                    logoUrl={heroLogoUrl}
+                    artistName={previewName}
+                    logoWidth={previewLogoWidth}
+                    heroLogoStyle={heroLogoStyle}
+                    heroLogoReadability={heroLogoReadability}
+                  />
+                </div>
+              )}
+
               {/* Content area — mirrors public hero structure exactly */}
               <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
-                <div className="relative">
-                  {/* Genre pills — full-width, naturally left-aligned */}
+                <div className={cn(
+                  "relative",
+                  heroContentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.20] px-4 py-3 backdrop-blur-[3px] sm:px-5 sm:py-4",
+                  heroContentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.35] px-4 py-3 backdrop-blur-[5px] sm:px-5 sm:py-4",
+                )}>
+                  {heroContentSurface !== "none" && (
+                    <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.08] to-transparent" />
+                  )}
+
+                  {/* Genre pills */}
                   {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-4">
+                    <div className="relative mb-3 flex flex-wrap gap-1.5 sm:mb-4">
                       {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
                         <span
                           key={genre}
@@ -2123,37 +2186,43 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </div>
                   )}
 
-                  {/* Hero identity — full-width so center alignment works relative to hero width */}
-                  <HeroIdentity
-                    artistName={previewName}
-                    heroLogoUrl={artist.plan === "pro" ? (heroLogoUrl || null) : null}
-                    heroIdentityMode={heroIdentityMode}
-                    heroTextStyle={heroTextStyle}
-                    heroLogoScale={heroLogoScale}
-                    heroLogoLayout={heroLogoLayout}
-                    heroLogoAlignment={heroLogoAlignment}
-                    heroLogoOffsetX={heroLogoOffsetX}
-                    heroLogoOffsetY={heroLogoOffsetY}
-                    heroLogoStyle={heroLogoStyle}
-                    isPro={artist.plan === "pro"}
-                    isPreview
-                  />
+                  {/* Hero identity — skipped for floating placements */}
+                  {!isFloating && (
+                    <HeroIdentity
+                      artistName={previewName}
+                      heroLogoUrl={artist.plan === "pro" ? (heroLogoUrl || null) : null}
+                      heroIdentityMode={heroIdentityMode}
+                      heroTextStyle={heroTextStyle}
+                      heroLogoScale={heroLogoScale}
+                      heroLogoLayout={heroLogoLayout}
+                      heroLogoAlignment={heroLogoAlignment}
+                      heroLogoOffsetX={heroLogoOffsetX}
+                      heroLogoOffsetY={heroLogoOffsetY}
+                      heroLogoStyle={heroLogoStyle}
+                      heroLogoReadability={heroLogoReadability}
+                      isPro={artist.plan === "pro"}
+                      isPreview
+                    />
+                  )}
 
-                  {/* Text content constrained for readability */}
-                  <div className="max-w-3xl">
-                    {heroTagline && (
-                      <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
-                        {heroTagline}
-                      </p>
-                    )}
+                  {/* Text content block */}
+                  <div className={cn("relative", previewContentWidthClass)}>
                     {location && (
-                      <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-white/65 sm:mt-3 sm:text-sm">
+                      <p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3">
                         <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
                         {location}
                       </p>
                     )}
+                    {heroTagline && (
+                      <p
+                        className="mt-2 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2.5 sm:text-xl"
+                        style={{ textShadow: "0 0 20px rgba(0,255,180,.15)" }}
+                      >
+                        {heroTagline}
+                      </p>
+                    )}
                     {shortBio && (
-                      <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-[1.65] text-white/60 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-[0.9375rem]">
+                      <p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">
                         {shortBio}
                       </p>
                     )}
@@ -2193,6 +2262,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   onClick={() => {
                     if (artist.plan !== "pro") return
                     setHeroIdentityMode(preset.heroIdentityMode)
+                    setHeroLogoPlacement(preset.heroLogoPlacement)
                     setHeroLogoLayout(preset.heroLogoLayout)
                     setHeroLogoAlignment(preset.heroLogoAlignment)
                     setHeroLogoScale(preset.heroLogoScale)
@@ -2300,8 +2370,42 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </p>
             </div>
 
-            {/* Logo Layout */}
+            {/* Logo Placement */}
             <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Logo Placement
+              </p>
+              <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {([
+                  { value: "editorial", label: "Editorial" },
+                  { value: "top_center", label: "Top Center" },
+                  { value: "center", label: "Center" },
+                  { value: "custom", label: "Custom" },
+                ] as { value: HeroLogoPlacement; label: string }[]).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroLogoPlacement(value)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroLogoPlacement === value
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Editorial keeps the logo inside the content flow. Floating placements let the logo sit independently over the hero photo.
+              </p>
+            </div>
+
+            {/* Logo Layout — de-emphasized when placement is floating */}
+            <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
                 Logo Layout
               </p>
@@ -2335,8 +2439,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </p>
             </div>
 
-            {/* Logo Alignment */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+            {/* Logo Alignment — de-emphasized when placement is floating */}
+            <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
                 Logo Alignment
               </p>
@@ -2429,6 +2533,93 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
               <p className="text-[10px] text-muted-foreground/35">
                 Solid: full opacity, no blend. Soft: reduced opacity, glow. Cinematic: integrates into photography.
+              </p>
+            </div>
+
+            {/* Logo Readability */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Logo Readability
+              </p>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {(["none", "subtle", "strong"] as const).map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroLogoReadability(level)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroLogoReadability === level
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Adds soft contrast protection behind the logo without a visible box.
+              </p>
+            </div>
+
+            {/* Hero Content Surface */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Hero Content Surface
+              </p>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {(["none", "soft", "strong"] as const).map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroContentSurface(level)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroContentSurface === level
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Adds an atmospheric surface behind the full content cluster for readability on busy photos.
+              </p>
+            </div>
+
+            {/* Hero Content Width */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Content Width
+              </p>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {(["compact", "standard", "wide"] as const).map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroContentWidth(w)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroContentWidth === w
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Controls how wide the text content block extends across the hero. Adjust to complement your hero image.
               </p>
             </div>
 
