@@ -761,11 +761,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* Genre chips — above logo, photo-safe overlay style */}
                 {artist.genres.length > 0 && (
-                  <div className="mb-4 flex flex-wrap gap-2 sm:mb-5">
+                  <div className="mb-5 flex flex-wrap gap-2 sm:mb-6">
                     {artist.genres.map((genre) => (
                       <span
                         key={genre}
-                        className="genre-chip rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
+                        className="genre-chip rounded-full border border-accent/70 bg-black/35 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
                       >
                         {genre}
                       </span>
@@ -797,19 +797,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {displayHeroTagline ? (
                     <p
                       className="mt-2 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-3 sm:text-lg"
-                      style={{ textShadow: `0 0 10px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
+                      style={{ textShadow: `0 0 12px rgba(0,0,0,0.45), 0 0 10px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
                     >
                       {displayHeroTagline}
                     </p>
                   ) : null}
 
                   {/* Location — supporting metadata */}
-                  <p className={cn("flex items-center gap-2 text-sm text-white/65", displayHeroTagline ? "mt-2" : "mt-2.5")}>
-                    <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
-                    {artist.location}
+                  <p className={cn("flex items-center gap-2 text-sm text-white/70", displayHeroTagline ? "mt-2" : "mt-2.5")}>
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-white/70 sm:h-4 sm:w-4" />
+                    {artist.location.replace(/\s*\/\s*/g, ' • ')}
                   </p>
 
-                  <p className="mt-3 max-w-[700px] text-base font-medium leading-relaxed tracking-[0.02em] text-white/85 sm:mt-4">
+                  <p className="mt-3 max-w-[700px] text-base font-medium leading-[1.7] tracking-[0.02em] text-white/92 sm:mt-4">
                     {artist.shortBio}
                   </p>
 
