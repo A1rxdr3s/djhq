@@ -23,9 +23,11 @@ import {
 import { mockArtist } from "@/data/mock-artist"
 import type { Artist, DjSet, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
+import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
+import { ReleaseListenPanel } from "@/components/release-listen-panel"
 
 type PublicProfilePageProps = {
   params: Promise<{
@@ -72,6 +74,8 @@ type ArtistRow = {
   hero_logo_url: string | null
   hero_identity_mode: string
   hero_text_style: string
+  hero_logo_scale: number | null
+  hero_logo_layout: string | null
   is_published: boolean
   created_at: string
   updated_at: string
@@ -246,40 +250,6 @@ function isReleaseRemix(release: Release): boolean {
   return /remix/i.test(release.title) || /remix/i.test(release.credits ?? "")
 }
 
-type PlatformLink = { url: string; badge: string; title: string }
-
-// Returns platform-specific links for a release.
-// Falls back to detecting the platform from platformUrl if no specific links are set.
-function getReleasePlatformLinks(release: Release): PlatformLink[] {
-  const links: PlatformLink[] = []
-  if (release.spotifyUrl) links.push({ url: release.spotifyUrl, badge: "SP", title: "Spotify" })
-  if (release.beatportUrl) links.push({ url: release.beatportUrl, badge: "BP", title: "Beatport" })
-  if (release.appleMusicUrl) links.push({ url: release.appleMusicUrl, badge: "AM", title: "Apple Music" })
-  if (release.soundcloudUrl) links.push({ url: release.soundcloudUrl, badge: "SC", title: "SoundCloud" })
-  if (release.youtubeMusicUrl) links.push({ url: release.youtubeMusicUrl, badge: "YM", title: "YouTube Music" })
-  if (release.bandcampUrl) links.push({ url: release.bandcampUrl, badge: "BC", title: "Bandcamp" })
-  if (release.otherUrl) links.push({ url: release.otherUrl, badge: "↗", title: "Listen" })
-  if (links.length > 0) return links
-
-  // Backward compat: infer platform from platformUrl hostname
-  if (release.platformUrl) {
-    try {
-      const hostname = new URL(release.platformUrl).hostname
-      let badge = "↗"
-      let title = "Listen"
-      if (/spotify/i.test(hostname)) { badge = "SP"; title = "Spotify" }
-      else if (/beatport/i.test(hostname)) { badge = "BP"; title = "Beatport" }
-      else if (/apple/i.test(hostname)) { badge = "AM"; title = "Apple Music" }
-      else if (/soundcloud/i.test(hostname)) { badge = "SC"; title = "SoundCloud" }
-      else if (/youtube|youtu\.be/i.test(hostname)) { badge = "YM"; title = "YouTube" }
-      else if (/bandcamp/i.test(hostname)) { badge = "BC"; title = "Bandcamp" }
-      links.push({ url: release.platformUrl, badge, title })
-    } catch {
-      // invalid URL — skip
-    }
-  }
-  return links
-}
 
 // Editorial de-duplication: determines whether two Release objects represent the
 // same content. Used to prevent the featured release from also appearing in the
@@ -478,6 +448,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       heroLogoUrl: artistRow.hero_logo_url ?? null,
       heroIdentityMode: (artistRow.hero_identity_mode || "text") as "text" | "logo" | "both",
       heroTextStyle: (artistRow.hero_text_style || "default") as "default" | "condensed" | "cinematic" | "editorial",
+      heroLogoScale: artistRow.hero_logo_scale ?? 100,
+      heroLogoLayout: (artistRow.hero_logo_layout || "replace_text") as "replace_text" | "above_text" | "below_text" | "left_text" | "right_text",
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -606,8 +578,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     if (artist.heroIdentityMode === "both" && hasLogo) return "both"
     return "text"
   })()
+  const logoScale = isPro ? (artist.heroLogoScale ?? 100) : 100
+  const logoLayout = (isPro ? (artist.heroLogoLayout ?? "replace_text") : "replace_text") as "replace_text" | "above_text" | "below_text" | "left_text" | "right_text"
   const showLogoInHero = effectiveIdentityMode === "logo" || effectiveIdentityMode === "both"
-  const showTextInHero = effectiveIdentityMode === "text" || effectiveIdentityMode === "both"
+  // In LOGO mode, show text alongside the logo unless layout is replace_text
+  const showTextInHero = effectiveIdentityMode === "text" || effectiveIdentityMode === "both" || (effectiveIdentityMode === "logo" && logoLayout !== "replace_text")
 
   // Hero text style classes — only applied when text is shown
   const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
@@ -706,24 +681,38 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 )}
 
-                {/* Hero identity — logo, text, or both */}
-                {showLogoInHero && artist.heroLogoUrl && (
-                  <div className={cn("mb-3", effectiveIdentityMode === "both" && "mb-4")}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* Hero identity — layout-aware logo + text system */}
+                {(showLogoInHero || showTextInHero) && (() => {
+                  const logoEl = showLogoInHero && artist.heroLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={artist.heroLogoUrl}
                       alt={artist.artistName}
-                      className="max-h-[56px] w-auto object-contain drop-shadow-2xl sm:max-h-[72px] lg:max-h-[88px]"
-                      style={{ maxWidth: "min(420px, 70vw)" }}
+                      style={{ height: `${logoScale}px`, maxWidth: "min(420px, 70vw)" }}
+                      className="w-auto object-contain drop-shadow-2xl"
                     />
-                  </div>
-                )}
+                  ) : null
 
-                {showTextInHero && (
-                  <h1 className={heroNameClasses}>
-                    {artist.artistName}
-                  </h1>
-                )}
+                  const nameEl = showTextInHero ? (
+                    <h1 className={heroNameClasses}>{artist.artistName}</h1>
+                  ) : null
+
+                  if (!logoEl && !nameEl) return null
+                  if (!logoEl) return <div className="mb-3">{nameEl}</div>
+                  if (!nameEl) return <div className="mb-3">{logoEl}</div>
+
+                  // Both logo and name — arrange by layout
+                  switch (logoLayout) {
+                    case "below_text":
+                      return <div className="mb-3 flex flex-col gap-3">{nameEl}{logoEl}</div>
+                    case "left_text":
+                      return <div className="mb-3 flex flex-row flex-wrap items-end gap-5">{logoEl}{nameEl}</div>
+                    case "right_text":
+                      return <div className="mb-3 flex flex-row flex-wrap items-end gap-5">{nameEl}{logoEl}</div>
+                    default: // above_text — logo above name
+                      return <div className="mb-3 flex flex-col gap-3">{logoEl}{nameEl}</div>
+                  }
+                })()}
 
                 {displayHeroTagline ? (
                   <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
@@ -838,7 +827,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     alt={photo.altText}
                     fill
                     loading="eager"
-                    sizes="(min-width: 768px) 220px, 33vw"
+                    sizes={
+                      index === 0
+                        ? "(min-width: 1024px) 660px, (min-width: 768px) 45vw, 60vw"
+                        : "(min-width: 1024px) 390px, (min-width: 768px) 37vw, 40vw"
+                    }
                     className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.018]"
                     style={{ objectPosition: `${photo.focalX ?? 50}% ${photo.focalY ?? 50}%` }}
                   />
@@ -910,23 +903,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             {catalogDate}
                           </p>
                         ) : null}
-                        {/* Platform icon badges */}
-                        {platformLinks.length > 0 ? (
-                          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                            {platformLinks.map((link) => (
-                              <a
-                                key={link.url}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title={link.title}
-                                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.04] text-[8px] font-bold tracking-[0.05em] text-foreground/40 transition-colors duration-150 hover:border-accent/40 hover:text-accent/80"
-                              >
-                                {link.badge}
-                              </a>
-                            ))}
-                          </div>
-                        ) : null}
+                        <ReleaseListenPanel release={release} platformLinks={platformLinks} />
                       </div>
                     </article>
                   )

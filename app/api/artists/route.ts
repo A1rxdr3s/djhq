@@ -16,6 +16,8 @@ type SaveProfilePayload = {
   heroLogoUrl: string
   heroIdentityMode: string
   heroTextStyle: string
+  heroLogoScale: number
+  heroLogoLayout: string
 }
 
 type SaveSocialLinkPayload = {
@@ -386,6 +388,8 @@ export async function PATCH(request: Request) {
         hero_logo_url: payload.profile.heroLogoUrl.trim() || null,
         hero_identity_mode: payload.profile.heroIdentityMode || "text",
         hero_text_style: payload.profile.heroTextStyle || "default",
+        hero_logo_scale: Math.max(40, Math.min(240, payload.profile.heroLogoScale ?? 100)),
+        hero_logo_layout: payload.profile.heroLogoLayout || "replace_text",
         is_published: payload.isPublished,
         booking_email: payload.booking.email.trim(),
         booking_url: payload.booking.bookingUrl?.trim() || null,

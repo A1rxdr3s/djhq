@@ -4,6 +4,17 @@
 export type SubscriptionPlan = "free" | "pro"
 
 /**
+ * Hero logo position relative to artist name text.
+ * Only applies when a logo is uploaded and identity mode includes logo.
+ */
+export type HeroLogoLayout =
+  | "replace_text"
+  | "above_text"
+  | "below_text"
+  | "left_text"
+  | "right_text"
+
+/**
  * Supported release formats.
  */
 export type ReleaseType = "single" | "EP" | "album"
@@ -311,6 +322,10 @@ export interface Artist {
   heroIdentityMode?: "text" | "logo" | "both"
   /** Hero text typography style (Pro only). Affects artist name rendering when text is shown. */
   heroTextStyle?: "default" | "condensed" | "cinematic" | "editorial"
+  /** Hero logo height in pixels (40–240, default 100). Pro only. */
+  heroLogoScale?: number
+  /** Hero logo position relative to artist name. Pro only. */
+  heroLogoLayout?: HeroLogoLayout
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */

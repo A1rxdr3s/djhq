@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
-import type { Artist, DjSet, GalleryImage, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, DjSet, GalleryImage, HeroLogoLayout, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -422,7 +422,7 @@ function getArtistInitialsPreview(artistName: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-// Resizes and re-encodes a File to WebP (JPEG fallback) at max 2000×2000, quality 0.82.
+// Resizes and re-encodes a File to WebP (JPEG fallback) at max 3000×3000, quality 0.86.
 // Runs entirely in the browser — no server round-trip for the image bytes.
 function compressGalleryImage(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -430,7 +430,7 @@ function compressGalleryImage(file: File): Promise<Blob> {
     const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
       URL.revokeObjectURL(objectUrl)
-      const MAX = 2000
+      const MAX = 3000
       let { width, height } = img
       if (width > MAX || height > MAX) {
         if (width >= height) {
@@ -463,11 +463,11 @@ function compressGalleryImage(file: File): Promise<Blob> {
               else reject(new Error("Unable to compress image."))
             },
             "image/jpeg",
-            0.82,
+            0.86,
           )
         },
         "image/webp",
-        0.82,
+        0.86,
       )
     }
     img.onerror = () => {
@@ -556,6 +556,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroLogoUrl, setHeroLogoUrl] = useState(initialArtist.heroLogoUrl ?? "")
   const [heroIdentityMode, setHeroIdentityMode] = useState<"text" | "logo" | "both">(initialArtist.heroIdentityMode ?? "text")
   const [heroTextStyle, setHeroTextStyle] = useState<"default" | "condensed" | "cinematic" | "editorial">(initialArtist.heroTextStyle ?? "default")
+  const [heroLogoScale, setHeroLogoScale] = useState(initialArtist.heroLogoScale ?? 100)
+  const [heroLogoLayout, setHeroLogoLayout] = useState<HeroLogoLayout>(initialArtist.heroLogoLayout ?? "replace_text")
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
   const [isUploadingHeroLogo, setIsUploadingHeroLogo] = useState(false)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
@@ -592,6 +594,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [galleryImageFile, setGalleryImageFile] = useState<File | null>(null)
   const [galleryImageAltText, setGalleryImageAltText] = useState("")
   const [galleryFileError, setGalleryFileError] = useState("")
+  const [galleryImageSmallWarning, setGalleryImageSmallWarning] = useState("")
   const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
   const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
   const [isReorderingGallery, setIsReorderingGallery] = useState(false)
@@ -620,7 +623,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     faviconUrl !== (artist.faviconUrl ?? "") ||
     heroLogoUrl !== (artist.heroLogoUrl ?? "") ||
     heroIdentityMode !== (artist.heroIdentityMode ?? "text") ||
-    heroTextStyle !== (artist.heroTextStyle ?? "default")
+    heroTextStyle !== (artist.heroTextStyle ?? "default") ||
+    heroLogoScale !== (artist.heroLogoScale ?? 100) ||
+    heroLogoLayout !== (artist.heroLogoLayout ?? "replace_text")
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -663,6 +668,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroLogoUrl,
           heroIdentityMode,
           heroTextStyle,
+          heroLogoScale,
+          heroLogoLayout,
         },
         socialLinks,
         featuredRelease,
@@ -723,6 +730,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroLogoUrl: heroLogoUrl.trim() || null,
       heroIdentityMode,
       heroTextStyle,
+      heroLogoScale,
+      heroLogoLayout,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -819,6 +828,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroLogoUrl(savedArtist.heroLogoUrl ?? "")
     setHeroIdentityMode(savedArtist.heroIdentityMode ?? "text")
     setHeroTextStyle(savedArtist.heroTextStyle ?? "default")
+    setHeroLogoScale(savedArtist.heroLogoScale ?? 100)
+    setHeroLogoLayout(savedArtist.heroLogoLayout ?? "replace_text")
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -1304,6 +1315,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       }))
       setGalleryImageFile(null)
       setGalleryImageAltText("")
+      setGalleryImageSmallWarning("")
       setSaveMessage("Gallery image uploaded.")
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to upload gallery image."
@@ -1658,8 +1670,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderProfile() {
     const previewName = artistName.trim() || artist.artistName
-    const showLogoInPreview = artist.plan === "pro" && !!heroLogoUrl && (heroIdentityMode === "logo" || heroIdentityMode === "both")
-    const showTextInPreview = artist.plan !== "pro" || !heroLogoUrl || heroIdentityMode === "text" || heroIdentityMode === "both"
+    const hasLogoForPreview = artist.plan === "pro" && !!heroLogoUrl
+    const showLogoInPreview = hasLogoForPreview && (heroIdentityMode === "logo" || heroIdentityMode === "both")
+    const showTextInPreview = !hasLogoForPreview || heroIdentityMode === "text" || heroIdentityMode === "both" || (heroIdentityMode === "logo" && heroLogoLayout !== "replace_text")
+    const previewLogoH = Math.min(Math.round(heroLogoScale * 0.45), 96)
     const previewNameClass = (() => {
       switch (heroTextStyle) {
         case "condensed": return "text-2xl font-black uppercase leading-none tracking-tight"
@@ -1805,19 +1819,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
             {/* Identity content */}
             <div className="absolute inset-0 flex flex-col items-start justify-end gap-1.5 p-4 sm:p-5">
-              {showLogoInPreview && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={heroLogoUrl}
-                  alt="Logo preview"
-                  className="max-h-8 max-w-[140px] object-contain drop-shadow-md sm:max-h-10"
-                />
-              )}
-              {showTextInPreview && (
-                <p className={cn(previewNameClass, "text-white drop-shadow-md max-w-[85%]")}>
-                  {previewName}
-                </p>
-              )}
+              {(() => {
+                const logoEl = showLogoInPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={heroLogoUrl}
+                    alt="Logo preview"
+                    style={{ height: `${previewLogoH}px` }}
+                    className="w-auto object-contain drop-shadow-md"
+                  />
+                ) : null
+                const textEl = showTextInPreview ? (
+                  <p className={cn(previewNameClass, "text-white drop-shadow-md max-w-[85%]")}>{previewName}</p>
+                ) : null
+
+                if (!logoEl && !textEl) return null
+                if (!logoEl) return textEl
+                if (!textEl) return logoEl
+
+                switch (heroLogoLayout) {
+                  case "below_text": return <div className="flex flex-col gap-1.5">{textEl}{logoEl}</div>
+                  case "left_text": return <div className="flex flex-row items-end gap-3">{logoEl}{textEl}</div>
+                  case "right_text": return <div className="flex flex-row items-end gap-3">{textEl}{logoEl}</div>
+                  default: return <div className="flex flex-col gap-1.5">{logoEl}{textEl}</div>
+                }
+              })()}
               {heroTagline && (
                 <p className="text-[10px] uppercase tracking-[0.14em] text-white/50 drop-shadow-sm">
                   {heroTagline}
@@ -1857,7 +1883,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 ))}
               </div>
               <p className="text-[10px] text-muted-foreground/35">
-                Text shows your artist name. Logo shows your uploaded lockup. Both shows logo above name.
+                Text: name only. Logo: logo only (or alongside name, depending on Layout). Both: logo + name together.
               </p>
             </div>
 
@@ -1887,6 +1913,64 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
               <p className="text-[10px] text-muted-foreground/35">
                 Controls weight, size, and tracking of your name. Only visible when text is shown in the hero.
+              </p>
+            </div>
+
+            {/* Logo Size */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                  Logo Size
+                </p>
+                <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoScale}px</span>
+              </div>
+              <input
+                type="range"
+                min={40}
+                max={240}
+                step={5}
+                value={heroLogoScale}
+                onChange={(e) => artist.plan === "pro" && setHeroLogoScale(Number(e.target.value))}
+                disabled={artist.plan !== "pro"}
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+              />
+              <p className="text-[10px] text-muted-foreground/35">
+                Height of your logo on the public profile. Increase for wide wordmarks.
+              </p>
+            </div>
+
+            {/* Logo Layout */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Logo Layout
+              </p>
+              <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {([
+                  { value: "replace_text", label: "Replace" },
+                  { value: "above_text", label: "Above" },
+                  { value: "below_text", label: "Below" },
+                  { value: "left_text", label: "Left" },
+                  { value: "right_text", label: "Right" },
+                ] as { value: HeroLogoLayout; label: string }[]).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroLogoLayout(value)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroLogoLayout === value
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Most DJ logos already include the artist name. Use <strong className="text-muted-foreground/55 font-semibold">Replace</strong> to avoid duplicated branding.
               </p>
             </div>
 
@@ -1929,7 +2013,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {isUploadingHeroLogo ? "Uploading..." : "Upload logo"}
                 </Button>
                 <p className="text-[10px] text-muted-foreground/38">
-                  PNG, SVG, or WEBP. Transparent background recommended. Max height 56–88px on public profile.
+                  PNG, SVG, or WEBP. Transparent background recommended. Use Logo Size above to control height on the public profile.
                 </p>
               </div>
             )}
@@ -3373,16 +3457,35 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     const file = event.target.files?.[0] ?? null
                     if (file && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
                       setGalleryFileError("Only JPEG, PNG, and WEBP images are supported.")
+                      setGalleryImageSmallWarning("")
                       setGalleryImageFile(null)
                       event.target.value = ""
                       return
                     }
                     setGalleryFileError("")
+                    setGalleryImageSmallWarning("")
                     setGalleryImageFile(file)
+                    if (file) {
+                      const objectUrl = URL.createObjectURL(file)
+                      const img = new globalThis.Image()
+                      img.onload = () => {
+                        URL.revokeObjectURL(objectUrl)
+                        if (img.naturalWidth < 2400) {
+                          setGalleryImageSmallWarning(
+                            "This image may look soft in the large press photo slot. Recommended width: 2400px+",
+                          )
+                        }
+                      }
+                      img.onerror = () => URL.revokeObjectURL(objectUrl)
+                      img.src = objectUrl
+                    }
                   }}
                 />
                 {galleryFileError && (
                   <p className="text-xs text-destructive/80">{galleryFileError}</p>
+                )}
+                {galleryImageSmallWarning && !galleryFileError && (
+                  <p className="text-xs text-amber-400/80">{galleryImageSmallWarning}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -3408,7 +3511,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Accepted formats: JPG, PNG, WEBP. Recommended size: up to 20 MB. Images are compressed and resized to max 2000 × 2000 px before upload.
+                Accepted formats: JPG, PNG, WEBP. Recommended size: up to 20 MB. Images are compressed and resized to max 3000 × 3000 px before upload.
               </p>
             </div>
           </div>
