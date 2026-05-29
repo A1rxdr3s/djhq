@@ -6,27 +6,33 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { GalleryImage } from "@/types/djhq"
 
-const ROTATION_MS = 6_000
+const ROTATION_MS  = 6_000  // interval between rotations
+const FADE_MS      = 700    // opacity + scale transition duration per slot
+const STAGGER_MS   = [0, 120, 240] // slot 0 → 1 → 2 stagger
 
 interface GallerySectionProps {
   images: GalleryImage[]
 }
 
 export function GallerySection({ images }: GallerySectionProps) {
-  // Lightbox state
+  // ── Lightbox ──────────────────────────────────────────────────────────────
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  // Rotation state
-  const [rotationOffset, setRotationOffset] = useState(0)
-  const [contentVisible, setContentVisible] = useState(true)
+  // ── Rotation ──────────────────────────────────────────────────────────────
+  // displayedOffset: the settled, fully-visible set of images
+  // incomingOffset:  the arriving set (non-null only during the transition window)
+  // isEntering:      true = transition is live (CSS fires); false = idle or pre-paint
+  const [displayedOffset, setDisplayedOffset] = useState(0)
+  const [incomingOffset,  setIncomingOffset]  = useState<number | null>(null)
+  const [isEntering,      setIsEntering]      = useState(false)
 
-  // Refs to avoid stale closures inside the interval
-  const pausedRef = useRef(false)
-  const activeIndexRef = useRef<number | null>(null)
+  // Refs used inside setInterval / rAF to avoid stale closures
+  const pausedRef         = useRef(false)
+  const activeIndexRef    = useRef<number | null>(null)
+  const currentOffsetRef  = useRef(0)
 
-  useEffect(() => {
-    activeIndexRef.current = activeIndex
-  }, [activeIndex])
+  useEffect(() => { activeIndexRef.current   = activeIndex      }, [activeIndex])
+  useEffect(() => { currentOffsetRef.current = displayedOffset  }, [displayedOffset])
 
   // ── Lightbox callbacks ────────────────────────────────────────────────────
   const close = useCallback(() => setActiveIndex(null), [])
@@ -44,8 +50,8 @@ export function GallerySection({ images }: GallerySectionProps) {
   useEffect(() => {
     if (activeIndex === null) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close()
-      else if (e.key === "ArrowLeft") prev()
+      if (e.key === "Escape")      close()
+      else if (e.key === "ArrowLeft")  prev()
       else if (e.key === "ArrowRight") next()
     }
     document.addEventListener("keydown", onKey)
@@ -60,26 +66,47 @@ export function GallerySection({ images }: GallerySectionProps) {
   // ── Auto-rotation (> 3 images only) ──────────────────────────────────────
   useEffect(() => {
     if (images.length <= 3) return
-    const timer = setInterval(() => {
-      if (pausedRef.current || activeIndexRef.current !== null) return
-      // Fade out → swap images → fade in
-      setContentVisible(false)
-      setTimeout(() => {
-        setRotationOffset((prev) => (prev + 3) % images.length)
-        setContentVisible(true)
-      }, 500)
+
+    let settleTimer: ReturnType<typeof setTimeout> | null = null
+    let raf1 = 0
+    let raf2 = 0
+
+    const interval = setInterval(() => {
+      // Skip if hovered, lightbox open, or a transition is already in flight
+      if (pausedRef.current || activeIndexRef.current !== null || settleTimer !== null) return
+
+      const incoming = (currentOffsetRef.current + 1) % images.length
+      setIncomingOffset(incoming)
+
+      // Two rAFs guarantee the browser has painted the incoming layer at opacity:0
+      // before we flip isEntering, so the CSS transition sees a real 0→1 change.
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          setIsEntering(true)
+
+          // Wait for the slowest slot to finish, then settle state
+          settleTimer = setTimeout(() => {
+            settleTimer = null
+            // All three sets are batched into one React render (React 18)
+            setDisplayedOffset(incoming)
+            setIncomingOffset(null)
+            setIsEntering(false)
+            currentOffsetRef.current = incoming
+          }, STAGGER_MS[2] + FADE_MS + 80)
+        })
+      })
     }, ROTATION_MS)
-    return () => clearInterval(timer)
+
+    return () => {
+      clearInterval(interval)
+      if (settleTimer) clearTimeout(settleTimer)
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
   }, [images.length])
 
-  // ── Display slots ─────────────────────────────────────────────────────────
-  // Cap at available image count so 1- or 2-image galleries don't duplicate
-  const numSlots = Math.min(images.length, 3)
-  const slots = Array.from({ length: numSlots }, (_, i) => ({
-    photo: images[(rotationOffset + i) % images.length],
-    lightboxIndex: (rotationOffset + i) % images.length,
-  }))
-
+  // ── Derived render values ─────────────────────────────────────────────────
+  const numSlots   = Math.min(images.length, 3)
   const activePhoto = activeIndex !== null ? images[activeIndex] : null
 
   if (images.length === 0) return null
@@ -88,58 +115,108 @@ export function GallerySection({ images }: GallerySectionProps) {
     <>
       {/* ── Masonry grid ─────────────────────────────────────────────────── */}
       <div
-        className="mt-4 grid grid-cols-[11fr_9fr] grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:h-[480px]"
-        onMouseEnter={() => { pausedRef.current = true }}
+        className="mt-4 grid grid-cols-[11fr_9fr] grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:flex-1 lg:min-h-0 lg:grid-rows-[1fr_1fr]"
+        onMouseEnter={() => { pausedRef.current = true  }}
         onMouseLeave={() => { pausedRef.current = false }}
       >
-        {slots.map(({ photo, lightboxIndex }, slot) => (
-          <button
-            // key by slot position so the button DOM node is reused across rotations;
-            // only the image src inside changes, which the fade transition covers.
-            key={slot}
-            type="button"
-            onClick={() => setActiveIndex(lightboxIndex)}
-            className={cn(
-              "group relative cursor-pointer overflow-hidden bg-secondary text-left",
-              "border border-white/10 transition-[transform,box-shadow,border-color] duration-200 ease-out",
-              "hover:-translate-y-0.5 hover:border-accent/70 hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_18%,transparent)]",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
-              slot === 0
-                ? "col-span-1 row-span-2 aspect-[4/5] rounded-2xl shadow-md shadow-black/25 lg:aspect-auto lg:rounded-[1.5rem]"
-                : "col-span-1 aspect-[4/3] rounded-xl shadow-sm shadow-black/20 lg:aspect-auto",
-            )}
-          >
-            {/* Image + gradient — this layer fades during rotation */}
-            <div
+        {Array.from({ length: numSlots }, (_, slot) => {
+          const displayedPhoto = images[(displayedOffset + slot) % images.length]
+          const incomingPhoto  = incomingOffset !== null
+            ? images[(incomingOffset + slot) % images.length]
+            : null
+
+          const delay = STAGGER_MS[slot]
+
+          // During a live transition, clicking opens the arriving image
+          const lightboxIndex = isEntering && incomingOffset !== null
+            ? (incomingOffset  + slot) % images.length
+            : (displayedOffset + slot) % images.length
+
+          // Only animate when a transition is active; snap instantly when settling
+          const transitionValue = isEntering || incomingOffset !== null
+            ? `opacity ${FADE_MS}ms ease-in-out ${delay}ms, transform ${FADE_MS}ms ease-in-out ${delay}ms`
+            : "none"
+
+          return (
+            <button
+              // key by slot index — keeps the DOM node stable across rotations
+              // so the CSS transition fires in-place rather than on mount/unmount
+              key={slot}
+              type="button"
+              onClick={() => setActiveIndex(lightboxIndex)}
               className={cn(
-                "absolute inset-0 transition-[opacity,transform] duration-500 ease-in-out",
-                contentVisible ? "opacity-100 scale-100" : "opacity-0 scale-[0.98]",
+                "group relative cursor-pointer overflow-hidden bg-secondary text-left",
+                "border border-white/10 transition-[transform,box-shadow,border-color] duration-200 ease-out",
+                "hover:-translate-y-0.5 hover:border-accent/70 hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_18%,transparent)]",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+                slot === 0
+                  ? "col-span-1 row-span-2 aspect-[4/5] rounded-2xl shadow-md shadow-black/25 lg:aspect-auto lg:rounded-[1.5rem]"
+                  : "col-span-1 aspect-[4/3] rounded-xl shadow-sm shadow-black/20 lg:aspect-auto",
               )}
             >
-              <Image
-                src={photo.imageUrl}
-                alt={photo.altText}
-                fill
-                loading="eager"
-                sizes={
-                  slot === 0
-                    ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
-                    : "(min-width: 1024px) 450px, (min-width: 768px) 37vw, 40vw"
-                }
-                className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                style={{ objectPosition: `${photo.focalX ?? 50}% ${photo.focalY ?? 50}%` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
-            </div>
+              {/* ── Outgoing image layer ── */}
+              {/* Always present; opacity 1 when idle → 0 when entering */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  opacity:    isEntering ? 0 : 1,
+                  transform:  isEntering ? "scale(0.985)" : "scale(1)",
+                  transition: transitionValue,
+                }}
+              >
+                <Image
+                  src={displayedPhoto.imageUrl}
+                  alt={displayedPhoto.altText}
+                  fill
+                  loading="eager"
+                  sizes={
+                    slot === 0
+                      ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
+                      : "(min-width: 1024px) 450px, (min-width: 768px) 37vw, 40vw"
+                  }
+                  className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                  style={{ objectPosition: `${displayedPhoto.focalX ?? 50}% ${displayedPhoto.focalY ?? 50}%` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
+              </div>
 
-            {/* Hover overlay — lives outside the fading layer so it's always ready */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-150 group-hover:bg-black/45 group-hover:opacity-100">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/87">
-                View Photo ↗
-              </span>
-            </div>
-          </button>
-        ))}
+              {/* ── Incoming image layer ── */}
+              {/* Mounted at opacity 0 before entering, fades to 1 when entering */}
+              {incomingPhoto !== null && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    opacity:    isEntering ? 1 : 0,
+                    transform:  isEntering ? "scale(1)" : "scale(1.015)",
+                    transition: `opacity ${FADE_MS}ms ease-in-out ${delay}ms, transform ${FADE_MS}ms ease-in-out ${delay}ms`,
+                  }}
+                >
+                  <Image
+                    src={incomingPhoto.imageUrl}
+                    alt={incomingPhoto.altText}
+                    fill
+                    sizes={
+                      slot === 0
+                        ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
+                        : "(min-width: 1024px) 450px, (min-width: 768px) 37vw, 40vw"
+                    }
+                    className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                    style={{ objectPosition: `${incomingPhoto.focalX ?? 50}% ${incomingPhoto.focalY ?? 50}%` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
+                </div>
+              )}
+
+              {/* ── Hover overlay ── */}
+              {/* DOM-last so it always paints above both image layers */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-150 group-hover:bg-black/45 group-hover:opacity-100">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/87">
+                  View Photo ↗
+                </span>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {/* ── Lightbox ─────────────────────────────────────────────────────── */}
@@ -151,7 +228,6 @@ export function GallerySection({ images }: GallerySectionProps) {
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90"
           onClick={close}
         >
-          {/* Image */}
           <div
             className="relative h-[85vh] w-[85vw]"
             onClick={(e) => e.stopPropagation()}
@@ -166,7 +242,6 @@ export function GallerySection({ images }: GallerySectionProps) {
             />
           </div>
 
-          {/* Close */}
           <button
             type="button"
             onClick={close}
@@ -176,12 +251,10 @@ export function GallerySection({ images }: GallerySectionProps) {
             <span className="sr-only">Close</span>
           </button>
 
-          {/* Index counter */}
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full border border-white/[0.10] bg-black/50 px-4 py-1.5 text-xs font-medium tabular-nums text-white/50">
             {activeIndex + 1} / {images.length}
           </div>
 
-          {/* Prev */}
           {images.length > 1 && (
             <button
               type="button"
@@ -193,7 +266,6 @@ export function GallerySection({ images }: GallerySectionProps) {
             </button>
           )}
 
-          {/* Next */}
           {images.length > 1 && (
             <button
               type="button"
