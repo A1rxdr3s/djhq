@@ -5,7 +5,6 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import {
-  ChevronRight,
   Download,
   ExternalLink,
   Globe,
@@ -22,7 +21,7 @@ import {
 import { mockArtist } from "@/data/mock-artist"
 import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
-import { getReleasePlatformLinks } from "@/lib/release-platforms"
+import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
 import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
@@ -30,7 +29,6 @@ import { GigsSection } from "@/components/djhq/gigs-section"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
-import { ReleaseListenPanel } from "@/components/release-listen-panel"
 
 type PublicProfilePageProps = {
   params: Promise<{
@@ -259,46 +257,6 @@ function mapReleaseRow(row: ReleaseRow): Release {
     remixer: row.remixer ?? undefined,
   }
 }
-
-function formatReleaseDateCatalog(releaseDate: string): string | null {
-  if (!releaseDate) return null
-  const date = new Date(releaseDate)
-  if (isNaN(date.getTime())) return null
-  return date
-    .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
-    .toUpperCase()
-}
-
-const VERSION_TYPE_LABELS: Record<string, string> = {
-  original_mix: "Original Mix",
-  extended_mix: "Extended Mix",
-  radio_edit:   "Radio Edit",
-  remix:        "Remix",
-  club_mix:     "Club Mix",
-  dub_mix:      "Dub Mix",
-  instrumental: "Instrumental",
-  vip_mix:      "VIP Mix",
-  edit:         "Edit",
-  mashup:       "Mashup",
-  bootleg:      "Bootleg",
-  rework:       "Rework",
-  acapella:     "Acapella",
-  tool:         "Tool",
-}
-
-const RELEASE_TYPE_LABELS: Record<string, string> = {
-  single:      "Single",
-  ep:          "EP",
-  album:       "Album",
-  compilation: "Compilation",
-  va:          "VA",
-}
-
-function isReleaseRemix(release: Release): boolean {
-  if (release.versionType === "remix") return true
-  return /remix/i.test(release.title) || /remix/i.test(release.credits ?? "")
-}
-
 
 // Editorial de-duplication: determines whether two Release objects represent the
 // same content. Used to prevent the featured release from also appearing in the
@@ -745,7 +703,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8 lg:pb-14 lg:pt-8">
               {/* Cinematic content fade — stronger bottom lift */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
 
@@ -765,7 +723,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     {artist.genres.map((genre) => (
                       <span
                         key={genre}
-                        className="genre-chip rounded-full border border-accent/70 bg-black/35 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
+                        className="genre-chip rounded-full border border-accent/70 bg-black/35 px-3.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
                       >
                         {genre}
                       </span>
@@ -944,86 +902,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {selectedReleasesForDisplay.length > 0 ? (
           <section className="mt-10 lg:mt-12">
-            <SectionTitle>Selected Releases</SectionTitle>
-            <div className="relative mt-4">
-              <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
-                {selectedReleasesForDisplay.map((release) => {
-                  const catalogDate = formatReleaseDateCatalog(release.releaseDate)
-                  const hasArtwork = !!(release.artworkUrl?.trim())
-                  const isRemix = isReleaseRemix(release)
-                  const platformLinks = getReleasePlatformLinks(release)
-
-                  return (
-                    <article
-                      key={release.id}
-                      className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
-                    >
-                      <div className="relative aspect-square overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30">
-                        {hasArtwork ? (
-                          <Image
-                            src={release.artworkUrl}
-                            alt={`${release.title} artwork`}
-                            fill
-                            sizes="220px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.24),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                            <Music2 className="h-8 w-8 text-accent/75" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-                      </div>
-                      <div className="mt-3 min-w-0">
-                        {/* Title */}
-                        <h3 className="text-balance text-base font-bold leading-tight text-foreground">
-                          {release.title}
-                        </h3>
-                        {/* Artists / credits */}
-                        {release.credits ? (
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground/75">
-                            {release.credits}
-                          </p>
-                        ) : null}
-                        {/* Editorial metadata: release type · version */}
-                        {(() => {
-                          const typeLabel = release.releaseType
-                            ? (RELEASE_TYPE_LABELS[release.releaseType] ?? null)
-                            : null
-                          const isRemixVersion = release.versionType === "remix" || (!release.versionType && isRemix)
-                          const versionLabel = release.versionType
-                            ? (VERSION_TYPE_LABELS[release.versionType] ?? release.versionType)
-                            : (isRemix ? "Remix" : null)
-                          const versionDisplay = isRemixVersion && release.remixer
-                            ? `Remix by ${release.remixer}`
-                            : versionLabel
-                          const parts = [typeLabel, versionDisplay].filter(Boolean)
-                          if (parts.length === 0) return null
-                          return (
-                            <p className="mt-1 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/55">
-                              {parts.join(" · ")}
-                            </p>
-                          )
-                        })()}
-                        {/* Label — own line */}
-                        <p className="mt-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/55">
-                          {release.label}
-                        </p>
-                        {/* Date — own line, quieter */}
-                        {catalogDate ? (
-                          <p className="mt-0.5 text-[10px] uppercase tracking-[0.10em] text-foreground/30">
-                            {catalogDate}
-                          </p>
-                        ) : null}
-                        <ReleaseListenPanel release={release} platformLinks={platformLinks} />
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex w-20 items-center justify-end bg-gradient-to-r from-transparent to-background/85 pr-2 sm:w-28 sm:pr-3">
-                <ChevronRight className="h-4 w-4 text-foreground/20" />
-              </div>
+            <SectionTitle>Releases</SectionTitle>
+            <div className="mt-4">
+              <SelectedReleasesCarousel releases={selectedReleasesForDisplay} artistName={artist.artistName} />
             </div>
           </section>
         ) : null}
