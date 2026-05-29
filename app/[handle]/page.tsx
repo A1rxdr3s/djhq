@@ -584,7 +584,7 @@ function MainLink({ link }: { link: SocialLink }) {
       href={link.url}
       aria-label={`${link.label} for this artist`}
       title={link.label}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.05] text-accent backdrop-blur-sm transition-colors hover:border-accent/40 hover:bg-accent/[0.10]"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.05] text-accent backdrop-blur-sm transition-all duration-150 hover:scale-[1.05] hover:border-accent/40 hover:bg-accent/[0.10]"
     >
       <Icon className="h-5 w-5" />
       <span className="sr-only">{link.label}</span>
@@ -670,7 +670,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
   return (
     <>
-      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}`}</style>
+      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}`}</style>
       <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
@@ -718,9 +718,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Multi-layer gradient system — cinematic depth and separation */}
             <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
-            <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
+            <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.52),_transparent_72%)]" />
             <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
+            {/* Photo vignette — subtle edge darkening for text contrast */}
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(92deg,_rgba(0,0,0,0.20)_0%,_transparent_50%),linear-gradient(0deg,_rgba(0,0,0,0.18)_0%,_transparent_32%)]" />
 
             {/* Floating logo layer — renders before content area in DOM so it sits between
                 gradients and editorial content without requiring explicit z-index changes. */}
@@ -749,22 +751,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
               <div className={cn(
                 "relative",
-                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
-                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
+                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.14] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-4",
+                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.09] bg-black/[0.22] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-5 sm:py-4",
               )}>
                 {/* Subtle vertical gradient inside the surface — improves readability without a card look */}
                 {contentSurface !== "none" && (
-                  <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
+                  <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-white/[0.05] to-transparent" />
                 )}
 
                 {/* Genre chips — above logo, photo-safe overlay style */}
                 {artist.genres.length > 0 && (
-                  <div className="mb-3.5 flex flex-wrap gap-2 sm:mb-4">
+                  <div className="mb-4 flex flex-wrap gap-2 sm:mb-5">
                     {artist.genres.map((genre) => (
                       <span
                         key={genre}
-                        className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
-                        style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}
+                        className="genre-chip rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
                       >
                         {genre}
                       </span>
@@ -795,7 +796,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Tagline — primary artistic proposition */}
                   {displayHeroTagline ? (
                     <p
-                      className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg"
+                      className="mt-2 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-3 sm:text-lg"
                       style={{ textShadow: `0 0 10px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
                     >
                       {displayHeroTagline}
@@ -803,29 +804,31 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   ) : null}
 
                   {/* Location — supporting metadata */}
-                  <p className={cn("flex items-center gap-2 text-sm text-white/65", displayHeroTagline ? "mt-1.5" : "mt-2.5")}>
+                  <p className={cn("flex items-center gap-2 text-sm text-white/65", displayHeroTagline ? "mt-2" : "mt-2.5")}>
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
                     {artist.location}
                   </p>
 
-                  <p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">
+                  <p className="mt-3 max-w-[700px] text-base font-medium leading-relaxed tracking-[0.02em] text-white/85 sm:mt-4">
                     {artist.shortBio}
                   </p>
 
                   {/* CTA row — BOOKINGS and/or PRESS KIT; hidden if neither is configured */}
                   {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                    <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5">
+                    <div className="mt-5 flex flex-wrap items-center gap-3 sm:mt-6">
                       {artist.bookingInfo.email.trim() ? (
-                        <BookingInquiryModal
-                          artistHandle={artist.handle}
-                          artistName={artist.artistName}
-                          pressKitUrl={hasPressKit ? artist.pressKit.downloadUrl : undefined}
-                        />
+                        <div className="transition-transform duration-150 hover:-translate-y-0.5">
+                          <BookingInquiryModal
+                            artistHandle={artist.handle}
+                            artistName={artist.artistName}
+                            pressKitUrl={hasPressKit ? artist.pressKit.downloadUrl : undefined}
+                          />
+                        </div>
                       ) : null}
                       {hasPressKit ? (
                         <a
                           href={artist.pressKit.downloadUrl}
-                          className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/[0.18] bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white/75 transition-colors hover:border-white/[0.28] hover:text-white/95 sm:h-12"
+                          className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-accent/50 bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/80 hover:bg-accent/10 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_18%,transparent)] sm:h-12"
                         >
                           <Download className="h-3.5 w-3.5" />
                           Press Kit
