@@ -10,7 +10,6 @@ import {
   ExternalLink,
   Globe,
   Instagram,
-  Mail,
   MapPin,
   Music2,
   Play,
@@ -30,6 +29,7 @@ import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
+import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 import { ReleaseListenPanel } from "@/components/release-listen-panel"
 
 type PublicProfilePageProps = {
@@ -578,9 +578,9 @@ function MainLink({ link }: { link: SocialLink }) {
       href={link.url}
       aria-label={`${link.label} for this artist`}
       title={link.label}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-accent backdrop-blur-sm transition-colors hover:border-accent/35 hover:bg-accent/[0.08]"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.05] text-accent backdrop-blur-sm transition-colors hover:border-accent/40 hover:bg-accent/[0.10]"
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-5 w-5" />
       <span className="sr-only">{link.label}</span>
     </a>
   )
@@ -782,45 +782,54 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* Text content block — width controlled by heroContentWidth */}
                 <div className={cn("relative", contentWidthClass)}>
-                  {/* Location — supporting metadata, rendered above tagline */}
-                  <p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3">
-                    <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
-                    {artist.location}
-                  </p>
-
-                  {/* Tagline — primary brand statement */}
+                  {/* Tagline — primary artistic proposition */}
                   {displayHeroTagline ? (
                     <p
-                      className="mt-2 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2.5 sm:text-xl"
+                      className="mt-1.5 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2 sm:text-xl"
                       style={{ textShadow: "0 0 20px rgba(0,255,180,.15)" }}
                     >
                       {displayHeroTagline}
                     </p>
                   ) : null}
 
+                  {/* Location — supporting metadata */}
+                  <p className={cn("flex items-center gap-2 text-sm text-white/65", displayHeroTagline ? "mt-1.5" : "mt-2.5")}>
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
+                    {artist.location}
+                  </p>
+
                   <p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">
                     {artist.shortBio}
                   </p>
 
-                  <div className="mt-4 flex flex-col gap-3 sm:mt-5">
-                    <Button
-                      asChild
-                      size="lg"
-                      className="h-11 w-fit rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:h-12"
-                    >
-                      <a href={`mailto:${artist.bookingInfo.email}`}>
-                        <Mail className="h-4 w-4" />
-                        Book this artist
-                      </a>
-                    </Button>
-                    {prioritizedLinks.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        {prioritizedLinks.map((link) => (
-                          <MainLink key={`${link.platform}-${link.url}`} link={link} />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
+                  {/* CTA row — BOOKINGS and/or PRESS KIT; hidden if neither is configured */}
+                  {(artist.bookingInfo.email.trim() || hasPressKit) ? (
+                    <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5">
+                      {artist.bookingInfo.email.trim() ? (
+                        <BookingInquiryModal
+                          artistHandle={artist.handle}
+                          artistName={artist.artistName}
+                        />
+                      ) : null}
+                      {hasPressKit ? (
+                        <a
+                          href={artist.pressKit.downloadUrl}
+                          className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/[0.18] bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white/75 transition-colors hover:border-white/[0.28] hover:text-white/95 sm:h-12"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Press Kit
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {prioritizedLinks.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5">
+                      {prioritizedLinks.map((link) => (
+                        <MainLink key={`${link.platform}-${link.url}`} link={link} />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -1180,41 +1189,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
         ) : null}
-
-        <section className="relative mt-12 overflow-hidden rounded-[1.75rem] border border-accent/15 bg-[radial-gradient(circle_at_12%_0%,_hsl(var(--accent)/0.14),_transparent_48%),linear-gradient(160deg,_hsl(var(--accent)/0.06),_hsl(var(--card)/0.35))] p-6 shadow-lg shadow-black/25 sm:p-8 lg:mt-16 lg:p-10">
-          <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.012]" />
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
-            <div className="lg:max-w-xl">
-              <SectionTitle>Booking</SectionTitle>
-              <p className="mt-4 text-xl font-bold leading-tight text-foreground sm:text-2xl lg:text-[1.75rem]">
-                Bring {artist.artistName} to your next room.
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground lg:mt-3">
-                Press kit, photos, and booking contact for promoters and venues.
-              </p>
-            </div>
-            <div className="flex flex-col items-start gap-3 lg:shrink-0 lg:items-end">
-              {hasPressKit ? (
-                <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
-                  <a href={artist.pressKit.downloadUrl}>
-                    <Download className="h-4 w-4" />
-                    Download press kit
-                  </a>
-                </Button>
-              ) : (
-                <Button asChild className="h-12 w-full rounded-full bg-accent text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:w-fit sm:px-8">
-                  <a href={`mailto:${artist.bookingInfo.email}`}>
-                    <Mail className="h-4 w-4" />
-                    Book this artist
-                  </a>
-                </Button>
-              )}
-              <a href={`mailto:${artist.bookingInfo.email}`} className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground lg:text-right">
-                {artist.bookingInfo.email}
-              </a>
-            </div>
-          </div>
-        </section>
 
         <footer className="py-10 text-center sm:py-12">
           <Link

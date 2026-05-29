@@ -98,7 +98,7 @@ export function HeroIdentity({
 
   // Outer wrapper: flex column with alignment. mb-3 provides spacing before
   // the tagline in both public and preview (preview container uses same padding).
-  const base = "mb-3 w-full flex flex-col"
+  const base = "mb-2 w-full flex flex-col"
 
   // Logo only
   if (logoEl && !nameEl) {
