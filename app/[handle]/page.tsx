@@ -757,18 +757,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
                 )}
 
-                {/* Genre line — editorial metadata, above logo */}
-                {artist.genres.length > 0 && (
-                  <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 sm:mb-5 sm:text-xs">
-                    {artist.genres.map((genre, i) => (
-                      <span key={genre}>
-                        {i > 0 && <span className="mx-2 text-white/35">•</span>}
-                        {genre}
-                      </span>
-                    ))}
-                  </p>
-                )}
-
                 {/* Hero identity — skipped for floating placements (logo rendered in floating layer above) */}
                 {!isFloatingPlacement && (
                   <HeroIdentity
@@ -799,8 +787,23 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </p>
                   ) : null}
 
+                  {/* Genre chips — photo-safe overlay style */}
+                  {artist.genres.length > 0 && (
+                    <div className="mt-2.5 flex flex-wrap gap-2.5">
+                      {artist.genres.map((genre) => (
+                        <span
+                          key={genre}
+                          className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm"
+                          style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}
+                        >
+                          {genre}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Location — supporting metadata */}
-                  <p className={cn("flex items-center gap-2 text-sm text-white/65", displayHeroTagline ? "mt-1.5" : "mt-2.5")}>
+                  <p className={cn("flex items-center gap-2 text-sm text-white/65", (artist.genres.length > 0 || displayHeroTagline) ? "mt-2" : "mt-2.5")}>
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
                     {artist.location}
                   </p>

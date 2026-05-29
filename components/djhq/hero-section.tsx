@@ -129,14 +129,10 @@ export function HeroSection() {
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/35 to-transparent" />
-                <div className="absolute bottom-3 left-3">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 sm:text-xs">
-                    House
-                    <span className="mx-2 text-white/35">•</span>
-                    Tech House
-                    <span className="mx-2 text-white/35">•</span>
-                    Producer
-                  </p>
+                <div className="absolute bottom-3 left-3 flex flex-wrap gap-2.5">
+                  <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>House</span>
+                  <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Tech House</span>
+                  <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Producer</span>
                 </div>
               </div>
 
