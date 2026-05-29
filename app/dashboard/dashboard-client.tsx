@@ -659,6 +659,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroTextStyle, setHeroTextStyle] = useState<"default" | "condensed" | "cinematic" | "editorial">(initialArtist.heroTextStyle ?? "default")
   const [heroLogoScale, setHeroLogoScale] = useState(initialArtist.heroLogoScale ?? 100)
   const [heroLogoLayout, setHeroLogoLayout] = useState<HeroLogoLayout>(initialArtist.heroLogoLayout ?? "replace_text")
+  const [heroLogoAlignment, setHeroLogoAlignment] = useState<"left" | "center" | "right">(initialArtist.heroLogoAlignment ?? "left")
+  const [heroLogoOffsetX, setHeroLogoOffsetX] = useState(initialArtist.heroLogoOffsetX ?? 0)
+  const [heroLogoOffsetY, setHeroLogoOffsetY] = useState(initialArtist.heroLogoOffsetY ?? 0)
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
   const [isUploadingHeroLogo, setIsUploadingHeroLogo] = useState(false)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
@@ -730,7 +733,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroIdentityMode !== (artist.heroIdentityMode ?? "text") ||
     heroTextStyle !== (artist.heroTextStyle ?? "default") ||
     heroLogoScale !== (artist.heroLogoScale ?? 100) ||
-    heroLogoLayout !== (artist.heroLogoLayout ?? "replace_text")
+    heroLogoLayout !== (artist.heroLogoLayout ?? "replace_text") ||
+    heroLogoAlignment !== (artist.heroLogoAlignment ?? "left") ||
+    heroLogoOffsetX !== (artist.heroLogoOffsetX ?? 0) ||
+    heroLogoOffsetY !== (artist.heroLogoOffsetY ?? 0)
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -775,6 +781,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroTextStyle,
           heroLogoScale,
           heroLogoLayout,
+          heroLogoAlignment,
+          heroLogoOffsetX,
+          heroLogoOffsetY,
         },
         socialLinks,
         featuredRelease,
@@ -846,6 +855,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroTextStyle,
       heroLogoScale,
       heroLogoLayout,
+      heroLogoAlignment,
+      heroLogoOffsetX,
+      heroLogoOffsetY,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -964,6 +976,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroTextStyle(savedArtist.heroTextStyle ?? "default")
     setHeroLogoScale(savedArtist.heroLogoScale ?? 100)
     setHeroLogoLayout(savedArtist.heroLogoLayout ?? "replace_text")
+    setHeroLogoAlignment(savedArtist.heroLogoAlignment ?? "left")
+    setHeroLogoOffsetX(savedArtist.heroLogoOffsetX ?? 0)
+    setHeroLogoOffsetY(savedArtist.heroLogoOffsetY ?? 0)
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -1985,13 +2000,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Identity content */}
             <div className="absolute inset-0 flex flex-col items-start justify-end gap-1.5 p-4 sm:p-5">
               {(() => {
+                const alignClass = heroLogoAlignment === "center" ? "self-center" : heroLogoAlignment === "right" ? "self-end" : "self-start"
                 const logoEl = showLogoInPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={heroLogoUrl}
                     alt="Logo preview"
-                    style={{ maxWidth: `${previewLogoW}px`, height: "auto" }}
-                    className="object-contain drop-shadow-md"
+                    style={{
+                      maxWidth: `${previewLogoW}px`,
+                      height: "auto",
+                      transform: `translate(${heroLogoOffsetX * 0.4}px, ${heroLogoOffsetY * 0.4}px)`,
+                    }}
+                    className={cn("object-contain drop-shadow-md", alignClass)}
                   />
                 ) : null
                 const textEl = showTextInPreview ? (
@@ -2136,6 +2156,74 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
               <p className="text-[10px] text-muted-foreground/35">
                 Most DJ logos already include the artist name. Use <strong className="text-muted-foreground/55 font-semibold">Replace</strong> to avoid duplicated branding.
+              </p>
+            </div>
+
+            {/* Logo Alignment */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Logo Alignment
+              </p>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {(["left", "center", "right"] as const).map((alignment) => (
+                  <button
+                    key={alignment}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroLogoAlignment(alignment)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroLogoAlignment === alignment
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {alignment}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Logo Offset */}
+            <div className="space-y-3 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Logo Position Offset
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-muted-foreground/50">Horizontal</p>
+                  <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoOffsetX > 0 ? "+" : ""}{heroLogoOffsetX}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={-100}
+                  max={100}
+                  step={1}
+                  value={heroLogoOffsetX}
+                  onChange={(e) => artist.plan === "pro" && setHeroLogoOffsetX(Number(e.target.value))}
+                  disabled={artist.plan !== "pro"}
+                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-muted-foreground/50">Vertical</p>
+                  <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoOffsetY > 0 ? "+" : ""}{heroLogoOffsetY}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={-100}
+                  max={100}
+                  step={1}
+                  value={heroLogoOffsetY}
+                  onChange={(e) => artist.plan === "pro" && setHeroLogoOffsetY(Number(e.target.value))}
+                  disabled={artist.plan !== "pro"}
+                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Fine-tune logo position without affecting hero layout or spacing.
               </p>
             </div>
 

@@ -77,6 +77,9 @@ type ArtistRow = {
   hero_text_style: string
   hero_logo_scale: number | null
   hero_logo_layout: string | null
+  hero_logo_alignment: string | null
+  hero_logo_offset_x: number | null
+  hero_logo_offset_y: number | null
   is_published: boolean
   created_at: string
   updated_at: string
@@ -488,6 +491,9 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       heroTextStyle: (artistRow.hero_text_style || "default") as "default" | "condensed" | "cinematic" | "editorial",
       heroLogoScale: artistRow.hero_logo_scale ?? 100,
       heroLogoLayout: (artistRow.hero_logo_layout || "replace_text") as "replace_text" | "above_text" | "below_text" | "left_text" | "right_text",
+      heroLogoAlignment: (artistRow.hero_logo_alignment || "left") as "left" | "center" | "right",
+      heroLogoOffsetX: artistRow.hero_logo_offset_x ?? 0,
+      heroLogoOffsetY: artistRow.hero_logo_offset_y ?? 0,
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -618,6 +624,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   })()
   const logoScale = isPro ? (artist.heroLogoScale ?? 100) : 100
   const logoLayout = (isPro ? (artist.heroLogoLayout ?? "replace_text") : "replace_text") as "replace_text" | "above_text" | "below_text" | "left_text" | "right_text"
+  const logoAlignment = isPro ? (artist.heroLogoAlignment ?? "left") : "left"
+  const logoOffsetX = isPro ? (artist.heroLogoOffsetX ?? 0) : 0
+  const logoOffsetY = isPro ? (artist.heroLogoOffsetY ?? 0) : 0
   const showLogoInHero = effectiveIdentityMode === "logo" || effectiveIdentityMode === "both"
   // In LOGO mode, show text alongside the logo unless layout is replace_text
   const showTextInHero = effectiveIdentityMode === "text" || effectiveIdentityMode === "both" || (effectiveIdentityMode === "logo" && logoLayout !== "replace_text")
@@ -721,13 +730,18 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* Hero identity — layout-aware logo + text system */}
                 {(showLogoInHero || showTextInHero) && (() => {
+                  const logoAlignClass = logoAlignment === "center" ? "self-center" : logoAlignment === "right" ? "self-end" : "self-start"
                   const logoEl = showLogoInHero && artist.heroLogoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={artist.heroLogoUrl}
                       alt={artist.artistName}
-                      style={{ width: `min(80vw, ${Math.min(logoScale * 3, 720)}px)`, height: "auto" }}
-                      className="object-contain drop-shadow-2xl"
+                      style={{
+                        width: `min(80vw, ${Math.min(logoScale * 3, 720)}px)`,
+                        height: "auto",
+                        transform: `translate(${logoOffsetX}px, ${logoOffsetY}px)`,
+                      }}
+                      className={`object-contain drop-shadow-2xl ${logoAlignClass}`}
                     />
                   ) : null
 

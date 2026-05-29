@@ -35,6 +35,9 @@ type ArtistRow = {
   hero_text_style: string
   hero_logo_scale: number
   hero_logo_layout: string
+  hero_logo_alignment: string
+  hero_logo_offset_x: number
+  hero_logo_offset_y: number
   is_published: boolean
   created_at: string
   updated_at: string
@@ -423,6 +426,9 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     heroTextStyle: (artistRow.hero_text_style || "default") as "default" | "condensed" | "cinematic" | "editorial",
     heroLogoScale: artistRow.hero_logo_scale ?? 100,
     heroLogoLayout: (artistRow.hero_logo_layout || "replace_text") as "replace_text" | "above_text" | "below_text" | "left_text" | "right_text",
+    heroLogoAlignment: (artistRow.hero_logo_alignment || "left") as "left" | "center" | "right",
+    heroLogoOffsetX: artistRow.hero_logo_offset_x ?? 0,
+    heroLogoOffsetY: artistRow.hero_logo_offset_y ?? 0,
     isPublished: artistRow.is_published,
     createdAt: artistRow.created_at,
     updatedAt: artistRow.updated_at,

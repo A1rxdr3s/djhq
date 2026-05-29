@@ -347,6 +347,12 @@ export interface Artist {
   heroLogoScale?: number
   /** Hero logo position relative to artist name. Pro only. */
   heroLogoLayout?: HeroLogoLayout
+  /** Horizontal alignment of the logo within the hero identity block. Pro only. */
+  heroLogoAlignment?: "left" | "center" | "right"
+  /** Horizontal offset applied via CSS transform (px, -100 to +100). Pro only. */
+  heroLogoOffsetX?: number
+  /** Vertical offset applied via CSS transform (px, -100 to +100). Pro only. */
+  heroLogoOffsetY?: number
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */
