@@ -63,6 +63,82 @@ const navGroups: NavGroup[] = [
 ]
 
 
+type HeroPreset = {
+  id: string
+  label: string
+  description: string
+  heroIdentityMode: "text" | "logo" | "both"
+  heroLogoLayout: HeroLogoLayout
+  heroLogoAlignment: "left" | "center" | "right"
+  heroLogoScale: number
+  heroLogoOffsetX: number
+  heroLogoOffsetY: number
+  heroLogoStyle: HeroLogoStyle
+}
+
+const HERO_PRESETS: HeroPreset[] = [
+  {
+    id: "editorial_center",
+    label: "Editorial Center",
+    description: "Balanced premium lockup",
+    heroIdentityMode: "logo",
+    heroLogoLayout: "replace_text",
+    heroLogoAlignment: "center",
+    heroLogoScale: 180,
+    heroLogoOffsetX: 0,
+    heroLogoOffsetY: 0,
+    heroLogoStyle: "soft",
+  },
+  {
+    id: "club_poster",
+    label: "Club Poster",
+    description: "Large festival-style mark",
+    heroIdentityMode: "logo",
+    heroLogoLayout: "replace_text",
+    heroLogoAlignment: "center",
+    heroLogoScale: 230,
+    heroLogoOffsetX: 0,
+    heroLogoOffsetY: -10,
+    heroLogoStyle: "solid",
+  },
+  {
+    id: "left_lockup",
+    label: "Left Lockup",
+    description: "Editorial left-weighted layout",
+    heroIdentityMode: "logo",
+    heroLogoLayout: "replace_text",
+    heroLogoAlignment: "left",
+    heroLogoScale: 170,
+    heroLogoOffsetX: 0,
+    heroLogoOffsetY: 0,
+    heroLogoStyle: "soft",
+  },
+  {
+    id: "cinematic_wide",
+    label: "Cinematic Wide",
+    description: "Blends into photography",
+    heroIdentityMode: "logo",
+    heroLogoLayout: "replace_text",
+    heroLogoAlignment: "center",
+    heroLogoScale: 210,
+    heroLogoOffsetX: -20,
+    heroLogoOffsetY: 0,
+    heroLogoStyle: "cinematic",
+  },
+  {
+    id: "minimal_mark",
+    label: "Minimal Mark",
+    description: "Quiet identity presence",
+    heroIdentityMode: "logo",
+    heroLogoLayout: "replace_text",
+    heroLogoAlignment: "center",
+    heroLogoScale: 120,
+    heroLogoOffsetX: 0,
+    heroLogoOffsetY: 10,
+    heroLogoStyle: "soft",
+  },
+]
+
 type SocialLinkFormState = {
   platform: string
   label: string
@@ -2102,6 +2178,43 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <p className="mb-5 text-[10px] text-muted-foreground/35">
             This preview mirrors the public hero. Only the overall size is scaled down.
           </p>
+
+          {/* Hero Composition Presets */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+              Hero Composition
+            </p>
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+              {HERO_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  disabled={artist.plan !== "pro"}
+                  onClick={() => {
+                    if (artist.plan !== "pro") return
+                    setHeroIdentityMode(preset.heroIdentityMode)
+                    setHeroLogoLayout(preset.heroLogoLayout)
+                    setHeroLogoAlignment(preset.heroLogoAlignment)
+                    setHeroLogoScale(preset.heroLogoScale)
+                    setHeroLogoOffsetX(preset.heroLogoOffsetX)
+                    setHeroLogoOffsetY(preset.heroLogoOffsetY)
+                    setHeroLogoStyle(preset.heroLogoStyle)
+                  }}
+                  className={cn(
+                    "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-100",
+                    "border-white/[0.06] bg-white/[0.015] hover:border-white/[0.10] hover:bg-white/[0.03]",
+                    artist.plan !== "pro" && "pointer-events-none opacity-40",
+                  )}
+                >
+                  <span className="text-[10px] font-semibold text-foreground/70">{preset.label}</span>
+                  <span className="text-[9px] text-muted-foreground/40">{preset.description}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground/35">
+              Start with a curated composition, then fine-tune manually.
+            </p>
+          </div>
 
           <div className="space-y-5 mt-5">
             {/* Identity mode */}
