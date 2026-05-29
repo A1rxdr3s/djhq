@@ -866,7 +866,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           {upcomingGigs.length > 0 ? <GigsSection gigs={upcomingGigs} /> : null}
 
           <section className="flex flex-col lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <SectionTitle>Gallery</SectionTitle>
+            <SectionTitle>Moments</SectionTitle>
+            <p className="mt-1 text-xs text-white/45">Scenes from recent nights.</p>
             <GallerySection images={galleryImages} />
           </section>
 

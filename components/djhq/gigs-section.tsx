@@ -204,7 +204,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const primaryGigs = hasUpcoming ? upcoming.slice(0, 3) : past.slice(0, 3)
   if (primaryGigs.length === 0) return null
 
-  const sectionTitle = hasUpcoming ? "Shows" : "Recent Shows"
+  const sectionTitle = hasUpcoming ? "Next Shows" : "Recent Shows"
   const PAST_PAGE = 10
   const visiblePast = showAllPast ? past : past.slice(0, PAST_PAGE)
   const hasMorePast = past.length > PAST_PAGE

@@ -220,9 +220,14 @@ export function SelectedReleasesCarousel({ releases }: Props) {
 
                 <p className="mt-0.5 text-sm text-white/45 line-clamp-1">{release.credits ?? ""}</p>
 
-                <p className="mt-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/55">
-                  {[release.label, releaseYear].filter(Boolean).join(" · ")}
+                <p className="mt-1.5 line-clamp-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
+                  {release.label}
                 </p>
+                {releaseYear && (
+                  <p className="mt-1 text-xs tracking-[0.12em] text-white/35">
+                    {releaseYear}
+                  </p>
+                )}
 
                 <ReleaseListenPanel release={release} platformLinks={platformLinks} />
               </div>

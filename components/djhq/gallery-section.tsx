@@ -6,42 +6,42 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { GalleryImage } from "@/types/djhq"
 
-const ROTATION_MS = 6_000
-const FADE_MS     = 900
-// Slot stagger delays: featured → top-right → bottom-right
-const STAGGER_MS  = [0, 150, 300] as const
+const SLOT_INTERVAL_MS = 3_000
+const FADE_MS          = 900
 
 interface GallerySectionProps {
   images: GalleryImage[]
 }
 
 export function GallerySection({ images }: GallerySectionProps) {
+  const n = images.length
+
   // ── Lightbox ──────────────────────────────────────────────────────────────
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  // ── Double-buffer rotation ────────────────────────────────────────────────
+  // ── Per-slot double-buffer state ──────────────────────────────────────────
   //
-  // Two layers (A and B) are permanently in the DOM per slot — never mounted
-  // or unmounted.  Only their opacity flips, so no grey background can appear
-  // between unmount and the browser painting the new image.
+  // Each slot (0=featured, 1=top-right, 2=bottom-right) owns two permanently-
+  // rendered layers (A and B). Only one slot transitions at a time, triggered
+  // sequentially every SLOT_INTERVAL_MS: 0 → 1 → 2 → 0 → …
   //
-  // layerAOffset / layerBOffset: which image from `images` each layer shows.
-  // frontIsA:   true  → Layer A visible (opacity 1), Layer B preloading (opacity 0)
-  //             false → Layer B visible (opacity 1), Layer A preloading (opacity 0)
-  // isTransitioning: enables CSS transitions; disabled at idle so settling
-  //                  snaps instantly without animating.
-  const [layerAOffset,    setLayerAOffset]    = useState(0)
-  const [layerBOffset,    setLayerBOffset]    = useState(() => Math.min(1, images.length - 1))
-  const [frontIsA,        setFrontIsA]        = useState(true)
-  const [isTransitioning, setIsTransitioning] = useState(false)
+  // Arrays are length 3; slots beyond numSlots are never rendered.
+  const initLayerA = n > 0 ? [0, 1 % n, 2 % n] : [0, 0, 0]
+  const initLayerB = n > 0 ? [1 % n, 2 % n, 3 % n] : [0, 0, 0]
+
+  const [layerAOffsets,    setLayerAOffsets]    = useState<number[]>(initLayerA)
+  const [layerBOffsets,    setLayerBOffsets]    = useState<number[]>(initLayerB)
+  const [frontIsAs,        setFrontIsAs]        = useState<boolean[]>([true, true, true])
+  const [isTransitionings, setIsTransitionings] = useState<boolean[]>([false, false, false])
 
   // Refs used inside timers/rAF to avoid stale-closure bugs
-  const pausedRef       = useRef(false)
-  const activeIndexRef  = useRef<number | null>(null)
-  const layerAOffsetRef = useRef(0)
-  const layerBOffsetRef = useRef(Math.min(1, images.length - 1))
-  const frontIsARef     = useRef(true)
-  const settleTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pausedRef        = useRef(false)
+  const activeIndexRef   = useRef<number | null>(null)
+  const layerAOffsetsRef = useRef<number[]>([...initLayerA])
+  const layerBOffsetsRef = useRef<number[]>([...initLayerB])
+  const frontIsAsRef     = useRef<boolean[]>([true, true, true])
+  const settleTimerRefs  = useRef<Array<ReturnType<typeof setTimeout> | null>>([null, null, null])
+  const currentSlotRef   = useRef<number>(0)
 
   useEffect(() => { activeIndexRef.current = activeIndex }, [activeIndex])
 
@@ -49,13 +49,13 @@ export function GallerySection({ images }: GallerySectionProps) {
   const close = useCallback(() => setActiveIndex(null), [])
 
   const prev = useCallback(
-    () => setActiveIndex((i) => (i === null ? null : (i - 1 + images.length) % images.length)),
-    [images.length],
+    () => setActiveIndex((i) => (i === null ? null : (i - 1 + n) % n)),
+    [n],
   )
 
   const next = useCallback(
-    () => setActiveIndex((i) => (i === null ? null : (i + 1) % images.length)),
-    [images.length],
+    () => setActiveIndex((i) => (i === null ? null : (i + 1) % n)),
+    [n],
   )
 
   useEffect(() => {
@@ -74,62 +74,68 @@ export function GallerySection({ images }: GallerySectionProps) {
     return () => { document.body.style.overflow = "" }
   }, [activeIndex])
 
-  // ── Auto-rotation (> 3 images only) ──────────────────────────────────────
+  // ── Sequential per-slot rotation (> 3 images only) ───────────────────────
+  //
+  // Every SLOT_INTERVAL_MS the next slot in the sequence rotates independently.
+  // Slot 0 fires at t=0, slot 1 at t+3 s, slot 2 at t+6 s, then repeats.
+  // Each slot's back layer has the full idle period to preload before it
+  // comes to front, so no grey placeholder can appear.
   useEffect(() => {
-    if (images.length <= 3) return
+    if (n <= 3) return
+
+    const numSlotsLocal = Math.min(n, 3)
 
     const interval = setInterval(() => {
-      if (
-        pausedRef.current          ||
-        activeIndexRef.current !== null ||
-        settleTimerRef.current !== null
-      ) return
+      if (pausedRef.current || activeIndexRef.current !== null) return
 
-      // Step 1 — enable CSS transitions (layers are still at their current values).
-      setIsTransitioning(true)
+      const slot = currentSlotRef.current
+      currentSlotRef.current = (slot + 1) % numSlotsLocal
 
-      // Step 2 — one rAF later, flip which layer is front.  The browser has now
-      // committed render-1 (transitions on, values unchanged), so it has a valid
-      // "from" state and will animate the property change in render-2.
+      // Skip if this slot is still settling from a previous rotation
+      if (settleTimerRefs.current[slot] !== null) return
+
+      // Step 1 — enable CSS transition for this slot
+      setIsTransitionings((prev) => { const a = [...prev]; a[slot] = true; return a })
+
+      // Step 2 — one rAF later, flip front/back so browser animates from the
+      // just-established "from" state
       requestAnimationFrame(() => {
-        const nextFrontIsA = !frontIsARef.current
-        setFrontIsA(nextFrontIsA)
-        frontIsARef.current = nextFrontIsA
+        const nextFrontIsA = !frontIsAsRef.current[slot]
+        setFrontIsAs((prev) => { const a = [...prev]; a[slot] = nextFrontIsA; return a })
+        frontIsAsRef.current[slot] = nextFrontIsA
 
-        // Step 3 — after every staggered slot has finished, settle.
-        settleTimerRef.current = setTimeout(() => {
-          settleTimerRef.current = null
-
-          // Disable transitions BEFORE updating the offset of the now-back layer
-          // so the image-source swap is invisible (layer is at opacity 0).
-          setIsTransitioning(false)
+        // Step 3 — settle: disable transition, preload next image into back layer
+        settleTimerRefs.current[slot] = setTimeout(() => {
+          settleTimerRefs.current[slot] = null
+          setIsTransitionings((prev) => { const a = [...prev]; a[slot] = false; return a })
 
           if (nextFrontIsA) {
-            // Layer A came to front → Layer B is now back → update B to preload next
-            const newB = (layerAOffsetRef.current + 1) % images.length
-            setLayerBOffset(newB)
-            layerBOffsetRef.current = newB
+            // A is now front → B is back → update B to next image
+            const newB = (layerAOffsetsRef.current[slot] + 1) % n
+            setLayerBOffsets((prev) => { const a = [...prev]; a[slot] = newB; return a })
+            layerBOffsetsRef.current[slot] = newB
           } else {
-            // Layer B came to front → Layer A is now back → update A to preload next
-            const newA = (layerBOffsetRef.current + 1) % images.length
-            setLayerAOffset(newA)
-            layerAOffsetRef.current = newA
+            // B is now front → A is back → update A to next image
+            const newA = (layerBOffsetsRef.current[slot] + 1) % n
+            setLayerAOffsets((prev) => { const a = [...prev]; a[slot] = newA; return a })
+            layerAOffsetsRef.current[slot] = newA
           }
-        }, STAGGER_MS[2] + FADE_MS + 80)
+        }, FADE_MS + 80)
       })
-    }, ROTATION_MS)
+    }, SLOT_INTERVAL_MS)
 
+    const timers = settleTimerRefs.current
     return () => {
       clearInterval(interval)
-      if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
+      timers.forEach((t) => { if (t) clearTimeout(t) })
     }
-  }, [images.length])
+  }, [n])
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const numSlots   = Math.min(images.length, 3)
+  const numSlots    = Math.min(n, 3)
   const activePhoto = activeIndex !== null ? images[activeIndex] : null
 
-  if (images.length === 0) return null
+  if (n === 0) return null
 
   return (
     <>
@@ -140,18 +146,13 @@ export function GallerySection({ images }: GallerySectionProps) {
         onMouseLeave={() => { pausedRef.current = false }}
       >
         {Array.from({ length: numSlots }, (_, slot) => {
-          const photoA = images[(layerAOffset + slot) % images.length]
-          const photoB = images[(layerBOffset + slot) % images.length]
+          const photoA = images[layerAOffsets[slot]]
+          const photoB = images[layerBOffsets[slot]]
+          const frontIsA      = frontIsAs[slot]
+          const isTransitioning = isTransitionings[slot]
 
-          // Layer A is front when frontIsA; Layer B is front otherwise.
-          // Front  layer: opacity 1, scale(1)
-          // Back   layer: opacity 0, scale(0.99) — invisible but preloading
-          //   → when it comes to front it zooms in from 0.99 → 1 (subtle)
-          //   → when it goes to back it zooms out from 1 → 0.99 (subtle)
-
-          const delay = STAGGER_MS[slot]
           const transitionCSS = isTransitioning
-            ? `opacity ${FADE_MS}ms ease-in-out ${delay}ms, transform ${FADE_MS}ms ease-in-out ${delay}ms`
+            ? `opacity ${FADE_MS}ms ease-in-out, transform ${FADE_MS}ms ease-in-out`
             : "none"
 
           const layerAStyle: React.CSSProperties = {
@@ -171,9 +172,8 @@ export function GallerySection({ images }: GallerySectionProps) {
             zIndex:     frontIsA ? 0 : 1,
           }
 
-          // Open the image the user actually sees (front layer).
-          const frontOffset    = frontIsA ? layerAOffset : layerBOffset
-          const lightboxIndex  = (frontOffset + slot) % images.length
+          // Open the image the user actually sees (front layer)
+          const lightboxIndex = frontIsA ? layerAOffsets[slot] : layerBOffsets[slot]
 
           const sizesAttr = slot === 0
             ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
@@ -182,7 +182,6 @@ export function GallerySection({ images }: GallerySectionProps) {
           return (
             <button
               // Keyed by slot — DOM node is STABLE across rotations.
-              // No remount means no grey-flash between unmount and image paint.
               key={slot}
               type="button"
               onClick={() => setActiveIndex(lightboxIndex)}
@@ -271,10 +270,10 @@ export function GallerySection({ images }: GallerySectionProps) {
           </button>
 
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full border border-white/[0.10] bg-black/50 px-4 py-1.5 text-xs font-medium tabular-nums text-white/50">
-            {activeIndex + 1} / {images.length}
+            {activeIndex + 1} / {n}
           </div>
 
-          {images.length > 1 && (
+          {n > 1 && (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); prev() }}
@@ -285,7 +284,7 @@ export function GallerySection({ images }: GallerySectionProps) {
             </button>
           )}
 
-          {images.length > 1 && (
+          {n > 1 && (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); next() }}
