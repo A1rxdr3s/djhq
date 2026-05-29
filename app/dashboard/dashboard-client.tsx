@@ -1344,7 +1344,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         .from("artist-gallery")
         .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, faviconFile, {
           contentType: faviconFile.type,
-          upsert: true,
         })
 
       if (uploadError) throw new Error(uploadError.message)
@@ -1357,7 +1356,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setFaviconFile(null)
       setSaveMessage("Favicon uploaded. Save your profile to apply.")
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to upload favicon."
+      const raw = error instanceof Error ? error.message : ""
+      const message = /already exists|duplicate/i.test(raw) ? "Upload failed. Please try again." : raw || "Unable to upload favicon."
       setSaveMessage(message)
     } finally {
       setIsUploadingFavicon(false)
@@ -1390,7 +1390,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         .from("artist-gallery")
         .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, heroLogoFile, {
           contentType: heroLogoFile.type,
-          upsert: true,
         })
 
       if (uploadError) throw new Error(uploadError.message)
@@ -1401,7 +1400,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setHeroLogoFile(null)
       setSaveMessage("Hero logo uploaded. Save to apply.")
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to upload hero logo."
+      const raw = error instanceof Error ? error.message : ""
+      const message = /already exists|duplicate/i.test(raw) ? "Upload failed. Please try again." : raw || "Unable to upload hero logo."
       setSaveMessage(message)
     } finally {
       setIsUploadingHeroLogo(false)

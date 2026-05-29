@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 })
   }
 
-  const filePath = `artists/${artistId}/branding/favicon.${fileExt}`
+  const filePath = `artists/${artistId}/branding/favicon-${Date.now()}.${fileExt}`
 
   const { data: signedData, error: signedError } = await supabase.storage
     .from("artist-gallery")

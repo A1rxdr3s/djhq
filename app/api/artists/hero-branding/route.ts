@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     if (artist.owner_user_id !== user.id) return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
     if (artist.plan !== "pro") return NextResponse.json({ error: "Hero branding requires a Pro plan." }, { status: 403 })
 
-    const filePath = `artists/${artist.id}/branding/hero-logo.${fileExt}`
+    const filePath = `artists/${artist.id}/branding/hero-logo-${Date.now()}.${fileExt}`
 
     const { data: signedData, error: signedError } = await supabase.storage
       .from("artist-gallery")
