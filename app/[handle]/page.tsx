@@ -93,12 +93,20 @@ type ReleaseRow = {
   platform_url: string
   type: string
   is_featured: boolean
+  spotify_url: string | null
+  beatport_url: string | null
+  apple_music_url: string | null
+  soundcloud_url: string | null
+  youtube_music_url: string | null
+  bandcamp_url: string | null
+  other_url: string | null
 }
 
 type DjSetRow = {
   id: string
   title: string
   venue: string | null
+  event: string | null
   set_date: string | null
   image_url: string | null
   platform_url: string
@@ -215,7 +223,62 @@ function mapReleaseRow(row: ReleaseRow): Release {
     artworkUrl: row.artwork_url,
     platformUrl: row.platform_url,
     type: normalizeReleaseType(row.type),
+    spotifyUrl: row.spotify_url ?? undefined,
+    beatportUrl: row.beatport_url ?? undefined,
+    appleMusicUrl: row.apple_music_url ?? undefined,
+    soundcloudUrl: row.soundcloud_url ?? undefined,
+    youtubeMusicUrl: row.youtube_music_url ?? undefined,
+    bandcampUrl: row.bandcamp_url ?? undefined,
+    otherUrl: row.other_url ?? undefined,
   }
+}
+
+function formatReleaseDateCatalog(releaseDate: string): string | null {
+  if (!releaseDate) return null
+  const date = new Date(releaseDate)
+  if (isNaN(date.getTime())) return null
+  return date
+    .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
+    .toUpperCase()
+}
+
+function isReleaseRemix(release: Release): boolean {
+  return /remix/i.test(release.title) || /remix/i.test(release.credits ?? "")
+}
+
+type PlatformLink = { url: string; badge: string; title: string }
+
+// Returns platform-specific links for a release.
+// Falls back to detecting the platform from platformUrl if no specific links are set.
+function getReleasePlatformLinks(release: Release): PlatformLink[] {
+  const links: PlatformLink[] = []
+  if (release.spotifyUrl) links.push({ url: release.spotifyUrl, badge: "SP", title: "Spotify" })
+  if (release.beatportUrl) links.push({ url: release.beatportUrl, badge: "BP", title: "Beatport" })
+  if (release.appleMusicUrl) links.push({ url: release.appleMusicUrl, badge: "AM", title: "Apple Music" })
+  if (release.soundcloudUrl) links.push({ url: release.soundcloudUrl, badge: "SC", title: "SoundCloud" })
+  if (release.youtubeMusicUrl) links.push({ url: release.youtubeMusicUrl, badge: "YM", title: "YouTube Music" })
+  if (release.bandcampUrl) links.push({ url: release.bandcampUrl, badge: "BC", title: "Bandcamp" })
+  if (release.otherUrl) links.push({ url: release.otherUrl, badge: "↗", title: "Listen" })
+  if (links.length > 0) return links
+
+  // Backward compat: infer platform from platformUrl hostname
+  if (release.platformUrl) {
+    try {
+      const hostname = new URL(release.platformUrl).hostname
+      let badge = "↗"
+      let title = "Listen"
+      if (/spotify/i.test(hostname)) { badge = "SP"; title = "Spotify" }
+      else if (/beatport/i.test(hostname)) { badge = "BP"; title = "Beatport" }
+      else if (/apple/i.test(hostname)) { badge = "AM"; title = "Apple Music" }
+      else if (/soundcloud/i.test(hostname)) { badge = "SC"; title = "SoundCloud" }
+      else if (/youtube|youtu\.be/i.test(hostname)) { badge = "YM"; title = "YouTube" }
+      else if (/bandcamp/i.test(hostname)) { badge = "BC"; title = "Bandcamp" }
+      links.push({ url: release.platformUrl, badge, title })
+    } catch {
+      // invalid URL — skip
+    }
+  }
+  return links
 }
 
 // Editorial de-duplication: determines whether two Release objects represent the
@@ -274,7 +337,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<SocialLinkRow[]>(),
       supabase
         .from("releases")
-        .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured")
+        .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url, bandcamp_url, other_url")
         .eq("artist_id", artistRow.id)
         .order("sort_order", { ascending: true })
         .order("release_date", { ascending: false })
@@ -293,7 +356,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<GalleryImageRow[]>(),
       supabase
         .from("dj_sets")
-        .select("id, title, venue, set_date, image_url, platform_url, sort_order")
+        .select("id, title, venue, event, set_date, image_url, platform_url, sort_order")
         .eq("artist_id", artistRow.id)
         .eq("is_published", true)
         .order("sort_order", { ascending: true })
@@ -369,6 +432,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
           id: row.id,
           title: row.title,
           venue: row.venue ?? undefined,
+          event: row.event ?? undefined,
           setDate: row.set_date ?? undefined,
           imageUrl: row.image_url ?? undefined,
           platformUrl: row.platform_url,
@@ -794,8 +858,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <div className="relative mt-4">
               <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden">
                 {selectedReleasesForDisplay.map((release) => {
-                  const formattedDate = formatReleaseDate(release.releaseDate)
+                  const catalogDate = formatReleaseDateCatalog(release.releaseDate)
                   const hasArtwork = !!(release.artworkUrl?.trim())
+                  const isRemix = isReleaseRemix(release)
+                  const platformLinks = getReleasePlatformLinks(release)
 
                   return (
                     <article
@@ -819,26 +885,48 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                       </div>
                       <div className="mt-3 min-w-0">
+                        {/* Title + remix chip */}
                         <h3 className="text-balance text-base font-bold leading-tight text-foreground">
                           {release.title}
+                          {isRemix && (
+                            <span className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded border border-white/[0.09] bg-white/[0.04] px-1.5 py-px text-[7px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/45 align-middle">
+                              Remix
+                            </span>
+                          )}
                         </h3>
+                        {/* Artists / credits */}
                         {release.credits ? (
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground/85">
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground/75">
                             {release.credits}
                           </p>
                         ) : null}
-                        <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                          {release.label}{formattedDate ? ` · ${formattedDate}` : ""}
+                        {/* Label — own line */}
+                        <p className="mt-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/55">
+                          {release.label}
                         </p>
-                        <a
-                          href={release.platformUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent/80"
-                        >
-                          Listen
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
+                        {/* Date — own line, quieter */}
+                        {catalogDate ? (
+                          <p className="mt-0.5 text-[10px] uppercase tracking-[0.10em] text-foreground/30">
+                            {catalogDate}
+                          </p>
+                        ) : null}
+                        {/* Platform icon badges */}
+                        {platformLinks.length > 0 ? (
+                          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                            {platformLinks.map((link) => (
+                              <a
+                                key={link.url}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={link.title}
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.04] text-[8px] font-bold tracking-[0.05em] text-foreground/40 transition-colors duration-150 hover:border-accent/40 hover:text-accent/80"
+                              >
+                                {link.badge}
+                              </a>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
                     </article>
                   )
@@ -977,9 +1065,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
                         {cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>
-                      {(featuredSet.venue ?? featuredSet.setDate) ? (
+                      {(featuredSet.event ?? featuredSet.venue ?? featuredSet.setDate) ? (
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {[featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
+                          {[featuredSet.event, featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
                         </p>
                       ) : null}
                       <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
@@ -1007,9 +1095,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             </span>
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium text-foreground/85">{cleanDjSetTitle(set.title, artist.artistName)}</p>
-                              {(set.venue ?? set.setDate) ? (
+                              {(set.event ?? set.venue ?? set.setDate) ? (
                                 <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                                  {[set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
+                                  {[set.event, set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
                                 </p>
                               ) : null}
                             </div>

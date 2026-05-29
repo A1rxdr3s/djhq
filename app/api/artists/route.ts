@@ -42,6 +42,13 @@ type SaveSelectedReleasePayload = {
   type: string
   platformUrl: string
   artworkUrl: string
+  spotifyUrl?: string
+  beatportUrl?: string
+  appleMusicUrl?: string
+  soundcloudUrl?: string
+  youtubeMusicUrl?: string
+  bandcampUrl?: string
+  otherUrl?: string
 }
 
 type SaveGigPayload = {
@@ -60,6 +67,7 @@ type SaveGigPayload = {
 type SaveDjSetPayload = {
   title: string
   venue?: string
+  event?: string
   setDate?: string
   imageUrl?: string
   platformUrl: string
@@ -465,6 +473,13 @@ export async function PATCH(request: Request) {
           type: normalizeReleaseType(release.type),
           is_featured: false,
           sort_order: index + 1,
+          spotify_url: release.spotifyUrl?.trim() || null,
+          beatport_url: release.beatportUrl?.trim() || null,
+          apple_music_url: release.appleMusicUrl?.trim() || null,
+          soundcloud_url: release.soundcloudUrl?.trim() || null,
+          youtube_music_url: release.youtubeMusicUrl?.trim() || null,
+          bandcamp_url: release.bandcampUrl?.trim() || null,
+          other_url: release.otherUrl?.trim() || null,
         })),
       )
 
@@ -513,6 +528,7 @@ export async function PATCH(request: Request) {
           artist_id: artistId,
           title: set.title.trim(),
           venue: set.venue?.trim() || null,
+          event: set.event?.trim() || null,
           set_date: set.setDate || null,
           image_url: set.imageUrl?.trim() || null,
           platform_url: set.platformUrl.trim(),

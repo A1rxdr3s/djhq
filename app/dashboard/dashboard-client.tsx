@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { GigCard } from "@/components/dashboard/gig-card"
+import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 
 // Canonical app host used for display copy. Controlled by NEXT_PUBLIC_APP_URL in production.
 const APP_DISPLAY_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.vercel.app")
@@ -73,6 +74,13 @@ type FeaturedReleaseFormState = {
 
 type SelectedReleaseFormState = FeaturedReleaseFormState & {
   id: string
+  spotifyUrl: string
+  beatportUrl: string
+  appleMusicUrl: string
+  soundcloudUrl: string
+  youtubeMusicUrl: string
+  bandcampUrl: string
+  otherUrl: string
 }
 
 type GigFormState = {
@@ -93,6 +101,7 @@ type DjSetFormState = {
   id: string
   title: string
   venue: string
+  event: string
   setDate: string
   imageUrl: string
   platformUrl: string
@@ -186,6 +195,13 @@ function getSelectedReleaseFormState(artist: Artist): SelectedReleaseFormState[]
     type: release.type,
     platformUrl: release.platformUrl,
     artworkUrl: release.artworkUrl,
+    spotifyUrl: release.spotifyUrl ?? "",
+    beatportUrl: release.beatportUrl ?? "",
+    appleMusicUrl: release.appleMusicUrl ?? "",
+    soundcloudUrl: release.soundcloudUrl ?? "",
+    youtubeMusicUrl: release.youtubeMusicUrl ?? "",
+    bandcampUrl: release.bandcampUrl ?? "",
+    otherUrl: release.otherUrl ?? "",
   }))
 }
 
@@ -199,6 +215,13 @@ function createEmptySelectedRelease(): SelectedReleaseFormState {
     type: "",
     platformUrl: "",
     artworkUrl: "",
+    spotifyUrl: "",
+    beatportUrl: "",
+    appleMusicUrl: "",
+    soundcloudUrl: "",
+    youtubeMusicUrl: "",
+    bandcampUrl: "",
+    otherUrl: "",
   }
 }
 
@@ -231,7 +254,8 @@ function mergeDjSetMetadata(current: DjSetFormState, result: ImportedReleaseMeta
     title: result.title?.trim() || current.title,
     imageUrl: result.artworkUrl?.trim() || current.imageUrl,
     platformUrl: result.platformUrl || current.platformUrl,
-    setDate: result.releaseDate ?? current.setDate,
+    // Only fill date/venue/event if they aren't already set
+    setDate: current.setDate || result.releaseDate || current.setDate,
   }
 }
 
@@ -276,6 +300,7 @@ function getDjSetFormState(artist: Artist): DjSetFormState[] {
     id: set.id,
     title: set.title,
     venue: set.venue ?? "",
+    event: set.event ?? "",
     setDate: set.setDate ? toDateInputValue(set.setDate) : "",
     imageUrl: set.imageUrl ?? "",
     platformUrl: set.platformUrl,
@@ -288,6 +313,7 @@ function createEmptyDjSet(): DjSetFormState {
     id: `new-${crypto.randomUUID()}`,
     title: "",
     venue: "",
+    event: "",
     setDate: "",
     imageUrl: "",
     platformUrl: "",
@@ -640,9 +666,32 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         },
         socialLinks,
         featuredRelease,
-        selectedReleases,
+        selectedReleases: selectedReleases.map((r) => ({
+          title: r.title,
+          label: r.label,
+          credits: r.credits,
+          releaseDate: r.releaseDate,
+          type: r.type,
+          platformUrl: r.platformUrl,
+          artworkUrl: r.artworkUrl,
+          spotifyUrl: r.spotifyUrl,
+          beatportUrl: r.beatportUrl,
+          appleMusicUrl: r.appleMusicUrl,
+          soundcloudUrl: r.soundcloudUrl,
+          youtubeMusicUrl: r.youtubeMusicUrl,
+          bandcampUrl: r.bandcampUrl,
+          otherUrl: r.otherUrl,
+        })),
         gigs: upcomingGigs,
-        djSets,
+        djSets: djSets.map((set) => ({
+          title: set.title,
+          venue: set.venue,
+          event: set.event,
+          setDate: set.setDate,
+          imageUrl: set.imageUrl,
+          platformUrl: set.platformUrl,
+          isPublished: set.isPublished,
+        })),
         videos,
         booking: {
           email: bookingEmail,
@@ -701,6 +750,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         artworkUrl: release.artworkUrl.trim(),
         platformUrl: release.platformUrl.trim(),
         type: normalizeReleaseType(release.type),
+        spotifyUrl: release.spotifyUrl?.trim() || undefined,
+        beatportUrl: release.beatportUrl?.trim() || undefined,
+        appleMusicUrl: release.appleMusicUrl?.trim() || undefined,
+        soundcloudUrl: release.soundcloudUrl?.trim() || undefined,
+        youtubeMusicUrl: release.youtubeMusicUrl?.trim() || undefined,
+        bandcampUrl: release.bandcampUrl?.trim() || undefined,
+        otherUrl: release.otherUrl?.trim() || undefined,
       })),
       upcomingGigs: upcomingGigs.map((gig) => ({
         id: gig.id,
@@ -719,6 +775,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         id: set.id,
         title: set.title.trim(),
         venue: set.venue.trim() || undefined,
+        event: set.event.trim() || undefined,
         setDate: set.setDate || undefined,
         imageUrl: set.imageUrl.trim() || undefined,
         platformUrl: set.platformUrl.trim(),
@@ -1600,12 +1657,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderProfile() {
+    const previewName = artistName.trim() || artist.artistName
+    const showLogoInPreview = artist.plan === "pro" && !!heroLogoUrl && (heroIdentityMode === "logo" || heroIdentityMode === "both")
+    const showTextInPreview = artist.plan !== "pro" || !heroLogoUrl || heroIdentityMode === "text" || heroIdentityMode === "both"
+    const previewNameClass = (() => {
+      switch (heroTextStyle) {
+        case "condensed": return "text-2xl font-black uppercase leading-none tracking-tight"
+        case "cinematic": return "text-lg font-bold uppercase tracking-[0.14em]"
+        case "editorial": return "text-xl font-extrabold leading-tight"
+        default: return "text-2xl font-black uppercase leading-tight tracking-tight"
+      }
+    })()
+
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground">Profile</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">Core identity shown on your public artist page.</p>
         </div>
+
+        {/* Core fields */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-1.5">
@@ -1639,9 +1710,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </label>
                 <span className={cn(
                   "text-[10px] tabular-nums transition-colors duration-150",
-                  heroTagline.length > 90
-                    ? "text-amber-400/60"
-                    : "text-muted-foreground/30",
+                  heroTagline.length > 90 ? "text-amber-400/60" : "text-muted-foreground/30",
                 )}>
                   {heroTagline.length}/100
                 </span>
@@ -1694,19 +1763,180 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <p className="text-xs text-muted-foreground">
                 Recommended: high-quality landscape image. Large images are automatically optimized before upload.
               </p>
-              {heroImageUrl ? (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Hero Preview</p>
-                  <div className="relative aspect-[16/7] overflow-hidden rounded-lg border border-white/[0.06] bg-secondary/40">
-                    <Image src={heroImageUrl} alt={`${artistName || "Artist"} hero preview`} fill className="object-cover" />
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
 
-        {/* DJHQ branding toggle — Pro only */}
+        {/* Hero Identity — directly below hero image fields */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Hero Identity
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground/45">
+                {artist.plan === "pro"
+                  ? "Control how your name and visual identity appear inside the public hero section."
+                  : "Upgrade to Pro to upload a custom logo, choose your identity mode, and refine hero typography."}
+              </p>
+            </div>
+            {artist.plan !== "pro" && (
+              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
+                Pro only
+              </span>
+            )}
+          </div>
+
+          {/* Live hero preview */}
+          <div className="relative mb-5 aspect-[16/7] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0a0a0a]">
+            {heroImageUrl ? (
+              <Image
+                src={heroImageUrl}
+                alt="Hero preview"
+                fill
+                className="object-cover"
+                sizes="600px"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_30%,rgba(255,255,255,0.04)_0%,transparent_70%)]" />
+            )}
+            {/* Gradient overlay to replicate public hero feel */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+            {/* Identity content */}
+            <div className="absolute inset-0 flex flex-col items-start justify-end gap-1.5 p-4 sm:p-5">
+              {showLogoInPreview && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={heroLogoUrl}
+                  alt="Logo preview"
+                  className="max-h-8 max-w-[140px] object-contain drop-shadow-md sm:max-h-10"
+                />
+              )}
+              {showTextInPreview && (
+                <p className={cn(previewNameClass, "text-white drop-shadow-md max-w-[85%]")}>
+                  {previewName}
+                </p>
+              )}
+              {heroTagline && (
+                <p className="text-[10px] uppercase tracking-[0.14em] text-white/50 drop-shadow-sm">
+                  {heroTagline}
+                </p>
+              )}
+            </div>
+            <div className="absolute right-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">
+              Preview
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            {/* Identity mode */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                  Identity Mode
+                </p>
+              </div>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {(["text", "logo", "both"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroIdentityMode(mode)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroIdentityMode === mode
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Text shows your artist name. Logo shows your uploaded lockup. Both shows logo above name.
+              </p>
+            </div>
+
+            {/* Typography style */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Typography Style
+              </p>
+              <div className="flex flex-wrap gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                {(["default", "condensed", "cinematic", "editorial"] as const).map((style) => (
+                  <button
+                    key={style}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setHeroTextStyle(style)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      heroTextStyle === style
+                        ? "bg-white/[0.07] text-foreground/75"
+                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Controls weight, size, and tracking of your name. Only visible when text is shown in the hero.
+              </p>
+            </div>
+
+            {/* Custom Hero Logo */}
+            {artist.plan === "pro" && (
+              <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                  Custom Logo
+                </p>
+                {heroLogoUrl ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                    <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.08] bg-[#0a0a0a]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={heroLogoUrl} alt="Hero logo" className="max-h-8 max-w-full object-contain" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] text-foreground/55">{heroLogoUrl.split("/").pop()}</p>
+                      <button
+                        type="button"
+                        onClick={() => setHeroLogoUrl("")}
+                        className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <Input
+                  id="heroLogoFile"
+                  type="file"
+                  accept="image/png,image/svg+xml,image/webp"
+                  onChange={(event) => setHeroLogoFile(event.target.files?.[0] ?? null)}
+                />
+                <Button
+                  type="button"
+                  onClick={handleUploadHeroLogo}
+                  disabled={!heroLogoFile || isUploadingHeroLogo || isSaving || isPublishing}
+                  className="bg-secondary text-foreground hover:bg-secondary/80"
+                >
+                  {isUploadingHeroLogo ? "Uploading..." : "Upload logo"}
+                </Button>
+                <p className="text-[10px] text-muted-foreground/38">
+                  PNG, SVG, or WEBP. Transparent background recommended. Max height 56–88px on public profile.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* DJHQ Branding */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5">
@@ -1729,8 +1959,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       type="button"
                       onClick={() => setShowHeaderBranding(opt === "show")}
                       className={cn(
-                        "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
-                        "transition-colors duration-100",
+                        "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                         isActive
                           ? "bg-white/[0.07] text-foreground/75"
                           : "text-muted-foreground/30 hover:text-muted-foreground/50",
@@ -1749,139 +1978,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         </div>
 
-        {/* Hero Identity System — Pro only */}
+        {/* Browser Identity */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Hero Identity Mode
+                Browser Identity
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground/45">
-                {artist.plan === "pro"
-                  ? "Choose what appears in the hero: your name, uploaded logo, or both."
-                  : "Upgrade to Pro to upload a custom logo and set your hero identity mode."}
-              </p>
-            </div>
-            {artist.plan !== "pro" && (
-              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
-                Pro only
-              </span>
-            )}
-          </div>
-
-          {/* Identity mode segmented control */}
-          <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-            {(["text", "logo", "both"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => artist.plan === "pro" && setHeroIdentityMode(mode)}
-                disabled={artist.plan !== "pro"}
-                className={cn(
-                  "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
-                  "transition-colors duration-100",
-                  heroIdentityMode === mode
-                    ? "bg-white/[0.07] text-foreground/75"
-                    : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                  artist.plan !== "pro" && "pointer-events-none",
-                )}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
-
-          {/* Custom Hero Logo — Pro only */}
-          {artist.plan === "pro" && (
-            <div className="mt-5 space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Custom Hero Logo
-              </p>
-              {heroLogoUrl ? (
-                <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="flex h-12 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.08] bg-[#0a0a0a]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={heroLogoUrl} alt="Hero logo" className="max-h-10 max-w-full object-contain" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] text-foreground/55">{heroLogoUrl.split("/").pop()}</p>
-                    <button
-                      type="button"
-                      onClick={() => setHeroLogoUrl("")}
-                      className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-              <Input
-                id="heroLogoFile"
-                type="file"
-                accept="image/png,image/svg+xml,image/webp"
-                onChange={(event) => setHeroLogoFile(event.target.files?.[0] ?? null)}
-              />
-              <Button
-                type="button"
-                onClick={handleUploadHeroLogo}
-                disabled={!heroLogoFile || isUploadingHeroLogo || isSaving || isPublishing}
-                className="bg-secondary text-foreground hover:bg-secondary/80"
-              >
-                {isUploadingHeroLogo ? "Uploading..." : "Upload logo"}
-              </Button>
-              <p className="text-[10px] text-muted-foreground/38">
-                PNG, SVG, or WEBP. Transparent background recommended. Displayed at max height 56–88px depending on breakpoint.
-              </p>
-            </div>
-          )}
-
-          {/* Hero Typography Style — Pro only */}
-          <div className="mt-5 space-y-3 border-t border-white/[0.04] pt-4">
-            <div className="flex items-start justify-between gap-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Hero Typography Style
-              </p>
-              {artist.plan !== "pro" && (
-                <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
-                  Pro only
-                </span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-              {(["default", "condensed", "cinematic", "editorial"] as const).map((style) => (
-                <button
-                  key={style}
-                  type="button"
-                  onClick={() => artist.plan === "pro" && setHeroTextStyle(style)}
-                  disabled={artist.plan !== "pro"}
-                  className={cn(
-                    "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
-                    "transition-colors duration-100",
-                    heroTextStyle === style
-                      ? "bg-white/[0.07] text-foreground/75"
-                      : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                    artist.plan !== "pro" && "pointer-events-none",
-                  )}
-                >
-                  {style}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground/38">
-              Controls font weight, size, and tracking of your name in the hero. Only applies when text is visible.
-            </p>
-          </div>
-        </div>
-
-        {/* Brand Identity — Pro only */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Brand Identity
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground/45">
-                How your profile appears in browser tabs, bookmarks, and shared links.
+                Control how your profile appears in browser tabs, bookmarks, and shared links.
               </p>
             </div>
             {artist.plan !== "pro" && (
@@ -1914,7 +2019,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onChange={(event) => setBrowserTitle(event.target.value)}
                 className={artist.plan !== "pro" ? "opacity-40 cursor-not-allowed" : ""}
               />
-
               {/* Live browser tab preview */}
               <div className="overflow-hidden rounded-lg border border-white/[0.06] bg-[#1a1a1a]">
                 <div className="flex h-9 items-end gap-0 px-2 pt-2">
@@ -1954,7 +2058,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 </div>
               </div>
-
               <p className="text-[10px] text-muted-foreground/38">
                 {artist.plan === "pro"
                   ? "Shown in browser tabs, bookmarks, and shared links. Leave blank to use your artist name."
@@ -1962,7 +2065,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </p>
             </div>
 
-            {/* Custom Favicon — Pro only */}
+            {/* Custom Favicon */}
             {artist.plan === "pro" && (
               <div className="space-y-2 border-t border-white/[0.04] pt-4">
                 <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
@@ -2408,6 +2511,48 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     }
                   />
                 </div>
+
+                {/* Platform Links */}
+                <div className="space-y-3 border-t border-white/[0.04] pt-3 md:col-span-2">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                      Platform Links
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/35">
+                      Shown as small badges on your profile. Leave blank to omit. If none are set, the primary URL above is used.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {(
+                      [
+                        { key: "spotifyUrl", label: "Spotify" },
+                        { key: "beatportUrl", label: "Beatport" },
+                        { key: "appleMusicUrl", label: "Apple Music" },
+                        { key: "soundcloudUrl", label: "SoundCloud" },
+                        { key: "youtubeMusicUrl", label: "YouTube Music" },
+                        { key: "bandcampUrl", label: "Bandcamp" },
+                        { key: "otherUrl", label: "Other" },
+                      ] as const
+                    ).map(({ key, label }) => (
+                      <div key={key} className="space-y-1">
+                        <label className="text-[9px] font-medium uppercase tracking-[0.10em] text-muted-foreground/40">
+                          {label}
+                        </label>
+                        <Input
+                          value={release[key]}
+                          placeholder="https://..."
+                          onChange={(event) =>
+                            setSelectedReleases((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index ? { ...item, [key]: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -2590,189 +2735,248 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderDjSets() {
+    function formatDjSetDate(value: string): string {
+      if (!value) return ""
+      const d = new Date(value + "T00:00:00")
+      if (isNaN(d.getTime())) return ""
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    }
+
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground">DJ Sets</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Recorded or broadcast sets shown on your public profile. First set is featured.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Recorded or broadcast sets. First set is featured on your public profile.</p>
         </div>
         <div className="space-y-3">
-          {djSets.map((set, index) => (
-            <div key={set.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  {set.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={set.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
-                  ) : (
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
-                      <Headphones className="h-3.5 w-3.5" />
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-medium leading-none text-foreground">{set.title || <span className="text-muted-foreground/30">Untitled</span>}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Set {index + 1}{index === 0 ? " · Featured" : ""}</p>
+          {djSets.map((set, index) => {
+            const previewMeta = [set.event, set.venue, formatDjSetDate(set.setDate)].filter(Boolean).join(" · ")
+            return (
+              <div key={set.id} className="rounded-xl border border-white/[0.06] bg-card/40 transition-colors duration-150 hover:border-white/[0.09]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 sm:px-5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {set.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={set.imageUrl} alt="" className="h-9 w-9 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
+                    ) : (
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
+                        <Headphones className="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium leading-none text-foreground">
+                        {set.title || <span className="text-muted-foreground/30">Untitled</span>}
+                      </p>
+                      {previewMeta ? (
+                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/40">{previewMeta}</p>
+                      ) : (
+                        <p className="mt-0.5 text-[10px] text-muted-foreground/30">
+                          Set {index + 1}{index === 0 ? " · Featured" : ""}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-0.5 shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleMoveDjSet(index, "up")}
+                      disabled={index === 0 || isSaving || isPublishing || importingDjSetIndex !== null}
+                      title="Move up"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleMoveDjSet(index, "down")}
+                      disabled={index === djSets.length - 1 || isSaving || isPublishing || importingDjSetIndex !== null}
+                      title="Move down"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveDjSet(index)}
+                      disabled={isSaving || isPublishing || importingDjSetIndex !== null}
+                      title="Remove"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-0.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleMoveDjSet(index, "up")}
-                    disabled={index === 0 || isSaving || isPublishing || importingDjSetIndex !== null}
-                    title="Move up"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleMoveDjSet(index, "down")}
-                    disabled={index === djSets.length - 1 || isSaving || isPublishing || importingDjSetIndex !== null}
-                    title="Move down"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveDjSet(index)}
-                    disabled={isSaving || isPublishing || importingDjSetIndex !== null}
-                    title="Remove"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+
+                {/* Fields */}
+                <div className="space-y-4 border-t border-white/[0.04] px-4 py-4 sm:px-5">
+                  {/* Row 1: Title */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`djset-title-${index}`}
+                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                    >
+                      Title
+                    </label>
+                    <Input
+                      id={`djset-title-${index}`}
+                      value={set.title}
+                      placeholder="Live from Fabric"
+                      onChange={(e) =>
+                        setDjSets((current) =>
+                          current.map((item, i) => (i === index ? { ...item, title: e.target.value } : item)),
+                        )
+                      }
+                    />
+                  </div>
+
+                  {/* Row 2: Date · Venue · Event */}
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor={`djset-date-${index}`}
+                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                      >
+                        Date
+                      </label>
+                      <input
+                        id={`djset-date-${index}`}
+                        type="date"
+                        value={set.setDate}
+                        onChange={(e) =>
+                          setDjSets((current) =>
+                            current.map((item, i) => (i === index ? { ...item, setDate: e.target.value } : item)),
+                          )
+                        }
+                        className="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 text-sm font-medium text-foreground [color-scheme:dark] outline-none transition-colors duration-150 focus:border-white/[0.14] focus:bg-white/[0.04]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                      >
+                        Venue
+                      </label>
+                      <VenueAutocomplete
+                        value={set.venue}
+                        onChange={(v) =>
+                          setDjSets((current) =>
+                            current.map((item, i) => (i === index ? { ...item, venue: v } : item)),
+                          )
+                        }
+                        onSelect={(entry) =>
+                          setDjSets((current) =>
+                            current.map((item, i) => (i === index ? { ...item, venue: entry.name } : item)),
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor={`djset-event-${index}`}
+                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                      >
+                        Event
+                      </label>
+                      <Input
+                        id={`djset-event-${index}`}
+                        value={set.event}
+                        placeholder="MISA, Boiler Room…"
+                        onChange={(e) =>
+                          setDjSets((current) =>
+                            current.map((item, i) => (i === index ? { ...item, event: e.target.value } : item)),
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 3: Platform URL · Thumbnail URL */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor={`djset-platform-${index}`}
+                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                      >
+                        Platform URL
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          id={`djset-platform-${index}`}
+                          value={set.platformUrl}
+                          placeholder="soundcloud.com/…"
+                          onChange={(e) =>
+                            setDjSets((current) =>
+                              current.map((item, i) => (i === index ? { ...item, platformUrl: e.target.value } : item)),
+                            )
+                          }
+                          className="min-w-0 flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleImportDjSetMetadata(index)}
+                          disabled={importingDjSetIndex === index || isSaving || isPublishing}
+                          className="shrink-0 border-border bg-background/70 text-xs"
+                          title="Import title and thumbnail from SoundCloud or YouTube"
+                        >
+                          {importingDjSetIndex === index ? "…" : "Import"}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor={`djset-image-${index}`}
+                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
+                      >
+                        Thumbnail URL
+                      </label>
+                      <Input
+                        id={`djset-image-${index}`}
+                        value={set.imageUrl}
+                        placeholder="https://…"
+                        onChange={(e) =>
+                          setDjSets((current) =>
+                            current.map((item, i) => (i === index ? { ...item, imageUrl: e.target.value } : item)),
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Show on profile */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      id={`djset-published-${index}`}
+                      type="checkbox"
+                      checked={set.isPublished}
+                      onChange={(e) =>
+                        setDjSets((current) =>
+                          current.map((item, i) => (i === index ? { ...item, isPublished: e.target.checked } : item)),
+                        )
+                      }
+                      className="h-4 w-4 rounded border-border"
+                    />
+                    <label htmlFor={`djset-published-${index}`} className="text-sm text-foreground">
+                      Show on public profile
+                    </label>
+                  </div>
                 </div>
               </div>
-              <div className="grid gap-4 border-t border-white/[0.04] pt-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`djset-title-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Title
-                  </label>
-                  <Input
-                    id={`djset-title-${index}`}
-                    value={set.title}
-                    onChange={(event) =>
-                      setDjSets((current) =>
-                        current.map((item, i) => (i === index ? { ...item, title: event.target.value } : item)),
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`djset-venue-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Venue / Event
-                  </label>
-                  <Input
-                    id={`djset-venue-${index}`}
-                    value={set.venue}
-                    onChange={(event) =>
-                      setDjSets((current) =>
-                        current.map((item, i) => (i === index ? { ...item, venue: event.target.value } : item)),
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`djset-date-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Date
-                  </label>
-                  <Input
-                    id={`djset-date-${index}`}
-                    type="date"
-                    value={set.setDate}
-                    onChange={(event) =>
-                      setDjSets((current) =>
-                        current.map((item, i) => (i === index ? { ...item, setDate: event.target.value } : item)),
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`djset-platform-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Platform URL
-                  </label>
-                  <Input
-                    id={`djset-platform-${index}`}
-                    value={set.platformUrl}
-                    onChange={(event) =>
-                      setDjSets((current) =>
-                        current.map((item, i) => (i === index ? { ...item, platformUrl: event.target.value } : item)),
-                      )
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleImportDjSetMetadata(index)}
-                    disabled={importingDjSetIndex === index || isSaving || isPublishing}
-                    className="border-border bg-background/70"
-                  >
-                    {importingDjSetIndex === index ? "Fetching..." : "Import metadata"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Paste a soundcloud.com link. Title, artwork, and platform URL are filled from public SoundCloud data when available.
-                  </p>
-                </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <label
-                    htmlFor={`djset-image-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
-                  >
-                    Thumbnail URL
-                  </label>
-                  <Input
-                    id={`djset-image-${index}`}
-                    value={set.imageUrl}
-                    onChange={(event) =>
-                      setDjSets((current) =>
-                        current.map((item, i) => (i === index ? { ...item, imageUrl: event.target.value } : item)),
-                      )
-                    }
-                  />
-                </div>
-                <div className="flex items-center gap-2 md:col-span-2">
-                  <input
-                    id={`djset-published-${index}`}
-                    type="checkbox"
-                    checked={set.isPublished}
-                    onChange={(event) =>
-                      setDjSets((current) =>
-                        current.map((item, i) => (i === index ? { ...item, isPublished: event.target.checked } : item)),
-                      )
-                    }
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <label htmlFor={`djset-published-${index}`} className="text-sm text-foreground">
-                    Show on public profile
-                  </label>
-                </div>
-              </div>
-            </div>
-          ))}
+            )
+          })}
           {djSets.length === 0 && (
             <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
               <Headphones className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
               <p className="text-sm font-medium text-muted-foreground/50">No sets added</p>
-              <p className="mt-1 text-xs text-muted-foreground/30">Paste a SoundCloud link to import your recorded sets.</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">Paste a SoundCloud or YouTube link and click Import to fill metadata.</p>
             </div>
           )}
           <button

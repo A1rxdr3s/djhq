@@ -105,12 +105,26 @@ export interface Release {
   releaseDate: ISODateString
   /** Cover artwork image URL. */
   artworkUrl: string
-  /** Primary platform URL for listening or purchase. */
+  /** Primary platform URL for listening or purchase (legacy; still used for featured release and backward compat). */
   platformUrl: string
   /** Optional artist/collaborator credits line (e.g. "ANDRES:HERRERA, Seba Cortes"). */
   credits?: string
   /** Release format. */
   type: ReleaseType
+  /** Optional Spotify URL. */
+  spotifyUrl?: string
+  /** Optional Beatport URL. */
+  beatportUrl?: string
+  /** Optional Apple Music URL. */
+  appleMusicUrl?: string
+  /** Optional SoundCloud URL. */
+  soundcloudUrl?: string
+  /** Optional YouTube Music URL. */
+  youtubeMusicUrl?: string
+  /** Optional Bandcamp URL. */
+  bandcampUrl?: string
+  /** Optional other/generic URL. */
+  otherUrl?: string
 }
 
 /**
@@ -149,8 +163,10 @@ export interface DjSet {
   id: string
   /** Set title (e.g. "Live at Fabric" or "DJHQ Radio 012"). */
   title: string
-  /** Venue or broadcast name. */
+  /** Physical venue or club name (e.g. "Fabric", "Watergate"). */
   venue?: string
+  /** Event or party brand name (e.g. "MISA", "Boiler Room", "State of House"). */
+  event?: string
   /** Recording or air date in ISO-8601 format. */
   setDate?: string
   /** Optional cover/thumbnail image URL. */

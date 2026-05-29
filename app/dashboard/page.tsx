@@ -54,6 +54,13 @@ type ReleaseRow = {
   platform_url: string
   type: string
   is_featured: boolean
+  spotify_url: string | null
+  beatport_url: string | null
+  apple_music_url: string | null
+  soundcloud_url: string | null
+  youtube_music_url: string | null
+  bandcamp_url: string | null
+  other_url: string | null
 }
 
 type GigRow = {
@@ -83,6 +90,7 @@ type DjSetRow = {
   id: string
   title: string
   venue: string | null
+  event: string | null
   set_date: string | null
   image_url: string | null
   platform_url: string
@@ -218,7 +226,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<SocialLinkRow[]>(),
     supabase
       .from("releases")
-      .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured")
+      .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url, bandcamp_url, other_url")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .order("release_date", { ascending: false })
@@ -237,7 +245,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<GalleryImageRow[]>(),
     supabase
       .from("dj_sets")
-      .select("id, title, venue, set_date, image_url, platform_url, sort_order, is_published")
+      .select("id, title, venue, event, set_date, image_url, platform_url, sort_order, is_published")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<DjSetRow[]>(),
@@ -304,6 +312,13 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       artworkUrl: release.artwork_url,
       platformUrl: release.platform_url,
       type: normalizeReleaseType(release.type),
+      spotifyUrl: release.spotify_url ?? undefined,
+      beatportUrl: release.beatport_url ?? undefined,
+      appleMusicUrl: release.apple_music_url ?? undefined,
+      soundcloudUrl: release.soundcloud_url ?? undefined,
+      youtubeMusicUrl: release.youtube_music_url ?? undefined,
+      bandcampUrl: release.bandcamp_url ?? undefined,
+      otherUrl: release.other_url ?? undefined,
     })),
     upcomingGigs: (gigsResult.data ?? []).map((gig) => ({
       id: gig.id,
@@ -322,6 +337,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       id: set.id,
       title: set.title,
       venue: set.venue ?? undefined,
+      event: set.event ?? undefined,
       setDate: set.set_date ?? undefined,
       imageUrl: set.image_url ?? undefined,
       platformUrl: set.platform_url,
