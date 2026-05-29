@@ -28,6 +28,7 @@ import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
+import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { ReleaseListenPanel } from "@/components/release-listen-panel"
 
 type PublicProfilePageProps = {
@@ -615,36 +616,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   // Hero Identity System — Pro artists can use logo, text, or both.
   // Free artists always use text mode. Logo mode requires an uploaded logo.
   const isPro = artist.plan === "pro"
-  const effectiveIdentityMode: "text" | "logo" | "both" = (() => {
-    if (!isPro) return "text"
-    const hasLogo = !!artist.heroLogoUrl?.trim()
-    if (artist.heroIdentityMode === "logo" && hasLogo) return "logo"
-    if (artist.heroIdentityMode === "both" && hasLogo) return "both"
-    return "text"
-  })()
   const logoScale = isPro ? (artist.heroLogoScale ?? 100) : 100
   const logoLayout = (isPro ? (artist.heroLogoLayout ?? "replace_text") : "replace_text") as "replace_text" | "above_text" | "below_text" | "left_text" | "right_text"
   const logoAlignment = isPro ? (artist.heroLogoAlignment ?? "left") : "left"
   const logoOffsetX = isPro ? (artist.heroLogoOffsetX ?? 0) : 0
   const logoOffsetY = isPro ? (artist.heroLogoOffsetY ?? 0) : 0
-  const showLogoInHero = effectiveIdentityMode === "logo" || effectiveIdentityMode === "both"
-  // In LOGO mode, show text alongside the logo unless layout is replace_text
-  const showTextInHero = effectiveIdentityMode === "text" || effectiveIdentityMode === "both" || (effectiveIdentityMode === "logo" && logoLayout !== "replace_text")
-
-  // Hero text style classes — only applied when text is shown
   const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
-  const heroNameClasses = (() => {
-    switch (heroTextStyle) {
-      case "condensed":
-        return "max-w-full text-[clamp(2rem,8.5vw,3.2rem)] font-black uppercase leading-[0.88] tracking-[-0.04em] text-foreground drop-shadow-2xl sm:text-[clamp(2.8rem,6.8vw,4.6rem)] sm:leading-[0.86] lg:max-w-none lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap lg:text-[clamp(3.6rem,5.2vw,5.8rem)]"
-      case "cinematic":
-        return "max-w-full text-[clamp(1.6rem,7vw,2.5rem)] font-bold uppercase leading-[1.02] tracking-[0.06em] text-foreground/95 drop-shadow-2xl sm:text-[clamp(2.2rem,5.5vw,3.6rem)] sm:leading-[1.0] lg:max-w-2xl lg:text-[clamp(2.8rem,4.2vw,4.4rem)]"
-      case "editorial":
-        return "max-w-full text-[clamp(1.75rem,7.5vw,2.75rem)] font-extrabold leading-[0.96] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:text-[clamp(2.4rem,6vw,3.8rem)] sm:leading-[0.94] lg:max-w-2xl lg:text-[clamp(3rem,4.6vw,5rem)]"
-      default:
-        return "max-w-full text-[clamp(1.85rem,7.8vw,2.85rem)] font-black uppercase leading-[0.94] tracking-[-0.02em] text-foreground drop-shadow-2xl sm:text-[clamp(2.5rem,6.2vw,4rem)] sm:leading-[0.92] lg:max-w-none lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap lg:text-[clamp(3.25rem,4.8vw,5.25rem)]"
-    }
-  })()
   const hasPressKit =
     artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
@@ -728,43 +705,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 )}
 
-                {/* Hero identity — layout-aware logo + text system */}
-                {(showLogoInHero || showTextInHero) && (() => {
-                  const logoAlignClass = logoAlignment === "center" ? "self-center" : logoAlignment === "right" ? "self-end" : "self-start"
-                  const logoEl = showLogoInHero && artist.heroLogoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={artist.heroLogoUrl}
-                      alt={artist.artistName}
-                      style={{
-                        width: `min(80vw, ${Math.min(logoScale * 3, 720)}px)`,
-                        height: "auto",
-                        transform: `translate(${logoOffsetX}px, ${logoOffsetY}px)`,
-                      }}
-                      className={`object-contain drop-shadow-2xl ${logoAlignClass}`}
-                    />
-                  ) : null
-
-                  const nameEl = showTextInHero ? (
-                    <h1 className={heroNameClasses}>{artist.artistName}</h1>
-                  ) : null
-
-                  if (!logoEl && !nameEl) return null
-                  if (!logoEl) return <div className="mb-3">{nameEl}</div>
-                  if (!nameEl) return <div className="mb-3">{logoEl}</div>
-
-                  // Both logo and name — arrange by layout
-                  switch (logoLayout) {
-                    case "below_text":
-                      return <div className="mb-3 flex flex-col gap-3">{nameEl}{logoEl}</div>
-                    case "left_text":
-                      return <div className="mb-3 flex flex-row flex-wrap items-end gap-5">{logoEl}{nameEl}</div>
-                    case "right_text":
-                      return <div className="mb-3 flex flex-row flex-wrap items-end gap-5">{nameEl}{logoEl}</div>
-                    default: // above_text — logo above name
-                      return <div className="mb-3 flex flex-col gap-3">{logoEl}{nameEl}</div>
-                  }
-                })()}
+                {/* Hero identity — shared component, same logic as dashboard preview */}
+                <HeroIdentity
+                  artistName={artist.artistName}
+                  heroLogoUrl={artist.heroLogoUrl}
+                  heroIdentityMode={artist.heroIdentityMode ?? "text"}
+                  heroTextStyle={heroTextStyle}
+                  heroLogoScale={logoScale}
+                  heroLogoLayout={logoLayout}
+                  heroLogoAlignment={logoAlignment}
+                  heroLogoOffsetX={logoOffsetX}
+                  heroLogoOffsetY={logoOffsetY}
+                  isPro={isPro}
+                />
 
                 {displayHeroTagline ? (
                   <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">

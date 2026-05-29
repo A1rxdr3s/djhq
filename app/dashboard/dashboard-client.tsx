@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
@@ -13,6 +13,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { GigCard } from "@/components/dashboard/gig-card"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
+import { HeroIdentity } from "@/components/djhq/hero-identity"
+
+// Natural dimensions of the virtual hero used for CSS-scale preview.
+// The preview container scales this viewport-equivalent canvas down to fit.
+const PREVIEW_NATURAL_W = 1440
+const PREVIEW_NATURAL_H = Math.round(PREVIEW_NATURAL_W * 7 / 16) // 630
 
 // Canonical app host used for display copy. Controlled by NEXT_PUBLIC_APP_URL in production.
 const APP_DISPLAY_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.vercel.app")
@@ -662,6 +668,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroLogoAlignment, setHeroLogoAlignment] = useState<"left" | "center" | "right">(initialArtist.heroLogoAlignment ?? "left")
   const [heroLogoOffsetX, setHeroLogoOffsetX] = useState(initialArtist.heroLogoOffsetX ?? 0)
   const [heroLogoOffsetY, setHeroLogoOffsetY] = useState(initialArtist.heroLogoOffsetY ?? 0)
+  const previewContainerRef = useRef<HTMLDivElement>(null)
+  const [previewScale, setPreviewScale] = useState(0.4)
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
   const [isUploadingHeroLogo, setIsUploadingHeroLogo] = useState(false)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
@@ -717,6 +725,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isVerifyingDomainId, setIsVerifyingDomainId] = useState<string | null>(null)
   const [isCheckingConnectionId, setIsCheckingConnectionId] = useState<string | null>(null)
   const [isRemovingDomainId, setIsRemovingDomainId] = useState<string | null>(null)
+  useLayoutEffect(() => {
+    const el = previewContainerRef.current
+    if (!el) return
+    setPreviewScale(el.getBoundingClientRect().width / PREVIEW_NATURAL_W)
+    const observer = new ResizeObserver(([entry]) => {
+      setPreviewScale(entry.contentRect.width / PREVIEW_NATURAL_W)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -1850,18 +1869,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderProfile() {
     const previewName = artistName.trim() || artist.artistName
-    const hasLogoForPreview = artist.plan === "pro" && !!heroLogoUrl
-    const showLogoInPreview = hasLogoForPreview && (heroIdentityMode === "logo" || heroIdentityMode === "both")
-    const showTextInPreview = !hasLogoForPreview || heroIdentityMode === "text" || heroIdentityMode === "both" || (heroIdentityMode === "logo" && heroLogoLayout !== "replace_text")
-    const previewLogoW = Math.min(heroLogoScale, 200)
-    const previewNameClass = (() => {
-      switch (heroTextStyle) {
-        case "condensed": return "text-2xl font-black uppercase leading-none tracking-tight"
-        case "cinematic": return "text-lg font-bold uppercase tracking-[0.14em]"
-        case "editorial": return "text-xl font-extrabold leading-tight"
-        default: return "text-2xl font-black uppercase leading-tight tracking-tight"
-      }
-    })()
 
     return (
       <div className="space-y-6">
@@ -1981,66 +1988,78 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             )}
           </div>
 
-          {/* Live hero preview */}
-          <div className="relative mb-5 aspect-[16/7] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0a0a0a]">
-            {heroImageUrl ? (
-              <Image
-                src={heroImageUrl}
-                alt="Hero preview"
-                fill
-                className="object-cover"
-                sizes="600px"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_30%,rgba(255,255,255,0.04)_0%,transparent_70%)]" />
-            )}
-            {/* Gradient overlay to replicate public hero feel */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
-            {/* Identity content */}
-            <div className="absolute inset-0 flex flex-col items-start justify-end gap-1.5 p-4 sm:p-5">
-              {(() => {
-                const alignClass = heroLogoAlignment === "center" ? "self-center" : heroLogoAlignment === "right" ? "self-end" : "self-start"
-                const logoEl = showLogoInPreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={heroLogoUrl}
-                    alt="Logo preview"
-                    style={{
-                      maxWidth: `${previewLogoW}px`,
-                      height: "auto",
-                      transform: `translate(${heroLogoOffsetX * 0.4}px, ${heroLogoOffsetY * 0.4}px)`,
-                    }}
-                    className={cn("object-contain drop-shadow-md", alignClass)}
-                  />
-                ) : null
-                const textEl = showTextInPreview ? (
-                  <p className={cn(previewNameClass, "text-white drop-shadow-md max-w-[85%]")}>{previewName}</p>
-                ) : null
-
-                if (!logoEl && !textEl) return null
-                if (!logoEl) return textEl
-                if (!textEl) return logoEl
-
-                switch (heroLogoLayout) {
-                  case "below_text": return <div className="flex flex-col gap-1.5">{textEl}{logoEl}</div>
-                  case "left_text": return <div className="flex flex-row items-end gap-3">{logoEl}{textEl}</div>
-                  case "right_text": return <div className="flex flex-row items-end gap-3">{textEl}{logoEl}</div>
-                  default: return <div className="flex flex-col gap-1.5">{logoEl}{textEl}</div>
-                }
-              })()}
-              {heroTagline && (
-                <p className="text-[10px] uppercase tracking-[0.14em] text-white/50 drop-shadow-sm">
-                  {heroTagline}
-                </p>
+          {/* Live hero preview — CSS-scaled virtual hero (WYSIWYG) */}
+          <div
+            ref={previewContainerRef}
+            className="relative mb-2 aspect-[16/7] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0a0a0a]"
+          >
+            {/* Virtual hero at natural PREVIEW_NATURAL_W px width, scaled to container */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: PREVIEW_NATURAL_W,
+                height: PREVIEW_NATURAL_H,
+                transform: `scale(${previewScale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              {/* Background image */}
+              {heroImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={heroImageUrl}
+                  alt=""
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_30%,rgba(255,255,255,0.04)_0%,transparent_70%)]" />
               )}
+
+              {/* Multi-layer gradient system — identical to public hero */}
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
+              <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
+              <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
+
+              {/* Content area — same padding and structure as public hero at lg breakpoint */}
+              <div className="absolute inset-x-0 bottom-0 p-8">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
+                <div className="relative max-w-3xl">
+                  <HeroIdentity
+                    artistName={previewName}
+                    heroLogoUrl={artist.plan === "pro" ? (heroLogoUrl || null) : null}
+                    heroIdentityMode={heroIdentityMode}
+                    heroTextStyle={heroTextStyle}
+                    heroLogoScale={heroLogoScale}
+                    heroLogoLayout={heroLogoLayout}
+                    heroLogoAlignment={heroLogoAlignment}
+                    heroLogoOffsetX={heroLogoOffsetX}
+                    heroLogoOffsetY={heroLogoOffsetY}
+                    isPro={artist.plan === "pro"}
+                    isPreview
+                  />
+                  {heroTagline && (
+                    <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
+                      {heroTagline}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="absolute right-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">
+
+            {/* Preview badge */}
+            <div className="absolute right-2 top-2 z-10 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">
               Preview
             </div>
           </div>
+          <p className="mb-5 text-[10px] text-muted-foreground/35">
+            Scaled replica of your public hero. What you see here matches the live profile.
+          </p>
 
-          <div className="space-y-5">
+          <div className="space-y-5 mt-5">
             {/* Identity mode */}
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-4">
