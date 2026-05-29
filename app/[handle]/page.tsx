@@ -740,12 +740,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
               <div className={cn(
                 "relative",
-                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.20] px-4 py-3 backdrop-blur-[3px] sm:px-5 sm:py-4",
-                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.35] px-4 py-3 backdrop-blur-[5px] sm:px-5 sm:py-4",
+                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
+                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
               )}>
                 {/* Subtle vertical gradient inside the surface — improves readability without a card look */}
                 {contentSurface !== "none" && (
-                  <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.08] to-transparent" />
+                  <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
                 )}
 
                 {/* Genre pills — full-width, naturally left-aligned */}

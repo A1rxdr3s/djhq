@@ -2165,11 +2165,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
                 <div className={cn(
                   "relative",
-                  heroContentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.20] px-4 py-3 backdrop-blur-[3px] sm:px-5 sm:py-4",
-                  heroContentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.35] px-4 py-3 backdrop-blur-[5px] sm:px-5 sm:py-4",
+                  heroContentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
+                  heroContentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
                 )}>
                   {heroContentSurface !== "none" && (
-                    <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.08] to-transparent" />
+                    <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
                   )}
 
                   {/* Genre pills */}
