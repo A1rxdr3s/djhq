@@ -46,10 +46,10 @@ export function ProfileDemoSection() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6 sm:bottom-8 sm:left-8 sm:right-8">
-              <div className="mb-4 flex flex-wrap gap-2.5">
-                <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>House</span>
-                <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Tech House</span>
-                <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Producer</span>
+              <div className="mb-3.5 flex flex-wrap gap-2 sm:mb-4">
+                <span className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>House</span>
+                <span className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Tech House</span>
+                <span className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Producer</span>
               </div>
               <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>

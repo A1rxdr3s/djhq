@@ -129,10 +129,10 @@ export function HeroSection() {
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/35 to-transparent" />
-                <div className="absolute bottom-3 left-3 flex flex-wrap gap-2.5">
-                  <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>House</span>
-                  <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Tech House</span>
-                  <span className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Producer</span>
+                <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
+                  <span className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>House</span>
+                  <span className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Tech House</span>
+                  <span className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}>Producer</span>
                 </div>
               </div>
 

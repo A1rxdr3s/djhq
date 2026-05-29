@@ -2182,6 +2182,21 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
                   )}
 
+                  {/* Genre chips — above logo */}
+                  {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
+                    <div className="mb-3.5 flex flex-wrap gap-2 sm:mb-4">
+                      {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
+                        <span
+                          key={genre}
+                          className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
+                          style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}
+                        >
+                          {genre}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Hero identity — skipped for floating placements */}
                   {!isFloating && (
                     <HeroIdentity
@@ -2216,19 +2231,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       >
                         {heroTagline}
                       </p>
-                    )}
-                    {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
-                      <div className="mt-2.5 flex flex-wrap gap-2.5">
-                        {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
-                          <span
-                            key={genre}
-                            className="rounded-full border border-accent/70 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.10em] text-white/90 backdrop-blur-sm"
-                            style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}
-                          >
-                            {genre}
-                          </span>
-                        ))}
-                      </div>
                     )}
                     {shortBio && (
                       <p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">
