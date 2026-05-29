@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Trash2 } from "lucide-react"
 import type { Artist, DjSet, GalleryImage, HeroLogoLayout, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -2024,10 +2024,25 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
 
-              {/* Content area — same padding and structure as public hero at lg breakpoint */}
-              <div className="absolute inset-x-0 bottom-0 p-8">
+              {/* Content area — mirrors public hero structure exactly */}
+              <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
-                <div className="relative max-w-3xl">
+                <div className="relative">
+                  {/* Genre pills — full-width, naturally left-aligned */}
+                  {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-4">
+                      {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
+                        <span
+                          key={genre}
+                          className="rounded-full border border-white/[0.14] bg-white/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur-[6px]"
+                        >
+                          {genre}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Hero identity — full-width so center alignment works relative to hero width */}
                   <HeroIdentity
                     artistName={previewName}
                     heroLogoUrl={artist.plan === "pro" ? (heroLogoUrl || null) : null}
@@ -2041,11 +2056,34 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     isPro={artist.plan === "pro"}
                     isPreview
                   />
-                  {heroTagline && (
-                    <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
-                      {heroTagline}
-                    </p>
-                  )}
+
+                  {/* Text content constrained for readability */}
+                  <div className="max-w-3xl">
+                    {heroTagline && (
+                      <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
+                        {heroTagline}
+                      </p>
+                    )}
+                    {location && (
+                      <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-white/65 sm:mt-3 sm:text-sm">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
+                        {location}
+                      </p>
+                    )}
+                    {shortBio && (
+                      <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-[1.65] text-white/60 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-[0.9375rem]">
+                        {shortBio}
+                      </p>
+                    )}
+                    {bookingEmail && (
+                      <div className="mt-4 flex flex-col gap-3 sm:mt-5">
+                        <div className="flex h-11 w-fit items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-md shadow-accent/15 sm:h-12">
+                          <Mail className="h-4 w-4" />
+                          Book this artist
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2056,7 +2094,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           </div>
           <p className="mb-5 text-[10px] text-muted-foreground/35">
-            Scaled replica of your public hero. What you see here matches the live profile.
+            This preview mirrors the public hero. Only the overall size is scaled down.
           </p>
 
           <div className="space-y-5 mt-5">

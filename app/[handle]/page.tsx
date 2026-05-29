@@ -690,8 +690,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               {/* Cinematic content fade — stronger bottom lift */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
 
-              <div className="relative max-w-3xl">
-                {/* Genre pills — premium editorial */}
+              <div className="relative">
+                {/* Genre pills — full-width, naturally left-aligned */}
                 {artist.genres.length > 0 && (
                   <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-4">
                     {artist.genres.map((genre) => (
@@ -705,7 +705,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 )}
 
-                {/* Hero identity — shared component, same logic as dashboard preview */}
+                {/* Hero identity — full-width context so center alignment works relative to the hero */}
                 <HeroIdentity
                   artistName={artist.artistName}
                   heroLogoUrl={artist.heroLogoUrl}
@@ -719,39 +719,42 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   isPro={isPro}
                 />
 
-                {displayHeroTagline ? (
-                  <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
-                    {displayHeroTagline}
-                  </p>
-                ) : null}
-
-                <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-white/65 sm:mt-3 sm:text-sm">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
-                  {artist.location}
-                </p>
-
-                <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-[1.65] text-white/60 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-[0.9375rem]">
-                  {artist.shortBio}
-                </p>
-
-                <div className="mt-4 flex flex-col gap-3 sm:mt-5">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="h-11 w-fit rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:h-12"
-                  >
-                    <a href={`mailto:${artist.bookingInfo.email}`}>
-                      <Mail className="h-4 w-4" />
-                      Book this artist
-                    </a>
-                  </Button>
-                  {prioritizedLinks.length > 0 ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      {prioritizedLinks.map((link) => (
-                        <MainLink key={`${link.platform}-${link.url}`} link={link} />
-                      ))}
-                    </div>
+                {/* Text content constrained for readability */}
+                <div className="max-w-3xl">
+                  {displayHeroTagline ? (
+                    <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
+                      {displayHeroTagline}
+                    </p>
                   ) : null}
+
+                  <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-white/65 sm:mt-3 sm:text-sm">
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
+                    {artist.location}
+                  </p>
+
+                  <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-[1.65] text-white/60 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-[0.9375rem]">
+                    {artist.shortBio}
+                  </p>
+
+                  <div className="mt-4 flex flex-col gap-3 sm:mt-5">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="h-11 w-fit rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:h-12"
+                    >
+                      <a href={`mailto:${artist.bookingInfo.email}`}>
+                        <Mail className="h-4 w-4" />
+                        Book this artist
+                      </a>
+                    </Button>
+                    {prioritizedLinks.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {prioritizedLinks.map((link) => (
+                          <MainLink key={`${link.platform}-${link.url}`} link={link} />
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>
