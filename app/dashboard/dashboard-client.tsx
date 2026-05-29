@@ -5,9 +5,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Trash2 } from "lucide-react"
-import type { Artist, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
+import { ACCENT_THEMES, getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -756,6 +757,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroContentSurface, setHeroContentSurface] = useState<HeroContentSurface>(initialArtist.heroContentSurface ?? "soft")
   const [heroLogoPlacement, setHeroLogoPlacement] = useState<HeroLogoPlacement>(initialArtist.heroLogoPlacement ?? "editorial")
   const [heroContentWidth, setHeroContentWidth] = useState<HeroContentWidth>(initialArtist.heroContentWidth ?? "standard")
+  const [accentTheme, setAccentTheme] = useState<ArtistAccentTheme>(initialArtist.accentTheme ?? "matrix")
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const [previewScale, setPreviewScale] = useState(0.4)
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
@@ -848,7 +850,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroLogoReadability !== (artist.heroLogoReadability ?? "subtle") ||
     heroContentSurface !== (artist.heroContentSurface ?? "soft") ||
     heroLogoPlacement !== (artist.heroLogoPlacement ?? "editorial") ||
-    heroContentWidth !== (artist.heroContentWidth ?? "standard")
+    heroContentWidth !== (artist.heroContentWidth ?? "standard") ||
+    accentTheme !== (artist.accentTheme ?? "matrix")
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -901,6 +904,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroContentSurface,
           heroLogoPlacement,
           heroContentWidth,
+          accentTheme,
         },
         socialLinks,
         featuredRelease,
@@ -980,6 +984,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroContentSurface,
       heroLogoPlacement,
       heroContentWidth,
+      accentTheme,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -1106,6 +1111,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroContentSurface(savedArtist.heroContentSurface ?? "soft")
     setHeroLogoPlacement(savedArtist.heroLogoPlacement ?? "editorial")
     setHeroContentWidth(savedArtist.heroContentWidth ?? "standard")
+    setAccentTheme(savedArtist.accentTheme ?? "matrix")
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -1980,6 +1986,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const isFloating = heroLogoPlacement !== "editorial"
     const previewLogoWidth = `min(80vw, ${Math.min(heroLogoScale * 3, 720)}px)`
     const previewContentWidthClass = heroContentWidth === "compact" ? "max-w-2xl" : heroContentWidth === "wide" ? "max-w-5xl" : "max-w-3xl"
+    const previewTheme = getAccentTheme(accentTheme)
     const previewHasFloatingLogo = isFloating && !!(heroLogoUrl || null) && artist.plan === "pro" &&
       (heroIdentityMode === "logo" || heroIdentityMode === "both")
     const previewFloatingTransform = heroLogoPlacement === "top_center"
@@ -2119,7 +2126,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 height: PREVIEW_NATURAL_H,
                 transform: `scale(${previewScale})`,
                 transformOrigin: "top left",
-              }}
+                "--accent": previewTheme.accent,
+                "--accent-foreground": previewTheme.accentForeground,
+              } as React.CSSProperties}
             >
               {/* Background image */}
               {heroImageUrl ? (
@@ -2216,7 +2225,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {heroTagline && (
                       <p
                         className="mt-2 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2.5 sm:text-xl"
-                        style={{ textShadow: "0 0 20px rgba(0,255,180,.15)" }}
+                        style={{ textShadow: `0 0 20px rgba(${previewTheme.glowRgb}, 0.15)` }}
                       >
                         {heroTagline}
                       </p>
@@ -2620,6 +2629,39 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
               <p className="text-[10px] text-muted-foreground/35">
                 Controls how wide the text content block extends across the hero. Adjust to complement your hero image.
+              </p>
+            </div>
+
+            {/* Accent Theme */}
+            <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                Accent Theme
+              </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {(Object.values(ACCENT_THEMES)).map((theme) => (
+                  <button
+                    key={theme.value}
+                    type="button"
+                    onClick={() => artist.plan === "pro" && setAccentTheme(theme.value)}
+                    disabled={artist.plan !== "pro"}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      accentTheme === theme.value
+                        ? "border-white/[0.14] bg-white/[0.07] text-foreground/80"
+                        : "border-transparent text-muted-foreground/30 hover:text-muted-foreground/50",
+                      artist.plan !== "pro" && "pointer-events-none",
+                    )}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: theme.hex }}
+                    />
+                    {theme.name}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/35">
+                Sets the primary accent color used throughout your profile.
               </p>
             </div>
 

@@ -27,6 +27,7 @@ type SaveProfilePayload = {
   heroContentSurface: string
   heroLogoPlacement: string
   heroContentWidth: string
+  accentTheme: string
 }
 
 type SaveSocialLinkPayload = {
@@ -416,6 +417,7 @@ export async function PATCH(request: Request) {
         hero_content_surface: ["none", "soft", "strong"].includes(payload.profile.heroContentSurface) ? payload.profile.heroContentSurface : "soft",
         hero_logo_placement: ["editorial", "top_center", "center", "custom"].includes(payload.profile.heroLogoPlacement) ? payload.profile.heroLogoPlacement : "editorial",
         hero_content_width: ["compact", "standard", "wide"].includes(payload.profile.heroContentWidth) ? payload.profile.heroContentWidth : "standard",
+        artist_accent_theme: ["matrix", "electric_blue", "signal_red"].includes(payload.profile.accentTheme) ? payload.profile.accentTheme : "matrix",
         is_published: payload.isPublished,
         booking_email: payload.booking.email.trim(),
         booking_url: payload.booking.bookingUrl?.trim() || null,

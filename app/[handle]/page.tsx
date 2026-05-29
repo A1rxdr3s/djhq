@@ -24,6 +24,7 @@ import type { Artist, DjSet, PerformanceType, Release, ReleaseType, SocialLink, 
 import { cn } from "@/lib/utils"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
+import { getAccentTheme } from "@/lib/accent-themes"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
@@ -87,6 +88,7 @@ type ArtistRow = {
   hero_content_surface: string | null
   hero_logo_placement: string | null
   hero_content_width: string | null
+  artist_accent_theme: string | null
   is_published: boolean
   created_at: string
   updated_at: string
@@ -506,6 +508,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       heroContentSurface: (artistRow.hero_content_surface || "soft") as "none" | "soft" | "strong",
       heroLogoPlacement: (artistRow.hero_logo_placement || "editorial") as "editorial" | "top_center" | "center" | "custom",
       heroContentWidth: (artistRow.hero_content_width || "standard") as "compact" | "standard" | "wide",
+      accentTheme: (artistRow.artist_accent_theme || "matrix") as "matrix" | "electric_blue" | "signal_red",
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -651,6 +654,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
   const hasPressKit =
     artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
+  const accentThemeConfig = getAccentTheme(isPro ? artist.accentTheme : "matrix")
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
   const prioritizedLinks = artist.socialLinks.filter((link) => link.url.trim().length > 0).sort((a, b) => {
     const priorityA = linkPriority.indexOf(a.platform)
@@ -662,7 +666,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   })
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <>
+      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}`}</style>
+      <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
           src={artist.heroImageUrl}
@@ -786,7 +792,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {displayHeroTagline ? (
                     <p
                       className="mt-1.5 text-lg font-medium uppercase tracking-[0.12em] text-accent/90 sm:mt-2 sm:text-xl"
-                      style={{ textShadow: "0 0 20px rgba(0,255,180,.15)" }}
+                      style={{ textShadow: `0 0 20px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
                     >
                       {displayHeroTagline}
                     </p>
@@ -809,6 +815,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         <BookingInquiryModal
                           artistHandle={artist.handle}
                           artistName={artist.artistName}
+                          pressKitUrl={hasPressKit ? artist.pressKit.downloadUrl : undefined}
                         />
                       ) : null}
                       {hasPressKit ? (
@@ -1202,5 +1209,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </footer>
       </div>
     </main>
+    </>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ExternalLink } from "lucide-react"
+import { Instagram, Ticket } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Gig } from "@/types/djhq"
 
@@ -49,6 +49,8 @@ const item = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE } },
 }
 
+const iconLinkClass = "flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 text-white/45 hover:text-accent hover:scale-[1.03]"
+
 type GigsSectionProps = {
   gigs: Gig[]
 }
@@ -60,17 +62,16 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const selected = selectGigsForDisplay(gigs, today)
   if (selected.length === 0) return null
 
-  // First upcoming row carries a subtly elevated surface and tile — no label needed.
   const firstUpcomingIndex = selected.findIndex((s) => !s.isPast)
 
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:col-start-2 lg:row-start-2 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
       <h2 className="text-[10px] font-medium uppercase tracking-[0.28em] text-accent/70">
-        Upcoming Gigs
+        Shows
       </h2>
 
       <motion.div
-        className="mt-4 flex flex-col gap-2"
+        className="mt-4 flex flex-col gap-1.5"
         variants={container}
         initial="hidden"
         whileInView="visible"
@@ -79,12 +80,13 @@ export function GigsSection({ gigs }: GigsSectionProps) {
         {selected.map(({ gig, isPast }, i) => {
           const { day, month } = parseGigDate(gig.date)
           const isNext = i === firstUpcomingIndex && firstUpcomingIndex !== -1
+          const hasActions = !!(gig.ticketUrl || gig.instagramUrl)
 
           return (
             <motion.div key={gig.id} variants={item}>
               <div
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-2.5 py-2",
+                  "group flex items-center gap-3 rounded-xl px-2 py-2",
                   "border transition-colors duration-200",
                   isNext
                     ? "border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.05]"
@@ -93,7 +95,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                     : "border-transparent hover:bg-white/[0.025]",
                 )}
               >
-                {/* Date tile — primary temporal anchor, enlarged calendar object */}
+                {/* Date tile — primary temporal anchor */}
                 <div
                   className={cn(
                     "flex h-14 w-11 shrink-0 flex-col items-center justify-center rounded-lg border",
@@ -122,11 +124,11 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   </span>
                 </div>
 
-                {/* Content stack: venue → location → micro-action links */}
+                {/* Content: event name + location */}
                 <div className="min-w-0 flex-1">
                   <p
                     className={cn(
-                      "truncate text-[13px] font-semibold leading-tight",
+                      "truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.06em]",
                       isPast ? "text-foreground/30" : "text-foreground/85",
                     )}
                   >
@@ -136,75 +138,52 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   {(gig.city || gig.country) && (
                     <p
                       className={cn(
-                        "mt-1 truncate text-[10px] font-medium uppercase tracking-[0.08em]",
-                        isPast ? "text-foreground/14" : "text-foreground/30",
+                        "mt-0.5 truncate text-xs font-medium uppercase tracking-[0.08em]",
+                        isPast ? "text-white/14" : "text-white/55",
                       )}
                     >
                       {gig.city}
                       {gig.city && gig.country && (
-                        <span className="mx-1 opacity-40">·</span>
+                        <span className="mx-1 opacity-50">·</span>
                       )}
                       {gig.country}
                     </p>
                   )}
-
-                  {/* Micro-action links — editorial utility links, not buttons */}
-                  {(gig.ticketUrl || gig.flyerUrl || gig.instagramUrl) && (
-                    <div className="mt-1.5 flex items-center gap-3">
-                      {gig.ticketUrl && (
-                        <a
-                          href={gig.ticketUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "inline-flex items-center gap-1 transition-colors duration-200",
-                            "text-[10px] tracking-[0.08em]",
-                            isPast
-                              ? "text-foreground/14 hover:text-foreground/30"
-                              : "text-foreground/40 hover:text-accent/80",
-                          )}
-                        >
-                          Tickets
-                          <ExternalLink className="h-2 w-2 opacity-70" />
-                        </a>
-                      )}
-                      {gig.flyerUrl && (
-                        <a
-                          href={gig.flyerUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "inline-flex items-center gap-1 transition-colors duration-200",
-                            "text-[10px] tracking-[0.08em]",
-                            isPast
-                              ? "text-foreground/14 hover:text-foreground/30"
-                              : "text-foreground/40 hover:text-accent/80",
-                          )}
-                        >
-                          Flyer
-                          <ExternalLink className="h-2 w-2 opacity-70" />
-                        </a>
-                      )}
-                      {gig.instagramUrl && (
-                        <a
-                          href={gig.instagramUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "inline-flex items-center gap-1 transition-colors duration-200",
-                            "text-[10px] tracking-[0.08em]",
-                            isPast
-                              ? "text-foreground/14 hover:text-foreground/30"
-                              : "text-foreground/40 hover:text-accent/80",
-                          )}
-                        >
-                          Instagram
-                          <ExternalLink className="h-2 w-2 opacity-70" />
-                        </a>
-                      )}
-                    </div>
-                  )}
                 </div>
+
+                {/* Icon actions — right-aligned, only rendered when links exist */}
+                {hasActions && (
+                  <div className="flex shrink-0 items-center">
+                    {gig.ticketUrl && (
+                      <a
+                        href={gig.ticketUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Tickets"
+                        className={cn(
+                          iconLinkClass,
+                          isPast && "text-white/20 hover:text-white/40",
+                        )}
+                      >
+                        <Ticket className="h-4 w-4" />
+                      </a>
+                    )}
+                    {gig.instagramUrl && (
+                      <a
+                        href={gig.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Instagram"
+                        className={cn(
+                          iconLinkClass,
+                          isPast && "text-white/20 hover:text-white/40",
+                        )}
+                      >
+                        <Instagram className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           )

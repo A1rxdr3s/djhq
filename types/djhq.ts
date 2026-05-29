@@ -39,6 +39,12 @@ export type HeroLogoPlacement = "editorial" | "top_center" | "center" | "custom"
 export type HeroContentWidth = "compact" | "standard" | "wide"
 
 /**
+ * Curated accent color theme for the artist profile.
+ * Controls the primary accent CSS variable used throughout the profile.
+ */
+export type ArtistAccentTheme = "matrix" | "electric_blue" | "signal_red"
+
+/**
  * Hero logo position relative to artist name text.
  * Only applies when a logo is uploaded and identity mode includes logo.
  */
@@ -393,6 +399,8 @@ export interface Artist {
   heroLogoPlacement?: HeroLogoPlacement
   /** Max-width of the hero text content block. Pro only. */
   heroContentWidth?: HeroContentWidth
+  /** Curated accent color theme. Pro only. */
+  accentTheme?: ArtistAccentTheme
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */
