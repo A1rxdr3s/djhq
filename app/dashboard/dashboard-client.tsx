@@ -76,10 +76,11 @@ type FeaturedReleaseFormState = {
 type SelectedReleaseFormState = FeaturedReleaseFormState & {
   id: string
   spotifyUrl: string
-  beatportUrl: string
   appleMusicUrl: string
   soundcloudUrl: string
   youtubeMusicUrl: string
+  beatportUrl: string
+  traxsourceUrl: string
   bandcampUrl: string
   otherUrl: string
   releaseType: string
@@ -278,10 +279,11 @@ function getSelectedReleaseFormState(artist: Artist): SelectedReleaseFormState[]
       platformUrl: release.platformUrl,
       artworkUrl: release.artworkUrl,
       spotifyUrl: release.spotifyUrl ?? "",
-      beatportUrl: release.beatportUrl ?? "",
       appleMusicUrl: release.appleMusicUrl ?? "",
       soundcloudUrl: release.soundcloudUrl ?? "",
       youtubeMusicUrl: release.youtubeMusicUrl ?? "",
+      beatportUrl: release.beatportUrl ?? "",
+      traxsourceUrl: release.traxsourceUrl ?? "",
       bandcampUrl: release.bandcampUrl ?? "",
       otherUrl: release.otherUrl ?? "",
       releaseType: release.releaseType ?? "",
@@ -303,10 +305,11 @@ function createEmptySelectedRelease(): SelectedReleaseFormState {
     platformUrl: "",
     artworkUrl: "",
     spotifyUrl: "",
-    beatportUrl: "",
     appleMusicUrl: "",
     soundcloudUrl: "",
     youtubeMusicUrl: "",
+    beatportUrl: "",
+    traxsourceUrl: "",
     bandcampUrl: "",
     otherUrl: "",
     releaseType: "",
@@ -784,10 +787,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           platformUrl: r.platformUrl,
           artworkUrl: r.artworkUrl,
           spotifyUrl: r.spotifyUrl,
-          beatportUrl: r.beatportUrl,
           appleMusicUrl: r.appleMusicUrl,
           soundcloudUrl: r.soundcloudUrl,
           youtubeMusicUrl: r.youtubeMusicUrl,
+          beatportUrl: r.beatportUrl,
+          traxsourceUrl: r.traxsourceUrl,
           bandcampUrl: r.bandcampUrl,
           otherUrl: r.otherUrl,
           releaseType: r.releaseType || undefined,
@@ -870,10 +874,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         platformUrl: release.platformUrl.trim(),
         type: normalizeReleaseType(release.type),
         spotifyUrl: release.spotifyUrl?.trim() || undefined,
-        beatportUrl: release.beatportUrl?.trim() || undefined,
         appleMusicUrl: release.appleMusicUrl?.trim() || undefined,
         soundcloudUrl: release.soundcloudUrl?.trim() || undefined,
         youtubeMusicUrl: release.youtubeMusicUrl?.trim() || undefined,
+        beatportUrl: release.beatportUrl?.trim() || undefined,
+        traxsourceUrl: release.traxsourceUrl?.trim() || undefined,
         bandcampUrl: release.bandcampUrl?.trim() || undefined,
         otherUrl: release.otherUrl?.trim() || undefined,
         releaseType: release.releaseType || undefined,
@@ -1107,20 +1112,34 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         current.map((item, itemIndex) => {
           if (itemIndex !== index) return item
           const merged = mergeImportedReleaseFields(item, result)
+
+          // Populate platform-specific URL from the import provider (never overwrite existing)
+          const platformPatch: Partial<SelectedReleaseFormState> = {}
+          if (result.provider === "spotify" && !merged.spotifyUrl) {
+            platformPatch.spotifyUrl = result.platformUrl
+          } else if (result.provider === "beatport" && !merged.beatportUrl) {
+            platformPatch.beatportUrl = result.platformUrl
+          } else if (result.provider === "soundcloud" && !merged.soundcloudUrl) {
+            platformPatch.soundcloudUrl = result.platformUrl
+          }
+
+          // Version / remix detection
           if (!merged.versionType && result.title) {
             const { versionType: detectedType, remixer: detectedRemixer } = detectRemixFromTitle(result.title)
             if (detectedType) {
               return {
                 ...merged,
+                ...platformPatch,
                 versionType: detectedType,
                 customVersionType: "",
                 remixer: merged.remixer || detectedRemixer || "",
               }
             }
             const inferred = inferVersionType(result.title)
-            if (inferred) return { ...merged, versionType: inferred, customVersionType: "" }
+            if (inferred) return { ...merged, ...platformPatch, versionType: inferred, customVersionType: "" }
           }
-          return merged
+
+          return { ...merged, ...platformPatch }
         }),
       )
       setSaveMessage("Release metadata imported. Review and save changes.")
@@ -2762,11 +2781,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     htmlFor={`selected-release-platform-${index}`}
                     className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
-                    Platform URL
+                    Primary URL / Legacy URL
                   </label>
                   <Input
                     id={`selected-release-platform-${index}`}
                     value={release.platformUrl}
+                    placeholder="https://..."
                     onChange={(event) =>
                       setSelectedReleases((current) =>
                         current.map((item, itemIndex) =>
@@ -2775,6 +2795,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       )
                     }
                   />
+                  <p className="text-[10px] text-muted-foreground/35">
+                    Fallback when no platform-specific links are configured below.
+                  </p>
                   <Button
                     type="button"
                     variant="outline"
@@ -2817,19 +2840,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       Platform Links
                     </p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground/35">
-                      Shown as small badges on your profile. Leave blank to omit. If none are set, the primary URL above is used.
+                      Only configured platforms appear in the Listen Now panel.
                     </p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {(
                       [
-                        { key: "spotifyUrl", label: "Spotify" },
-                        { key: "beatportUrl", label: "Beatport" },
-                        { key: "appleMusicUrl", label: "Apple Music" },
-                        { key: "soundcloudUrl", label: "SoundCloud" },
+                        { key: "spotifyUrl",      label: "Spotify" },
+                        { key: "appleMusicUrl",   label: "Apple Music" },
+                        { key: "soundcloudUrl",   label: "SoundCloud" },
                         { key: "youtubeMusicUrl", label: "YouTube Music" },
-                        { key: "bandcampUrl", label: "Bandcamp" },
-                        { key: "otherUrl", label: "Other" },
+                        { key: "beatportUrl",     label: "Beatport" },
+                        { key: "traxsourceUrl",   label: "Traxsource" },
+                        { key: "bandcampUrl",     label: "Bandcamp" },
+                        { key: "otherUrl",        label: "Other" },
                       ] as const
                     ).map(({ key, label }) => (
                       <div key={key} className="space-y-1">

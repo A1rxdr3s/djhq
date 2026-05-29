@@ -99,12 +99,16 @@ type ReleaseRow = {
   type: string
   is_featured: boolean
   spotify_url: string | null
-  beatport_url: string | null
   apple_music_url: string | null
   soundcloud_url: string | null
   youtube_music_url: string | null
+  beatport_url: string | null
+  traxsource_url: string | null
   bandcamp_url: string | null
   other_url: string | null
+  release_type: string | null
+  version_type: string | null
+  remixer: string | null
 }
 
 type DjSetRow = {
@@ -230,12 +234,16 @@ function mapReleaseRow(row: ReleaseRow): Release {
     platformUrl: row.platform_url,
     type: normalizeReleaseType(row.type),
     spotifyUrl: row.spotify_url ?? undefined,
-    beatportUrl: row.beatport_url ?? undefined,
     appleMusicUrl: row.apple_music_url ?? undefined,
     soundcloudUrl: row.soundcloud_url ?? undefined,
     youtubeMusicUrl: row.youtube_music_url ?? undefined,
+    beatportUrl: row.beatport_url ?? undefined,
+    traxsourceUrl: row.traxsource_url ?? undefined,
     bandcampUrl: row.bandcamp_url ?? undefined,
     otherUrl: row.other_url ?? undefined,
+    releaseType: row.release_type ?? undefined,
+    versionType: row.version_type ?? undefined,
+    remixer: row.remixer ?? undefined,
   }
 }
 
@@ -335,7 +343,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<SocialLinkRow[]>(),
       supabase
         .from("releases")
-        .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url, bandcamp_url, other_url")
+        .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, apple_music_url, soundcloud_url, youtube_music_url, beatport_url, traxsource_url, bandcamp_url, other_url, release_type, version_type, remixer")
         .eq("artist_id", artistRow.id)
         .order("sort_order", { ascending: true })
         .order("release_date", { ascending: false })
@@ -918,31 +926,24 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             {release.credits}
                           </p>
                         ) : null}
-                        {/* Release type + version metadata */}
+                        {/* Editorial metadata: release type · version */}
                         {(() => {
-                          const releaseTypeLabel = release.releaseType
+                          const typeLabel = release.releaseType
                             ? (RELEASE_TYPE_LABELS[release.releaseType] ?? null)
                             : null
                           const isRemixVersion = release.versionType === "remix" || (!release.versionType && isRemix)
                           const versionLabel = release.versionType
                             ? (VERSION_TYPE_LABELS[release.versionType] ?? release.versionType)
                             : (isRemix ? "Remix" : null)
-                          const remixChip = isRemixVersion && release.remixer
+                          const versionDisplay = isRemixVersion && release.remixer
                             ? `Remix by ${release.remixer}`
                             : versionLabel
-                          const parts = [releaseTypeLabel, remixChip].filter(Boolean)
+                          const parts = [typeLabel, versionDisplay].filter(Boolean)
                           if (parts.length === 0) return null
                           return (
-                            <div className="mt-1.5 flex flex-wrap gap-1">
-                              {parts.map((part) => (
-                                <span
-                                  key={part}
-                                  className="inline-flex items-center rounded border border-white/[0.10] bg-white/[0.02] px-1.5 py-px text-[7px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70"
-                                >
-                                  {part}
-                                </span>
-                              ))}
-                            </div>
+                            <p className="mt-1 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/55">
+                              {parts.join(" · ")}
+                            </p>
                           )
                         })()}
                         {/* Label — own line */}

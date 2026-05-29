@@ -139,6 +139,8 @@ export interface Release {
   youtubeMusicUrl?: string
   /** Optional Bandcamp URL. */
   bandcampUrl?: string
+  /** Optional Traxsource URL. */
+  traxsourceUrl?: string
   /** Optional other/generic URL. */
   otherUrl?: string
   /** Comprehensive release format: single | ep | album | compilation | va | other. */

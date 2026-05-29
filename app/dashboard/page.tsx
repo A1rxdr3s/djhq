@@ -62,6 +62,7 @@ type ReleaseRow = {
   soundcloud_url: string | null
   youtube_music_url: string | null
   bandcamp_url: string | null
+  traxsource_url: string | null
   other_url: string | null
   release_type: string | null
   version_type: string | null
@@ -235,7 +236,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<SocialLinkRow[]>(),
     supabase
       .from("releases")
-      .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url, bandcamp_url, other_url, release_type, version_type, remixer")
+      .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url, bandcamp_url, traxsource_url, other_url, release_type, version_type, remixer")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .order("release_date", { ascending: false })
@@ -327,6 +328,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       soundcloudUrl: release.soundcloud_url ?? undefined,
       youtubeMusicUrl: release.youtube_music_url ?? undefined,
       bandcampUrl: release.bandcamp_url ?? undefined,
+      traxsourceUrl: release.traxsource_url ?? undefined,
       otherUrl: release.other_url ?? undefined,
       releaseType: release.release_type ?? undefined,
       versionType: release.version_type ?? undefined,

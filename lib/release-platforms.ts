@@ -8,24 +8,27 @@ export type PlatformLink = {
 }
 
 function detectPlatform(hostname: string): { badge: string; name: string; action: string } {
-  if (/spotify/i.test(hostname)) return { badge: "SP", name: "Spotify", action: "Play" }
-  if (/beatport/i.test(hostname)) return { badge: "BP", name: "Beatport", action: "Buy" }
-  if (/apple/i.test(hostname)) return { badge: "AM", name: "Apple Music", action: "Play" }
-  if (/soundcloud/i.test(hostname)) return { badge: "SC", name: "SoundCloud", action: "Play" }
+  if (/spotify/i.test(hostname))        return { badge: "SP", name: "Spotify",        action: "Play" }
+  if (/apple/i.test(hostname))          return { badge: "AM", name: "Apple Music",    action: "Play" }
+  if (/soundcloud/i.test(hostname))     return { badge: "SC", name: "SoundCloud",     action: "Play" }
   if (/youtube|youtu\.be/i.test(hostname)) return { badge: "YM", name: "YouTube Music", action: "Play" }
-  if (/bandcamp/i.test(hostname)) return { badge: "BC", name: "Bandcamp", action: "Buy" }
+  if (/beatport/i.test(hostname))       return { badge: "BP", name: "Beatport",       action: "Buy"  }
+  if (/traxsource/i.test(hostname))     return { badge: "TX", name: "Traxsource",     action: "Buy"  }
+  if (/bandcamp/i.test(hostname))       return { badge: "BC", name: "Bandcamp",       action: "Buy"  }
   return { badge: "↗", name: "Other", action: "Open" }
 }
 
+// Order: streaming (Play) first, then stores (Buy), then Other.
 export function getReleasePlatformLinks(release: Release): PlatformLink[] {
   const links: PlatformLink[] = []
-  if (release.spotifyUrl) links.push({ url: release.spotifyUrl, badge: "SP", name: "Spotify", action: "Play" })
-  if (release.beatportUrl) links.push({ url: release.beatportUrl, badge: "BP", name: "Beatport", action: "Buy" })
-  if (release.appleMusicUrl) links.push({ url: release.appleMusicUrl, badge: "AM", name: "Apple Music", action: "Play" })
-  if (release.soundcloudUrl) links.push({ url: release.soundcloudUrl, badge: "SC", name: "SoundCloud", action: "Play" })
-  if (release.youtubeMusicUrl) links.push({ url: release.youtubeMusicUrl, badge: "YM", name: "YouTube Music", action: "Play" })
-  if (release.bandcampUrl) links.push({ url: release.bandcampUrl, badge: "BC", name: "Bandcamp", action: "Buy" })
-  if (release.otherUrl) links.push({ url: release.otherUrl, badge: "↗", name: "Other", action: "Open" })
+  if (release.spotifyUrl)      links.push({ url: release.spotifyUrl,      badge: "SP", name: "Spotify",        action: "Play" })
+  if (release.appleMusicUrl)   links.push({ url: release.appleMusicUrl,   badge: "AM", name: "Apple Music",    action: "Play" })
+  if (release.soundcloudUrl)   links.push({ url: release.soundcloudUrl,   badge: "SC", name: "SoundCloud",     action: "Play" })
+  if (release.youtubeMusicUrl) links.push({ url: release.youtubeMusicUrl, badge: "YM", name: "YouTube Music",  action: "Play" })
+  if (release.beatportUrl)     links.push({ url: release.beatportUrl,     badge: "BP", name: "Beatport",       action: "Buy"  })
+  if (release.traxsourceUrl)   links.push({ url: release.traxsourceUrl,   badge: "TX", name: "Traxsource",     action: "Buy"  })
+  if (release.bandcampUrl)     links.push({ url: release.bandcampUrl,     badge: "BC", name: "Bandcamp",       action: "Buy"  })
+  if (release.otherUrl)        links.push({ url: release.otherUrl,        badge: "↗",  name: "Other",          action: "Open" })
   if (links.length > 0) return links
 
   if (release.platformUrl) {

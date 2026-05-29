@@ -51,6 +51,7 @@ type SaveSelectedReleasePayload = {
   soundcloudUrl?: string
   youtubeMusicUrl?: string
   bandcampUrl?: string
+  traxsourceUrl?: string
   otherUrl?: string
   releaseType?: string
   versionType?: string
@@ -492,6 +493,7 @@ export async function PATCH(request: Request) {
           soundcloud_url: release.soundcloudUrl?.trim() || null,
           youtube_music_url: release.youtubeMusicUrl?.trim() || null,
           bandcamp_url: release.bandcampUrl?.trim() || null,
+          traxsource_url: release.traxsourceUrl?.trim() || null,
           other_url: release.otherUrl?.trim() || null,
           release_type: release.releaseType?.trim() || null,
           version_type: release.versionType?.trim() || null,
