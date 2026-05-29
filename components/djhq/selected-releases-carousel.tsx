@@ -7,15 +7,6 @@ import type { Release } from "@/types/djhq"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { ReleaseListenPanel } from "@/components/release-listen-panel"
 
-function formatReleaseDateCatalog(releaseDate: string): string | null {
-  if (!releaseDate) return null
-  const date = new Date(releaseDate)
-  if (isNaN(date.getTime())) return null
-  return date
-    .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
-    .toUpperCase()
-}
-
 const VERSION_TYPE_LABELS: Record<string, string> = {
   original_mix: "Original Mix",
   extended_mix:  "Extended Mix",
@@ -154,8 +145,8 @@ export function SelectedReleasesCarousel({ releases }: Props) {
           const platformLinks = getReleasePlatformLinks(release)
           const hasArtwork = !!(release.artworkUrl?.trim())
           const isRemix = isReleaseRemix(release)
-          const catalogDate = formatReleaseDateCatalog(release.releaseDate)
           const isClone = i >= releases.length
+          const releaseYear = release.releaseDate?.slice(0, 4) ?? null
 
           // Badge: type + version
           const typeLabel = release.releaseType ? (RELEASE_TYPE_LABELS[release.releaseType] ?? null) : null

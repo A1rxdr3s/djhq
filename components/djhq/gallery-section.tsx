@@ -6,9 +6,10 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { GalleryImage } from "@/types/djhq"
 
-const ROTATION_MS  = 6_000  // interval between rotations
-const FADE_MS      = 700    // opacity + scale transition duration per slot
-const STAGGER_MS   = [0, 120, 240] // slot 0 → 1 → 2 stagger
+const ROTATION_MS = 6_000
+const FADE_MS     = 900
+// Slot stagger delays: featured → top-right → bottom-right
+const STAGGER_MS  = [0, 150, 300] as const
 
 interface GallerySectionProps {
   images: GalleryImage[]
@@ -18,21 +19,31 @@ export function GallerySection({ images }: GallerySectionProps) {
   // ── Lightbox ──────────────────────────────────────────────────────────────
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  // ── Rotation ──────────────────────────────────────────────────────────────
-  // displayedOffset: the settled, fully-visible set of images
-  // incomingOffset:  the arriving set (non-null only during the transition window)
-  // isEntering:      true = transition is live (CSS fires); false = idle or pre-paint
-  const [displayedOffset, setDisplayedOffset] = useState(0)
-  const [incomingOffset,  setIncomingOffset]  = useState<number | null>(null)
-  const [isEntering,      setIsEntering]      = useState(false)
+  // ── Double-buffer rotation ────────────────────────────────────────────────
+  //
+  // Two layers (A and B) are permanently in the DOM per slot — never mounted
+  // or unmounted.  Only their opacity flips, so no grey background can appear
+  // between unmount and the browser painting the new image.
+  //
+  // layerAOffset / layerBOffset: which image from `images` each layer shows.
+  // frontIsA:   true  → Layer A visible (opacity 1), Layer B preloading (opacity 0)
+  //             false → Layer B visible (opacity 1), Layer A preloading (opacity 0)
+  // isTransitioning: enables CSS transitions; disabled at idle so settling
+  //                  snaps instantly without animating.
+  const [layerAOffset,    setLayerAOffset]    = useState(0)
+  const [layerBOffset,    setLayerBOffset]    = useState(() => Math.min(1, images.length - 1))
+  const [frontIsA,        setFrontIsA]        = useState(true)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
-  // Refs used inside setInterval / rAF to avoid stale closures
-  const pausedRef         = useRef(false)
-  const activeIndexRef    = useRef<number | null>(null)
-  const currentOffsetRef  = useRef(0)
+  // Refs used inside timers/rAF to avoid stale-closure bugs
+  const pausedRef       = useRef(false)
+  const activeIndexRef  = useRef<number | null>(null)
+  const layerAOffsetRef = useRef(0)
+  const layerBOffsetRef = useRef(Math.min(1, images.length - 1))
+  const frontIsARef     = useRef(true)
+  const settleTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => { activeIndexRef.current   = activeIndex      }, [activeIndex])
-  useEffect(() => { currentOffsetRef.current = displayedOffset  }, [displayedOffset])
+  useEffect(() => { activeIndexRef.current = activeIndex }, [activeIndex])
 
   // ── Lightbox callbacks ────────────────────────────────────────────────────
   const close = useCallback(() => setActiveIndex(null), [])
@@ -50,7 +61,7 @@ export function GallerySection({ images }: GallerySectionProps) {
   useEffect(() => {
     if (activeIndex === null) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape")      close()
+      if (e.key === "Escape")          close()
       else if (e.key === "ArrowLeft")  prev()
       else if (e.key === "ArrowRight") next()
     }
@@ -67,45 +78,54 @@ export function GallerySection({ images }: GallerySectionProps) {
   useEffect(() => {
     if (images.length <= 3) return
 
-    let settleTimer: ReturnType<typeof setTimeout> | null = null
-    let raf1 = 0
-    let raf2 = 0
-
     const interval = setInterval(() => {
-      // Skip if hovered, lightbox open, or a transition is already in flight
-      if (pausedRef.current || activeIndexRef.current !== null || settleTimer !== null) return
+      if (
+        pausedRef.current          ||
+        activeIndexRef.current !== null ||
+        settleTimerRef.current !== null
+      ) return
 
-      const incoming = (currentOffsetRef.current + 1) % images.length
-      setIncomingOffset(incoming)
+      // Step 1 — enable CSS transitions (layers are still at their current values).
+      setIsTransitioning(true)
 
-      // Two rAFs guarantee the browser has painted the incoming layer at opacity:0
-      // before we flip isEntering, so the CSS transition sees a real 0→1 change.
-      raf1 = requestAnimationFrame(() => {
-        raf2 = requestAnimationFrame(() => {
-          setIsEntering(true)
+      // Step 2 — one rAF later, flip which layer is front.  The browser has now
+      // committed render-1 (transitions on, values unchanged), so it has a valid
+      // "from" state and will animate the property change in render-2.
+      requestAnimationFrame(() => {
+        const nextFrontIsA = !frontIsARef.current
+        setFrontIsA(nextFrontIsA)
+        frontIsARef.current = nextFrontIsA
 
-          // Wait for the slowest slot to finish, then settle state
-          settleTimer = setTimeout(() => {
-            settleTimer = null
-            // All three sets are batched into one React render (React 18)
-            setDisplayedOffset(incoming)
-            setIncomingOffset(null)
-            setIsEntering(false)
-            currentOffsetRef.current = incoming
-          }, STAGGER_MS[2] + FADE_MS + 80)
-        })
+        // Step 3 — after every staggered slot has finished, settle.
+        settleTimerRef.current = setTimeout(() => {
+          settleTimerRef.current = null
+
+          // Disable transitions BEFORE updating the offset of the now-back layer
+          // so the image-source swap is invisible (layer is at opacity 0).
+          setIsTransitioning(false)
+
+          if (nextFrontIsA) {
+            // Layer A came to front → Layer B is now back → update B to preload next
+            const newB = (layerAOffsetRef.current + 1) % images.length
+            setLayerBOffset(newB)
+            layerBOffsetRef.current = newB
+          } else {
+            // Layer B came to front → Layer A is now back → update A to preload next
+            const newA = (layerBOffsetRef.current + 1) % images.length
+            setLayerAOffset(newA)
+            layerAOffsetRef.current = newA
+          }
+        }, STAGGER_MS[2] + FADE_MS + 80)
       })
     }, ROTATION_MS)
 
     return () => {
       clearInterval(interval)
-      if (settleTimer) clearTimeout(settleTimer)
-      cancelAnimationFrame(raf1)
-      cancelAnimationFrame(raf2)
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
     }
   }, [images.length])
 
-  // ── Derived render values ─────────────────────────────────────────────────
+  // ── Derived ───────────────────────────────────────────────────────────────
   const numSlots   = Math.min(images.length, 3)
   const activePhoto = activeIndex !== null ? images[activeIndex] : null
 
@@ -120,27 +140,49 @@ export function GallerySection({ images }: GallerySectionProps) {
         onMouseLeave={() => { pausedRef.current = false }}
       >
         {Array.from({ length: numSlots }, (_, slot) => {
-          const displayedPhoto = images[(displayedOffset + slot) % images.length]
-          const incomingPhoto  = incomingOffset !== null
-            ? images[(incomingOffset + slot) % images.length]
-            : null
+          const photoA = images[(layerAOffset + slot) % images.length]
+          const photoB = images[(layerBOffset + slot) % images.length]
+
+          // Layer A is front when frontIsA; Layer B is front otherwise.
+          // Front  layer: opacity 1, scale(1)
+          // Back   layer: opacity 0, scale(0.99) — invisible but preloading
+          //   → when it comes to front it zooms in from 0.99 → 1 (subtle)
+          //   → when it goes to back it zooms out from 1 → 0.99 (subtle)
 
           const delay = STAGGER_MS[slot]
-
-          // During a live transition, clicking opens the arriving image
-          const lightboxIndex = isEntering && incomingOffset !== null
-            ? (incomingOffset  + slot) % images.length
-            : (displayedOffset + slot) % images.length
-
-          // Only animate when a transition is active; snap instantly when settling
-          const transitionValue = isEntering || incomingOffset !== null
+          const transitionCSS = isTransitioning
             ? `opacity ${FADE_MS}ms ease-in-out ${delay}ms, transform ${FADE_MS}ms ease-in-out ${delay}ms`
             : "none"
 
+          const layerAStyle: React.CSSProperties = {
+            position:   "absolute",
+            inset:      0,
+            opacity:    frontIsA ? 1 : 0,
+            transform:  frontIsA ? "scale(1)" : "scale(0.99)",
+            transition: transitionCSS,
+            zIndex:     frontIsA ? 1 : 0,
+          }
+          const layerBStyle: React.CSSProperties = {
+            position:   "absolute",
+            inset:      0,
+            opacity:    frontIsA ? 0 : 1,
+            transform:  frontIsA ? "scale(0.99)" : "scale(1)",
+            transition: transitionCSS,
+            zIndex:     frontIsA ? 0 : 1,
+          }
+
+          // Open the image the user actually sees (front layer).
+          const frontOffset    = frontIsA ? layerAOffset : layerBOffset
+          const lightboxIndex  = (frontOffset + slot) % images.length
+
+          const sizesAttr = slot === 0
+            ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
+            : "(min-width: 1024px) 450px, (min-width: 768px) 37vw, 40vw"
+
           return (
             <button
-              // key by slot index — keeps the DOM node stable across rotations
-              // so the CSS transition fires in-place rather than on mount/unmount
+              // Keyed by slot — DOM node is STABLE across rotations.
+              // No remount means no grey-flash between unmount and image paint.
               key={slot}
               type="button"
               onClick={() => setActiveIndex(lightboxIndex)}
@@ -154,62 +196,39 @@ export function GallerySection({ images }: GallerySectionProps) {
                   : "col-span-1 aspect-[4/3] rounded-xl shadow-sm shadow-black/20 lg:aspect-auto",
               )}
             >
-              {/* ── Outgoing image layer ── */}
-              {/* Always present; opacity 1 when idle → 0 when entering */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  opacity:    isEntering ? 0 : 1,
-                  transform:  isEntering ? "scale(0.985)" : "scale(1)",
-                  transition: transitionValue,
-                }}
-              >
+              {/* ── Layer A — always in the DOM ── */}
+              <div style={layerAStyle}>
                 <Image
-                  src={displayedPhoto.imageUrl}
-                  alt={displayedPhoto.altText}
+                  src={photoA.imageUrl}
+                  alt={photoA.altText}
                   fill
                   loading="eager"
-                  sizes={
-                    slot === 0
-                      ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
-                      : "(min-width: 1024px) 450px, (min-width: 768px) 37vw, 40vw"
-                  }
+                  sizes={sizesAttr}
                   className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                  style={{ objectPosition: `${displayedPhoto.focalX ?? 50}% ${displayedPhoto.focalY ?? 50}%` }}
+                  style={{ objectPosition: `${photoA.focalX ?? 50}% ${photoA.focalY ?? 50}%` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
               </div>
 
-              {/* ── Incoming image layer ── */}
-              {/* Mounted at opacity 0 before entering, fades to 1 when entering */}
-              {incomingPhoto !== null && (
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    opacity:    isEntering ? 1 : 0,
-                    transform:  isEntering ? "scale(1)" : "scale(1.015)",
-                    transition: `opacity ${FADE_MS}ms ease-in-out ${delay}ms, transform ${FADE_MS}ms ease-in-out ${delay}ms`,
-                  }}
-                >
-                  <Image
-                    src={incomingPhoto.imageUrl}
-                    alt={incomingPhoto.altText}
-                    fill
-                    sizes={
-                      slot === 0
-                        ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
-                        : "(min-width: 1024px) 450px, (min-width: 768px) 37vw, 40vw"
-                    }
-                    className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                    style={{ objectPosition: `${incomingPhoto.focalX ?? 50}% ${incomingPhoto.focalY ?? 50}%` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
-                </div>
-              )}
+              {/* ── Layer B — always in the DOM ── */}
+              <div style={layerBStyle}>
+                <Image
+                  src={photoB.imageUrl}
+                  alt={photoB.altText}
+                  fill
+                  loading="eager"
+                  sizes={sizesAttr}
+                  className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                  style={{ objectPosition: `${photoB.focalX ?? 50}% ${photoB.focalY ?? 50}%` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
+              </div>
 
-              {/* ── Hover overlay ── */}
-              {/* DOM-last so it always paints above both image layers */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-150 group-hover:bg-black/45 group-hover:opacity-100">
+              {/* ── Hover overlay — always above both image layers ── */}
+              <div
+                className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-150 group-hover:bg-black/45 group-hover:opacity-100"
+                style={{ zIndex: 10 }}
+              >
                 <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/87">
                   View Photo ↗
                 </span>
