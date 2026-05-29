@@ -82,6 +82,8 @@ type GigFormState = {
   city: string
   country: string
   ticketUrl?: string
+  flyerUrl?: string
+  instagramUrl?: string
   feeAmount?: number | null
   feeCurrency?: string | null
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
@@ -120,6 +122,7 @@ type VideoFormState = {
   venue: string
   videoDate: string
   thumbnailUrl: string
+  customThumbnailUrl: string | null
   platformUrl: string
   isPublished: boolean
 }
@@ -259,6 +262,8 @@ function getGigFormState(artist: Artist): GigFormState[] {
       city: gig.city,
       country: gig.country,
       ticketUrl: gig.ticketUrl,
+      flyerUrl: gig.flyerUrl,
+      instagramUrl: gig.instagramUrl,
       feeAmount: gig.feeAmount ?? null,
       feeCurrency: gig.feeCurrency ?? null,
       paymentStatus: gig.paymentStatus ?? null,
@@ -297,6 +302,7 @@ function getVideoFormState(artist: Artist): VideoFormState[] {
     venue: video.venue ?? "",
     videoDate: video.videoDate ? toDateInputValue(video.videoDate) : "",
     thumbnailUrl: video.thumbnailUrl ?? "",
+    customThumbnailUrl: video.customThumbnailUrl ?? null,
     platformUrl: video.platformUrl,
     isPublished: video.isPublished,
   }))
@@ -309,9 +315,78 @@ function createEmptyVideo(): VideoFormState {
     venue: "",
     videoDate: "",
     thumbnailUrl: "",
+    customThumbnailUrl: null,
     platformUrl: "",
     isPublished: true,
   }
+}
+
+// Parses a JSON response safely — validates content-type before calling .json()
+// to avoid "Unexpected token" errors when servers return HTML (e.g. Vercel 413 pages).
+async function parseJsonResponse<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get("content-type") ?? ""
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      response.status === 413
+        ? "Image too large for upload. Please use a smaller file."
+        : `Server error (${response.status}). Please try again.`,
+    )
+  }
+  return response.json() as Promise<T>
+}
+
+// Resizes and re-encodes a File to WebP (JPEG fallback) at max 2400×2400, quality 0.84.
+function compressHeroImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new globalThis.Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      const MAX = 2400
+      let { width, height } = img
+      if (width > MAX || height > MAX) {
+        if (width >= height) {
+          height = Math.round((height * MAX) / width)
+          width = MAX
+        } else {
+          width = Math.round((width * MAX) / height)
+          height = MAX
+        }
+      }
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext("2d")
+      if (!ctx) {
+        reject(new Error("Canvas unavailable."))
+        return
+      }
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (webpBlob) => {
+          if (webpBlob) {
+            resolve(webpBlob)
+            return
+          }
+          canvas.toBlob(
+            (jpegBlob) => {
+              if (jpegBlob) resolve(jpegBlob)
+              else reject(new Error("Image processing failed."))
+            },
+            "image/jpeg",
+            0.84,
+          )
+        },
+        "image/webp",
+        0.84,
+      )
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("Image processing failed."))
+    }
+    img.src = objectUrl
+  })
 }
 
 function getArtistInitialsPreview(artistName: string): string {
@@ -478,8 +553,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [importingSelectedReleaseIndex, setImportingSelectedReleaseIndex] = useState<number | null>(null)
   const [importingDjSetIndex, setImportingDjSetIndex] = useState<number | null>(null)
   const [importingVideoIndex, setImportingVideoIndex] = useState<number | null>(null)
+  const [uploadingVideoThumbnailIndex, setUploadingVideoThumbnailIndex] = useState<number | null>(null)
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
-  const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false)
+  const [heroUploadStatus, setHeroUploadStatus] = useState<"idle" | "compressing" | "uploading">("idle")
+  const isUploadingHeroImage = heroUploadStatus !== "idle"
   const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
   const [galleryImageFile, setGalleryImageFile] = useState<File | null>(null)
   const [galleryImageAltText, setGalleryImageAltText] = useState("")
@@ -487,6 +564,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
   const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
   const [isReorderingGallery, setIsReorderingGallery] = useState(false)
+  const [focalDirtyIds, setFocalDirtyIds] = useState<Set<string>>(new Set())
+  const [isSavingFocalPoints, setIsSavingFocalPoints] = useState(false)
+  const isGalleryFocalDirty = focalDirtyIds.size > 0
   const [savedRecently, setSavedRecently] = useState(false)
   const [customDomains, setCustomDomains] = useState(initialArtist.customDomains)
   const [domainInput, setDomainInput] = useState("")
@@ -519,7 +599,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     pressKitEnabled !== artist.pressKit.enabled ||
     pressKitUrl !== artist.pressKit.downloadUrl ||
     JSON.stringify(pressKitAssets) !== JSON.stringify(artist.pressKit.assetsIncluded)
-  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty
+  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isGalleryFocalDirty
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
@@ -615,6 +695,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         city: gig.city.trim(),
         country: gig.country.trim(),
         ticketUrl: gig.ticketUrl?.trim() || undefined,
+        flyerUrl: gig.flyerUrl?.trim() || undefined,
+        instagramUrl: gig.instagramUrl?.trim() || undefined,
         feeAmount: gig.feeAmount ?? null,
         feeCurrency: gig.feeCurrency?.trim() || null,
         paymentStatus: gig.paymentStatus ?? null,
@@ -635,6 +717,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         venue: video.venue.trim() || undefined,
         videoDate: video.videoDate || undefined,
         thumbnailUrl: video.thumbnailUrl.trim() || undefined,
+        customThumbnailUrl: video.customThumbnailUrl ?? null,
         platformUrl: video.platformUrl.trim(),
         sortOrder: index + 1,
         isPublished: video.isPublished,
@@ -668,7 +751,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setUpcomingGigs(getGigFormState(savedArtist))
     setDjSets(getDjSetFormState(savedArtist))
     setVideos(getVideoFormState(savedArtist))
-    setGalleryImages(savedArtist.galleryImages)
     setBookingEmail(savedArtist.bookingInfo.email)
     setBookingUrl(savedArtist.bookingInfo.bookingUrl ?? "")
     setPressKitEnabled(savedArtist.pressKit.enabled)
@@ -677,13 +759,44 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setSaveMessage(successMessage)
   }
 
+  async function saveFocalPoints(): Promise<void> {
+    if (focalDirtyIds.size === 0) return
+
+    setIsSavingFocalPoints(true)
+    const dirtyIds = [...focalDirtyIds]
+
+    const updates = dirtyIds.map((id) => {
+      const image = galleryImages.find((img) => img.id === id)
+      if (!image) return Promise.resolve()
+      return fetch("/api/artists/gallery-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artistId: artist.id,
+          galleryImageId: id,
+          focalX: image.focalX,
+          focalY: image.focalY,
+        }),
+      }).then((r) => {
+        if (!r.ok) throw new Error("Failed to save focal point.")
+      })
+    })
+
+    await Promise.all(updates)
+    setFocalDirtyIds(new Set())
+    setIsSavingFocalPoints(false)
+  }
+
   async function handleSaveChanges() {
     setIsSaving(true)
     setSavedRecently(false)
     setSaveMessage("")
 
     try {
-      await persistArtistChanges(artist.isPublished, "Changes saved.")
+      await Promise.all([
+        persistArtistChanges(artist.isPublished, "Changes saved."),
+        saveFocalPoints(),
+      ])
       setSavedRecently(true)
       setTimeout(() => setSavedRecently(false), 2500)
     } catch (error) {
@@ -919,6 +1032,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
+  async function handleUploadVideoThumbnail(index: number, file: File) {
+    const video = videos[index]
+    if (!video) return
+
+    setUploadingVideoThumbnailIndex(index)
+    setSaveMessage("")
+
+    try {
+      const compressedBlob = await compressGalleryImage(file)
+
+      const params = new URLSearchParams({ artistId: artist.id, videoId: video.id })
+      const signedUrlResponse = await fetch(`/api/artists/video-thumbnail?${params.toString()}`)
+      const signedUrlResult = await parseJsonResponse<{ error?: string; signedUrl?: string; token?: string; filePath?: string }>(signedUrlResponse)
+
+      if (!signedUrlResponse.ok || !signedUrlResult.signedUrl || !signedUrlResult.token || !signedUrlResult.filePath) {
+        throw new Error(signedUrlResult.error ?? "Unable to get upload URL.")
+      }
+
+      const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+      const { error: uploadError } = await supabaseClient.storage
+        .from("artist-gallery")
+        .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, compressedBlob, { contentType: "image/webp" })
+
+      if (uploadError) throw new Error(uploadError.message)
+
+      const { data: { publicUrl } } = supabaseClient.storage.from("artist-gallery").getPublicUrl(signedUrlResult.filePath)
+
+      setVideos((current) =>
+        current.map((item, i) => (i === index ? { ...item, customThumbnailUrl: publicUrl } : item)),
+      )
+      setSaveMessage("Custom thumbnail uploaded. Save to apply.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to upload thumbnail."
+      setSaveMessage(message)
+    } finally {
+      setUploadingVideoThumbnailIndex(null)
+    }
+  }
+
   function handleAddVideo() {
     setVideos((current) => [...current, createEmptyVideo()])
   }
@@ -948,38 +1100,66 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       return
     }
 
-    setIsUploadingHeroImage(true)
+    setHeroUploadStatus("compressing")
     setSaveMessage("")
 
     try {
-      const formData = new FormData()
-      formData.append("artistId", artist.id)
-      formData.append("file", heroImageFile)
+      // Step 1: compress client-side — large DSLR images are resized and re-encoded before upload.
+      const compressedBlob = await compressHeroImage(heroImageFile)
 
-      const response = await fetch("/api/artists/hero-image", {
-        method: "POST",
-        body: formData,
-      })
+      // Step 2: get a signed upload URL (lightweight JSON — no file bytes through Vercel).
+      setHeroUploadStatus("uploading")
+      const signedUrlParams = new URLSearchParams({ artistId: artist.id })
+      const signedUrlResponse = await fetch(`/api/artists/hero-image?${signedUrlParams.toString()}`)
+      const signedUrlResult = await parseJsonResponse<{
+        error?: string
+        signedUrl?: string
+        token?: string
+        filePath?: string
+      }>(signedUrlResponse)
 
-      const result = (await response.json()) as { error?: string; heroImageUrl?: string }
-
-      if (!response.ok || !result.heroImageUrl) {
-        throw new Error(result.error ?? "Unable to upload hero image.")
+      if (!signedUrlResponse.ok || !signedUrlResult.signedUrl || !signedUrlResult.token || !signedUrlResult.filePath) {
+        throw new Error(signedUrlResult.error ?? "Could not upload hero image.")
       }
 
-      setHeroImageUrl(result.heroImageUrl)
+      // Step 3: upload compressed blob directly to Supabase Storage — bypasses Vercel function limits.
+      const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+      const { error: uploadError } = await supabaseClient.storage
+        .from("artist-heroes")
+        .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, compressedBlob, {
+          contentType: compressedBlob.type || "image/webp",
+          upsert: true,
+        })
+
+      if (uploadError) throw new Error(uploadError.message)
+
+      // Step 4: register the uploaded path in the database (lightweight JSON).
+      const registerResponse = await fetch("/api/artists/hero-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artistId: artist.id, filePath: signedUrlResult.filePath }),
+      })
+      const registerResult = await parseJsonResponse<{ error?: string; heroImageUrl?: string }>(
+        registerResponse,
+      )
+
+      if (!registerResponse.ok || !registerResult.heroImageUrl) {
+        throw new Error(registerResult.error ?? "Could not upload hero image.")
+      }
+
+      setHeroImageUrl(registerResult.heroImageUrl)
       setArtist((current) => ({
         ...current,
-        heroImageUrl: result.heroImageUrl ?? current.heroImageUrl,
+        heroImageUrl: registerResult.heroImageUrl ?? current.heroImageUrl,
         updatedAt: new Date().toISOString(),
       }))
       setHeroImageFile(null)
       setSaveMessage("Hero image uploaded.")
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to upload hero image."
+      const message = error instanceof Error ? error.message : "Image upload failed. Please try again."
       setSaveMessage(message)
     } finally {
-      setIsUploadingHeroImage(false)
+      setHeroUploadStatus("idle")
     }
   }
 
@@ -1145,6 +1325,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     } finally {
       setDeletingGalleryImageId(null)
     }
+  }
+
+  function handleSetFocalPoint(imageId: string, event: React.MouseEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const focalX = Math.min(100, Math.max(0, Math.round(((event.clientX - rect.left) / rect.width) * 100)))
+    const focalY = Math.min(100, Math.max(0, Math.round(((event.clientY - rect.top) / rect.height) * 100)))
+    setGalleryImages((current) =>
+      current.map((img) => (img.id === imageId ? { ...img, focalX, focalY } : img)),
+    )
+    setFocalDirtyIds((current) => new Set([...current, imageId]))
   }
 
   async function handleReorderGalleryImage(currentIndex: number, direction: "up" | "down") {
@@ -1434,9 +1624,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 disabled={!heroImageFile || isUploadingHeroImage || isSaving || isPublishing}
                 className="bg-secondary text-foreground hover:bg-secondary/80"
               >
-                {isUploadingHeroImage ? "Uploading..." : "Upload hero image"}
+                {heroUploadStatus === "compressing"
+                  ? "Compressing..."
+                  : heroUploadStatus === "uploading"
+                    ? "Uploading..."
+                    : "Upload hero image"}
               </Button>
-              <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
+              <p className="text-xs text-muted-foreground">
+                Recommended: high-quality landscape image. Large images are automatically optimized before upload.
+              </p>
               {heroImageUrl ? (
                 <div className="space-y-1.5">
                   <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Hero Preview</p>
@@ -2059,7 +2255,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setUpcomingGigs((current) =>
       sortGigsByDate([
         ...current,
-        { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined, feeAmount: null, feeCurrency: null, paymentStatus: null },
+        { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined, flyerUrl: undefined, instagramUrl: undefined, feeAmount: null, feeCurrency: null, paymentStatus: null },
       ]),
     )
     setTimeout(() => {
@@ -2420,9 +2616,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div key={video.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  {video.thumbnailUrl ? (
+                  {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={video.thumbnailUrl} alt="" className="h-9 w-16 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
+                    <img src={(video.customThumbnailUrl ?? video.thumbnailUrl)!} alt="" className="h-9 w-16 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
                   ) : (
                     <span className="flex h-9 w-16 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
                       <Play className="h-3.5 w-3.5" />
@@ -2568,6 +2764,64 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     }
                   />
                 </div>
+                {/* Custom Thumbnail — PRO only */}
+                <div className={`space-y-2 rounded-lg border border-white/[0.05] p-3 md:col-span-2 ${artist.plan !== "pro" ? "opacity-50" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60">
+                      Custom Cover
+                    </p>
+                    {artist.plan !== "pro" && (
+                      <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-accent/50">
+                        PRO
+                      </span>
+                    )}
+                    {video.customThumbnailUrl && artist.plan === "pro" && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVideos((current) =>
+                            current.map((item, i) => (i === index ? { ...item, customThumbnailUrl: null } : item)),
+                          )
+                        }
+                        className="text-[10px] text-muted-foreground/40 transition-colors hover:text-destructive/60"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  {video.customThumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={video.customThumbnailUrl}
+                      alt="Custom cover"
+                      className="aspect-video w-full rounded-md object-cover"
+                    />
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground/35">
+                      Upload your own event cover or cinematic thumbnail. Overrides the YouTube thumbnail on your profile.
+                    </p>
+                  )}
+                  {artist.plan === "pro" && (
+                    <label
+                      className={`flex cursor-pointer items-center gap-2 text-[11px] text-muted-foreground/50 transition-colors hover:text-foreground/60 ${uploadingVideoThumbnailIndex === index ? "pointer-events-none opacity-50" : ""}`}
+                    >
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="sr-only"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            void handleUploadVideoThumbnail(index, file)
+                          }
+                          e.target.value = ""
+                        }}
+                        disabled={uploadingVideoThumbnailIndex !== null || isSaving || isPublishing}
+                      />
+                      {uploadingVideoThumbnailIndex === index ? "Uploading..." : "Upload cover image"}
+                    </label>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 md:col-span-2">
                   <input
                     id={`video-published-${index}`}
@@ -2609,6 +2863,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderGallery() {
+    const busy = isReorderingGallery || !!deletingGalleryImageId || isUploadingGalleryImage || isSaving || isPublishing || isSavingFocalPoints
+
     return (
       <div className="space-y-6">
         <div>
@@ -2617,72 +2873,100 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
-            {galleryImages.map((image, index) => (
-              <div key={image.id} className="space-y-2">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-white/[0.06] bg-secondary/40">
-                  <Image src={image.imageUrl} alt={image.altText} fill sizes="200px" className="object-cover" />
-                </div>
-                <div className="flex items-center justify-between gap-1">
-                  <p className="truncate text-xs text-muted-foreground">{image.altText}</p>
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleReorderGalleryImage(index, "up")}
-                      disabled={
-                        index === 0 ||
-                        isReorderingGallery ||
-                        !!deletingGalleryImageId ||
-                        isUploadingGalleryImage ||
-                        isSaving ||
-                        isPublishing
-                      }
-                      title="Move up"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            {galleryImages.map((image, index) => {
+              const isFocalDirty = focalDirtyIds.has(image.id)
+              return (
+                <div key={image.id} className="space-y-2">
+                  {/* Image preview with focal point editor */}
+                  <div className="group relative">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Click to set focal point"
+                      title="Click to set focal point"
+                      className="relative aspect-[4/5] cursor-crosshair overflow-hidden rounded-lg border border-white/[0.06] bg-secondary/40 select-none"
+                      onClick={(e) => !busy && handleSetFocalPoint(image.id, e)}
+                      onKeyDown={(e) => {
+                        if ((e.key === "Enter" || e.key === " ") && !busy) {
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          const syntheticEvent = { currentTarget: e.currentTarget, clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 } as React.MouseEvent<HTMLDivElement>
+                          handleSetFocalPoint(image.id, syntheticEvent)
+                        }
+                      }}
                     >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleReorderGalleryImage(index, "down")}
-                      disabled={
-                        index === galleryImages.length - 1 ||
-                        isReorderingGallery ||
-                        !!deletingGalleryImageId ||
-                        isUploadingGalleryImage ||
-                        isSaving ||
-                        isPublishing
-                      }
-                      title="Move down"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteGalleryImage(image.id)}
-                      disabled={
-                        deletingGalleryImageId === image.id ||
-                        isReorderingGallery ||
-                        isUploadingGalleryImage ||
-                        isSaving ||
-                        isPublishing
-                      }
-                      title="Delete"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                      <Image
+                        src={image.imageUrl}
+                        alt={image.altText}
+                        fill
+                        sizes="200px"
+                        className="pointer-events-none object-cover"
+                        style={{ objectPosition: `${image.focalX ?? 50}% ${image.focalY ?? 50}%` }}
+                      />
+                      {/* Focal point crosshair */}
+                      <div
+                        className="pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 transition-all duration-150"
+                        style={{ left: `${image.focalX ?? 50}%`, top: `${image.focalY ?? 50}%` }}
+                      >
+                        <div className="absolute inset-0 rounded-full border border-white/80 shadow-[0_0_0_1px_rgba(0,0,0,0.5)]" />
+                        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/60" />
+                        <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-white/60" />
+                      </div>
+                      {/* Hover hint */}
+                      <div className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-black/60 to-transparent pb-2 pt-6 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-white/70">Click to set focal</span>
+                      </div>
+                    </div>
+                    {isFocalDirty && (
+                      <div className="absolute right-1.5 top-1.5 rounded-full bg-accent/80 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-black">
+                        unsaved
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="truncate text-xs text-muted-foreground">{image.altText}</p>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleReorderGalleryImage(index, "up")}
+                        disabled={index === 0 || busy}
+                        title="Move up"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleReorderGalleryImage(index, "down")}
+                        disabled={index === galleryImages.length - 1 || busy}
+                        title="Move down"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteGalleryImage(image.id)}
+                        disabled={deletingGalleryImageId === image.id || busy}
+                        title="Delete"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
+          {isGalleryFocalDirty && (
+            <p className="text-[10px] text-accent/60 tracking-[0.06em]">Focal point changes will be saved when you click Save.</p>
+          )}
           <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4 sm:p-5">
             <div className="space-y-3">
               <div className="space-y-1.5">
@@ -2729,14 +3013,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <Button
                 type="button"
                 onClick={handleUploadGalleryImage}
-                disabled={
-                  !galleryImageFile ||
-                  isUploadingGalleryImage ||
-                  isReorderingGallery ||
-                  isSaving ||
-                  isPublishing ||
-                  !!deletingGalleryImageId
-                }
+                disabled={!galleryImageFile || busy}
                 className="bg-secondary text-foreground hover:bg-secondary/80"
               >
                 {isUploadingGalleryImage ? "Uploading..." : "Upload gallery image"}

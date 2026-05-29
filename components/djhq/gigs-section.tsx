@@ -122,7 +122,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   </span>
                 </div>
 
-                {/* Two-line content stack: venue anchors top, location + ticket below */}
+                {/* Content stack: venue → location → micro-action links */}
                 <div className="min-w-0 flex-1">
                   <p
                     className={cn(
@@ -133,39 +133,77 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                     {gig.venue}
                   </p>
 
-                  <div className="mt-1 flex items-center gap-1.5">
-                    {(gig.city || gig.country) && (
-                      <span
-                        className={cn(
-                          "min-w-0 truncate text-[10px] font-medium uppercase tracking-[0.08em]",
-                          isPast ? "text-foreground/14" : "text-foreground/30",
-                        )}
-                      >
-                        {gig.city}
-                        {gig.city && gig.country && (
-                          <span className="mx-1 opacity-40">·</span>
-                        )}
-                        {gig.country}
-                      </span>
-                    )}
+                  {(gig.city || gig.country) && (
+                    <p
+                      className={cn(
+                        "mt-1 truncate text-[10px] font-medium uppercase tracking-[0.08em]",
+                        isPast ? "text-foreground/14" : "text-foreground/30",
+                      )}
+                    >
+                      {gig.city}
+                      {gig.city && gig.country && (
+                        <span className="mx-1 opacity-40">·</span>
+                      )}
+                      {gig.country}
+                    </p>
+                  )}
 
-                    {gig.ticketUrl && (
-                      <a
-                        href={gig.ticketUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Tickets for ${gig.venue}`}
-                        className={cn(
-                          "shrink-0 transition-colors duration-200",
-                          isPast
-                            ? "text-muted-foreground/16 hover:text-muted-foreground/35"
-                            : "text-accent/38 hover:text-accent/75",
-                        )}
-                      >
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    )}
-                  </div>
+                  {/* Micro-action links — editorial utility links, not buttons */}
+                  {(gig.ticketUrl || gig.flyerUrl || gig.instagramUrl) && (
+                    <div className="mt-1.5 flex items-center gap-3">
+                      {gig.ticketUrl && (
+                        <a
+                          href={gig.ticketUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "inline-flex items-center gap-1 transition-colors duration-200",
+                            "text-[10px] tracking-[0.08em]",
+                            isPast
+                              ? "text-foreground/14 hover:text-foreground/30"
+                              : "text-foreground/40 hover:text-accent/80",
+                          )}
+                        >
+                          Tickets
+                          <ExternalLink className="h-2 w-2 opacity-70" />
+                        </a>
+                      )}
+                      {gig.flyerUrl && (
+                        <a
+                          href={gig.flyerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "inline-flex items-center gap-1 transition-colors duration-200",
+                            "text-[10px] tracking-[0.08em]",
+                            isPast
+                              ? "text-foreground/14 hover:text-foreground/30"
+                              : "text-foreground/40 hover:text-accent/80",
+                          )}
+                        >
+                          Flyer
+                          <ExternalLink className="h-2 w-2 opacity-70" />
+                        </a>
+                      )}
+                      {gig.instagramUrl && (
+                        <a
+                          href={gig.instagramUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "inline-flex items-center gap-1 transition-colors duration-200",
+                            "text-[10px] tracking-[0.08em]",
+                            isPast
+                              ? "text-foreground/14 hover:text-foreground/30"
+                              : "text-foreground/40 hover:text-accent/80",
+                          )}
+                        >
+                          Instagram
+                          <ExternalLink className="h-2 w-2 opacity-70" />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

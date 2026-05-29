@@ -129,6 +129,10 @@ export interface Gig {
   country: string
   /** Optional public ticket/event URL. */
   ticketUrl?: string
+  /** Optional public flyer URL. */
+  flyerUrl?: string
+  /** Optional public Instagram event URL. */
+  instagramUrl?: string
   /** Internal: negotiated fee amount (not shown publicly). */
   feeAmount?: number | null
   /** Internal: ISO currency code for the fee (e.g. "USD", "CLP"). */
@@ -171,8 +175,10 @@ export interface Video {
   venue?: string
   /** Recording or event date in ISO-8601 format. */
   videoDate?: string
-  /** Thumbnail image URL. */
+  /** Thumbnail image URL (auto-imported from platform). */
   thumbnailUrl?: string
+  /** Custom thumbnail URL uploaded by the artist (Pro only). Overrides thumbnailUrl when present. */
+  customThumbnailUrl?: string | null
   /** Platform URL (YouTube, Vimeo, etc.). */
   platformUrl: string
   /** Display sort position. */
@@ -193,6 +199,10 @@ export interface GalleryImage {
   altText: string
   /** Sort order for deterministic rendering. */
   sortOrder: number
+  /** Horizontal focal point (0–100, default 50). Used as object-position x in public renders. */
+  focalX: number
+  /** Vertical focal point (0–100, default 50). Used as object-position y in public renders. */
+  focalY: number
 }
 
 /**

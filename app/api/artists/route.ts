@@ -47,6 +47,8 @@ type SaveGigPayload = {
   city: string
   country: string
   ticketUrl?: string
+  flyerUrl?: string
+  instagramUrl?: string
   feeAmount?: number | null
   feeCurrency?: string | null
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
@@ -66,6 +68,7 @@ type SaveVideoPayload = {
   venue?: string
   videoDate?: string
   thumbnailUrl?: string
+  customThumbnailUrl?: string | null
   platformUrl: string
   isPublished: boolean
 }
@@ -479,6 +482,8 @@ export async function PATCH(request: Request) {
           city: gig.city.trim(),
           country: gig.country.trim(),
           ticket_url: gig.ticketUrl?.trim() || null,
+          flyer_url: gig.flyerUrl?.trim() || null,
+          instagram_url: gig.instagramUrl?.trim() || null,
           fee_amount: gig.feeAmount ?? null,
           fee_currency: gig.feeCurrency?.trim() || null,
           payment_status: gig.paymentStatus ?? null,
@@ -529,6 +534,7 @@ export async function PATCH(request: Request) {
           venue: video.venue?.trim() || null,
           video_date: video.videoDate || null,
           thumbnail_url: video.thumbnailUrl?.trim() || null,
+          custom_thumbnail_url: video.customThumbnailUrl ?? null,
           platform_url: video.platformUrl.trim(),
           sort_order: index + 1,
           is_published: video.isPublished,

@@ -18,6 +18,8 @@ export type GigEntry = {
   city: string
   country: string
   ticketUrl?: string
+  flyerUrl?: string
+  instagramUrl?: string
   feeAmount?: number | null
   feeCurrency?: string | null
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
@@ -308,7 +310,23 @@ export function GigCard({
                 </div>
               </div>
 
-              {/* Row 3: optional fee tracking — private, not shown on public profile */}
+              {/* Row 3: public micro-action links — flyer + Instagram */}
+              <div className="flex items-center gap-2">
+                <input
+                  value={gig.flyerUrl ?? ""}
+                  placeholder="Flyer URL"
+                  onChange={(e) => set("flyerUrl", e.target.value || undefined)}
+                  className={field("flex-1")}
+                />
+                <input
+                  value={gig.instagramUrl ?? ""}
+                  placeholder="Instagram URL"
+                  onChange={(e) => set("instagramUrl", e.target.value || undefined)}
+                  className={field("flex-1")}
+                />
+              </div>
+
+              {/* Row 4: optional fee tracking — private, not shown on public profile */}
               <div className="flex flex-col gap-2 border-t border-white/[0.03] pt-2 sm:flex-row sm:items-center">
                 {/* Fee amount */}
                 <input

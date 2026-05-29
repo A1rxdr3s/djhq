@@ -16,6 +16,8 @@ type GalleryImageRow = {
   image_url: string
   alt_text: string
   sort_order: number
+  focal_x: number
+  focal_y: number
   artist_id?: string
 }
 
@@ -198,8 +200,10 @@ export async function POST(request: Request) {
         image_url: publicUrl,
         alt_text: imageAltText,
         sort_order: nextSortOrder,
+        focal_x: 50,
+        focal_y: 50,
       })
-      .select("id, image_url, alt_text, sort_order")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
       .single<GalleryImageRow>()
 
     if (createImageError) throw createImageError
@@ -211,6 +215,8 @@ export async function POST(request: Request) {
           imageUrl: createdImage.image_url,
           altText: createdImage.alt_text,
           sortOrder: createdImage.sort_order,
+          focalX: createdImage.focal_x,
+          focalY: createdImage.focal_y,
         },
       },
       { status: 201 },
@@ -316,6 +322,13 @@ export async function DELETE(request: Request) {
   }
 }
 
+type UpdateFocalPointPayload = {
+  artistId?: string
+  galleryImageId?: string
+  focalX?: number
+  focalY?: number
+}
+
 export async function PATCH(request: Request) {
   const authClient = await createSupabaseServerClient()
   const {
@@ -326,16 +339,55 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 })
   }
 
-  let payload: ReorderGalleryImagesPayload
+  let rawPayload: (ReorderGalleryImagesPayload & UpdateFocalPointPayload)
 
   try {
-    payload = (await request.json()) as ReorderGalleryImagesPayload
+    rawPayload = (await request.json()) as ReorderGalleryImagesPayload & UpdateFocalPointPayload
   } catch {
     return badRequest("Invalid JSON payload.")
   }
 
-  const artistId = payload.artistId?.trim()
-  const orderedImageIds = Array.isArray(payload.orderedImageIds) ? payload.orderedImageIds.map((id) => id.trim()) : []
+  // Focal point update path: presence of galleryImageId distinguishes from reorder
+  if (rawPayload.galleryImageId !== undefined) {
+    const artistId = rawPayload.artistId?.trim()
+    const galleryImageId = rawPayload.galleryImageId?.trim()
+    const focalX = typeof rawPayload.focalX === "number" ? Math.min(100, Math.max(0, Math.round(rawPayload.focalX))) : null
+    const focalY = typeof rawPayload.focalY === "number" ? Math.min(100, Math.max(0, Math.round(rawPayload.focalY))) : null
+
+    if (!artistId) return badRequest("Artist id is required.")
+    if (!galleryImageId) return badRequest("Gallery image id is required.")
+    if (focalX === null || focalY === null) return badRequest("focalX and focalY are required numbers.")
+
+    try {
+      const supabase = createSupabaseAdminClient()
+      const { data: artist, error: artistError } = await supabase
+        .from("artists")
+        .select("id, owner_user_id")
+        .eq("id", artistId)
+        .maybeSingle<ArtistOwnershipRow>()
+
+      if (artistError) throw artistError
+      if (!artist) return NextResponse.json({ error: "Artist not found." }, { status: 404 })
+      if (artist.owner_user_id !== user.id) return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
+
+      const { error: updateError } = await supabase
+        .from("gallery_images")
+        .update({ focal_x: focalX, focal_y: focalY })
+        .eq("id", galleryImageId)
+        .eq("artist_id", artist.id)
+
+      if (updateError) throw updateError
+
+      return NextResponse.json({ success: true, galleryImageId, focalX, focalY }, { status: 200 })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to update focal point."
+      return NextResponse.json({ error: message }, { status: 500 })
+    }
+  }
+
+  // Reorder path
+  const artistId = rawPayload.artistId?.trim()
+  const orderedImageIds = Array.isArray(rawPayload.orderedImageIds) ? rawPayload.orderedImageIds.map((id) => id.trim()) : []
 
   if (!artistId) {
     return badRequest("Artist id is required.")
@@ -369,7 +421,7 @@ export async function PATCH(request: Request) {
 
     const { data: existingImages, error: existingImagesError } = await supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
       .eq("artist_id", artist.id)
       .returns<GalleryImageRow[]>()
 
@@ -398,7 +450,7 @@ export async function PATCH(request: Request) {
 
     const { data: reorderedImages, error: reorderedImagesError } = await supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
       .eq("artist_id", artist.id)
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>()
@@ -412,6 +464,8 @@ export async function PATCH(request: Request) {
           imageUrl: image.image_url,
           altText: image.alt_text,
           sortOrder: image.sort_order,
+          focalX: image.focal_x,
+          focalY: image.focal_y,
         })),
       },
       { status: 200 },

@@ -108,6 +108,7 @@ type VideoRow = {
   venue: string | null
   video_date: string | null
   thumbnail_url: string | null
+  custom_thumbnail_url: string | null
   platform_url: string
   sort_order: number
 }
@@ -119,6 +120,8 @@ type GigRow = {
   city: string
   country: string
   ticket_url: string | null
+  flyer_url: string | null
+  instagram_url: string | null
 }
 
 type GalleryImageRow = {
@@ -126,6 +129,8 @@ type GalleryImageRow = {
   image_url: string
   alt_text: string
   sort_order: number
+  focal_x: number
+  focal_y: number
 }
 
 const socialPlatforms: SocialPlatform[] = [
@@ -273,13 +278,13 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<ReleaseRow[]>(),
       supabase
         .from("gigs")
-        .select("id, date, venue, city, country, ticket_url")
+        .select("id, date, venue, city, country, ticket_url, flyer_url, instagram_url")
         .eq("artist_id", artistRow.id)
         .order("date", { ascending: true })
         .returns<GigRow[]>(),
       supabase
         .from("gallery_images")
-        .select("id, image_url, alt_text, sort_order")
+        .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
         .eq("artist_id", artistRow.id)
         .order("sort_order", { ascending: true })
         .returns<GalleryImageRow[]>(),
@@ -294,7 +299,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<DjSetRow[]>(),
       supabase
         .from("videos")
-        .select("id, title, venue, video_date, thumbnail_url, platform_url, sort_order")
+        .select("id, title, venue, video_date, thumbnail_url, custom_thumbnail_url, platform_url, sort_order")
         .eq("artist_id", artistRow.id)
         .eq("is_published", true)
         .order("sort_order", { ascending: true })
@@ -353,6 +358,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         city: gig.city,
         country: gig.country,
         ticketUrl: gig.ticket_url ?? undefined,
+        flyerUrl: gig.flyer_url ?? undefined,
+        instagramUrl: gig.instagram_url ?? undefined,
       })),
       djSets: (djSetsResult.data ?? []).map(
         (row): DjSet => ({
@@ -373,6 +380,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
           venue: row.venue ?? undefined,
           videoDate: row.video_date ?? undefined,
           thumbnailUrl: row.thumbnail_url ?? undefined,
+          customThumbnailUrl: row.custom_thumbnail_url ?? null,
           platformUrl: row.platform_url,
           sortOrder: row.sort_order,
           isPublished: true,
@@ -383,6 +391,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         imageUrl: image.image_url,
         altText: image.alt_text,
         sortOrder: image.sort_order,
+        focalX: image.focal_x ?? 50,
+        focalY: image.focal_y ?? 50,
       })),
       bookingInfo: {
         email: artistRow.booking_email,
@@ -700,10 +710,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     fill
                     loading="eager"
                     sizes="(min-width: 768px) 220px, 33vw"
-                    className={cn(
-                      "object-cover saturate-[0.97]",
-                      photo.sortOrder === 1 ? "object-left" : photo.sortOrder === 2 ? "object-center" : "object-right",
-                    )}
+                    className="object-cover saturate-[0.97]"
+                    style={{ objectPosition: `${photo.focalX ?? 50}% ${photo.focalY ?? 50}%` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 </div>
@@ -795,10 +803,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.02] sm:gap-5 sm:p-5"
                   >
                     <div className="relative aspect-video w-[140px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[180px]">
-                      {featuredVideo.thumbnailUrl ? (
+                      {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={featuredVideo.thumbnailUrl}
+                          src={(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl)!}
                           alt={`${featuredVideo.title} thumbnail`}
                           className="h-full w-full object-cover"
                         />
@@ -838,10 +846,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           className="group flex gap-3 p-4 transition-colors hover:bg-white/[0.02]"
                         >
                           <div className="relative aspect-video w-[88px] shrink-0 overflow-hidden rounded-lg bg-secondary shadow-sm shadow-black/25 sm:w-[96px]">
-                            {video.thumbnailUrl ? (
+                            {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
-                                src={video.thumbnailUrl}
+                                src={(video.customThumbnailUrl ?? video.thumbnailUrl)!}
                                 alt={`${video.title} thumbnail`}
                                 className="h-full w-full object-cover"
                               />

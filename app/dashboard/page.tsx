@@ -60,6 +60,8 @@ type GigRow = {
   city: string
   country: string
   ticket_url: string | null
+  flyer_url: string | null
+  instagram_url: string | null
   fee_amount: string | null
   fee_currency: string | null
   payment_status: string | null
@@ -70,6 +72,8 @@ type GalleryImageRow = {
   image_url: string
   alt_text: string
   sort_order: number
+  focal_x: number
+  focal_y: number
 }
 
 type DjSetRow = {
@@ -89,6 +93,7 @@ type VideoRow = {
   venue: string | null
   video_date: string | null
   thumbnail_url: string | null
+  custom_thumbnail_url: string | null
   platform_url: string
   sort_order: number
   is_published: boolean
@@ -217,13 +222,13 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<ReleaseRow[]>(),
     supabase
       .from("gigs")
-      .select("id, date, venue, city, country, ticket_url, fee_amount, fee_currency, payment_status")
+      .select("id, date, venue, city, country, ticket_url, flyer_url, instagram_url, fee_amount, fee_currency, payment_status")
       .eq("artist_id", artistRow.id)
       .order("date", { ascending: true })
       .returns<GigRow[]>(),
     supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>(),
@@ -235,7 +240,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<DjSetRow[]>(),
     supabase
       .from("videos")
-      .select("id, title, venue, video_date, thumbnail_url, platform_url, sort_order, is_published")
+      .select("id, title, venue, video_date, thumbnail_url, custom_thumbnail_url, platform_url, sort_order, is_published")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<VideoRow[]>(),
@@ -304,6 +309,8 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       city: gig.city,
       country: gig.country,
       ticketUrl: gig.ticket_url ?? undefined,
+      flyerUrl: gig.flyer_url ?? undefined,
+      instagramUrl: gig.instagram_url ?? undefined,
       feeAmount: gig.fee_amount != null ? parseFloat(gig.fee_amount) : null,
       feeCurrency: gig.fee_currency ?? null,
       paymentStatus: (gig.payment_status ?? null) as "pending" | "partial" | "paid" | "cancelled" | null,
@@ -324,6 +331,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       venue: video.venue ?? undefined,
       videoDate: video.video_date ?? undefined,
       thumbnailUrl: video.thumbnail_url ?? undefined,
+      customThumbnailUrl: video.custom_thumbnail_url ?? null,
       platformUrl: video.platform_url,
       sortOrder: video.sort_order,
       isPublished: video.is_published,
@@ -333,6 +341,8 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       imageUrl: image.image_url,
       altText: image.alt_text,
       sortOrder: image.sort_order,
+      focalX: image.focal_x ?? 50,
+      focalY: image.focal_y ?? 50,
     })),
     bookingInfo: {
       email: artistRow.booking_email,
