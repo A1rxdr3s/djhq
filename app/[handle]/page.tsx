@@ -904,7 +904,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           <section className="mt-10 lg:mt-12">
             <SectionTitle>Releases</SectionTitle>
             <div className="mt-4">
-              <SelectedReleasesCarousel releases={selectedReleasesForDisplay} artistName={artist.artistName} />
+              <SelectedReleasesCarousel releases={selectedReleasesForDisplay} />
             </div>
           </section>
         ) : null}

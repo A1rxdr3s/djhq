@@ -1998,722 +1998,676 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       ? `translate(calc(-50% + ${heroLogoOffsetX}px), ${heroLogoOffsetY}px)`
       : `translate(calc(-50% + ${heroLogoOffsetX}px), calc(-50% + ${heroLogoOffsetY}px))`
 
+    const isPro = artist.plan === "pro"
+
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground">Profile</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Core identity shown on your public artist page.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Your public artist identity and hero section.</p>
         </div>
 
-        {/* Core fields */}
+        {/* Basic artist info */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-          <div className="grid gap-5 md:grid-cols-2">
+          <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Artist</p>
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <label htmlFor="artistName" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Artist Name
-              </label>
+              <label htmlFor="artistName" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Artist Name</label>
               <Input id="artistName" value={artistName} onChange={(event) => setArtistName(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="handle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Handle
-              </label>
+              <label htmlFor="handle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Handle</label>
               <Input id="handle" value={handle} onChange={(event) => setHandle(event.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="genres" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Genres
-              </label>
-              <Input id="genres" value={genres} onChange={(event) => setGenres(event.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="location" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Location
-              </label>
-              <Input id="location" value={location} onChange={(event) => setLocation(event.target.value)} />
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <div className="flex items-baseline justify-between">
-                <label htmlFor="heroTagline" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                  Hero Tagline
-                </label>
-                <span className={cn(
-                  "text-[10px] tabular-nums transition-colors duration-150",
-                  heroTagline.length > 90 ? "text-amber-400/60" : "text-muted-foreground/30",
-                )}>
-                  {heroTagline.length}/100
-                </span>
-              </div>
-              <Input
-                id="heroTagline"
-                value={heroTagline}
-                maxLength={100}
-                placeholder="Peak-time house music for underground dance floors."
-                onChange={(event) => setHeroTagline(event.target.value)}
-              />
-              <p className="text-[10px] text-muted-foreground/38">
-                Rendered above the bio in the public hero. Leave blank to omit.
-              </p>
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="shortBio" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Short Bio
-              </label>
-              <Textarea id="shortBio" value={shortBio} onChange={(event) => setShortBio(event.target.value)} />
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="heroImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Hero Image URL
-              </label>
-              <Input id="heroImageUrl" value={heroImageUrl} onChange={(event) => setHeroImageUrl(event.target.value)} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor="heroImageFile" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Upload Hero Image
-              </label>
-              <Input
-                id="heroImageFile"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(event) => setHeroImageFile(event.target.files?.[0] ?? null)}
-              />
-              <Button
-                type="button"
-                onClick={handleUploadHeroImage}
-                disabled={!heroImageFile || isUploadingHeroImage || isSaving || isPublishing}
-                className="bg-secondary text-foreground hover:bg-secondary/80"
-              >
-                {heroUploadStatus === "compressing"
-                  ? "Compressing..."
-                  : heroUploadStatus === "uploading"
-                    ? "Uploading..."
-                    : "Upload hero image"}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Recommended: high-quality landscape image. Large images are automatically optimized before upload.
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Hero Identity — directly below hero image fields */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Hero Identity
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground/45">
-                {artist.plan === "pro"
-                  ? "Control how your name and visual identity appear inside the public hero section."
-                  : "Upgrade to Pro to upload a custom logo, choose your identity mode, and refine hero typography."}
-              </p>
-            </div>
-            {artist.plan !== "pro" && (
-              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
-                Pro only
-              </span>
-            )}
+        {/* ── Hero Studio ── */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/45">Hero Studio</p>
+            <span className="h-px flex-1 bg-white/[0.05]" />
           </div>
 
-          {/* Live hero preview — CSS-scaled virtual hero (WYSIWYG) */}
-          <div
-            ref={previewContainerRef}
-            className="relative mb-2 aspect-[16/7] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0a0a0a]"
-          >
-            {/* Virtual hero at natural PREVIEW_NATURAL_W px width, scaled to container */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: PREVIEW_NATURAL_W,
-                height: PREVIEW_NATURAL_H,
-                transform: `scale(${previewScale})`,
-                transformOrigin: "top left",
-                "--accent": previewTheme.accent,
-                "--accent-foreground": previewTheme.accentForeground,
-              } as React.CSSProperties}
-            >
-              {/* Background image */}
-              {heroImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={heroImageUrl}
-                  alt=""
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_30%,rgba(255,255,255,0.04)_0%,transparent_70%)]" />
-              )}
+          {/* Two-column layout: preview+presets left, panels right */}
+          <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
 
-              {/* Multi-layer gradient system — identical to public hero */}
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
-              <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
-              <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
+            {/* ── LEFT: Preview + presets ── */}
+            <div className="space-y-4">
 
-              {/* Floating logo layer — mirrors public hero; rendered between gradients and content */}
-              {previewHasFloatingLogo && (
+              {/* Preview frame */}
+              <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#080808]">
                 <div
-                  className="pointer-events-none absolute"
-                  style={{
-                    top: heroLogoPlacement === "top_center" ? "18%" : "50%",
-                    left: "50%",
-                    transform: previewFloatingTransform,
-                  }}
+                  ref={previewContainerRef}
+                  className="relative aspect-[16/7] overflow-hidden"
                 >
-                  <HeroLogoElement
-                    logoUrl={heroLogoUrl}
-                    artistName={previewName}
-                    logoWidth={previewLogoWidth}
-                    heroLogoStyle={heroLogoStyle}
-                    heroLogoReadability={heroLogoReadability}
-                  />
-                </div>
-              )}
-
-              {/* Content area — mirrors public hero structure exactly */}
-              <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
-                <div className={cn(
-                  "relative",
-                  heroContentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
-                  heroContentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
-                )}>
-                  {heroContentSurface !== "none" && (
-                    <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
-                  )}
-
-                  {/* Genre chips — above logo */}
-                  {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
-                    <div className="mb-3.5 flex flex-wrap gap-2 sm:mb-4">
-                      {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
-                        <span
-                          key={genre}
-                          className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
-                          style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}
-                        >
-                          {genre}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Hero identity — skipped for floating placements */}
-                  {!isFloating && (
-                    <HeroIdentity
-                      artistName={previewName}
-                      heroLogoUrl={artist.plan === "pro" ? (heroLogoUrl || null) : null}
-                      heroIdentityMode={heroIdentityMode}
-                      heroTextStyle={heroTextStyle}
-                      heroLogoScale={heroLogoScale}
-                      heroLogoLayout={heroLogoLayout}
-                      heroLogoAlignment={heroLogoAlignment}
-                      heroLogoOffsetX={heroLogoOffsetX}
-                      heroLogoOffsetY={heroLogoOffsetY}
-                      heroLogoStyle={heroLogoStyle}
-                      heroLogoReadability={heroLogoReadability}
-                      isPro={artist.plan === "pro"}
-                      isPreview
-                    />
-                  )}
-
-                  {/* Text content block */}
-                  <div className={cn("relative", previewContentWidthClass)}>
-                    {location && (
-                      <p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3">
-                        <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
-                        {location}
-                      </p>
+                  {/* Virtual hero at natural PREVIEW_NATURAL_W width, CSS-scaled to container */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: PREVIEW_NATURAL_W,
+                      height: PREVIEW_NATURAL_H,
+                      transform: `scale(${previewScale})`,
+                      transformOrigin: "top left",
+                      "--accent": previewTheme.accent,
+                      "--accent-foreground": previewTheme.accentForeground,
+                    } as React.CSSProperties}
+                  >
+                    {/* Background image — wired to image composition sliders */}
+                    {heroImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={heroImageUrl}
+                        alt=""
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          objectPosition: `${heroImageX}% ${heroImageY}%`,
+                          transform: heroImageZoom > 100 ? `scale(${heroImageZoom / 100})` : undefined,
+                          transformOrigin: "center",
+                        }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_30%,rgba(255,255,255,0.04)_0%,transparent_70%)]" />
                     )}
-                    {heroTagline && (
-                      <p
-                        className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg"
-                        style={{ textShadow: `0 0 10px rgba(${previewTheme.glowRgb}, 0.15)` }}
+
+                    {/* Multi-layer gradient system — identical to public hero */}
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
+                    <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
+                    <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
+
+                    {/* Floating logo layer */}
+                    {previewHasFloatingLogo && (
+                      <div
+                        className="pointer-events-none absolute"
+                        style={{
+                          top: heroLogoPlacement === "top_center" ? "18%" : "50%",
+                          left: "50%",
+                          transform: previewFloatingTransform,
+                        }}
                       >
-                        {heroTagline}
-                      </p>
-                    )}
-                    {shortBio && (
-                      <p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">
-                        {shortBio}
-                      </p>
-                    )}
-                    {bookingEmail && (
-                      <div className="mt-4 flex flex-col gap-3 sm:mt-5">
-                        <div className="flex h-11 w-fit items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-md shadow-accent/15 sm:h-12">
-                          <Mail className="h-4 w-4" />
-                          Book this artist
-                        </div>
+                        <HeroLogoElement
+                          logoUrl={heroLogoUrl}
+                          artistName={previewName}
+                          logoWidth={previewLogoWidth}
+                          heroLogoStyle={heroLogoStyle}
+                          heroLogoReadability={heroLogoReadability}
+                        />
                       </div>
                     )}
+
+                    {/* Content area — mirrors public hero structure exactly */}
+                    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
+                      <div className={cn(
+                        "relative",
+                        heroContentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
+                        heroContentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
+                      )}>
+                        {heroContentSurface !== "none" && (
+                          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
+                        )}
+
+                        {/* Genre chips — above logo */}
+                        {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
+                          <div className="mb-3.5 flex flex-wrap gap-2 sm:mb-4">
+                            {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
+                              <span
+                                key={genre}
+                                className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
+                                style={{ boxShadow: "0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)" }}
+                              >
+                                {genre}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Hero identity — skipped for floating placements */}
+                        {!isFloating && (
+                          <HeroIdentity
+                            artistName={previewName}
+                            heroLogoUrl={isPro ? (heroLogoUrl || null) : null}
+                            heroIdentityMode={heroIdentityMode}
+                            heroTextStyle={heroTextStyle}
+                            heroLogoScale={heroLogoScale}
+                            heroLogoLayout={heroLogoLayout}
+                            heroLogoAlignment={heroLogoAlignment}
+                            heroLogoOffsetX={heroLogoOffsetX}
+                            heroLogoOffsetY={heroLogoOffsetY}
+                            heroLogoStyle={heroLogoStyle}
+                            heroLogoReadability={heroLogoReadability}
+                            isPro={isPro}
+                            isPreview
+                          />
+                        )}
+
+                        {/* Text content block */}
+                        <div className={cn("relative", previewContentWidthClass)}>
+                          {location && (
+                            <p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3">
+                              <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
+                              {location}
+                            </p>
+                          )}
+                          {heroTagline && (
+                            <p
+                              className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg"
+                              style={{ textShadow: `0 0 10px rgba(${previewTheme.glowRgb}, 0.15)` }}
+                            >
+                              {heroTagline}
+                            </p>
+                          )}
+                          {shortBio && (
+                            <p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">
+                              {shortBio}
+                            </p>
+                          )}
+                          {bookingEmail && (
+                            <div className="mt-4 flex flex-col gap-3 sm:mt-5">
+                              <div className="flex h-11 w-fit items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-md shadow-accent/15 sm:h-12">
+                                <Mail className="h-4 w-4" />
+                                Book this artist
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preview badge */}
+                  <div className="absolute right-2 top-2 z-10 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">
+                    Preview
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Preview badge */}
-            <div className="absolute right-2 top-2 z-10 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">
-              Preview
-            </div>
-          </div>
-          <p className="mb-5 text-[10px] text-muted-foreground/35">
-            This preview mirrors the public hero. Only the overall size is scaled down.
-          </p>
-
-          {/* Hero Composition Presets */}
-          <div className="space-y-2">
-            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-              Hero Composition
-            </p>
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              {HERO_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  disabled={artist.plan !== "pro"}
-                  onClick={() => {
-                    if (artist.plan !== "pro") return
-                    setHeroIdentityMode(preset.heroIdentityMode)
-                    setHeroLogoPlacement(preset.heroLogoPlacement)
-                    setHeroLogoLayout(preset.heroLogoLayout)
-                    setHeroLogoAlignment(preset.heroLogoAlignment)
-                    setHeroLogoScale(preset.heroLogoScale)
-                    setHeroLogoOffsetX(preset.heroLogoOffsetX)
-                    setHeroLogoOffsetY(preset.heroLogoOffsetY)
-                    setHeroLogoStyle(preset.heroLogoStyle)
-                  }}
-                  className={cn(
-                    "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-100",
-                    "border-white/[0.06] bg-white/[0.015] hover:border-white/[0.10] hover:bg-white/[0.03]",
-                    artist.plan !== "pro" && "pointer-events-none opacity-40",
-                  )}
-                >
-                  <span className="text-[10px] font-semibold text-foreground/70">{preset.label}</span>
-                  <span className="text-[9px] text-muted-foreground/40">{preset.description}</span>
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground/35">
-              Start with a curated composition, then fine-tune manually.
-            </p>
-          </div>
-
-          <div className="space-y-5 mt-5">
-            {/* Identity mode */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                  Identity Mode
+              {/* Composition presets — below preview as compact shortcuts */}
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
+                <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Composition Presets
+                </p>
+                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                  {HERO_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      disabled={!isPro}
+                      onClick={() => {
+                        if (!isPro) return
+                        setHeroIdentityMode(preset.heroIdentityMode)
+                        setHeroLogoPlacement(preset.heroLogoPlacement)
+                        setHeroLogoLayout(preset.heroLogoLayout)
+                        setHeroLogoAlignment(preset.heroLogoAlignment)
+                        setHeroLogoScale(preset.heroLogoScale)
+                        setHeroLogoOffsetX(preset.heroLogoOffsetX)
+                        setHeroLogoOffsetY(preset.heroLogoOffsetY)
+                        setHeroLogoStyle(preset.heroLogoStyle)
+                      }}
+                      className={cn(
+                        "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-100",
+                        "border-white/[0.06] bg-white/[0.015] hover:border-white/[0.10] hover:bg-white/[0.03]",
+                        !isPro && "pointer-events-none opacity-40",
+                      )}
+                    >
+                      <span className="text-[10px] font-semibold text-foreground/70">{preset.label}</span>
+                      <span className="text-[9px] text-muted-foreground/40">{preset.description}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] text-muted-foreground/30">
+                  Start with a curated composition, then fine-tune in the panels.
                 </p>
               </div>
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {(["text", "logo", "both"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroIdentityMode(mode)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroIdentityMode === mode
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Text: name only. Logo: logo only (or alongside name, depending on Layout). Both: logo + name together.
-              </p>
             </div>
 
-            {/* Typography style */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Typography Style
-              </p>
-              <div className="flex flex-wrap gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {(["default", "condensed", "cinematic", "editorial"] as const).map((style) => (
-                  <button
-                    key={style}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroTextStyle(style)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroTextStyle === style
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {style}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Controls weight, size, and tracking of your name. Only visible when text is shown in the hero.
-              </p>
-            </div>
+            {/* ── RIGHT: Control panels ── */}
+            <div className="space-y-4">
 
-            {/* Logo Size */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                  Logo Size
-                </p>
-                <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoScale}px</span>
-              </div>
-              <input
-                type="range"
-                min={40}
-                max={240}
-                step={5}
-                value={heroLogoScale}
-                onChange={(e) => artist.plan === "pro" && setHeroLogoScale(Number(e.target.value))}
-                disabled={artist.plan !== "pro"}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
-              />
-              <p className="text-[10px] text-muted-foreground/35">
-                Controls visual logo width. Layout spacing stays fixed.
-              </p>
-            </div>
-
-            {/* Logo Placement */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Logo Placement
-              </p>
-              <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {([
-                  { value: "editorial", label: "Editorial" },
-                  { value: "top_center", label: "Top Center" },
-                  { value: "center", label: "Center" },
-                  { value: "custom", label: "Custom" },
-                ] as { value: HeroLogoPlacement; label: string }[]).map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroLogoPlacement(value)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroLogoPlacement === value
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Editorial keeps the logo inside the content flow. Floating placements let the logo sit independently over the hero photo.
-              </p>
-            </div>
-
-            {/* Logo Layout — de-emphasized when placement is floating */}
-            <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Logo Layout
-              </p>
-              <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {([
-                  { value: "replace_text", label: "Replace" },
-                  { value: "above_text", label: "Above" },
-                  { value: "below_text", label: "Below" },
-                  { value: "left_text", label: "Left" },
-                  { value: "right_text", label: "Right" },
-                ] as { value: HeroLogoLayout; label: string }[]).map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroLogoLayout(value)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroLogoLayout === value
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Most DJ logos already include the artist name. Use <strong className="text-muted-foreground/55 font-semibold">Replace</strong> to avoid duplicated branding.
-              </p>
-            </div>
-
-            {/* Logo Alignment — de-emphasized when placement is floating */}
-            <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Logo Alignment
-              </p>
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {(["left", "center", "right"] as const).map((alignment) => (
-                  <button
-                    key={alignment}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroLogoAlignment(alignment)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroLogoAlignment === alignment
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {alignment}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Logo Offset */}
-            <div className="space-y-3 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Logo Position Offset
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-muted-foreground/50">Horizontal</p>
-                  <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoOffsetX > 0 ? "+" : ""}{heroLogoOffsetX}px</span>
-                </div>
-                <input
-                  type="range"
-                  min={-100}
-                  max={100}
-                  step={1}
-                  value={heroLogoOffsetX}
-                  onChange={(e) => artist.plan === "pro" && setHeroLogoOffsetX(Number(e.target.value))}
-                  disabled={artist.plan !== "pro"}
-                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-muted-foreground/50">Vertical</p>
-                  <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoOffsetY > 0 ? "+" : ""}{heroLogoOffsetY}px</span>
-                </div>
-                <input
-                  type="range"
-                  min={-100}
-                  max={100}
-                  step={1}
-                  value={heroLogoOffsetY}
-                  onChange={(e) => artist.plan === "pro" && setHeroLogoOffsetY(Number(e.target.value))}
-                  disabled={artist.plan !== "pro"}
-                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
-                />
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Fine-tune logo position without affecting hero layout or spacing.
-              </p>
-            </div>
-
-            {/* Logo Visual Style */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Logo Visual Style
-              </p>
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {(["solid", "soft", "cinematic"] as const).map((style) => (
-                  <button
-                    key={style}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroLogoStyle(style)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroLogoStyle === style
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {style}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Solid: full opacity, no blend. Soft: reduced opacity, glow. Cinematic: integrates into photography.
-              </p>
-            </div>
-
-            {/* Logo Readability */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Logo Readability
-              </p>
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {(["none", "subtle", "strong"] as const).map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroLogoReadability(level)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroLogoReadability === level
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Adds soft contrast protection behind the logo without a visible box.
-              </p>
-            </div>
-
-            {/* Hero Content Surface */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Hero Content Surface
-              </p>
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {(["none", "soft", "strong"] as const).map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroContentSurface(level)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroContentSurface === level
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Adds an atmospheric surface behind the full content cluster for readability on busy photos.
-              </p>
-            </div>
-
-            {/* Hero Content Width */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Content Width
-              </p>
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                {(["compact", "standard", "wide"] as const).map((w) => (
-                  <button
-                    key={w}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setHeroContentWidth(w)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      heroContentWidth === w
-                        ? "bg-white/[0.07] text-foreground/75"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    {w}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Controls how wide the text content block extends across the hero. Adjust to complement your hero image.
-              </p>
-            </div>
-
-            {/* Accent Theme */}
-            <div className="space-y-2 border-t border-white/[0.04] pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Accent Theme
-              </p>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {(Object.values(ACCENT_THEMES)).map((theme) => (
-                  <button
-                    key={theme.value}
-                    type="button"
-                    onClick={() => artist.plan === "pro" && setAccentTheme(theme.value)}
-                    disabled={artist.plan !== "pro"}
-                    className={cn(
-                      "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      accentTheme === theme.value
-                        ? "border-white/[0.14] bg-white/[0.07] text-foreground/80"
-                        : "border-transparent text-muted-foreground/30 hover:text-muted-foreground/50",
-                      artist.plan !== "pro" && "pointer-events-none",
-                    )}
-                  >
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: theme.hex }}
+              {/* A. Hero Image */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+                <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Image</p>
+                <p className="mb-4 text-[10px] text-muted-foreground/40">Photograph or artwork behind the hero.</p>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label htmlFor="heroImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Image URL</label>
+                    <Input id="heroImageUrl" value={heroImageUrl} onChange={(event) => setHeroImageUrl(event.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="heroImageFile" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Upload</label>
+                    <Input
+                      id="heroImageFile"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => setHeroImageFile(event.target.files?.[0] ?? null)}
                     />
-                    {theme.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground/35">
-                Sets the primary accent color used throughout your profile.
-              </p>
-            </div>
+                    <Button
+                      type="button"
+                      onClick={handleUploadHeroImage}
+                      disabled={!heroImageFile || isUploadingHeroImage || isSaving || isPublishing}
+                      className="bg-secondary text-foreground hover:bg-secondary/80"
+                    >
+                      {heroUploadStatus === "compressing" ? "Compressing..." : heroUploadStatus === "uploading" ? "Uploading..." : "Upload hero image"}
+                    </Button>
+                    <p className="text-[10px] text-muted-foreground/38">
+                      Recommended: high-quality landscape. Large images are auto-optimized before upload.
+                    </p>
+                  </div>
 
-            {/* Custom Hero Logo */}
-            {artist.plan === "pro" && (
-              <div className="space-y-2 border-t border-white/[0.04] pt-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                  Custom Logo
-                </p>
-                {heroLogoUrl ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-                    <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.08] bg-[#0a0a0a]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={heroLogoUrl} alt="Hero logo" className="max-h-8 max-w-full object-contain" />
+                  {/* Image composition sliders — UI-only preview, not saved to profile */}
+                  <div className="space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Image Composition</p>
+                      <span className="rounded border border-white/[0.04] bg-white/[0.02] px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.10em] text-muted-foreground/30">Preview only</span>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] text-foreground/55">{heroLogoUrl.split("/").pop()}</p>
-                      <button
-                        type="button"
-                        onClick={() => setHeroLogoUrl("")}
-                        className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80"
-                      >
-                        Remove
-                      </button>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-muted-foreground/50">Position X</p>
+                        <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroImageX}%</span>
+                      </div>
+                      <input
+                        type="range" min={0} max={100} step={1} value={heroImageX}
+                        onChange={(e) => setHeroImageX(Number(e.target.value))}
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-muted-foreground/50">Position Y</p>
+                        <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroImageY}%</span>
+                      </div>
+                      <input
+                        type="range" min={0} max={100} step={1} value={heroImageY}
+                        onChange={(e) => setHeroImageY(Number(e.target.value))}
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-muted-foreground/50">Zoom</p>
+                        <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroImageZoom}%</span>
+                      </div>
+                      <input
+                        type="range" min={100} max={140} step={1} value={heroImageZoom}
+                        onChange={(e) => setHeroImageZoom(Number(e.target.value))}
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/30">
+                      Adjusts the image in the preview only. Changes are not saved to your profile.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* B. Hero Identity */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Identity</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Logo and name in the public hero.</p>
+                  </div>
+                  {!isPro && (
+                    <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
+                  )}
+                </div>
+                <div className="space-y-5">
+                  {/* Identity mode */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Identity Mode</p>
+                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {(["text", "logo", "both"] as const).map((mode) => (
+                        <button
+                          key={mode} type="button"
+                          onClick={() => isPro && setHeroIdentityMode(mode)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroIdentityMode === mode ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {mode}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Text: name only. Logo: logo only or alongside name. Both: logo + name together.</p>
+                  </div>
+
+                  {/* Typography style */}
+                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Typography Style</p>
+                    <div className="flex flex-wrap gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {(["default", "condensed", "cinematic", "editorial"] as const).map((style) => (
+                        <button
+                          key={style} type="button"
+                          onClick={() => isPro && setHeroTextStyle(style)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroTextStyle === style ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {style}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Controls weight and size of your name. Only visible when text is shown.</p>
+                  </div>
+
+                  {/* Custom Logo */}
+                  {isPro && (
+                    <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Logo</p>
+                      {heroLogoUrl ? (
+                        <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                          <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.08] bg-[#0a0a0a]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={heroLogoUrl} alt="Hero logo" className="max-h-8 max-w-full object-contain" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[11px] text-foreground/55">{heroLogoUrl.split("/").pop()}</p>
+                            <button type="button" onClick={() => setHeroLogoUrl("")} className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80">Remove</button>
+                          </div>
+                        </div>
+                      ) : null}
+                      <Input id="heroLogoFile" type="file" accept="image/png,image/svg+xml,image/webp" onChange={(event) => setHeroLogoFile(event.target.files?.[0] ?? null)} />
+                      <Button type="button" onClick={handleUploadHeroLogo} disabled={!heroLogoFile || isUploadingHeroLogo || isSaving || isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">
+                        {isUploadingHeroLogo ? "Uploading..." : "Upload logo"}
+                      </Button>
+                      <p className="text-[10px] text-muted-foreground/38">PNG, SVG, or WEBP. Transparent background recommended. Use Logo Size to control height on the public profile.</p>
+                    </div>
+                  )}
+
+                  {/* Logo Placement */}
+                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Placement</p>
+                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {([
+                        { value: "editorial", label: "Editorial" },
+                        { value: "top_center", label: "Top Center" },
+                        { value: "center", label: "Center" },
+                        { value: "custom", label: "Custom" },
+                      ] as { value: HeroLogoPlacement; label: string }[]).map(({ value, label }) => (
+                        <button
+                          key={value} type="button"
+                          onClick={() => isPro && setHeroLogoPlacement(value)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroLogoPlacement === value ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Editorial keeps the logo in content flow. Floating places it independently over the photo.</p>
+                  </div>
+
+                  {/* Logo Layout */}
+                  <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Layout</p>
+                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {([
+                        { value: "replace_text", label: "Replace" },
+                        { value: "above_text", label: "Above" },
+                        { value: "below_text", label: "Below" },
+                        { value: "left_text", label: "Left" },
+                        { value: "right_text", label: "Right" },
+                      ] as { value: HeroLogoLayout; label: string }[]).map(({ value, label }) => (
+                        <button
+                          key={value} type="button"
+                          onClick={() => isPro && setHeroLogoLayout(value)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroLogoLayout === value ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Use <strong className="font-semibold text-muted-foreground/55">Replace</strong> if your logo already contains your name.</p>
+                  </div>
+
+                  {/* Logo Alignment */}
+                  <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Alignment</p>
+                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {(["left", "center", "right"] as const).map((alignment) => (
+                        <button
+                          key={alignment} type="button"
+                          onClick={() => isPro && setHeroLogoAlignment(alignment)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroLogoAlignment === alignment ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {alignment}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                ) : null}
-                <Input
-                  id="heroLogoFile"
-                  type="file"
-                  accept="image/png,image/svg+xml,image/webp"
-                  onChange={(event) => setHeroLogoFile(event.target.files?.[0] ?? null)}
-                />
-                <Button
-                  type="button"
-                  onClick={handleUploadHeroLogo}
-                  disabled={!heroLogoFile || isUploadingHeroLogo || isSaving || isPublishing}
-                  className="bg-secondary text-foreground hover:bg-secondary/80"
-                >
-                  {isUploadingHeroLogo ? "Uploading..." : "Upload logo"}
-                </Button>
-                <p className="text-[10px] text-muted-foreground/38">
-                  PNG, SVG, or WEBP. Transparent background recommended. Use Logo Size above to control height on the public profile.
-                </p>
+
+                  {/* Logo Size */}
+                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Size</p>
+                      <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoScale}px</span>
+                    </div>
+                    <input
+                      type="range" min={40} max={240} step={5} value={heroLogoScale}
+                      onChange={(e) => isPro && setHeroLogoScale(Number(e.target.value))}
+                      disabled={!isPro}
+                      className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                    />
+                    <p className="text-[10px] text-muted-foreground/35">Controls visual logo width. Layout spacing stays fixed.</p>
+                  </div>
+
+                  {/* Logo Offset */}
+                  <div className="space-y-3 border-t border-white/[0.04] pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Position Offset</p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-muted-foreground/50">Horizontal</p>
+                        <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoOffsetX > 0 ? "+" : ""}{heroLogoOffsetX}px</span>
+                      </div>
+                      <input
+                        type="range" min={-100} max={100} step={1} value={heroLogoOffsetX}
+                        onChange={(e) => isPro && setHeroLogoOffsetX(Number(e.target.value))}
+                        disabled={!isPro}
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-muted-foreground/50">Vertical</p>
+                        <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoOffsetY > 0 ? "+" : ""}{heroLogoOffsetY}px</span>
+                      </div>
+                      <input
+                        type="range" min={-100} max={100} step={1} value={heroLogoOffsetY}
+                        onChange={(e) => isPro && setHeroLogoOffsetY(Number(e.target.value))}
+                        disabled={!isPro}
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Fine-tune logo position without affecting layout or spacing.</p>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* C. Hero Copy */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+                <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Copy</p>
+                <p className="mb-4 text-[10px] text-muted-foreground/40">Text content shown in the hero section.</p>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label htmlFor="genres" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Genre Tags</label>
+                    <Input id="genres" value={genres} onChange={(event) => setGenres(event.target.value)} placeholder="House, Tech House, Melodic" />
+                    <p className="text-[10px] text-muted-foreground/38">Comma-separated. Displayed as chips above the logo.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="location" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Location</label>
+                    <Input id="location" value={location} onChange={(event) => setLocation(event.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between">
+                      <label htmlFor="heroTagline" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Tagline</label>
+                      <span className={cn("text-[10px] tabular-nums transition-colors duration-150", heroTagline.length > 90 ? "text-amber-400/60" : "text-muted-foreground/30")}>
+                        {heroTagline.length}/100
+                      </span>
+                    </div>
+                    <Input id="heroTagline" value={heroTagline} maxLength={100} placeholder="Peak-time house music for underground dance floors." onChange={(event) => setHeroTagline(event.target.value)} />
+                    <p className="text-[10px] text-muted-foreground/38">Rendered above the bio in accent color. Leave blank to omit.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="shortBio" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Short Bio</label>
+                    <Textarea id="shortBio" value={shortBio} onChange={(event) => setShortBio(event.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              {/* D. Hero Style */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Style</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Visual treatment and color theme.</p>
+                  </div>
+                  {!isPro && (
+                    <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
+                  )}
+                </div>
+                <div className="space-y-5">
+                  {/* Accent theme */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Accent Theme</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {(Object.values(ACCENT_THEMES)).map((theme) => (
+                        <button
+                          key={theme.value} type="button"
+                          onClick={() => isPro && setAccentTheme(theme.value)}
+                          disabled={!isPro}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            accentTheme === theme.value ? "border-white/[0.14] bg-white/[0.07] text-foreground/80" : "border-transparent text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: theme.hex }} />
+                          {theme.name}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Primary accent color used throughout your profile.</p>
+                  </div>
+
+                  {/* Logo Visual Style */}
+                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Visual Style</p>
+                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {(["solid", "soft", "cinematic"] as const).map((style) => (
+                        <button
+                          key={style} type="button"
+                          onClick={() => isPro && setHeroLogoStyle(style)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroLogoStyle === style ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {style}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Solid: full opacity. Soft: reduced opacity with glow. Cinematic: blends into the photo.</p>
+                  </div>
+
+                  {/* Logo Readability */}
+                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Readability</p>
+                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {(["none", "subtle", "strong"] as const).map((level) => (
+                        <button
+                          key={level} type="button"
+                          onClick={() => isPro && setHeroLogoReadability(level)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroLogoReadability === level ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {level}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Soft contrast protection behind the logo without a visible box.</p>
+                  </div>
+
+                  {/* Content Surface */}
+                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Content Surface</p>
+                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {(["none", "soft", "strong"] as const).map((level) => (
+                        <button
+                          key={level} type="button"
+                          onClick={() => isPro && setHeroContentSurface(level)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroContentSurface === level ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {level}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Atmospheric surface behind the full content cluster for readability on busy photos.</p>
+                  </div>
+
+                  {/* Content Width */}
+                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Content Width</p>
+                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {(["compact", "standard", "wide"] as const).map((w) => (
+                        <button
+                          key={w} type="button"
+                          onClick={() => isPro && setHeroContentWidth(w)}
+                          disabled={!isPro}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            heroContentWidth === w ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            !isPro && "pointer-events-none",
+                          )}
+                        >
+                          {w}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">How wide the text content block extends across the hero.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
 

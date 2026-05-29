@@ -3,7 +3,6 @@
 import { useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { Music2, Play } from "lucide-react"
-import { cn } from "@/lib/utils"
 import type { Release } from "@/types/djhq"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { ReleaseListenPanel } from "@/components/release-listen-panel"
@@ -51,10 +50,9 @@ const ADVANCE_MS = 8_000
 
 type Props = {
   releases: Release[]
-  artistName: string
 }
 
-export function SelectedReleasesCarousel({ releases, artistName }: Props) {
+export function SelectedReleasesCarousel({ releases }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
   const dragRef = useRef(false)
@@ -170,14 +168,6 @@ export function SelectedReleasesCarousel({ releases, artistName }: Props) {
             : versionLabel
           const badges = [typeLabel, versionDisplay].filter(Boolean) as string[]
 
-          // Credits: hide when it's just the artist's own name
-          const normalizedCredits = release.credits?.trim().toLowerCase() ?? ""
-          const normalizedArtist = artistName.trim().toLowerCase()
-          const creditsToShow =
-            normalizedCredits && normalizedCredits !== normalizedArtist
-              ? release.credits
-              : null
-
           return (
             <article
               key={`${release.id}-${i}`}
@@ -237,14 +227,9 @@ export function SelectedReleasesCarousel({ releases, artistName }: Props) {
                   {release.title}
                 </h3>
 
-                {creditsToShow ? (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground/75">{creditsToShow}</p>
-                ) : null}
+                <p className="mt-0.5 text-sm text-white/45 line-clamp-1">{release.credits ?? ""}</p>
 
-                <p className={cn(
-                  "truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/55",
-                  creditsToShow ? "mt-1.5" : "mt-1",
-                )}>
+                <p className="mt-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/55">
                   {release.label}
                 </p>
 

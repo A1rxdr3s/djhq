@@ -188,6 +188,7 @@ type GigsSectionProps = {
 
 export function GigsSection({ gigs }: GigsSectionProps) {
   const [pastExpanded, setPastExpanded] = useState(false)
+  const [showAllPast, setShowAllPast] = useState(false)
 
   if (gigs.length === 0) return null
 
@@ -204,7 +205,10 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   if (primaryGigs.length === 0) return null
 
   const sectionTitle = hasUpcoming ? "Shows" : "Recent Shows"
-  const pastGroups = hasPast ? groupByYear(past) : []
+  const PAST_PAGE = 10
+  const visiblePast = showAllPast ? past : past.slice(0, PAST_PAGE)
+  const hasMorePast = past.length > PAST_PAGE
+  const pastGroups = hasPast ? groupByYear(visiblePast) : []
 
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:col-start-2 lg:row-start-2 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
@@ -232,11 +236,9 @@ export function GigsSection({ gigs }: GigsSectionProps) {
         <button
           type="button"
           onClick={() => setPastExpanded((v) => !v)}
-          className="mt-4 w-full border-t border-white/[0.06] pt-3 text-left text-sm text-white/55 transition-colors duration-150 hover:text-accent"
+          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/50 transition-colors duration-150 hover:text-accent"
         >
-          {pastExpanded
-            ? "Hide past shows"
-            : `${past.length} Past Show${past.length !== 1 ? "s" : ""} →`}
+          {pastExpanded ? "Hide Past Shows ↑" : "View Past Shows →"}
         </button>
       )}
 
@@ -251,18 +253,32 @@ export function GigsSection({ gigs }: GigsSectionProps) {
             style={{ overflow: "hidden" }}
           >
             <div className="mt-3 space-y-4">
-              {pastGroups.map(({ year, gigs: yearGigs }) => (
-                <div key={year}>
-                  <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/30">
-                    {year}
-                  </p>
-                  <div className="flex flex-col gap-1.5">
-                    {yearGigs.map((gig) => (
-                      <GigRow key={gig.id} gig={gig} isNext={false} isPast />
-                    ))}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                Past Shows
+              </p>
+              <div className="space-y-4 opacity-75">
+                {pastGroups.map(({ year, gigs: yearGigs }) => (
+                  <div key={year}>
+                    <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/30">
+                      {year}
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {yearGigs.map((gig) => (
+                        <GigRow key={gig.id} gig={gig} isNext={false} isPast />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              {hasMorePast && !showAllPast && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllPast(true)}
+                  className="text-xs font-medium uppercase tracking-[0.14em] text-white/35 transition-colors duration-150 hover:text-accent"
+                >
+                  Show More →
+                </button>
+              )}
             </div>
           </motion.div>
         )}
