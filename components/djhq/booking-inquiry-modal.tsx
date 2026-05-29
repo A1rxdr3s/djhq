@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 
 // ---------------------------------------------------------------------------
@@ -611,13 +612,12 @@ export function BookingInquiryModal({
                   {/* Row 3: Date + City + Country */}
                   <div className="grid grid-cols-3 gap-3">
                     <Field label="Event Date" required>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={form.eventDate}
-                        onChange={(e) => update("eventDate", e.target.value)}
-                        required
+                        onChange={(v) => update("eventDate", v)}
                         disabled={isSubmitting}
-                        className={cn(inputClass, "text-foreground/80")}
+                        triggerClassName={cn(inputClass, "rounded-md px-3")}
+                        align="start"
                       />
                     </Field>
                     <Field label="City" required>

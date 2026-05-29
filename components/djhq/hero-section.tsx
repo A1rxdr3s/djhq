@@ -130,9 +130,9 @@ export function HeroSection() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/35 to-transparent" />
                 <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-                  <span className="rounded-full bg-background/70 px-2.5 py-1 text-[10px] font-medium text-foreground/90 backdrop-blur-sm">House</span>
-                  <span className="rounded-full bg-background/70 px-2.5 py-1 text-[10px] font-medium text-foreground/90 backdrop-blur-sm">Tech House</span>
-                  <span className="rounded-full bg-accent/20 px-2.5 py-1 text-[10px] font-medium text-accent backdrop-blur-sm">Producer</span>
+                  <span className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>House</span>
+                  <span className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Tech House</span>
+                  <span className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Producer</span>
                 </div>
               </div>
 

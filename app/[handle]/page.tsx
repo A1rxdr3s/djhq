@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { getAccentTheme } from "@/lib/accent-themes"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
@@ -758,12 +757,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 {artist.genres.length > 0 && (
                   <div className="relative mb-3 flex flex-wrap gap-1.5 sm:mb-4">
                     {artist.genres.map((genre) => (
-                      <Badge
+                      <span
                         key={genre}
-                        className="border-white/[0.14] bg-white/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur-[6px]"
+                        className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm transition-colors duration-150 hover:border-accent/50 hover:bg-accent/15"
+                        style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}
                       >
                         {genre}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 )}

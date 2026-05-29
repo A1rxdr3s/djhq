@@ -8,6 +8,7 @@ import { VenueAutocomplete } from "./venue-autocomplete"
 import { CityAutocomplete } from "./city-autocomplete"
 import { TicketProviderBadge } from "./ticket-provider-badge"
 import { findCityExact } from "@/lib/city-data"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { VenueEntry } from "@/lib/venue-data"
 import type { CityOption } from "@/lib/city-data"
 
@@ -272,11 +273,10 @@ export function GigCard({
                   onSelect={handleVenueSelect}
                   autoFocus={initialExpanded}
                 />
-                <input
-                  type="date"
+                <DatePicker
                   value={gig.date}
-                  onChange={(e) => set("date", e.target.value)}
-                  className={cn(field("w-36 shrink-0 [color-scheme:dark]"))}
+                  onChange={(v) => set("date", v)}
+                  triggerClassName={cn(field("w-36 shrink-0"))}
                 />
               </div>
 

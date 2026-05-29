@@ -47,9 +47,9 @@ export function ProfileDemoSection() {
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6 sm:bottom-8 sm:left-8 sm:right-8">
               <div className="flex flex-wrap gap-2">
-                <span className="rounded-full bg-background/75 px-3 py-1 text-xs font-medium text-foreground backdrop-blur-sm">House</span>
-                <span className="rounded-full bg-background/75 px-3 py-1 text-xs font-medium text-foreground backdrop-blur-sm">Tech House</span>
-                <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-accent backdrop-blur-sm">Producer</span>
+                <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>House</span>
+                <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Tech House</span>
+                <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm" style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}>Producer</span>
               </div>
               <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>

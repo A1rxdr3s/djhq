@@ -12,6 +12,7 @@ import { ACCENT_THEMES, getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import { GigCard } from "@/components/dashboard/gig-card"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
@@ -2187,7 +2188,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
                         <span
                           key={genre}
-                          className="rounded-full border border-white/[0.14] bg-white/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur-[6px]"
+                          className="rounded-full border border-accent/35 bg-accent/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-accent backdrop-blur-sm"
+                          style={{ boxShadow: "0 0 18px color-mix(in srgb, var(--accent) 20%, transparent)" }}
                         >
                           {genre}
                         </span>
@@ -3013,13 +3015,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <label htmlFor="releaseDate" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                 Release Date
               </label>
-              <Input
-                id="releaseDate"
-                type="date"
+              <DatePicker
                 value={featuredRelease.releaseDate}
-                onChange={(event) =>
-                  setFeaturedRelease((current) => (current ? { ...current, releaseDate: event.target.value } : current))
+                onChange={(v) =>
+                  setFeaturedRelease((current) => (current ? { ...current, releaseDate: v } : current))
                 }
+                allowClear
+                triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
               />
             </div>
             <div className="space-y-1.5">
@@ -3202,17 +3204,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   >
                     Release Date
                   </label>
-                  <Input
-                    id={`selected-release-date-${index}`}
-                    type="date"
+                  <DatePicker
                     value={release.releaseDate}
-                    onChange={(event) =>
+                    onChange={(v) =>
                       setSelectedReleases((current) =>
                         current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, releaseDate: event.target.value } : item,
+                          itemIndex === index ? { ...item, releaseDate: v } : item,
                         ),
                       )
                     }
+                    allowClear
+                    triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -3797,12 +3799,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       >
                         Date
                       </label>
-                      <input
-                        id={`djset-date-${index}`}
-                        type="date"
-                        value={set.setDate}
-                        onChange={(e) => updateSet(index, { setDate: e.target.value })}
-                        className="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 text-sm font-medium text-foreground [color-scheme:dark] outline-none transition-colors duration-150 focus:border-white/[0.14] focus:bg-white/[0.04]"
+                      <DatePicker
+                        value={set.setDate ?? ""}
+                        onChange={(v) => updateSet(index, { setDate: v })}
+                        allowClear
+                        triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -4049,15 +4050,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   >
                     Date
                   </label>
-                  <Input
-                    id={`video-date-${index}`}
-                    type="date"
-                    value={video.videoDate}
-                    onChange={(event) =>
+                  <DatePicker
+                    value={video.videoDate ?? ""}
+                    onChange={(v) =>
                       setVideos((current) =>
-                        current.map((item, i) => (i === index ? { ...item, videoDate: event.target.value } : item)),
+                        current.map((item, i) => (i === index ? { ...item, videoDate: v } : item)),
                       )
                     }
+                    allowClear
+                    triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
                   />
                 </div>
                 <div className="space-y-1.5">
