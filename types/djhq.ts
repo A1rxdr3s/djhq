@@ -289,6 +289,12 @@ export interface Artist {
   browserTitle?: string
   /** Custom favicon URL for browser tabs (Pro only). Falls back to auto-generated initials favicon. */
   faviconUrl?: string
+  /** Custom hero logo URL (Pro only). Displayed based on heroIdentityMode. */
+  heroLogoUrl?: string | null
+  /** Hero identity display mode (Pro only). Controls whether text, logo, or both are shown. */
+  heroIdentityMode?: "text" | "logo" | "both"
+  /** Hero text typography style (Pro only). Affects artist name rendering when text is shown. */
+  heroTextStyle?: "default" | "condensed" | "cinematic" | "editorial"
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */

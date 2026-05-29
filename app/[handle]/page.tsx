@@ -69,6 +69,9 @@ type ArtistRow = {
   show_header_branding: boolean
   browser_title: string | null
   favicon_url: string | null
+  hero_logo_url: string | null
+  hero_identity_mode: string
+  hero_text_style: string
   is_published: boolean
   created_at: string
   updated_at: string
@@ -408,6 +411,9 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       showHeaderBranding: artistRow.show_header_branding,
       browserTitle: artistRow.browser_title ?? undefined,
       faviconUrl: artistRow.favicon_url ?? undefined,
+      heroLogoUrl: artistRow.hero_logo_url ?? null,
+      heroIdentityMode: (artistRow.hero_identity_mode || "text") as "text" | "logo" | "both",
+      heroTextStyle: (artistRow.hero_text_style || "default") as "default" | "condensed" | "cinematic" | "editorial",
       isPublished: artistRow.is_published,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
@@ -525,6 +531,34 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   // heroTagline takes priority; falls back to the legacy tagline field for existing artists.
   const displayHeroTagline = artist.heroTagline?.trim() || releaseTagline
   const hasFeaturedArtwork = featuredRelease.artworkUrl.trim().length > 0
+
+  // Hero Identity System — Pro artists can use logo, text, or both.
+  // Free artists always use text mode. Logo mode requires an uploaded logo.
+  const isPro = artist.plan === "pro"
+  const effectiveIdentityMode: "text" | "logo" | "both" = (() => {
+    if (!isPro) return "text"
+    const hasLogo = !!artist.heroLogoUrl?.trim()
+    if (artist.heroIdentityMode === "logo" && hasLogo) return "logo"
+    if (artist.heroIdentityMode === "both" && hasLogo) return "both"
+    return "text"
+  })()
+  const showLogoInHero = effectiveIdentityMode === "logo" || effectiveIdentityMode === "both"
+  const showTextInHero = effectiveIdentityMode === "text" || effectiveIdentityMode === "both"
+
+  // Hero text style classes — only applied when text is shown
+  const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
+  const heroNameClasses = (() => {
+    switch (heroTextStyle) {
+      case "condensed":
+        return "max-w-full text-[clamp(2rem,8.5vw,3.2rem)] font-black uppercase leading-[0.88] tracking-[-0.04em] text-foreground drop-shadow-2xl sm:text-[clamp(2.8rem,6.8vw,4.6rem)] sm:leading-[0.86] lg:max-w-none lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap lg:text-[clamp(3.6rem,5.2vw,5.8rem)]"
+      case "cinematic":
+        return "max-w-full text-[clamp(1.6rem,7vw,2.5rem)] font-bold uppercase leading-[1.02] tracking-[0.06em] text-foreground/95 drop-shadow-2xl sm:text-[clamp(2.2rem,5.5vw,3.6rem)] sm:leading-[1.0] lg:max-w-2xl lg:text-[clamp(2.8rem,4.2vw,4.4rem)]"
+      case "editorial":
+        return "max-w-full text-[clamp(1.75rem,7.5vw,2.75rem)] font-extrabold leading-[0.96] tracking-[-0.01em] text-foreground drop-shadow-2xl sm:text-[clamp(2.4rem,6vw,3.8rem)] sm:leading-[0.94] lg:max-w-2xl lg:text-[clamp(3rem,4.6vw,5rem)]"
+      default:
+        return "max-w-full text-[clamp(1.85rem,7.8vw,2.85rem)] font-black uppercase leading-[0.94] tracking-[-0.02em] text-foreground drop-shadow-2xl sm:text-[clamp(2.5rem,6.2vw,4rem)] sm:leading-[0.92] lg:max-w-none lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap lg:text-[clamp(3.25rem,4.8vw,5.25rem)]"
+    }
+  })()
   const hasPressKit =
     artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
@@ -580,43 +614,68 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               priority
               loading="eager"
               sizes="(min-width: 1024px) 1120px, (min-width: 768px) 640px, 100vw"
-              className="object-cover saturate-[0.95] contrast-110 brightness-[0.86] transition-transform duration-[1800ms] ease-out group-hover:scale-[1.02]"
+              className="object-cover saturate-[0.93] contrast-[1.08] brightness-[0.82] transition-transform duration-[1800ms] ease-out group-hover:scale-[1.02]"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.28),_hsl(var(--background)/0.04)_32%,_hsl(var(--background)/0.48)_68%,_hsl(var(--background)/0.97))]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,_transparent_20%,_hsl(var(--background)/0.22)_58%,_hsl(var(--background)/0.68)_100%)]" />
-            <div className="absolute inset-y-0 left-0 w-2/3 bg-[linear-gradient(92deg,_hsl(var(--background)/0.38),_transparent_76%)]" />
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.016]" />
-            <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_88%,_hsl(var(--accent)/0.12),_transparent_40%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_48%,_hsl(var(--background)/0.28)_100%)]" />
+            {/* Multi-layer gradient system — cinematic depth and separation */}
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
+            <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
 
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(72%,420px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.92)_0%,_hsl(var(--background)/0.55)_42%,_transparent_100%)]" />
+              {/* Cinematic content fade — stronger bottom lift */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
+
               <div className="relative max-w-3xl">
-                <div className="mb-2.5 flex flex-wrap gap-1.5 sm:mb-3">
-                  {artist.genres.map((genre) => (
-                    <Badge
-                      key={genre}
-                      className="border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white/70 backdrop-blur-sm"
-                    >
-                      {genre}
-                    </Badge>
-                  ))}
-                </div>
-                <h1 className="max-w-full text-[clamp(1.85rem,7.8vw,2.85rem)] font-black uppercase leading-[0.94] tracking-[-0.02em] text-foreground drop-shadow-2xl sm:text-[clamp(2.5rem,6.2vw,4rem)] sm:leading-[0.92] lg:max-w-none lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap lg:text-[clamp(3.25rem,4.8vw,5.25rem)]">
-                  {artist.artistName}
-                </h1>
+                {/* Genre pills — premium editorial */}
+                {artist.genres.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-4">
+                    {artist.genres.map((genre) => (
+                      <Badge
+                        key={genre}
+                        className="border-white/[0.14] bg-white/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur-[6px]"
+                      >
+                        {genre}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Hero identity — logo, text, or both */}
+                {showLogoInHero && artist.heroLogoUrl && (
+                  <div className={cn("mb-3", effectiveIdentityMode === "both" && "mb-4")}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={artist.heroLogoUrl}
+                      alt={artist.artistName}
+                      className="max-h-[56px] w-auto object-contain drop-shadow-2xl sm:max-h-[72px] lg:max-h-[88px]"
+                      style={{ maxWidth: "min(420px, 70vw)" }}
+                    />
+                  </div>
+                )}
+
+                {showTextInHero && (
+                  <h1 className={heroNameClasses}>
+                    {artist.artistName}
+                  </h1>
+                )}
+
                 {displayHeroTagline ? (
-                  <p className="mt-2 text-sm font-medium uppercase tracking-[0.14em] text-accent/90 sm:text-base">
+                  <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-accent/90 sm:mt-2.5 sm:text-base">
                     {displayHeroTagline}
                   </p>
                 ) : null}
-                <p className="mt-2 flex items-center gap-2 text-xs font-medium text-white/70 sm:mt-3 sm:text-sm">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-accent sm:h-4 sm:w-4" />
+
+                <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-white/65 sm:mt-3 sm:text-sm">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />
                   {artist.location}
                 </p>
-                <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-relaxed text-white/65 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-base">
+
+                <p className="mt-2 line-clamp-2 max-w-xl text-xs leading-[1.65] text-white/60 sm:mt-2.5 sm:text-sm lg:max-w-2xl lg:text-[0.9375rem]">
                   {artist.shortBio}
                 </p>
+
                 <div className="mt-4 flex flex-col gap-3 sm:mt-5">
                   <Button
                     asChild
@@ -641,7 +700,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </div>
         </section>
 
-        <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start lg:gap-10">
+        {/* Atmospheric lamina — unifies Press Photos / Featured Release / Gigs visually */}
+        <div className="relative mt-8 lg:mt-10">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
+          />
+        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-start lg:gap-10">
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:col-start-2 lg:row-start-1 lg:p-4">
             <SectionTitle>Featured Release</SectionTitle>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
@@ -698,10 +763,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <div
                   key={photo.id}
                   className={cn(
-                    "relative overflow-hidden bg-secondary",
+                    "group relative overflow-hidden bg-secondary transition-transform duration-300 ease-out hover:-translate-y-0.5",
                     index === 0
-                      ? "col-span-3 row-span-2 aspect-[4/5] rounded-2xl shadow-md shadow-black/25 lg:aspect-auto lg:rounded-[1.5rem]"
-                      : "col-span-2 aspect-[4/3] rounded-xl shadow-sm shadow-black/20 lg:aspect-auto",
+                      ? "col-span-3 row-span-2 aspect-[4/5] rounded-2xl shadow-md shadow-black/25 hover:shadow-lg hover:shadow-black/35 lg:aspect-auto lg:rounded-[1.5rem]"
+                      : "col-span-2 aspect-[4/3] rounded-xl shadow-sm shadow-black/20 hover:shadow-md hover:shadow-black/30 lg:aspect-auto",
                   )}
                 >
                   <Image
@@ -710,15 +775,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     fill
                     loading="eager"
                     sizes="(min-width: 768px) 220px, 33vw"
-                    className="object-cover saturate-[0.97]"
+                    className="object-cover saturate-[0.97] transition-transform duration-500 ease-out group-hover:scale-[1.018]"
                     style={{ objectPosition: `${photo.focalX ?? 50}% ${photo.focalY ?? 50}%` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent transition-opacity duration-300 group-hover:opacity-80" />
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/[0.10]" />
                 </div>
               ))}
             </div>
           </section>
 
+        </div>
         </div>
 
         {selectedReleasesForDisplay.length > 0 ? (

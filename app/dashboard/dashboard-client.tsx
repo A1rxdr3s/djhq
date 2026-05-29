@@ -527,6 +527,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [faviconUrl, setFaviconUrl] = useState(initialArtist.faviconUrl ?? "")
   const [faviconFile, setFaviconFile] = useState<File | null>(null)
   const [isUploadingFavicon, setIsUploadingFavicon] = useState(false)
+  const [heroLogoUrl, setHeroLogoUrl] = useState(initialArtist.heroLogoUrl ?? "")
+  const [heroIdentityMode, setHeroIdentityMode] = useState<"text" | "logo" | "both">(initialArtist.heroIdentityMode ?? "text")
+  const [heroTextStyle, setHeroTextStyle] = useState<"default" | "condensed" | "cinematic" | "editorial">(initialArtist.heroTextStyle ?? "default")
+  const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
+  const [isUploadingHeroLogo, setIsUploadingHeroLogo] = useState(false)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
   const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
   const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
@@ -586,7 +591,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroTagline !== (artist.heroTagline ?? "") ||
     showHeaderBranding !== artist.showHeaderBranding ||
     browserTitle !== (artist.browserTitle ?? "") ||
-    faviconUrl !== (artist.faviconUrl ?? "")
+    faviconUrl !== (artist.faviconUrl ?? "") ||
+    heroLogoUrl !== (artist.heroLogoUrl ?? "") ||
+    heroIdentityMode !== (artist.heroIdentityMode ?? "text") ||
+    heroTextStyle !== (artist.heroTextStyle ?? "default")
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
   const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
   const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
@@ -626,6 +634,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           showHeaderBranding,
           browserTitle,
           faviconUrl,
+          heroLogoUrl,
+          heroIdentityMode,
+          heroTextStyle,
         },
         socialLinks,
         featuredRelease,
@@ -660,6 +671,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       showHeaderBranding,
       browserTitle: browserTitle.trim() || undefined,
       faviconUrl: faviconUrl.trim() || undefined,
+      heroLogoUrl: heroLogoUrl.trim() || null,
+      heroIdentityMode,
+      heroTextStyle,
       isPublished: nextPublished,
       socialLinks: socialLinks.map((link) => ({
         platform: normalizeSocialPlatform(link.platform),
@@ -745,6 +759,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setShowHeaderBranding(savedArtist.showHeaderBranding)
     setBrowserTitle(savedArtist.browserTitle ?? "")
     setFaviconUrl(savedArtist.faviconUrl ?? "")
+    setHeroLogoUrl(savedArtist.heroLogoUrl ?? "")
+    setHeroIdentityMode(savedArtist.heroIdentityMode ?? "text")
+    setHeroTextStyle(savedArtist.heroTextStyle ?? "default")
     setSocialLinks(getSocialLinkFormState(savedArtist))
     setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
     setSelectedReleases(getSelectedReleaseFormState(savedArtist))
@@ -1290,6 +1307,50 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
+  async function handleUploadHeroLogo() {
+    if (!heroLogoFile) {
+      setSaveMessage("Please select a logo file to upload.")
+      return
+    }
+
+    setIsUploadingHeroLogo(true)
+    setSaveMessage("")
+
+    try {
+      const extMap: Record<string, string> = { "image/png": "png", "image/svg+xml": "svg", "image/webp": "webp" }
+      const fileExt = extMap[heroLogoFile.type] ?? "png"
+
+      const params = new URLSearchParams({ artistId: artist.id, type: "logo", fileExt })
+      const signedUrlResponse = await fetch(`/api/artists/hero-branding?${params.toString()}`)
+      const signedUrlResult = await parseJsonResponse<{ error?: string; signedUrl?: string; token?: string; filePath?: string }>(signedUrlResponse)
+
+      if (!signedUrlResponse.ok || !signedUrlResult.signedUrl || !signedUrlResult.token || !signedUrlResult.filePath) {
+        throw new Error(signedUrlResult.error ?? "Unable to get upload URL.")
+      }
+
+      const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+      const { error: uploadError } = await supabaseClient.storage
+        .from("artist-gallery")
+        .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, heroLogoFile, {
+          contentType: heroLogoFile.type,
+          upsert: true,
+        })
+
+      if (uploadError) throw new Error(uploadError.message)
+
+      const { data: urlData } = supabaseClient.storage.from("artist-gallery").getPublicUrl(signedUrlResult.filePath)
+
+      setHeroLogoUrl(urlData.publicUrl)
+      setHeroLogoFile(null)
+      setSaveMessage("Hero logo uploaded. Save to apply.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to upload hero logo."
+      setSaveMessage(message)
+    } finally {
+      setIsUploadingHeroLogo(false)
+    }
+  }
+
   async function handleDeleteGalleryImage(galleryImageId: string) {
     setDeletingGalleryImageId(galleryImageId)
     setSaveMessage("")
@@ -1688,12 +1749,136 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         </div>
 
-        {/* Browser Identity — Pro only */}
+        {/* Hero Identity System — Pro only */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Browser Identity
+                Hero Identity Mode
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground/45">
+                {artist.plan === "pro"
+                  ? "Choose what appears in the hero: your name, uploaded logo, or both."
+                  : "Upgrade to Pro to upload a custom logo and set your hero identity mode."}
+              </p>
+            </div>
+            {artist.plan !== "pro" && (
+              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
+                Pro only
+              </span>
+            )}
+          </div>
+
+          {/* Identity mode segmented control */}
+          <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+            {(["text", "logo", "both"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => artist.plan === "pro" && setHeroIdentityMode(mode)}
+                disabled={artist.plan !== "pro"}
+                className={cn(
+                  "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                  "transition-colors duration-100",
+                  heroIdentityMode === mode
+                    ? "bg-white/[0.07] text-foreground/75"
+                    : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                  artist.plan !== "pro" && "pointer-events-none",
+                )}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Hero Logo — Pro only */}
+          {artist.plan === "pro" && (
+            <div className="mt-5 space-y-2 border-t border-white/[0.04] pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Custom Hero Logo
+              </p>
+              {heroLogoUrl ? (
+                <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="flex h-12 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.08] bg-[#0a0a0a]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={heroLogoUrl} alt="Hero logo" className="max-h-10 max-w-full object-contain" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] text-foreground/55">{heroLogoUrl.split("/").pop()}</p>
+                    <button
+                      type="button"
+                      onClick={() => setHeroLogoUrl("")}
+                      className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              <Input
+                id="heroLogoFile"
+                type="file"
+                accept="image/png,image/svg+xml,image/webp"
+                onChange={(event) => setHeroLogoFile(event.target.files?.[0] ?? null)}
+              />
+              <Button
+                type="button"
+                onClick={handleUploadHeroLogo}
+                disabled={!heroLogoFile || isUploadingHeroLogo || isSaving || isPublishing}
+                className="bg-secondary text-foreground hover:bg-secondary/80"
+              >
+                {isUploadingHeroLogo ? "Uploading..." : "Upload logo"}
+              </Button>
+              <p className="text-[10px] text-muted-foreground/38">
+                PNG, SVG, or WEBP. Transparent background recommended. Displayed at max height 56–88px depending on breakpoint.
+              </p>
+            </div>
+          )}
+
+          {/* Hero Typography Style — Pro only */}
+          <div className="mt-5 space-y-3 border-t border-white/[0.04] pt-4">
+            <div className="flex items-start justify-between gap-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Hero Typography Style
+              </p>
+              {artist.plan !== "pro" && (
+                <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
+                  Pro only
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+              {(["default", "condensed", "cinematic", "editorial"] as const).map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={() => artist.plan === "pro" && setHeroTextStyle(style)}
+                  disabled={artist.plan !== "pro"}
+                  className={cn(
+                    "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                    "transition-colors duration-100",
+                    heroTextStyle === style
+                      ? "bg-white/[0.07] text-foreground/75"
+                      : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                    artist.plan !== "pro" && "pointer-events-none",
+                  )}
+                >
+                  {style}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground/38">
+              Controls font weight, size, and tracking of your name in the hero. Only applies when text is visible.
+            </p>
+          </div>
+        </div>
+
+        {/* Brand Identity — Pro only */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Brand Identity
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground/45">
                 How your profile appears in browser tabs, bookmarks, and shared links.

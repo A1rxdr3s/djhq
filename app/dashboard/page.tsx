@@ -30,6 +30,9 @@ type ArtistRow = {
   show_header_branding: boolean
   browser_title: string | null
   favicon_url: string | null
+  hero_logo_url: string | null
+  hero_identity_mode: string
+  hero_text_style: string
   is_published: boolean
   created_at: string
   updated_at: string
@@ -381,6 +384,9 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     showHeaderBranding: artistRow.show_header_branding,
     browserTitle: artistRow.browser_title ?? undefined,
     faviconUrl: artistRow.favicon_url ?? undefined,
+    heroLogoUrl: artistRow.hero_logo_url ?? null,
+    heroIdentityMode: (artistRow.hero_identity_mode || "text") as "text" | "logo" | "both",
+    heroTextStyle: (artistRow.hero_text_style || "default") as "default" | "condensed" | "cinematic" | "editorial",
     isPublished: artistRow.is_published,
     createdAt: artistRow.created_at,
     updatedAt: artistRow.updated_at,
