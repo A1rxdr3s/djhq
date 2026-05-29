@@ -5,8 +5,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, Music, Play, Plus, Save, Trash2 } from "lucide-react"
-import type { Artist, DjSet, GalleryImage, HeroLogoLayout, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, DjSet, GalleryImage, HeroLogoLayout, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
+import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -81,6 +82,10 @@ type SelectedReleaseFormState = FeaturedReleaseFormState & {
   youtubeMusicUrl: string
   bandcampUrl: string
   otherUrl: string
+  releaseType: string
+  versionType: string
+  customVersionType: string
+  remixer: string
 }
 
 type GigFormState = {
@@ -99,7 +104,10 @@ type GigFormState = {
 
 type DjSetFormState = {
   id: string
-  title: string
+  performanceType: PerformanceType
+  performanceArtists: string[]
+  customPerformanceType: string
+  titleOverride: string
   venue: string
   event: string
   setDate: string
@@ -159,6 +167,78 @@ function normalizeReleaseType(type: string): ReleaseType {
   return type === "album" ? "album" : "single"
 }
 
+const RELEASE_TYPE_OPTIONS = [
+  { value: "single",      label: "Single" },
+  { value: "ep",          label: "EP" },
+  { value: "album",       label: "Album" },
+  { value: "compilation", label: "Compilation" },
+  { value: "va",          label: "VA" },
+  { value: "other",       label: "Other" },
+] as const
+
+const VERSION_TYPE_OPTIONS = [
+  { value: "original_mix",  label: "Original Mix" },
+  { value: "extended_mix",  label: "Extended Mix" },
+  { value: "radio_edit",    label: "Radio Edit" },
+  { value: "remix",         label: "Remix" },
+  { value: "club_mix",      label: "Club Mix" },
+  { value: "dub_mix",       label: "Dub Mix" },
+  { value: "instrumental",  label: "Instrumental" },
+  { value: "vip_mix",       label: "VIP Mix" },
+  { value: "edit",          label: "Edit" },
+  { value: "mashup",        label: "Mashup" },
+  { value: "bootleg",       label: "Bootleg" },
+  { value: "rework",        label: "Rework" },
+  { value: "acapella",      label: "Acapella" },
+  { value: "tool",          label: "Tool" },
+  { value: "other",         label: "Other" },
+] as const
+
+const VERSION_TYPE_VALUES = VERSION_TYPE_OPTIONS.map((o) => o.value)
+
+function parseVersionType(stored?: string): { versionType: string; customVersionType: string } {
+  if (!stored) return { versionType: "", customVersionType: "" }
+  if ((VERSION_TYPE_VALUES as readonly string[]).includes(stored)) {
+    return { versionType: stored, customVersionType: "" }
+  }
+  return { versionType: "other", customVersionType: stored }
+}
+
+// Returns snake_case version type key. Remix is handled by detectRemixFromTitle.
+function inferVersionType(title: string): string | null {
+  const patterns: [RegExp, string][] = [
+    [/\bextended\s+mix\b/i, "extended_mix"],
+    [/\boriginal\s+mix\b/i, "original_mix"],
+    [/\bradio\s+edit\b/i,   "radio_edit"],
+    [/\bclub\s+mix\b/i,     "club_mix"],
+    [/\bdub\s+mix\b/i,      "dub_mix"],
+    [/\bvip\s+mix\b/i,      "vip_mix"],
+    [/\binstrumental\b/i,   "instrumental"],
+    [/\bmashup\b/i,         "mashup"],
+    [/\bbootleg\b/i,        "bootleg"],
+    [/\brework\b/i,         "rework"],
+    [/\bacapp?ella\b/i,     "acapella"],
+    [/\bedit\b/i,           "edit"],
+    [/\btool\b/i,           "tool"],
+  ]
+  for (const [pattern, value] of patterns) {
+    if (pattern.test(title)) return value
+  }
+  return null
+}
+
+// Detects "(Artist Remix)", "[Artist Remix]", "- Artist Remix" patterns.
+function detectRemixFromTitle(title: string): { versionType?: string; remixer?: string } {
+  const bracketPattern = /[([]([\w\s:&.,'-]+?)\s+[Rr]emix[)\]]/
+  const dashPattern = /-\s+([\w\s:&.,'-]+?)\s+[Rr]emix\s*$/
+  for (const pattern of [bracketPattern, dashPattern]) {
+    const match = title.match(pattern)
+    if (match) return { versionType: "remix", remixer: match[1].trim() }
+  }
+  if (/\bremix\b/i.test(title)) return { versionType: "remix" }
+  return {}
+}
+
 function toDateInputValue(value: string) {
   return value.slice(0, 10)
 }
@@ -186,23 +266,30 @@ function getFeaturedReleaseFormState(artist: Artist): FeaturedReleaseFormState |
 }
 
 function getSelectedReleaseFormState(artist: Artist): SelectedReleaseFormState[] {
-  return artist.selectedReleases.map((release) => ({
-    id: release.id,
-    title: release.title,
-    label: release.label,
-    credits: release.credits ?? "",
-    releaseDate: toDateInputValue(release.releaseDate),
-    type: release.type,
-    platformUrl: release.platformUrl,
-    artworkUrl: release.artworkUrl,
-    spotifyUrl: release.spotifyUrl ?? "",
-    beatportUrl: release.beatportUrl ?? "",
-    appleMusicUrl: release.appleMusicUrl ?? "",
-    soundcloudUrl: release.soundcloudUrl ?? "",
-    youtubeMusicUrl: release.youtubeMusicUrl ?? "",
-    bandcampUrl: release.bandcampUrl ?? "",
-    otherUrl: release.otherUrl ?? "",
-  }))
+  return artist.selectedReleases.map((release) => {
+    const { versionType, customVersionType } = parseVersionType(release.versionType)
+    return {
+      id: release.id,
+      title: release.title,
+      label: release.label,
+      credits: release.credits ?? "",
+      releaseDate: toDateInputValue(release.releaseDate),
+      type: release.type,
+      platformUrl: release.platformUrl,
+      artworkUrl: release.artworkUrl,
+      spotifyUrl: release.spotifyUrl ?? "",
+      beatportUrl: release.beatportUrl ?? "",
+      appleMusicUrl: release.appleMusicUrl ?? "",
+      soundcloudUrl: release.soundcloudUrl ?? "",
+      youtubeMusicUrl: release.youtubeMusicUrl ?? "",
+      bandcampUrl: release.bandcampUrl ?? "",
+      otherUrl: release.otherUrl ?? "",
+      releaseType: release.releaseType ?? "",
+      versionType,
+      customVersionType,
+      remixer: release.remixer ?? "",
+    }
+  })
 }
 
 function createEmptySelectedRelease(): SelectedReleaseFormState {
@@ -222,6 +309,10 @@ function createEmptySelectedRelease(): SelectedReleaseFormState {
     youtubeMusicUrl: "",
     bandcampUrl: "",
     otherUrl: "",
+    releaseType: "",
+    versionType: "",
+    customVersionType: "",
+    remixer: "",
   }
 }
 
@@ -251,10 +342,11 @@ function mergeImportedReleaseFields<T extends FeaturedReleaseFormState>(
 function mergeDjSetMetadata(current: DjSetFormState, result: ImportedReleaseMetadata): DjSetFormState {
   return {
     ...current,
-    title: result.title?.trim() || current.title,
+    // Only suggest imported title as titleOverride if no override is set yet
+    titleOverride: current.titleOverride || result.title?.trim() || current.titleOverride,
     imageUrl: result.artworkUrl?.trim() || current.imageUrl,
     platformUrl: result.platformUrl || current.platformUrl,
-    // Only fill date/venue/event if they aren't already set
+    // Only fill date if not already set; never overwrite artists/type/event/venue
     setDate: current.setDate || result.releaseDate || current.setDate,
   }
 }
@@ -298,7 +390,10 @@ function getGigFormState(artist: Artist): GigFormState[] {
 function getDjSetFormState(artist: Artist): DjSetFormState[] {
   return artist.djSets.map((set) => ({
     id: set.id,
-    title: set.title,
+    performanceType: set.performanceType,
+    performanceArtists: set.performanceArtists,
+    customPerformanceType: set.customPerformanceType ?? "",
+    titleOverride: set.titleOverride ?? "",
     venue: set.venue ?? "",
     event: set.event ?? "",
     setDate: set.setDate ? toDateInputValue(set.setDate) : "",
@@ -308,10 +403,13 @@ function getDjSetFormState(artist: Artist): DjSetFormState[] {
   }))
 }
 
-function createEmptyDjSet(): DjSetFormState {
+function createEmptyDjSet(artistName: string): DjSetFormState {
   return {
     id: `new-${crypto.randomUUID()}`,
-    title: "",
+    performanceType: "dj_set",
+    performanceArtists: [artistName],
+    customPerformanceType: "",
+    titleOverride: "",
     venue: "",
     event: "",
     setDate: "",
@@ -577,6 +675,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   })
   const initialDjSets = getDjSetFormState(artist)
   const [djSets, setDjSets] = useState(initialDjSets)
+  const [advancedOpenIds, setAdvancedOpenIds] = useState<Set<string>>(() => {
+    // Auto-open advanced section for sets that already have a titleOverride (backward compat)
+    return new Set(initialDjSets.filter((s) => s.titleOverride !== "").map((s) => s.id))
+  })
   const initialVideos = getVideoFormState(artist)
   const [videos, setVideos] = useState(initialVideos)
   const [saveMessage, setSaveMessage] = useState("")
@@ -688,10 +790,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           youtubeMusicUrl: r.youtubeMusicUrl,
           bandcampUrl: r.bandcampUrl,
           otherUrl: r.otherUrl,
+          releaseType: r.releaseType || undefined,
+          versionType: r.versionType === "other"
+            ? r.customVersionType.trim() || undefined
+            : r.versionType || undefined,
+          remixer: r.remixer.trim() || undefined,
         })),
         gigs: upcomingGigs,
         djSets: djSets.map((set) => ({
-          title: set.title,
+          performanceType: set.performanceType,
+          performanceArtists: set.performanceArtists,
+          customPerformanceType: set.customPerformanceType || undefined,
+          titleOverride: set.titleOverride || undefined,
           venue: set.venue,
           event: set.event,
           setDate: set.setDate,
@@ -766,6 +876,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         youtubeMusicUrl: release.youtubeMusicUrl?.trim() || undefined,
         bandcampUrl: release.bandcampUrl?.trim() || undefined,
         otherUrl: release.otherUrl?.trim() || undefined,
+        releaseType: release.releaseType || undefined,
+        versionType: release.versionType === "other"
+          ? release.customVersionType.trim() || undefined
+          : release.versionType || undefined,
+        remixer: release.remixer.trim() || undefined,
       })),
       upcomingGigs: upcomingGigs.map((gig) => ({
         id: gig.id,
@@ -780,17 +895,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         feeCurrency: gig.feeCurrency?.trim() || null,
         paymentStatus: gig.paymentStatus ?? null,
       })),
-      djSets: djSets.map((set, index): DjSet => ({
-        id: set.id,
-        title: set.title.trim(),
-        venue: set.venue.trim() || undefined,
-        event: set.event.trim() || undefined,
-        setDate: set.setDate || undefined,
-        imageUrl: set.imageUrl.trim() || undefined,
-        platformUrl: set.platformUrl.trim(),
-        sortOrder: index + 1,
-        isPublished: set.isPublished,
-      })),
+      djSets: djSets.map((set, index): DjSet => {
+        const generatedTitle = computeDjSetTitle(
+          set.performanceType,
+          set.performanceArtists,
+          set.customPerformanceType || undefined,
+          set.event || undefined,
+          set.venue || undefined,
+          artist.artistName,
+        )
+        return {
+          id: set.id,
+          title: set.titleOverride.trim() || generatedTitle,
+          performanceType: set.performanceType,
+          performanceArtists: set.performanceArtists,
+          customPerformanceType: set.customPerformanceType.trim() || undefined,
+          titleOverride: set.titleOverride.trim() || undefined,
+          venue: set.venue.trim() || undefined,
+          event: set.event.trim() || undefined,
+          setDate: set.setDate || undefined,
+          imageUrl: set.imageUrl.trim() || undefined,
+          platformUrl: set.platformUrl.trim(),
+          sortOrder: index + 1,
+          isPublished: set.isPublished,
+        }
+      }),
       videos: videos.map((video, index): Video => ({
         id: video.id,
         title: video.title.trim(),
@@ -975,7 +1104,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       }
 
       setSelectedReleases((current) =>
-        current.map((item, itemIndex) => (itemIndex === index ? mergeImportedReleaseFields(item, result) : item)),
+        current.map((item, itemIndex) => {
+          if (itemIndex !== index) return item
+          const merged = mergeImportedReleaseFields(item, result)
+          if (!merged.versionType && result.title) {
+            const { versionType: detectedType, remixer: detectedRemixer } = detectRemixFromTitle(result.title)
+            if (detectedType) {
+              return {
+                ...merged,
+                versionType: detectedType,
+                customVersionType: "",
+                remixer: merged.remixer || detectedRemixer || "",
+              }
+            }
+            const inferred = inferVersionType(result.title)
+            if (inferred) return { ...merged, versionType: inferred, customVersionType: "" }
+          }
+          return merged
+        }),
       )
       setSaveMessage("Release metadata imported. Review and save changes.")
     } catch (error) {
@@ -1056,7 +1202,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function handleAddDjSet() {
-    setDjSets((current) => [...current, createEmptyDjSet()])
+    setDjSets((current) => [...current, createEmptyDjSet(artist.artistName)])
   }
 
   function handleRemoveDjSet(index: number) {
@@ -1673,7 +1819,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const hasLogoForPreview = artist.plan === "pro" && !!heroLogoUrl
     const showLogoInPreview = hasLogoForPreview && (heroIdentityMode === "logo" || heroIdentityMode === "both")
     const showTextInPreview = !hasLogoForPreview || heroIdentityMode === "text" || heroIdentityMode === "both" || (heroIdentityMode === "logo" && heroLogoLayout !== "replace_text")
-    const previewLogoH = Math.min(Math.round(heroLogoScale * 0.45), 96)
+    const previewLogoW = Math.min(heroLogoScale, 200)
     const previewNameClass = (() => {
       switch (heroTextStyle) {
         case "condensed": return "text-2xl font-black uppercase leading-none tracking-tight"
@@ -1825,8 +1971,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <img
                     src={heroLogoUrl}
                     alt="Logo preview"
-                    style={{ height: `${previewLogoH}px` }}
-                    className="w-auto object-contain drop-shadow-md"
+                    style={{ maxWidth: `${previewLogoW}px`, height: "auto" }}
+                    className="object-contain drop-shadow-md"
                   />
                 ) : null
                 const textEl = showTextInPreview ? (
@@ -1935,7 +2081,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
               />
               <p className="text-[10px] text-muted-foreground/35">
-                Height of your logo on the public profile. Increase for wide wordmarks.
+                Controls visual logo width. Layout spacing stays fixed.
               </p>
             </div>
 
@@ -2526,23 +2672,91 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </div>
                 <div className="space-y-1.5">
                   <label
-                    htmlFor={`selected-release-type-${index}`}
+                    htmlFor={`selected-release-reltype-${index}`}
                     className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
-                    Type
+                    Release Type
                   </label>
-                  <Input
-                    id={`selected-release-type-${index}`}
-                    value={release.type}
+                  <select
+                    id={`selected-release-reltype-${index}`}
+                    value={release.releaseType}
                     onChange={(event) =>
                       setSelectedReleases((current) =>
                         current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, type: event.target.value } : item,
+                          itemIndex === index ? { ...item, releaseType: event.target.value } : item,
                         ),
                       )
                     }
-                  />
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">— None —</option>
+                    {RELEASE_TYPE_OPTIONS.map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
                 </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`selected-release-version-${index}`}
+                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                  >
+                    Version / Mix Type
+                  </label>
+                  <select
+                    id={`selected-release-version-${index}`}
+                    value={release.versionType}
+                    onChange={(event) =>
+                      setSelectedReleases((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? { ...item, versionType: event.target.value, customVersionType: "" }
+                            : item,
+                        ),
+                      )
+                    }
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">— None —</option>
+                    {VERSION_TYPE_OPTIONS.map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                  {release.versionType === "other" && (
+                    <Input
+                      placeholder="Custom version / mix type"
+                      value={release.customVersionType}
+                      onChange={(event) =>
+                        setSelectedReleases((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, customVersionType: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  )}
+                </div>
+                {release.versionType === "remix" && (
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label
+                      htmlFor={`selected-release-remixer-${index}`}
+                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                    >
+                      Remixer
+                    </label>
+                    <Input
+                      id={`selected-release-remixer-${index}`}
+                      placeholder="Artist name"
+                      value={release.remixer}
+                      onChange={(event) =>
+                        setSelectedReleases((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, remixer: event.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                )}
                 <div className="space-y-1.5 md:col-span-2">
                   <label
                     htmlFor={`selected-release-platform-${index}`}
@@ -2826,15 +3040,58 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     }
 
+    function toggleAdvanced(id: string) {
+      setAdvancedOpenIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
+
+    function updateSet(index: number, patch: Partial<DjSetFormState>) {
+      setDjSets((current) => current.map((item, i) => (i === index ? { ...item, ...patch } : item)))
+    }
+
+    function handleTypeChange(index: number, type: PerformanceType) {
+      setDjSets((current) =>
+        current.map((item, i) => {
+          if (i !== index) return item
+          let artists = [...item.performanceArtists]
+          if (type === "b2b" && artists.length < 2) artists = [...artists, ...Array(2 - artists.length).fill("")]
+          if (type === "b3b" && artists.length < 3) artists = [...artists, ...Array(3 - artists.length).fill("")]
+          return { ...item, performanceType: type, performanceArtists: artists }
+        }),
+      )
+    }
+
+    const performanceTypes: PerformanceType[] = ["dj_set", "live_set", "vinyl_set", "b2b", "b3b", "other"]
+
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-base font-semibold text-foreground">DJ Sets</h2>
+          <h2 className="text-base font-semibold text-foreground">Performance Archive</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">Recorded or broadcast sets. First set is featured on your public profile.</p>
         </div>
         <div className="space-y-3">
           {djSets.map((set, index) => {
-            const previewMeta = [set.event, set.venue, formatDjSetDate(set.setDate)].filter(Boolean).join(" · ")
+            const generatedTitle = computeDjSetTitle(
+              set.performanceType,
+              set.performanceArtists,
+              set.customPerformanceType || undefined,
+              set.event || undefined,
+              set.venue || undefined,
+              artist.artistName,
+            )
+            const displayTitle = set.titleOverride.trim() || generatedTitle
+            const previewMeta = [
+              PERFORMANCE_TYPE_LABELS[set.performanceType],
+              set.event,
+              set.venue,
+              formatDjSetDate(set.setDate),
+            ].filter(Boolean).join(" · ")
+            const isAdvancedOpen = advancedOpenIds.has(set.id)
+
             return (
               <div key={set.id} className="rounded-xl border border-white/[0.06] bg-card/40 transition-colors duration-150 hover:border-white/[0.09]">
                 {/* Header */}
@@ -2850,15 +3107,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     )}
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium leading-none text-foreground">
-                        {set.title || <span className="text-muted-foreground/30">Untitled</span>}
+                        {displayTitle || <span className="text-muted-foreground/30">Set {index + 1}</span>}
                       </p>
-                      {previewMeta ? (
-                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/40">{previewMeta}</p>
-                      ) : (
-                        <p className="mt-0.5 text-[10px] text-muted-foreground/30">
-                          Set {index + 1}{index === 0 ? " · Featured" : ""}
-                        </p>
-                      )}
+                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground/40">
+                        {previewMeta || `Set ${index + 1}${index === 0 ? " · Featured" : ""}`}
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-0.5 shrink-0">
@@ -2900,27 +3153,92 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                 {/* Fields */}
                 <div className="space-y-4 border-t border-white/[0.04] px-4 py-4 sm:px-5">
-                  {/* Row 1: Title */}
+
+                  {/* Row 1: Performance Type */}
                   <div className="space-y-1.5">
-                    <label
-                      htmlFor={`djset-title-${index}`}
-                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                    >
-                      Title
-                    </label>
-                    <Input
-                      id={`djset-title-${index}`}
-                      value={set.title}
-                      placeholder="Live from Fabric"
-                      onChange={(e) =>
-                        setDjSets((current) =>
-                          current.map((item, i) => (i === index ? { ...item, title: e.target.value } : item)),
-                        )
-                      }
-                    />
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Type</p>
+                    <div className="flex flex-wrap gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                      {performanceTypes.map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => handleTypeChange(index, type)}
+                          disabled={isSaving || isPublishing}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            set.performanceType === type
+                              ? "bg-white/[0.07] text-foreground/75"
+                              : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                          )}
+                        >
+                          {PERFORMANCE_TYPE_LABELS[type]}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Row 2: Date · Venue · Event */}
+                  {/* Row 2: Artists */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Artists</p>
+                    <div className="space-y-2">
+                      {set.performanceArtists.map((name, ai) => (
+                        <div key={ai} className="flex gap-2">
+                          <Input
+                            value={name}
+                            placeholder="Artist name"
+                            onChange={(e) => {
+                              const next = [...set.performanceArtists]
+                              next[ai] = e.target.value
+                              updateSet(index, { performanceArtists: next })
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const next = set.performanceArtists.filter((_, j) => j !== ai)
+                              updateSet(index, { performanceArtists: next.length > 0 ? next : [""] })
+                            }}
+                            disabled={set.performanceArtists.length <= 1 || isSaving || isPublishing}
+                            className="h-9 w-9 shrink-0 p-0 text-muted-foreground/40 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => updateSet(index, { performanceArtists: [...set.performanceArtists, ""] })}
+                        disabled={isSaving || isPublishing}
+                        className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add artist
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Custom type — only for "other" */}
+                  {set.performanceType === "other" && (
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor={`djset-custom-type-${index}`}
+                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                      >
+                        Custom Type
+                      </label>
+                      <Input
+                        id={`djset-custom-type-${index}`}
+                        value={set.customPerformanceType}
+                        placeholder="Radio show, podcast, guest mix…"
+                        onChange={(e) => updateSet(index, { customPerformanceType: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  {/* Row 3: Date · Venue · Event */}
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div className="space-y-1.5">
                       <label
@@ -2933,32 +3251,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         id={`djset-date-${index}`}
                         type="date"
                         value={set.setDate}
-                        onChange={(e) =>
-                          setDjSets((current) =>
-                            current.map((item, i) => (i === index ? { ...item, setDate: e.target.value } : item)),
-                          )
-                        }
+                        onChange={(e) => updateSet(index, { setDate: e.target.value })}
                         className="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 text-sm font-medium text-foreground [color-scheme:dark] outline-none transition-colors duration-150 focus:border-white/[0.14] focus:bg-white/[0.04]"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label
-                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                      >
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                         Venue
                       </label>
                       <VenueAutocomplete
                         value={set.venue}
-                        onChange={(v) =>
-                          setDjSets((current) =>
-                            current.map((item, i) => (i === index ? { ...item, venue: v } : item)),
-                          )
-                        }
-                        onSelect={(entry) =>
-                          setDjSets((current) =>
-                            current.map((item, i) => (i === index ? { ...item, venue: entry.name } : item)),
-                          )
-                        }
+                        onChange={(v) => updateSet(index, { venue: v })}
+                        onSelect={(entry) => updateSet(index, { venue: entry.name })}
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -2972,16 +3276,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         id={`djset-event-${index}`}
                         value={set.event}
                         placeholder="MISA, Boiler Room…"
-                        onChange={(e) =>
-                          setDjSets((current) =>
-                            current.map((item, i) => (i === index ? { ...item, event: e.target.value } : item)),
-                          )
-                        }
+                        onChange={(e) => updateSet(index, { event: e.target.value })}
                       />
                     </div>
                   </div>
 
-                  {/* Row 3: Platform URL · Thumbnail URL */}
+                  {/* Row 4: Platform URL · Thumbnail URL */}
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <label
@@ -2995,11 +3295,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           id={`djset-platform-${index}`}
                           value={set.platformUrl}
                           placeholder="soundcloud.com/…"
-                          onChange={(e) =>
-                            setDjSets((current) =>
-                              current.map((item, i) => (i === index ? { ...item, platformUrl: e.target.value } : item)),
-                            )
-                          }
+                          onChange={(e) => updateSet(index, { platformUrl: e.target.value })}
                           className="min-w-0 flex-1"
                         />
                         <Button
@@ -3009,7 +3305,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           onClick={() => handleImportDjSetMetadata(index)}
                           disabled={importingDjSetIndex === index || isSaving || isPublishing}
                           className="shrink-0 border-border bg-background/70 text-xs"
-                          title="Import title and thumbnail from SoundCloud or YouTube"
+                          title="Import thumbnail from SoundCloud or YouTube"
                         >
                           {importingDjSetIndex === index ? "…" : "Import"}
                         </Button>
@@ -3026,13 +3322,40 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         id={`djset-image-${index}`}
                         value={set.imageUrl}
                         placeholder="https://…"
-                        onChange={(e) =>
-                          setDjSets((current) =>
-                            current.map((item, i) => (i === index ? { ...item, imageUrl: e.target.value } : item)),
-                          )
-                        }
+                        onChange={(e) => updateSet(index, { imageUrl: e.target.value })}
                       />
                     </div>
+                  </div>
+
+                  {/* Advanced section — Title Override */}
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleAdvanced(set.id)}
+                      className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40 transition-colors hover:text-muted-foreground/60"
+                    >
+                      <ChevronDown className={cn("h-3 w-3 transition-transform duration-150", isAdvancedOpen ? "rotate-180" : "")} />
+                      Advanced
+                    </button>
+                    {isAdvancedOpen && (
+                      <div className="space-y-1.5 rounded-lg border border-white/[0.04] bg-white/[0.015] p-3">
+                        <label
+                          htmlFor={`djset-override-${index}`}
+                          className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60"
+                        >
+                          Title Override
+                        </label>
+                        <Input
+                          id={`djset-override-${index}`}
+                          value={set.titleOverride}
+                          placeholder={generatedTitle}
+                          onChange={(e) => updateSet(index, { titleOverride: e.target.value })}
+                        />
+                        <p className="text-[10px] text-muted-foreground/35">
+                          Replaces the generated title on your public profile. Leave empty to use the generated title.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Show on profile */}
@@ -3041,11 +3364,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       id={`djset-published-${index}`}
                       type="checkbox"
                       checked={set.isPublished}
-                      onChange={(e) =>
-                        setDjSets((current) =>
-                          current.map((item, i) => (i === index ? { ...item, isPublished: e.target.checked } : item)),
-                        )
-                      }
+                      onChange={(e) => updateSet(index, { isPublished: e.target.checked })}
                       className="h-4 w-4 rounded border-border"
                     />
                     <label htmlFor={`djset-published-${index}`} className="text-sm text-foreground">
@@ -3060,7 +3379,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
               <Headphones className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
               <p className="text-sm font-medium text-muted-foreground/50">No sets added</p>
-              <p className="mt-1 text-xs text-muted-foreground/30">Paste a SoundCloud or YouTube link and click Import to fill metadata.</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">Add a set and fill in the performance details to generate an editorial title.</p>
             </div>
           )}
           <button

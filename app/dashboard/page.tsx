@@ -3,7 +3,7 @@ import DashboardClient from "./dashboard-client"
 import OnboardingForm from "./onboarding-form"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import type { Artist, CustomDomainStatus, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, CustomDomainStatus, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 
 const mvpArtistHandle = "andresherrera"
 
@@ -63,6 +63,9 @@ type ReleaseRow = {
   youtube_music_url: string | null
   bandcamp_url: string | null
   other_url: string | null
+  release_type: string | null
+  version_type: string | null
+  remixer: string | null
 }
 
 type GigRow = {
@@ -91,6 +94,10 @@ type GalleryImageRow = {
 type DjSetRow = {
   id: string
   title: string
+  performance_type: string
+  performance_artists: string[]
+  custom_performance_type: string | null
+  title_override: string | null
   venue: string | null
   event: string | null
   set_date: string | null
@@ -228,7 +235,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<SocialLinkRow[]>(),
     supabase
       .from("releases")
-      .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url, bandcamp_url, other_url")
+      .select("id, title, label, credits, release_date, artwork_url, platform_url, type, is_featured, spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url, bandcamp_url, other_url, release_type, version_type, remixer")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .order("release_date", { ascending: false })
@@ -247,7 +254,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<GalleryImageRow[]>(),
     supabase
       .from("dj_sets")
-      .select("id, title, venue, event, set_date, image_url, platform_url, sort_order, is_published")
+      .select("id, title, performance_type, performance_artists, custom_performance_type, title_override, venue, event, set_date, image_url, platform_url, sort_order, is_published")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<DjSetRow[]>(),
@@ -321,6 +328,9 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       youtubeMusicUrl: release.youtube_music_url ?? undefined,
       bandcampUrl: release.bandcamp_url ?? undefined,
       otherUrl: release.other_url ?? undefined,
+      releaseType: release.release_type ?? undefined,
+      versionType: release.version_type ?? undefined,
+      remixer: release.remixer ?? undefined,
     })),
     upcomingGigs: (gigsResult.data ?? []).map((gig) => ({
       id: gig.id,
@@ -338,6 +348,10 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     djSets: (djSetsResult.data ?? []).map((set) => ({
       id: set.id,
       title: set.title,
+      performanceType: (set.performance_type || "dj_set") as PerformanceType,
+      performanceArtists: set.performance_artists ?? [],
+      customPerformanceType: set.custom_performance_type ?? undefined,
+      titleOverride: set.title_override ?? undefined,
       venue: set.venue ?? undefined,
       event: set.event ?? undefined,
       setDate: set.set_date ?? undefined,

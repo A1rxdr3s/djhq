@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { computeDjSetTitle, type PerformanceType } from "@/lib/dj-set-title"
 
 type SaveProfilePayload = {
   artistName: string
@@ -51,6 +52,9 @@ type SaveSelectedReleasePayload = {
   youtubeMusicUrl?: string
   bandcampUrl?: string
   otherUrl?: string
+  releaseType?: string
+  versionType?: string
+  remixer?: string
 }
 
 type SaveGigPayload = {
@@ -67,7 +71,10 @@ type SaveGigPayload = {
 }
 
 type SaveDjSetPayload = {
-  title: string
+  performanceType: PerformanceType
+  performanceArtists: string[]
+  customPerformanceType?: string
+  titleOverride?: string
   venue?: string
   event?: string
   setDate?: string
@@ -119,6 +126,7 @@ type CreateArtistPayload = {
 type ArtistIdRow = {
   id: string
   owner_user_id: string | null
+  artist_name: string
 }
 
 type ArtistHandleRow = {
@@ -179,10 +187,10 @@ function validatePayload(payload: SaveArtistPayload) {
     return "Each gig must include venue, date, city, and country."
   }
 
-  const invalidDjSet = payload.djSets.find((set) => !set.title.trim() || !set.platformUrl.trim())
+  const invalidDjSet = payload.djSets.find((set) => !set.platformUrl.trim())
 
   if (invalidDjSet) {
-    return "Each DJ set must include a title and platform URL."
+    return "Each DJ set must include a platform URL."
   }
 
   const invalidVideo = payload.videos.find((video) => !video.title.trim() || !video.platformUrl.trim())
@@ -239,7 +247,7 @@ function validateCreatePayload(payload: CreateArtistPayload, normalizedHandle: s
 async function getArtistForWrite(supabase: SupabaseAdminClient, artistId: string) {
   const { data, error } = await supabase
     .from("artists")
-    .select("id, owner_user_id")
+    .select("id, owner_user_id, artist_name")
     .eq("id", artistId)
     .maybeSingle<ArtistIdRow>()
 
@@ -366,6 +374,7 @@ export async function PATCH(request: Request) {
     const supabase = createSupabaseAdminClient()
     const writableArtist = await getArtistForWrite(supabase, payload.artistId)
     const artistId = writableArtist.id
+    const artistName = writableArtist.artist_name || ""
     const normalizedHandle = normalizeHandle(payload.profile.handle)
 
     if (writableArtist.owner_user_id !== user.id) {
@@ -484,6 +493,9 @@ export async function PATCH(request: Request) {
           youtube_music_url: release.youtubeMusicUrl?.trim() || null,
           bandcamp_url: release.bandcampUrl?.trim() || null,
           other_url: release.otherUrl?.trim() || null,
+          release_type: release.releaseType?.trim() || null,
+          version_type: release.versionType?.trim() || null,
+          remixer: release.remixer?.trim() || null,
         })),
       )
 
@@ -528,17 +540,32 @@ export async function PATCH(request: Request) {
 
     if (payload.djSets.length > 0) {
       const { error: insertDjSetsError } = await supabase.from("dj_sets").insert(
-        payload.djSets.map((set, index) => ({
-          artist_id: artistId,
-          title: set.title.trim(),
-          venue: set.venue?.trim() || null,
-          event: set.event?.trim() || null,
-          set_date: set.setDate || null,
-          image_url: set.imageUrl?.trim() || null,
-          platform_url: set.platformUrl.trim(),
-          sort_order: index + 1,
-          is_published: set.isPublished,
-        })),
+        payload.djSets.map((set, index) => {
+          const generatedTitle = computeDjSetTitle(
+            set.performanceType,
+            set.performanceArtists,
+            set.customPerformanceType,
+            set.event,
+            set.venue,
+            artistName,
+          )
+          const displayTitle = set.titleOverride?.trim() || generatedTitle
+          return {
+            artist_id: artistId,
+            title: displayTitle,
+            performance_type: set.performanceType,
+            performance_artists: set.performanceArtists,
+            custom_performance_type: set.customPerformanceType?.trim() || null,
+            title_override: set.titleOverride?.trim() || null,
+            venue: set.venue?.trim() || null,
+            event: set.event?.trim() || null,
+            set_date: set.setDate || null,
+            image_url: set.imageUrl?.trim() || null,
+            platform_url: set.platformUrl.trim(),
+            sort_order: index + 1,
+            is_published: set.isPublished,
+          }
+        }),
       )
 
       if (insertDjSetsError) {

@@ -21,9 +21,10 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
-import type { Artist, DjSet, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, DjSet, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
+import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
@@ -109,6 +110,7 @@ type ReleaseRow = {
 type DjSetRow = {
   id: string
   title: string
+  performance_type: string
   venue: string | null
   event: string | null
   set_date: string | null
@@ -246,7 +248,33 @@ function formatReleaseDateCatalog(releaseDate: string): string | null {
     .toUpperCase()
 }
 
+const VERSION_TYPE_LABELS: Record<string, string> = {
+  original_mix: "Original Mix",
+  extended_mix: "Extended Mix",
+  radio_edit:   "Radio Edit",
+  remix:        "Remix",
+  club_mix:     "Club Mix",
+  dub_mix:      "Dub Mix",
+  instrumental: "Instrumental",
+  vip_mix:      "VIP Mix",
+  edit:         "Edit",
+  mashup:       "Mashup",
+  bootleg:      "Bootleg",
+  rework:       "Rework",
+  acapella:     "Acapella",
+  tool:         "Tool",
+}
+
+const RELEASE_TYPE_LABELS: Record<string, string> = {
+  single:      "Single",
+  ep:          "EP",
+  album:       "Album",
+  compilation: "Compilation",
+  va:          "VA",
+}
+
 function isReleaseRemix(release: Release): boolean {
+  if (release.versionType === "remix") return true
   return /remix/i.test(release.title) || /remix/i.test(release.credits ?? "")
 }
 
@@ -326,7 +354,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<GalleryImageRow[]>(),
       supabase
         .from("dj_sets")
-        .select("id, title, venue, event, set_date, image_url, platform_url, sort_order")
+        .select("id, title, performance_type, venue, event, set_date, image_url, platform_url, sort_order")
         .eq("artist_id", artistRow.id)
         .eq("is_published", true)
         .order("sort_order", { ascending: true })
@@ -401,6 +429,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         (row): DjSet => ({
           id: row.id,
           title: row.title,
+          performanceType: (row.performance_type || "dj_set") as PerformanceType,
+          performanceArtists: [],
           venue: row.venue ?? undefined,
           event: row.event ?? undefined,
           setDate: row.set_date ?? undefined,
@@ -688,8 +718,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <img
                       src={artist.heroLogoUrl}
                       alt={artist.artistName}
-                      style={{ height: `${logoScale}px`, maxWidth: "min(420px, 70vw)" }}
-                      className="w-auto object-contain drop-shadow-2xl"
+                      style={{ width: `min(80vw, ${Math.min(logoScale * 3, 720)}px)`, height: "auto" }}
+                      className="object-contain drop-shadow-2xl"
                     />
                   ) : null
 
@@ -878,14 +908,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                       </div>
                       <div className="mt-3 min-w-0">
-                        {/* Title + remix chip */}
+                        {/* Title */}
                         <h3 className="text-balance text-base font-bold leading-tight text-foreground">
                           {release.title}
-                          {isRemix && (
-                            <span className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded border border-white/[0.09] bg-white/[0.04] px-1.5 py-px text-[7px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/45 align-middle">
-                              Remix
-                            </span>
-                          )}
                         </h3>
                         {/* Artists / credits */}
                         {release.credits ? (
@@ -893,6 +918,33 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             {release.credits}
                           </p>
                         ) : null}
+                        {/* Release type + version metadata */}
+                        {(() => {
+                          const releaseTypeLabel = release.releaseType
+                            ? (RELEASE_TYPE_LABELS[release.releaseType] ?? null)
+                            : null
+                          const isRemixVersion = release.versionType === "remix" || (!release.versionType && isRemix)
+                          const versionLabel = release.versionType
+                            ? (VERSION_TYPE_LABELS[release.versionType] ?? release.versionType)
+                            : (isRemix ? "Remix" : null)
+                          const remixChip = isRemixVersion && release.remixer
+                            ? `Remix by ${release.remixer}`
+                            : versionLabel
+                          const parts = [releaseTypeLabel, remixChip].filter(Boolean)
+                          if (parts.length === 0) return null
+                          return (
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {parts.map((part) => (
+                                <span
+                                  key={part}
+                                  className="inline-flex items-center rounded border border-white/[0.10] bg-white/[0.02] px-1.5 py-px text-[7px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70"
+                                >
+                                  {part}
+                                </span>
+                              ))}
+                            </div>
+                          )
+                        })()}
                         {/* Label — own line */}
                         <p className="mt-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/55">
                           {release.label}
@@ -1038,7 +1090,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       )}
                     </div>
                     <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Latest DJ Set</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">
+                        Latest {PERFORMANCE_TYPE_LABELS[featuredSet.performanceType] ?? "DJ Set"}
+                      </p>
                       <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
                         {cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>

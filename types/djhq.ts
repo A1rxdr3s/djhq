@@ -4,6 +4,11 @@
 export type SubscriptionPlan = "free" | "pro"
 
 /**
+ * Performance type for DJ set entries.
+ */
+export type PerformanceType = "dj_set" | "live_set" | "vinyl_set" | "b2b" | "b3b" | "other"
+
+/**
  * Hero logo position relative to artist name text.
  * Only applies when a logo is uploaded and identity mode includes logo.
  */
@@ -136,6 +141,12 @@ export interface Release {
   bandcampUrl?: string
   /** Optional other/generic URL. */
   otherUrl?: string
+  /** Comprehensive release format: single | ep | album | compilation | va | other. */
+  releaseType?: string
+  /** Version or mix type key (snake_case, e.g. "extended_mix", "remix"). */
+  versionType?: string
+  /** Remixer artist name when versionType is "remix". */
+  remixer?: string
 }
 
 /**
@@ -172,8 +183,16 @@ export interface Gig {
 export interface DjSet {
   /** Stable unique identifier. */
   id: string
-  /** Set title (e.g. "Live at Fabric" or "DJHQ Radio 012"). */
+  /** Final display title — either titleOverride or the generated title stored by the API. */
   title: string
+  /** Performance format. */
+  performanceType: PerformanceType
+  /** Artists involved (B2B/B3B may have 2–3+). */
+  performanceArtists: string[]
+  /** Custom type label when performanceType is "other". */
+  customPerformanceType?: string
+  /** Explicit title that overrides the generated one. */
+  titleOverride?: string
   /** Physical venue or club name (e.g. "Fabric", "Watergate"). */
   venue?: string
   /** Event or party brand name (e.g. "MISA", "Boiler Room", "State of House"). */
