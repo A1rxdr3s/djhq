@@ -84,6 +84,8 @@ type GigRow = {
   venue: string
   city: string
   country: string
+  club_venue: string | null
+  event_status: string | null
   ticket_url: string | null
   flyer_url: string | null
   instagram_url: string | null
@@ -252,7 +254,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<ReleaseRow[]>(),
     supabase
       .from("gigs")
-      .select("id, date, venue, city, country, ticket_url, flyer_url, instagram_url, fee_amount, fee_currency, payment_status")
+      .select("id, date, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url, fee_amount, fee_currency, payment_status")
       .eq("artist_id", artistRow.id)
       .order("date", { ascending: true })
       .returns<GigRow[]>(),
@@ -349,6 +351,8 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       venue: gig.venue,
       city: gig.city,
       country: gig.country,
+      clubVenue: gig.club_venue ?? undefined,
+      eventStatus: (gig.event_status ?? undefined) as "upcoming" | "sold_out" | "cancelled" | undefined,
       ticketUrl: gig.ticket_url ?? undefined,
       flyerUrl: gig.flyer_url ?? undefined,
       instagramUrl: gig.instagram_url ?? undefined,

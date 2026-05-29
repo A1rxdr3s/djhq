@@ -2182,19 +2182,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
                   )}
 
-                  {/* Genre pills */}
+                  {/* Genre line — editorial metadata, above logo */}
                   {genres.split(",").map((g) => g.trim()).filter(Boolean).length > 0 && (
-                    <div className="relative mb-3 flex flex-wrap gap-3 sm:mb-4">
-                      {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
-                        <span
-                          key={genre}
-                          className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md"
-                          style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}
-                        >
+                    <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 sm:mb-5 sm:text-xs">
+                      {genres.split(",").map((g) => g.trim()).filter(Boolean).map((genre, i) => (
+                        <span key={genre}>
+                          {i > 0 && <span className="mx-2 text-white/35">•</span>}
                           {genre}
                         </span>
                       ))}
-                    </div>
+                    </p>
                   )}
 
                   {/* Hero identity — skipped for floating placements */}
@@ -2226,8 +2223,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     )}
                     {heroTagline && (
                       <p
-                        className="mt-2 text-lg font-medium uppercase tracking-[0.09em] text-accent/90 sm:mt-2.5 sm:text-xl"
-                        style={{ textShadow: `0 0 20px rgba(${previewTheme.glowRgb}, 0.15)` }}
+                        className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg"
+                        style={{ textShadow: `0 0 10px rgba(${previewTheme.glowRgb}, 0.15)` }}
                       >
                         {heroTagline}
                       </p>

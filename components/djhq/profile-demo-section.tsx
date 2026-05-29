@@ -46,11 +46,13 @@ export function ProfileDemoSection() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6 sm:bottom-8 sm:left-8 sm:right-8">
-              <div className="flex flex-wrap gap-3">
-                <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>House</span>
-                <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Tech House</span>
-                <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Producer</span>
-              </div>
+              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 sm:text-xs">
+                House
+                <span className="mx-2 text-white/35">•</span>
+                Tech House
+                <span className="mx-2 text-white/35">•</span>
+                Producer
+              </p>
               <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <h3 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">ANDRES:HERRERA</h3>

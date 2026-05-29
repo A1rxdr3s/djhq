@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Instagram, Ticket } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Gig } from "@/types/djhq"
+import type { Gig, GigEventStatus } from "@/types/djhq"
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
@@ -13,6 +13,16 @@ function parseGigDate(dateStr: string) {
     day: String(d.getUTCDate()),
     month: MONTHS[d.getUTCMonth()],
   }
+}
+
+// Convert ISO 3166-1 alpha-2 code to regional indicator flag emoji.
+// Maps "UK" → "GB" since venue data uses the non-standard abbreviation.
+function flag(iso: string): string {
+  const code = iso === "UK" ? "GB" : iso
+  if (!code || code.length !== 2) return iso
+  return [...code.toUpperCase()].map((c) =>
+    String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65),
+  ).join("")
 }
 
 // Selects up to 3 gigs for display.
@@ -34,6 +44,13 @@ function selectGigsForDisplay(
     ...selectedPast.map((g) => ({ gig: g, isPast: true })),
     ...selectedUpcoming.map((g) => ({ gig: g, isPast: false })),
   ]
+}
+
+const STATUS_CONFIG: Record<GigEventStatus, { label: string; className: string }> = {
+  upcoming:  { label: "Upcoming",  className: "border-accent/30 bg-accent/10 text-accent/75" },
+  sold_out:  { label: "Sold Out",  className: "border-amber-500/30 bg-amber-500/10 text-amber-400/80" },
+  cancelled: { label: "Cancelled", className: "border-red-500/30 bg-red-500/10 text-red-400/70" },
+  past:      { label: "Past",      className: "border-white/[0.12] bg-white/[0.04] text-white/35" },
 }
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
@@ -78,6 +95,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
           const { day, month } = parseGigDate(gig.date)
           const isNext = i === firstUpcomingIndex && firstUpcomingIndex !== -1
           const hasActions = !!(gig.ticketUrl || gig.instagramUrl)
+          const statusConfig = gig.eventStatus ? STATUS_CONFIG[gig.eventStatus] : null
 
           return (
             <motion.div key={gig.id} variants={item}>
@@ -121,17 +139,43 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                   </span>
                 </div>
 
-                {/* Content: event name + location */}
+                {/* Content: event name → club venue → location */}
                 <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      "truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.06em]",
-                      isPast ? "text-foreground/30" : "text-foreground/85",
+                  {/* Event name + optional status badge */}
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p
+                      className={cn(
+                        "min-w-0 truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.06em]",
+                        isPast ? "text-foreground/30" : "text-foreground/85",
+                      )}
+                    >
+                      {gig.venue}
+                    </p>
+                    {statusConfig && (
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em]",
+                          statusConfig.className,
+                        )}
+                      >
+                        {statusConfig.label}
+                      </span>
                     )}
-                  >
-                    {gig.venue}
-                  </p>
+                  </div>
 
+                  {/* Club / room name — optional secondary label */}
+                  {gig.clubVenue && (
+                    <p
+                      className={cn(
+                        "mt-0.5 truncate text-xs uppercase tracking-[0.08em]",
+                        isPast ? "text-white/18" : "text-white/50",
+                      )}
+                    >
+                      {gig.clubVenue}
+                    </p>
+                  )}
+
+                  {/* Location: city · flag emoji */}
                   {(gig.city || gig.country) && (
                     <p
                       className={cn(
@@ -143,12 +187,12 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                       {gig.city && gig.country && (
                         <span className="mx-1 opacity-50">·</span>
                       )}
-                      {gig.country}
+                      {flag(gig.country)}
                     </p>
                   )}
                 </div>
 
-                {/* Icon action buttons — accent-colored circular, right-aligned */}
+                {/* Icon action buttons — right-aligned, vertically centered via parent items-center */}
                 {hasActions && (
                   <div className="flex shrink-0 items-center gap-2.5">
                     {gig.ticketUrl && (

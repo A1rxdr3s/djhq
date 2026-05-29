@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
-import type { Artist, DjSet, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -151,6 +151,8 @@ type GigRow = {
   venue: string
   city: string
   country: string
+  club_venue: string | null
+  event_status: string | null
   ticket_url: string | null
   flyer_url: string | null
   instagram_url: string | null
@@ -361,7 +363,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<ReleaseRow[]>(),
       supabase
         .from("gigs")
-        .select("id, date, venue, city, country, ticket_url, flyer_url, instagram_url")
+        .select("id, date, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url")
         .eq("artist_id", artistRow.id)
         .order("date", { ascending: true })
         .returns<GigRow[]>(),
@@ -440,6 +442,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         venue: gig.venue,
         city: gig.city,
         country: gig.country,
+        clubVenue: gig.club_venue ?? undefined,
+        eventStatus: (gig.event_status ?? undefined) as GigEventStatus | undefined,
         ticketUrl: gig.ticket_url ?? undefined,
         flyerUrl: gig.flyer_url ?? undefined,
         instagramUrl: gig.instagram_url ?? undefined,
@@ -753,19 +757,16 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
                 )}
 
-                {/* Genre pills — full-width, naturally left-aligned */}
+                {/* Genre line — editorial metadata, above logo */}
                 {artist.genres.length > 0 && (
-                  <div className="relative mb-3 flex flex-wrap gap-3 sm:mb-4">
-                    {artist.genres.map((genre) => (
-                      <span
-                        key={genre}
-                        className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md transition-colors duration-150 hover:border-accent/55 hover:bg-accent/16"
-                        style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}
-                      >
+                  <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 sm:mb-5 sm:text-xs">
+                    {artist.genres.map((genre, i) => (
+                      <span key={genre}>
+                        {i > 0 && <span className="mx-2 text-white/35">•</span>}
                         {genre}
                       </span>
                     ))}
-                  </div>
+                  </p>
                 )}
 
                 {/* Hero identity — skipped for floating placements (logo rendered in floating layer above) */}
@@ -791,8 +792,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Tagline — primary artistic proposition */}
                   {displayHeroTagline ? (
                     <p
-                      className="mt-1.5 text-lg font-medium uppercase tracking-[0.09em] text-accent/90 sm:mt-2 sm:text-xl"
-                      style={{ textShadow: `0 0 20px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
+                      className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg"
+                      style={{ textShadow: `0 0 10px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
                     >
                       {displayHeroTagline}
                     </p>

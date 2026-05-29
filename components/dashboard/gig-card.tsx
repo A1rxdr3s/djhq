@@ -18,6 +18,8 @@ export type GigEntry = {
   date: string // YYYY-MM-DD
   city: string
   country: string
+  clubVenue?: string
+  eventStatus?: "upcoming" | "sold_out" | "cancelled" | null
   ticketUrl?: string
   flyerUrl?: string
   instagramUrl?: string
@@ -41,6 +43,12 @@ const PAYMENT_STATUSES = [
   { value: "pending" as const,   label: "Pending",   activeClass: "bg-amber-500/[0.12] text-amber-400/80" },
   { value: "partial" as const,   label: "Partial",   activeClass: "bg-sky-500/[0.12] text-sky-400/80" },
   { value: "paid" as const,      label: "Paid",      activeClass: "bg-emerald-500/[0.12] text-emerald-400/80" },
+  { value: "cancelled" as const, label: "Cancelled", activeClass: "bg-red-500/[0.12] text-red-400/70" },
+]
+
+const EVENT_STATUSES = [
+  { value: "upcoming"  as const, label: "Upcoming",  activeClass: "bg-accent/[0.12] text-accent/75" },
+  { value: "sold_out"  as const, label: "Sold Out",  activeClass: "bg-amber-500/[0.12] text-amber-400/80" },
   { value: "cancelled" as const, label: "Cancelled", activeClass: "bg-red-500/[0.12] text-red-400/70" },
 ]
 
@@ -324,6 +332,36 @@ export function GigCard({
                   onChange={(e) => set("instagramUrl", e.target.value || undefined)}
                   className={field("flex-1")}
                 />
+              </div>
+
+              {/* Row 3.5: public venue/room name + event status */}
+              <div className="flex items-center gap-2">
+                <input
+                  value={gig.clubVenue ?? ""}
+                  placeholder="Club / Room (optional)"
+                  onChange={(e) => set("clubVenue", e.target.value || undefined)}
+                  className={field("flex-1")}
+                />
+                <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+                  {EVENT_STATUSES.map(({ value: statusValue, label, activeClass }) => (
+                    <button
+                      key={statusValue}
+                      type="button"
+                      onClick={() =>
+                        set("eventStatus", gig.eventStatus === statusValue ? null : statusValue)
+                      }
+                      className={cn(
+                        "rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                        "transition-colors duration-100",
+                        gig.eventStatus === statusValue
+                          ? activeClass
+                          : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Row 4: optional fee tracking — private, not shown on public profile */}

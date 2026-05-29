@@ -72,6 +72,8 @@ type SaveGigPayload = {
   date: string
   city: string
   country: string
+  clubVenue?: string
+  eventStatus?: "upcoming" | "sold_out" | "cancelled" | null
   ticketUrl?: string
   flyerUrl?: string
   instagramUrl?: string
@@ -538,6 +540,8 @@ export async function PATCH(request: Request) {
           venue: gig.venue.trim(),
           city: gig.city.trim(),
           country: gig.country.trim(),
+          club_venue: gig.clubVenue?.trim() || null,
+          event_status: gig.eventStatus ?? null,
           ticket_url: gig.ticketUrl?.trim() || null,
           flyer_url: gig.flyerUrl?.trim() || null,
           instagram_url: gig.instagramUrl?.trim() || null,

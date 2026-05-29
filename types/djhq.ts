@@ -187,6 +187,9 @@ export interface Release {
   remixer?: string
 }
 
+/** Public-facing status of a live show. */
+export type GigEventStatus = "upcoming" | "sold_out" | "cancelled" | "past"
+
 /**
  * Upcoming live performance information.
  */
@@ -195,12 +198,16 @@ export interface Gig {
   id: string
   /** Event date. */
   date: ISODateString
-  /** Venue or event name. */
+  /** Event or show name (primary display label). */
   venue: string
+  /** Physical club or room name, shown below the event name. */
+  clubVenue?: string
   /** City of the event. */
   city: string
-  /** Country of the event. */
+  /** ISO 3166-1 alpha-2 country code. */
   country: string
+  /** Optional public-facing show status. Defaults to upcoming when absent. */
+  eventStatus?: GigEventStatus
   /** Optional public ticket/event URL. */
   ticketUrl?: string
   /** Optional public flyer URL. */

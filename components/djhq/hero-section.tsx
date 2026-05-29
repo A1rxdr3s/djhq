@@ -129,10 +129,14 @@ export function HeroSection() {
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/35 to-transparent" />
-                <div className="absolute bottom-3 left-3 flex flex-wrap gap-3">
-                  <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>House</span>
-                  <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Tech House</span>
-                  <span className="inline-flex min-h-[36px] items-center rounded-full border border-accent/40 bg-accent/12 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent backdrop-blur-md" style={{ boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)" }}>Producer</span>
+                <div className="absolute bottom-3 left-3">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 sm:text-xs">
+                    House
+                    <span className="mx-2 text-white/35">•</span>
+                    Tech House
+                    <span className="mx-2 text-white/35">•</span>
+                    Producer
+                  </p>
                 </div>
               </div>
 
