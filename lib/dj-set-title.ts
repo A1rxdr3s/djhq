@@ -5,20 +5,21 @@ export type PerformanceType = "dj_set" | "live_set" | "vinyl_set" | "b2b" | "b3b
  * Returns null when both fields are empty so the caller can fall back to the stored title.
  *
  * Priority / rules:
- *   1. "festival" (exact word)  → "{source} Set"           — avoids "Festival Festival Set"
- *   2. "feztival" / "fest"      → "{source} Festival Set"  — non-standard spellings
- *   3. sunset/rooftop/terrace/beach → "{source} Session"   — ambient/atmospheric context
- *   4. event exists             → return event as-is       — clean editorial primary
- *   5. venue only               → "Live at {venue}"        — venue fallback
+ *   1. festival/feztival/fest   → "{source} Set"         — all festival-family words get "Set" suffix only
+ *   2. sunset/rooftop/terrace/beach → "{source} Session" — ambient/atmospheric context
+ *   3. event exists             → return event as-is     — clean editorial primary
+ *   4. venue only               → "Live at {venue}"      — venue fallback
  *
  * Examples:
- *   event="MISA"           venue="Club Room"       → "MISA"
- *   event="Sky Sunset"     venue="Sky Costanera"   → "Sky Sunset Session"
- *   event="ICE Feztival"   venue=""                → "ICE Feztival Festival Set"
- *   event="Sonar Festival" venue=""                → "Sonar Festival Set"
- *   event=""               venue="Pacha Barcelona" → "Live at Pacha Barcelona"
- *   event=""               venue="W Rooftop"       → "W Rooftop Session"
- *   event=""               venue=""                → null (caller uses stored title)
+ *   event="MISA"                  venue="Club Room"       → "MISA"
+ *   event="ICE Feztival"          venue=""                → "ICE Feztival Set"
+ *   event="Sonar Festival"        venue=""                → "Sonar Festival Set"
+ *   event="Ultra Music Festival"  venue=""                → "Ultra Music Festival Set"
+ *   event="Creamfields"           venue=""                → "Creamfields"
+ *   event="Sky Sunset"            venue="Sky Costanera"   → "Sky Sunset Session"
+ *   event=""                      venue="Pacha Barcelona" → "Live at Pacha Barcelona"
+ *   event=""                      venue="W Rooftop"       → "W Rooftop Session"
+ *   event=""                      venue=""                → null (caller uses stored title)
  */
 export function formatPerformanceTitle(
   event: string | undefined,
@@ -32,8 +33,7 @@ export function formatPerformanceTitle(
 
   const lower = primary.toLowerCase()
 
-  if (/\bfestival\b/.test(lower)) return `${primary} Set`
-  if (/\b(feztival|fest)\b/.test(lower)) return `${primary} Festival Set`
+  if (/\b(festival|feztival|fest)\b/.test(lower)) return `${primary} Set`
   if (/\b(sunset|rooftop|terrace|beach)\b/.test(lower)) return `${primary} Session`
 
   if (eventName) return eventName
