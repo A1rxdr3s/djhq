@@ -979,8 +979,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
           />
         <div className="relative grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8">
+          {/* Featured Release → Music tab */}
           {featuredRelease && (
-          <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:col-start-2 lg:row-start-1 lg:p-4">
+          <MobileSection tab="music" className="lg:col-start-2 lg:row-start-1">
+          <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-4">
             <SectionHeader>Featured Release</SectionHeader>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
               <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full">
@@ -1026,28 +1028,42 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             </div>
           </section>
+          </MobileSection>
           )}
 
-          {upcomingGigs.length > 0 ? <GigsSection gigs={upcomingGigs} /> : null}
+          {/* Upcoming Gigs → Live tab */}
+          {upcomingGigs.length > 0 && (
+            <MobileSection tab="live" className="lg:col-start-2 lg:row-start-2">
+              <GigsSection gigs={upcomingGigs} />
+            </MobileSection>
+          )}
 
-          <section className="flex flex-col lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <SectionHeader variant="primary">Moments</SectionHeader>
-            <GallerySection images={galleryImages} />
-          </section>
+          {/* Gallery / Moments → Media tab */}
+          <MobileSection tab="media" className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+            <section className="flex flex-col">
+              <SectionHeader variant="primary">Moments</SectionHeader>
+              <GallerySection images={galleryImages} />
+            </section>
+          </MobileSection>
 
         </div>
         </div>
 
-        {selectedReleasesForDisplay.length > 0 ? (
+        {/* Releases → Music tab */}
+        {selectedReleasesForDisplay.length > 0 && (
+          <MobileSection tab="music">
           <section className="mt-10 lg:mt-12">
             <SectionHeader variant="primary">Releases</SectionHeader>
             <div className="mt-4">
               <SelectedReleasesCarousel releases={selectedReleasesForDisplay} />
             </div>
           </section>
-        ) : null}
+          </MobileSection>
+        )}
 
+        {/* Performance → Live tab */}
         {(featuredVideo ?? featuredSet) ? (
+          <MobileSection tab="live">
           <section className="mt-10 lg:mt-14">
             <SectionHeader>Performance</SectionHeader>
             <div
@@ -1118,6 +1134,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                   {/* Secondary videos — compact media rows */}
                   {secondaryVideos.length > 0 ? (
+                    <MobileArchive label="View Archive ↓">
                     <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
                       <p className="pb-1.5 pt-3.5 text-[8px] font-semibold uppercase tracking-[0.3em] text-foreground/18">Archive</p>
                       <div className="space-y-0.5">
@@ -1172,6 +1189,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         })}
                       </div>
                     </div>
+                    </MobileArchive>
                   ) : null}
                 </div>
               ) : null}
@@ -1237,6 +1255,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                   {/* Selected Sets — curated list */}
                   {recentSets.length > 0 ? (
+                    <MobileArchive label="View Selected Sets ↓">
                     <>
                       {/* Editorial divider */}
                       <div className="mx-4 border-t border-white/[0.05] sm:mx-6" />
@@ -1293,28 +1312,41 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         </div>
                       </div>
                     </>
+                    </MobileArchive>
                   ) : null}
                 </div>
               ) : null}
             </div>
           </section>
+          </MobileSection>
         ) : null}
 
+        {/* Playlist → Community tab */}
         {artist.playlist && (
+          <MobileSection tab="community">
           <section className="mt-10 lg:mt-14">
             <SectionHeader>Selected Tracks</SectionHeader>
             <div className="mt-4">
               <SelectedTracksSection playlist={artist.playlist} />
             </div>
           </section>
+          </MobileSection>
         )}
 
-        <section className="mt-10 lg:mt-14">
-          <SectionHeader>Join the Family</SectionHeader>
-          <div className="mt-4">
-            <JoinTheFamily />
-          </div>
-        </section>
+        {/* Join the Family → Community tab (compact on mobile) */}
+        <MobileSection tab="community">
+          <section className="mt-10 lg:mt-14">
+            <SectionHeader className="lg:block hidden">Join the Family</SectionHeader>
+            <div className="mt-4 lg:mt-4">
+              <div className="lg:hidden">
+                <JoinTheFamily compact />
+              </div>
+              <div className="hidden lg:block">
+                <JoinTheFamily />
+              </div>
+            </div>
+          </section>
+        </MobileSection>
 
         <footer className="py-10 text-center sm:py-12">
           <Link
