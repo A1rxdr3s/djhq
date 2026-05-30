@@ -51,8 +51,16 @@ export function GallerySection({ images }: GallerySectionProps) {
   const frontIsAsRef     = useRef<boolean[]>([true, true, true])
   const settleTimerRefs  = useRef<Array<ReturnType<typeof setTimeout> | null>>([null, null, null])
   const currentSlotRef   = useRef<number>(0)
+  // Delayed-resume timer: rotation restarts 4s after the cursor leaves the grid
+  const resumeTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => { activeIndexRef.current = activeIndex }, [activeIndex])
+
+  // Clean up the delayed-resume timer on unmount
+  useEffect(() => {
+    const ref = resumeTimerRef
+    return () => { if (ref.current) clearTimeout(ref.current) }
+  }, [])
 
   // ── Lightbox callbacks ────────────────────────────────────────────────────
   const close = useCallback(() => setActiveIndex(null), [])
@@ -148,8 +156,20 @@ export function GallerySection({ images }: GallerySectionProps) {
       {/* ── Masonry grid ─────────────────────────────────────────────────── */}
       <div
         className="mt-4 grid grid-cols-[11fr_9fr] grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:flex-1 lg:min-h-0 lg:grid-rows-[1fr_1fr]"
-        onMouseEnter={() => { pausedRef.current = true  }}
-        onMouseLeave={() => { pausedRef.current = false }}
+        onMouseEnter={() => {
+          if (resumeTimerRef.current) {
+            clearTimeout(resumeTimerRef.current)
+            resumeTimerRef.current = null
+          }
+          pausedRef.current = true
+        }}
+        onMouseLeave={() => {
+          if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current)
+          resumeTimerRef.current = setTimeout(() => {
+            resumeTimerRef.current = null
+            pausedRef.current = false
+          }, 4_000)
+        }}
       >
         {Array.from({ length: numSlots }, (_, slot) => {
           const photoA = images[layerAOffsets[slot]]
@@ -229,12 +249,21 @@ export function GallerySection({ images }: GallerySectionProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
               </div>
 
+              {/* ── Shared photo treatment — identical veil on every image ── */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background: "linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.10))",
+                  zIndex: 2,
+                }}
+              />
+
               {/* ── Hover overlay — always above both image layers ── */}
               <div
                 className="absolute inset-0 flex items-center justify-center bg-black/28 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 style={{ zIndex: 10 }}
               >
-                <span className="text-[9px] uppercase tracking-[0.18em] text-white/85">
+                <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-white/70">
                   View Photo ↗
                 </span>
               </div>
