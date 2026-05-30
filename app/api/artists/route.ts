@@ -201,7 +201,7 @@ function validatePayload(payload: SaveArtistPayload) {
     return "Each video must include a title and platform URL."
   }
 
-  const invalidSelectedRelease = payload.selectedReleases.find(
+  const invalidRelease = payload.releases.find(
     (release) =>
       !release.title.trim() ||
       !release.label.trim() ||
@@ -211,8 +211,8 @@ function validatePayload(payload: SaveArtistPayload) {
       !release.artworkUrl.trim(),
   )
 
-  if (invalidSelectedRelease) {
-    return "Each selected release must include title, label, date, type, platform URL, and artwork URL."
+  if (invalidRelease) {
+    return "Each release must include title, label, date, type, platform URL, and artwork URL."
   }
 
   return null

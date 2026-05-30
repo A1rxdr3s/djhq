@@ -776,7 +776,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
-  const [isImportingReleaseMetadata, setIsImportingReleaseMetadata] = useState(false)
   const [importingSelectedReleaseIndex, setImportingSelectedReleaseIndex] = useState<number | null>(null)
   const [importingDjSetIndex, setImportingDjSetIndex] = useState<number | null>(null)
   const [importingVideoIndex, setImportingVideoIndex] = useState<number | null>(null)

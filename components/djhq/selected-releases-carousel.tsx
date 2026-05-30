@@ -7,33 +7,12 @@ import type { Release } from "@/types/djhq"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { ReleaseListenPanel } from "@/components/release-listen-panel"
 
-const VERSION_TYPE_LABELS: Record<string, string> = {
-  original_mix: "Original Mix",
-  extended_mix:  "Extended Mix",
-  radio_edit:    "Radio Edit",
-  remix:         "Remix",
-  club_mix:      "Club Mix",
-  dub_mix:       "Dub Mix",
-  instrumental:  "Instrumental",
-  vip_mix:       "VIP Mix",
-  edit:          "Edit",
-  mashup:        "Mashup",
-  bootleg:       "Bootleg",
-  rework:        "Rework",
-  acapella:      "Acapella",
-  tool:          "Tool",
+// Only these three format types earn a badge; others add noise
+const PRIMARY_RELEASE_TYPE_BADGES: Record<string, string> = {
+  single: "Single",
+  ep:     "EP",
+  album:  "Album",
 }
-
-const RELEASE_TYPE_LABELS: Record<string, string> = {
-  single:      "Single",
-  ep:          "EP",
-  album:       "Album",
-  compilation: "Compilation",
-  va:          "VA",
-}
-
-// Version types that are the default/expected — omit badge to reduce noise
-const SUPPRESSED_VERSION_TYPES = new Set(["original_mix", "original"])
 
 function isReleaseRemix(release: Release): boolean {
   if (release.versionType === "remix") return true
@@ -151,21 +130,10 @@ export function SelectedReleasesCarousel({ releases }: Props) {
           const isClone = i >= releases.length
           const releaseYear = release.releaseDate?.slice(0, 4) ?? null
 
-          // Badge: type + version
-          const typeLabel = release.releaseType ? (RELEASE_TYPE_LABELS[release.releaseType] ?? null) : null
-          const isRemixVersion = release.versionType === "remix" || (!release.versionType && isRemix)
-          const versionLabel = release.versionType
-            ? (VERSION_TYPE_LABELS[release.versionType] ?? release.versionType)
-            : isRemix ? "Remix" : null
-          const versionDisplay = isRemixVersion && release.remixer
-            ? `${release.remixer} Remix`
-            : versionLabel
-          // Suppress default/noise versions (original mix, original); show everything else
-          const versionBadge = versionDisplay &&
-            (!release.versionType || !SUPPRESSED_VERSION_TYPES.has(release.versionType))
-            ? versionDisplay
-            : null
-          const badges = [typeLabel, versionBadge].filter(Boolean) as string[]
+          // Badge: only SINGLE/EP/ALBUM type + REMIX version
+          const typeLabel = release.releaseType ? (PRIMARY_RELEASE_TYPE_BADGES[release.releaseType] ?? null) : null
+          const remixBadge = isRemix ? "Remix" : null
+          const badges = [typeLabel, remixBadge].filter(Boolean) as string[]
 
           return (
             <article

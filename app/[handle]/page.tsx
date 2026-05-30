@@ -245,6 +245,7 @@ function mapReleaseRow(row: ReleaseRow): Release {
     artworkUrl: row.artwork_url,
     platformUrl: row.platform_url,
     type: normalizeReleaseType(row.type),
+    isFeatured: row.is_featured,
     spotifyUrl: row.spotify_url ?? undefined,
     appleMusicUrl: row.apple_music_url ?? undefined,
     soundcloudUrl: row.soundcloud_url ?? undefined,
@@ -259,24 +260,6 @@ function mapReleaseRow(row: ReleaseRow): Release {
   }
 }
 
-// Editorial de-duplication: determines whether two Release objects represent the
-// same content. Used to prevent the featured release from also appearing in the
-// Selected Releases carousel. Presentation-layer only — no data is mutated.
-function isSameRelease(a: Release, b: Release | undefined): boolean {
-  if (!b) return false
-  // Primary: platform URL is the most stable cross-system identifier
-  const aUrl = a.platformUrl.trim()
-  const bUrl = b.platformUrl.trim()
-  if (aUrl && bUrl) return aUrl === bUrl
-  // Secondary: title + label
-  const aTitle = a.title.trim().toLowerCase()
-  const bTitle = b.title.trim().toLowerCase()
-  const aLabel = a.label.trim().toLowerCase()
-  const bLabel = b.label.trim().toLowerCase()
-  if (aTitle && bTitle && aLabel && bLabel) return aTitle === bTitle && aLabel === bLabel
-  // Last resort: title only
-  return aTitle.length > 0 && aTitle === bTitle
-}
 
 function getMockArtistFallback(handle: string) {
   return handle === mockArtist.handle ? mockArtist : null
@@ -371,8 +354,6 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
     }
 
     const releaseRows = releasesResult.data ?? []
-    const featuredReleaseRow = releaseRows.find((release) => release.is_featured)
-    const selectedReleaseRows = releaseRows.filter((release) => !release.is_featured)
 
     return {
       id: artistRow.id,
@@ -393,8 +374,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         label: link.label,
         url: link.url,
       })),
-      featuredRelease: featuredReleaseRow ? mapReleaseRow(featuredReleaseRow) : undefined,
-      selectedReleases: selectedReleaseRows.map(mapReleaseRow),
+      releases: releaseRows.map(mapReleaseRow),
       upcomingGigs: (gigsResult.data ?? []).map((gig) => ({
         id: gig.id,
         date: gig.date,
@@ -554,35 +534,30 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     notFound()
   }
 
-  const featuredRelease = artist.featuredRelease
-  if (!featuredRelease) {
-    notFound()
-  }
-  const selectedReleases = [...artist.selectedReleases].sort((a, b) => {
-    const timeA = a.releaseDate ? new Date(a.releaseDate).getTime() : null
-    const timeB = b.releaseDate ? new Date(b.releaseDate).getTime() : null
-    if (timeA === null && timeB === null) return 0
-    if (timeA === null) return 1
-    if (timeB === null) return -1
-    return timeB - timeA
-  })
-  // Exclude the current featured release from the carousel to avoid showing the
-  // same content twice. Presentation-layer filter — underlying data is unchanged.
-  const selectedReleasesForDisplay = selectedReleases.filter(
-    (release) => !isSameRelease(release, featuredRelease),
-  )
+  const featuredRelease = artist.releases.find((r) => r.isFeatured) ?? null
+  // Carousel: all non-featured releases, sorted by date descending
+  const selectedReleasesForDisplay = artist.releases
+    .filter((r) => !r.isFeatured)
+    .sort((a, b) => {
+      const timeA = a.releaseDate ? new Date(a.releaseDate).getTime() : null
+      const timeB = b.releaseDate ? new Date(b.releaseDate).getTime() : null
+      if (timeA === null && timeB === null) return 0
+      if (timeA === null) return 1
+      if (timeB === null) return -1
+      return timeB - timeA
+    })
   const upcomingGigs = artist.upcomingGigs
   const galleryImages = artist.galleryImages
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 4)
   const featuredVideo = artist.videos[0] ?? null
   const secondaryVideos = artist.videos.slice(1, 3)
-  const featuredReleaseYear = new Date(featuredRelease.releaseDate).getUTCFullYear()
+  const featuredReleaseYear = featuredRelease ? new Date(featuredRelease.releaseDate).getUTCFullYear() : null
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
   // heroTagline takes priority; falls back to the legacy tagline field for existing artists.
   const displayHeroTagline = artist.heroTagline?.trim() || releaseTagline
-  const hasFeaturedArtwork = featuredRelease.artworkUrl.trim().length > 0
+  const hasFeaturedArtwork = !!featuredRelease?.artworkUrl.trim()
 
   // Hero Identity System — Pro artists can use logo, text, or both.
   // Free artists always use text mode. Logo mode requires an uploaded logo.
@@ -811,6 +786,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
           />
         <div className="relative grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8">
+          {featuredRelease && (
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:col-start-2 lg:row-start-1 lg:p-4">
             <SectionHeader>Featured Release</SectionHeader>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
@@ -857,6 +833,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             </div>
           </section>
+          )}
 
           {upcomingGigs.length > 0 ? <GigsSection gigs={upcomingGigs} /> : null}
 
@@ -879,146 +856,153 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {(featuredVideo ?? featuredSet) ? (
           <section className="mt-10 lg:mt-14">
-            <SectionHeader>Live Performance</SectionHeader>
+            <SectionHeader>Performance</SectionHeader>
             <div
               className={cn(
                 "mt-4 overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/25",
                 featuredVideo && featuredSet &&
-                  "lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(340px,1fr)] lg:divide-x lg:divide-white/[0.06]",
+                  "lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)] lg:divide-x lg:divide-white/[0.05]",
               )}
             >
+              {/* ── Featured Video ── */}
               {featuredVideo ? (
                 <div>
                   <a
                     href={featuredVideo.platformUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.02] sm:gap-5 sm:p-5"
+                    className="group block p-4 transition-colors hover:bg-white/[0.02] sm:p-5"
                   >
-                    <div className="relative aspect-video w-[140px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[180px]">
+                    {/* Cinematic thumbnail */}
+                    <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/35">
                       {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl)!}
                           alt={`${featuredVideo.title} thumbnail`}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                          <Play className="h-8 w-8 text-accent/60" />
+                          <Play className="h-10 w-10 text-accent/60" />
                         </div>
                       )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Play className="h-8 w-8 text-white/80" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/32 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <Play className="h-10 w-10 fill-white/80 text-white/80" />
                       </div>
                     </div>
-                    <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">Featured Video</p>
-                      <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
+                    {/* Text below */}
+                    <div className="mt-4">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-accent/70">Featured Video</p>
+                      <h3 className="mt-1.5 text-balance text-xl font-black leading-tight text-foreground">
                         {featuredVideo.title}
                       </h3>
                       {(featuredVideo.venue ?? featuredVideo.videoDate) ? (
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {[featuredVideo.venue, formatReleaseDate(featuredVideo.videoDate ?? "")].filter(Boolean).join(" · ")}
                         </p>
                       ) : null}
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
-                        Watch
-                        <ExternalLink className="h-3 w-3" />
+                      <span className="mt-3 inline-flex h-8 items-center rounded-full border border-accent/35 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-150 group-hover:border-accent/60 group-hover:bg-accent/10">
+                        WATCH ↗
                       </span>
                     </div>
                   </a>
+
+                  {/* Secondary videos — compact media rows */}
                   {secondaryVideos.length > 0 ? (
-                    <div className="divide-y divide-white/[0.06] border-t border-white/[0.06]">
-                      {secondaryVideos.map((video) => (
-                        <a
-                          key={video.id}
-                          href={video.platformUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex gap-3 p-4 transition-colors hover:bg-white/[0.02]"
-                        >
-                          <div className="relative aspect-video w-[88px] shrink-0 overflow-hidden rounded-lg bg-secondary shadow-sm shadow-black/25 sm:w-[96px]">
-                            {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={(video.customThumbnailUrl ?? video.thumbnailUrl)!}
-                                alt={`${video.title} thumbnail`}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                                <Play className="h-4 w-4 text-accent/60" />
-                              </div>
-                            )}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
-                              <Play className="h-4 w-4 text-white/80" />
-                            </div>
-                          </div>
-                          <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                            <p className="line-clamp-2 text-sm font-medium leading-tight text-foreground/85 group-hover:text-foreground">
-                              {video.title}
-                            </p>
-                            {(video.venue ?? video.videoDate) ? (
-                              <p className="truncate text-[11px] text-muted-foreground">
-                                {[video.venue, formatReleaseDate(video.videoDate ?? "")].filter(Boolean).join(" · ")}
-                              </p>
-                            ) : null}
-                            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-accent/70">
-                              Watch
-                              <ExternalLink className="h-2.5 w-2.5" />
+                    <div className="border-t border-white/[0.05] px-4 pb-3 sm:px-5">
+                      <p className="pb-1 pt-3 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/30">More Videos</p>
+                      <div className="divide-y divide-white/[0.04]">
+                        {secondaryVideos.map((video, index) => (
+                          <a
+                            key={video.id}
+                            href={video.platformUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center gap-3 py-2.5 transition-colors"
+                          >
+                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/22">
+                              {String(index + 2).padStart(2, "0")}
                             </span>
-                          </div>
-                        </a>
-                      ))}
+                            <div className="relative aspect-video w-[72px] shrink-0 overflow-hidden rounded-lg bg-secondary">
+                              {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={(video.customThumbnailUrl ?? video.thumbnailUrl)!}
+                                  alt=""
+                                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                                />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03]">
+                                  <Play className="h-3 w-3 text-accent/50" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-foreground/80 group-hover:text-foreground">
+                                {video.title}
+                              </p>
+                              {(video.venue ?? video.videoDate) ? (
+                                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                  {[video.venue, formatReleaseDate(video.videoDate ?? "")].filter(Boolean).join(" · ")}
+                                </p>
+                              ) : null}
+                            </div>
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/40 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/70" />
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   ) : null}
                 </div>
               ) : null}
 
+              {/* ── Latest DJ Set ── */}
               {featuredSet ? (
-                <div className={cn(featuredVideo && "border-t border-white/[0.06] lg:border-t-0")}>
+                <div className={cn(featuredVideo && "border-t border-white/[0.05] lg:border-t-0")}>
                   <a
                     href={featuredSet.platformUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.03] sm:gap-5 sm:p-5"
+                    className="group flex gap-4 p-4 transition-colors hover:bg-white/[0.02] sm:gap-5 sm:p-5"
                   >
-                    <div className="relative aspect-square w-[100px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30 sm:w-[120px]">
+                    <div className="relative h-[108px] w-[108px] shrink-0 overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30 sm:h-[124px] sm:w-[124px]">
                       {featuredSet.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={featuredSet.imageUrl}
-                          alt={`${featuredSet.title} thumbnail`}
-                          className="h-full w-full object-cover"
+                          alt={`${featuredSet.title} artwork`}
+                          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                          <Play className="h-7 w-7 text-accent/70" />
+                          <Play className="h-8 w-8 text-accent/70" />
                         </div>
                       )}
                     </div>
-                    <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/80">
+                    <div className="flex min-w-0 flex-1 flex-col justify-center">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-accent/70">
                         Latest {PERFORMANCE_TYPE_LABELS[featuredSet.performanceType] ?? "DJ Set"}
                       </p>
-                      <h3 className="mt-0.5 text-balance text-base font-bold leading-tight text-foreground">
+                      <h3 className="mt-1.5 text-balance text-lg font-black leading-tight text-foreground">
                         {cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>
                       {(featuredSet.event ?? featuredSet.venue ?? featuredSet.setDate) ? (
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
                           {[featuredSet.event, featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
                         </p>
                       ) : null}
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors group-hover:text-accent/80">
-                        Play
-                        <ExternalLink className="h-3 w-3" />
+                      <span className="mt-3 inline-flex h-8 w-fit items-center rounded-full border border-accent/35 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-150 group-hover:border-accent/60 group-hover:bg-accent/10">
+                        PLAY ↗
                       </span>
                     </div>
                   </a>
+
+                  {/* Recent sets — compact rows */}
                   {recentSets.length > 0 ? (
-                    <div className="border-t border-white/[0.06] px-4 pb-2 sm:px-5">
-                      <p className="pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/35">
+                    <div className="border-t border-white/[0.05] px-4 pb-3 sm:px-5">
+                      <p className="pb-1 pt-3 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/30">
                         Recent
                       </p>
                       <div className="divide-y divide-white/[0.04]">
@@ -1028,20 +1012,22 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             href={set.platformUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-3 py-2.5 transition-colors hover:text-foreground"
+                            className="group flex items-center gap-3 py-2.5 transition-colors"
                           >
-                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/25">
+                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/22">
                               {String(index + 1).padStart(2, "0")}
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-foreground/85">{cleanDjSetTitle(set.title, artist.artistName)}</p>
+                              <p className="truncate text-sm font-semibold text-foreground/80 group-hover:text-foreground">
+                                {cleanDjSetTitle(set.title, artist.artistName)}
+                              </p>
                               {(set.event ?? set.venue ?? set.setDate) ? (
                                 <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
                                   {[set.event, set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
                                 </p>
                               ) : null}
                             </div>
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/50" />
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/40 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/70" />
                           </a>
                         ))}
                       </div>

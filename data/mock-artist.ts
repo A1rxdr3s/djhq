@@ -22,16 +22,18 @@ export const mockArtist: Artist = {
     { platform: "youtube", label: "YouTube", url: "https://www.youtube.com/@andresherrera" },
     { platform: "instagram", label: "Instagram", url: "https://www.instagram.com/andresherrera" },
   ],
-  featuredRelease: {
-    id: "release_midnight_protocol_ep_2026",
-    title: "Midnight Protocol EP",
-    label: "Drumcode",
-    releaseDate: "2026-05-08T00:00:00.000Z",
-    artworkUrl: "/placeholder.jpg",
-    platformUrl: "https://www.beatport.com/release/midnight-protocol-ep/000001",
-    type: "EP",
-  },
-  selectedReleases: [],
+  releases: [
+    {
+      id: "release_midnight_protocol_ep_2026",
+      title: "Midnight Protocol EP",
+      label: "Drumcode",
+      releaseDate: "2026-05-08T00:00:00.000Z",
+      artworkUrl: "/placeholder.jpg",
+      platformUrl: "https://www.beatport.com/release/midnight-protocol-ep/000001",
+      type: "EP",
+      isFeatured: true,
+    },
+  ],
   djSets: [],
   videos: [],
   upcomingGigs: [
