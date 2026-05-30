@@ -28,6 +28,7 @@ import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { JoinTheFamily } from "@/components/djhq/join-the-family"
+import { MobileTabManager, MobileSection, MobileArchive } from "@/components/profile/mobile-tab-manager"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -832,6 +833,145 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </div>
         </section>
 
+        {/* ── Mobile tab navigation (desktop: all sections always visible) ── */}
+        <MobileTabManager>
+
+        {/* ── Mobile Home Overview: compact digest, hidden on desktop ── */}
+        <MobileSection tab="home" className="lg:hidden mt-6">
+          <div className="space-y-3">
+
+            {/* Compact Featured Release */}
+            {featuredRelease && (
+              <a
+                href={featuredRelease.platformUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5 transition-colors duration-200 active:bg-white/[0.04]"
+              >
+                <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30">
+                  {hasFeaturedArtwork ? (
+                    <Image
+                      src={featuredRelease.artworkUrl}
+                      alt=""
+                      fill
+                      sizes="72px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Music2 className="h-5 w-5 text-accent/50" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col justify-between py-0.5">
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+                      {featuredRelease.type}
+                    </p>
+                    <p className="mt-0.5 truncate text-sm font-black tracking-[-0.01em] text-white">
+                      {featuredRelease.title}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-white/40">
+                      {featuredRelease.label} · {featuredReleaseYear}
+                    </p>
+                  </div>
+                  <span className="mt-2 inline-flex h-6 w-fit items-center rounded-full border border-accent/20 px-3 text-[9px] font-bold uppercase tracking-[0.1em] text-accent">
+                    Listen ↗
+                  </span>
+                </div>
+              </a>
+            )}
+
+            {/* Compact Next Upcoming Show */}
+            {upcomingGigs[0] && (() => {
+              const gig = upcomingGigs[0]
+              const d = new Date(gig.date)
+              const MONTHS_SHORT = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+              const dayStr = String(d.getUTCDate())
+              const monthStr = MONTHS_SHORT[d.getUTCMonth()]
+              return (
+                <div className="flex gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+                  <div className="flex shrink-0 flex-col items-center justify-center rounded-xl border border-accent/20 bg-accent/[0.06] px-3 py-2 min-w-[52px]">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-accent/70">{monthStr}</span>
+                    <span className="text-xl font-black tabular-nums leading-none text-foreground">{dayStr}</span>
+                  </div>
+                  <div className="flex min-w-0 flex-col justify-center">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent/60">Next Show</p>
+                    <p className="mt-0.5 truncate text-sm font-bold tracking-[-0.01em] text-white">{gig.event}</p>
+                    {gig.venue && (
+                      <p className="mt-0.5 truncate text-[11px] text-white/40">{gig.venue}</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Compact Featured Set */}
+            {featuredSet && (
+              <a
+                href={featuredSet.platformUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5 transition-colors duration-200 active:bg-white/[0.04]"
+              >
+                <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-secondary shadow-md shadow-black/30">
+                  {featuredSet.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={featuredSet.imageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Play className="h-5 w-5 text-accent/50" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col justify-between py-0.5">
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent/60">Featured Set</p>
+                    <p className="mt-0.5 truncate text-sm font-black tracking-[-0.01em] text-white">
+                      {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
+                    </p>
+                    <p className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-[0.14em] text-accent/55">
+                      {buildPerformanceArtist(featuredSet.performanceType, featuredSet.performanceArtists, artist.artistName)}
+                    </p>
+                  </div>
+                  <span className="mt-2 inline-flex h-6 w-fit items-center rounded-full border border-accent/20 px-3 text-[9px] font-bold uppercase tracking-[0.1em] text-accent">
+                    Listen ↗
+                  </span>
+                </div>
+              </a>
+            )}
+
+            {/* Latest 3 Moments */}
+            {galleryImages.length > 0 && (
+              <div>
+                <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-foreground/25">Moments</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {galleryImages.slice(0, 3).map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative aspect-square overflow-hidden rounded-xl bg-secondary"
+                    >
+                      <Image
+                        src={img.imageUrl}
+                        alt={img.altText}
+                        fill
+                        sizes="33vw"
+                        className="object-cover"
+                        style={{ objectPosition: `${img.focalX ?? 50}% ${img.focalY ?? 50}%` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </MobileSection>
+
         {/* Atmospheric lamina — unifies Press Photos / Featured Release / Gigs visually */}
         <div className="relative mt-8 lg:mt-10">
           <div
@@ -1186,6 +1326,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <span className="h-px w-8 bg-border" />
           </Link>
         </footer>
+
+        </MobileTabManager>
       </div>
     </main>
     </>
