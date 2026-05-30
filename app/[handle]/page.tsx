@@ -1146,7 +1146,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         ].filter(Boolean)
                         return (
                           <>
-                            <h3 className="mt-1.5 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.02em] text-white sm:text-3xl lg:text-4xl">
+                            <h3 className="mt-1 text-balance text-xl font-black uppercase leading-[0.95] tracking-[-0.02em] text-white sm:text-2xl lg:text-3xl">
                               {displayTitle}
                             </h3>
                             <p className="mt-1.5 text-sm font-bold uppercase tracking-[0.10em] text-accent/55">
@@ -1160,7 +1160,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           </>
                         )
                       })()}
-                      <span className="mt-3 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
+                      <span className="mt-2.5 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         WATCH VIDEO ↗
                       </span>
                     </div>
@@ -1257,15 +1257,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         </div>
                       </div>
                     )}
-                    <div className="mt-3">
+                    <div className="mt-2.5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
                         Featured Set
                       </p>
                       {/* Event name · City — editorial primary title */}
-                      <h3 className="mt-1.5 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-3xl lg:text-4xl">
+                      <h3 className="mt-1 text-balance text-xl font-black uppercase leading-[0.95] tracking-[-0.02em] text-foreground sm:text-2xl lg:text-3xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                         {featuredSet.city?.trim() && (
-                          <span className="opacity-65"> · {featuredSet.city.trim()}</span>
+                          <span className="text-white/45"> · {featuredSet.city.trim()}</span>
                         )}
                       </h3>
                       {/* Artist attribution */}
