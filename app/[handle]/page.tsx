@@ -30,6 +30,7 @@ import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { JoinTheFamily } from "@/components/djhq/join-the-family"
 import { MobileTabManager, MobileSection, MobileArchive } from "@/components/profile/mobile-tab-manager"
+import { SetArtworkBanner, SetArtworkPlaceholder } from "@/components/profile/set-artwork-banner"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -477,6 +478,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
           venue: row.venue ?? undefined,
           event: row.event ?? undefined,
           setDate: row.set_date ?? undefined,
+          city: row.city ?? undefined,
           imageUrl: row.image_url ?? undefined,
           platformUrl: row.platform_url,
           sortOrder: row.sort_order,
@@ -965,6 +967,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent/60">Featured Set</p>
                     <p className="mt-0.5 truncate text-sm font-black tracking-[-0.01em] text-white">
                       {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
+                      {featuredSet.city?.trim() && <span className="opacity-55"> · {featuredSet.city.trim()}</span>}
                     </p>
                     <p className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-[0.14em] text-accent/55">
                       {buildPerformanceArtist(featuredSet.performanceType, featuredSet.performanceArtists, artist.artistName)}
@@ -1240,32 +1243,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     rel="noopener noreferrer"
                     className="group block p-5 sm:p-6"
                   >
-                    {/* Full-width banner artwork */}
-                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[24px] bg-secondary shadow-md shadow-black/30">
-                      {featuredSet.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={featuredSet.imageUrl}
-                          alt={`${featuredSet.title} artwork`}
-                          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                          <Play className="h-10 w-10 text-accent/70" />
-                        </div>
-                      )}
-                      {/* Subtle overall overlay */}
-                      <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
-                      {/* Dark gradient at bottom */}
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                    </div>
+                    {/* Smart artwork — portrait images preserve ratio; landscape fills 16/9 */}
+                    {featuredSet.imageUrl ? (
+                      <SetArtworkBanner
+                        src={featuredSet.imageUrl}
+                        alt={`${featuredSet.title} artwork`}
+                      />
+                    ) : (
+                      <SetArtworkPlaceholder />
+                    )}
                     <div className="mt-4 sm:mt-5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
                         Featured Set
                       </p>
-                      {/* Event name — editorial primary title */}
+                      {/* Event name · City — editorial primary title */}
                       <h3 className="mt-2 text-balance text-4xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-5xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
+                        {featuredSet.city?.trim() && (
+                          <span className="opacity-65"> · {featuredSet.city.trim()}</span>
+                        )}
                       </h3>
                       {/* Artist attribution */}
                       <p className="mt-2 text-sm font-bold uppercase tracking-[0.1em] text-accent/55">
@@ -1331,7 +1327,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white transition-all duration-150 group-hover:translate-x-[2px]">
-                                    {showTitle}
+                                    {showTitle}{set.city?.trim() && <span className="opacity-55"> · {set.city.trim()}</span>}
                                   </p>
                                   <p className="mt-[2px] truncate text-[11px] font-bold uppercase tracking-[0.18em] text-accent/50 transition-colors duration-150 group-hover:text-accent/70">
                                     {performanceArtist}
