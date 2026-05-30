@@ -287,7 +287,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<DjSetRow[]>(),
     supabase
       .from("videos")
-      .select("id, title, venue, video_date, thumbnail_url, custom_thumbnail_url, platform_url, sort_order, is_published")
+      .select("id, title, video_artists, video_event, video_city, video_country, venue, video_date, thumbnail_url, custom_thumbnail_url, platform_url, sort_order, is_published")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<VideoRow[]>(),
@@ -372,6 +372,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       venue: set.venue ?? undefined,
       event: set.event ?? undefined,
       setDate: set.set_date ?? undefined,
+      city: set.city ?? undefined,
       imageUrl: set.image_url ?? undefined,
       platformUrl: set.platform_url,
       sortOrder: set.sort_order,
@@ -380,6 +381,10 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     videos: (videosResult.data ?? []).map((video): Video => ({
       id: video.id,
       title: video.title,
+      videoArtists: video.video_artists ?? [],
+      videoEvent: video.video_event ?? undefined,
+      videoCity: video.video_city ?? undefined,
+      videoCountry: video.video_country ?? undefined,
       venue: video.venue ?? undefined,
       videoDate: video.video_date ?? undefined,
       thumbnailUrl: video.thumbnail_url ?? undefined,

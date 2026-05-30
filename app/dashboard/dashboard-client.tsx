@@ -8,6 +8,7 @@ import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
+import { computeVideoTitle } from "@/lib/performance-title"
 import { ACCENT_THEMES, getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -201,6 +202,7 @@ type DjSetFormState = {
   venue: string
   event: string
   setDate: string
+  city: string
   imageUrl: string
   platformUrl: string
   isPublished: boolean
@@ -481,6 +483,7 @@ function getDjSetFormState(artist: Artist): DjSetFormState[] {
     venue: set.venue ?? "",
     event: set.event ?? "",
     setDate: set.setDate ? toDateInputValue(set.setDate) : "",
+    city: set.city ?? "",
     imageUrl: set.imageUrl ?? "",
     platformUrl: set.platformUrl,
     isPublished: set.isPublished,
@@ -497,6 +500,7 @@ function createEmptyDjSet(artistName: string): DjSetFormState {
     venue: "",
     event: "",
     setDate: "",
+    city: "",
     imageUrl: "",
     platformUrl: "",
     isPublished: true,
@@ -671,9 +675,11 @@ function compressGalleryImage(file: File): Promise<Blob> {
 function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetadata): VideoFormState {
   return {
     ...current,
+    // Only fill the hidden fallback title (used when no structured fields produce a title)
     title: result.title?.trim() || current.title,
     thumbnailUrl: result.thumbnailUrl?.trim() || current.thumbnailUrl,
     platformUrl: result.platformUrl || current.platformUrl,
+    // Never overwrite structured fields (artists, event, venue, city, country)
   }
 }
 
@@ -960,11 +966,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           venue: set.venue,
           event: set.event,
           setDate: set.setDate,
+          city: set.city || undefined,
           imageUrl: set.imageUrl,
           platformUrl: set.platformUrl,
           isPublished: set.isPublished,
         })),
-        videos,
+        videos: videos.map((v) => ({
+          title: v.title,
+          videoArtists: v.videoArtists,
+          videoEvent: v.videoEvent || undefined,
+          videoCity: v.videoCity || undefined,
+          videoCountry: v.videoCountry || undefined,
+          venue: v.venue || undefined,
+          videoDate: v.videoDate || undefined,
+          thumbnailUrl: v.thumbnailUrl || undefined,
+          customThumbnailUrl: v.customThumbnailUrl ?? null,
+          platformUrl: v.platformUrl,
+          isPublished: v.isPublished,
+        })),
         booking: {
           email: bookingEmail,
           bookingUrl: bookingUrl || null,
@@ -1474,7 +1493,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function handleAddVideo() {
-    setVideos((current) => [...current, createEmptyVideo()])
+    setVideos((current) => [...current, createEmptyVideo(artist.artistName)])
   }
 
   function handleRemoveVideo(index: number) {
