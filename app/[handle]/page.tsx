@@ -897,9 +897,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                   <div className="flex min-w-0 flex-col justify-center">
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent/60">Next Show</p>
-                    <p className="mt-0.5 truncate text-sm font-bold tracking-[-0.01em] text-white">{gig.event}</p>
-                    {gig.venue && (
-                      <p className="mt-0.5 truncate text-[11px] text-white/40">{gig.venue}</p>
+                    <p className="mt-0.5 truncate text-sm font-bold tracking-[-0.01em] text-white">{gig.venue}</p>
+                    {gig.clubVenue && (
+                      <p className="mt-0.5 truncate text-[11px] text-white/40">{gig.clubVenue} · {gig.city}</p>
                     )}
                   </div>
                 </div>
@@ -1208,8 +1208,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     rel="noopener noreferrer"
                     className="group block p-5 sm:p-6"
                   >
-                    {/* Square artwork — stacked, fills column width */}
-                    <div className="relative aspect-square w-full overflow-hidden rounded-[20px] bg-secondary shadow-md shadow-black/30 sm:max-w-[220px]">
+                    {/* Full-width banner artwork */}
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[24px] bg-secondary shadow-md shadow-black/30">
                       {featuredSet.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1222,7 +1222,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           <Play className="h-10 w-10 text-accent/70" />
                         </div>
                       )}
-                      <div className="pointer-events-none absolute inset-0 bg-black/[0.06]" />
+                      {/* Subtle overall overlay */}
+                      <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
+                      {/* Dark gradient at bottom */}
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                     </div>
                     <div className="mt-4 sm:mt-5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
@@ -1333,11 +1336,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        {/* Join the Family → Community tab (compact on mobile) */}
+        {/* Join the Family → Community tab (compact on mobile, full on desktop) */}
         <MobileSection tab="community">
           <section className="mt-10 lg:mt-14">
-            <SectionHeader className="lg:block hidden">Join the Family</SectionHeader>
-            <div className="mt-4 lg:mt-4">
+            <div className="hidden lg:block">
+              <SectionHeader>Join the Family</SectionHeader>
+            </div>
+            <div className="mt-4">
               <div className="lg:hidden">
                 <JoinTheFamily compact />
               </div>
