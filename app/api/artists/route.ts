@@ -36,17 +36,8 @@ type SaveSocialLinkPayload = {
   url: string
 }
 
-type SaveFeaturedReleasePayload = {
-  title: string
-  label: string
-  credits?: string
-  releaseDate: string
-  type: string
-  platformUrl: string
-  artworkUrl: string
-} | null
-
-type SaveSelectedReleasePayload = {
+type SaveReleasePayload = {
+  isFeatured: boolean
   title: string
   label: string
   credits?: string
@@ -118,8 +109,7 @@ type SaveArtistPayload = {
   isPublished: boolean
   profile: SaveProfilePayload
   socialLinks: SaveSocialLinkPayload[]
-  featuredRelease: SaveFeaturedReleasePayload
-  selectedReleases: SaveSelectedReleasePayload[]
+  releases: SaveReleasePayload[]
   gigs: SaveGigPayload[]
   djSets: SaveDjSetPayload[]
   videos: SaveVideoPayload[]
@@ -455,48 +445,18 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const { error: deleteFeaturedReleaseError } = await supabase
+    const { error: deleteReleasesError } = await supabase
       .from("releases")
       .delete()
       .eq("artist_id", artistId)
-      .eq("is_featured", true)
 
-    if (deleteFeaturedReleaseError) {
-      throw deleteFeaturedReleaseError
+    if (deleteReleasesError) {
+      throw deleteReleasesError
     }
 
-    if (payload.featuredRelease) {
-      const { error: insertFeaturedReleaseError } = await supabase.from("releases").insert({
-        artist_id: artistId,
-        title: payload.featuredRelease.title.trim(),
-        label: payload.featuredRelease.label.trim(),
-        credits: payload.featuredRelease.credits?.trim() || null,
-        release_date: payload.featuredRelease.releaseDate,
-        artwork_url: payload.featuredRelease.artworkUrl.trim(),
-        platform_url: payload.featuredRelease.platformUrl.trim(),
-        type: normalizeReleaseType(payload.featuredRelease.type),
-        is_featured: true,
-        sort_order: 1,
-      })
-
-      if (insertFeaturedReleaseError) {
-        throw insertFeaturedReleaseError
-      }
-    }
-
-    const { error: deleteSelectedReleasesError } = await supabase
-      .from("releases")
-      .delete()
-      .eq("artist_id", artistId)
-      .eq("is_featured", false)
-
-    if (deleteSelectedReleasesError) {
-      throw deleteSelectedReleasesError
-    }
-
-    if (payload.selectedReleases.length > 0) {
-      const { error: insertSelectedReleasesError } = await supabase.from("releases").insert(
-        payload.selectedReleases.map((release, index) => ({
+    if (payload.releases.length > 0) {
+      const { error: insertReleasesError } = await supabase.from("releases").insert(
+        payload.releases.map((release, index) => ({
           artist_id: artistId,
           title: release.title.trim(),
           label: release.label.trim(),
@@ -505,7 +465,7 @@ export async function PATCH(request: Request) {
           artwork_url: release.artworkUrl.trim(),
           platform_url: release.platformUrl.trim(),
           type: normalizeReleaseType(release.type),
-          is_featured: false,
+          is_featured: release.isFeatured,
           sort_order: index + 1,
           spotify_url: release.spotifyUrl?.trim() || null,
           beatport_url: release.beatportUrl?.trim() || null,
@@ -521,8 +481,8 @@ export async function PATCH(request: Request) {
         })),
       )
 
-      if (insertSelectedReleasesError) {
-        throw insertSelectedReleasesError
+      if (insertReleasesError) {
+        throw insertReleasesError
       }
     }
 

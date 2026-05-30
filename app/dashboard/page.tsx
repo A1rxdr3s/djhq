@@ -290,8 +290,6 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
   }
 
   const releaseRows = releasesResult.data ?? []
-  const featuredReleaseRow = releaseRows.find((release) => release.is_featured)
-  const selectedReleaseRows = releaseRows.filter((release) => !release.is_featured)
 
   return {
     id: artistRow.id,
@@ -312,19 +310,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       label: link.label,
       url: link.url,
     })),
-    featuredRelease: featuredReleaseRow
-      ? {
-          id: featuredReleaseRow.id,
-          title: featuredReleaseRow.title,
-          label: featuredReleaseRow.label,
-          credits: featuredReleaseRow.credits ?? undefined,
-          releaseDate: featuredReleaseRow.release_date,
-          artworkUrl: featuredReleaseRow.artwork_url,
-          platformUrl: featuredReleaseRow.platform_url,
-          type: normalizeReleaseType(featuredReleaseRow.type),
-        }
-      : undefined,
-    selectedReleases: selectedReleaseRows.map((release) => ({
+    releases: releaseRows.map((release) => ({
       id: release.id,
       title: release.title,
       label: release.label,
@@ -333,6 +319,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       artworkUrl: release.artwork_url,
       platformUrl: release.platform_url,
       type: normalizeReleaseType(release.type),
+      isFeatured: release.is_featured,
       spotifyUrl: release.spotify_url ?? undefined,
       beatportUrl: release.beatport_url ?? undefined,
       appleMusicUrl: release.apple_music_url ?? undefined,

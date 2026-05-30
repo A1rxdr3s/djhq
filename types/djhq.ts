@@ -185,6 +185,8 @@ export interface Release {
   versionType?: string
   /** Remixer artist name when versionType is "remix". */
   remixer?: string
+  /** Whether this release is the featured (hero) release on the profile. */
+  isFeatured?: boolean
 }
 
 /** Public-facing status of a live show. */
@@ -352,10 +354,8 @@ export interface Artist {
   avatarUrl?: string
   /** Primary social/music links. */
   socialLinks: SocialLink[]
-  /** Optional featured release. */
-  featuredRelease?: Release
-  /** Catalog releases shown in the Selected Releases section. */
-  selectedReleases: Release[]
+  /** All releases. The one with isFeatured = true is shown in the hero slot. */
+  releases: Release[]
   /** Upcoming gigs for the profile. */
   upcomingGigs: Gig[]
   /** Recorded DJ sets shown on the profile. */

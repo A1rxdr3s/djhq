@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Star, Trash2 } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -43,8 +43,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Music",
     items: [
-      { id: "featured-release", label: "Featured Release" },
-      { id: "selected-releases", label: "Selected Releases" },
+      { id: "releases", label: "Releases" },
     ],
   },
   {
@@ -154,7 +153,9 @@ type SocialLinkFormState = {
   url: string
 }
 
-type FeaturedReleaseFormState = {
+type ReleaseFormState = {
+  id: string
+  isFeatured: boolean
   title: string
   label: string
   credits: string
@@ -162,10 +163,6 @@ type FeaturedReleaseFormState = {
   type: string
   platformUrl: string
   artworkUrl: string
-}
-
-type SelectedReleaseFormState = FeaturedReleaseFormState & {
-  id: string
   spotifyUrl: string
   appleMusicUrl: string
   soundcloudUrl: string
@@ -343,25 +340,12 @@ function getSocialLinkFormState(artist: Artist): SocialLinkFormState[] {
   }))
 }
 
-function getFeaturedReleaseFormState(artist: Artist): FeaturedReleaseFormState | null {
-  return artist.featuredRelease
-    ? {
-        title: artist.featuredRelease.title,
-        label: artist.featuredRelease.label,
-        credits: artist.featuredRelease.credits ?? "",
-        releaseDate: toDateInputValue(artist.featuredRelease.releaseDate),
-        type: artist.featuredRelease.type,
-        platformUrl: artist.featuredRelease.platformUrl,
-        artworkUrl: artist.featuredRelease.artworkUrl,
-      }
-    : null
-}
-
-function getSelectedReleaseFormState(artist: Artist): SelectedReleaseFormState[] {
-  return artist.selectedReleases.map((release) => {
+function getReleaseFormState(artist: Artist): ReleaseFormState[] {
+  return artist.releases.map((release) => {
     const { versionType, customVersionType } = parseVersionType(release.versionType)
     return {
       id: release.id,
+      isFeatured: release.isFeatured ?? false,
       title: release.title,
       label: release.label,
       credits: release.credits ?? "",
@@ -385,9 +369,10 @@ function getSelectedReleaseFormState(artist: Artist): SelectedReleaseFormState[]
   })
 }
 
-function createEmptySelectedRelease(): SelectedReleaseFormState {
+function createEmptyRelease(): ReleaseFormState {
   return {
     id: `new-${crypto.randomUUID()}`,
+    isFeatured: false,
     title: "",
     label: "",
     credits: "",
@@ -410,7 +395,7 @@ function createEmptySelectedRelease(): SelectedReleaseFormState {
   }
 }
 
-function mergeImportedReleaseFields<T extends FeaturedReleaseFormState>(
+function mergeImportedReleaseFields<T extends ReleaseFormState>(
   current: T,
   result: ImportedReleaseMetadata,
 ): T {
@@ -729,8 +714,7 @@ type DashboardClientProps = {
 export default function DashboardClient({ initialArtist, statusMessage }: DashboardClientProps) {
   const [artist, setArtist] = useState<Artist>(initialArtist)
   const initialSocialLinks = getSocialLinkFormState(artist)
-  const initialFeaturedRelease = getFeaturedReleaseFormState(artist)
-  const initialSelectedReleases = getSelectedReleaseFormState(artist)
+  const initialReleases = getReleaseFormState(artist)
   const initialUpcomingGigs = getGigFormState(artist)
   const [activeSection, setActiveSection] = useState("overview")
   const [artistName, setArtistName] = useState(initialArtist.artistName)
@@ -768,8 +752,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
   const [isUploadingHeroLogo, setIsUploadingHeroLogo] = useState(false)
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
-  const [featuredRelease, setFeaturedRelease] = useState(initialFeaturedRelease)
-  const [selectedReleases, setSelectedReleases] = useState(initialSelectedReleases)
+  const [releases, setReleases] = useState(initialReleases)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [newGigId, setNewGigId] = useState<string | null>(null)
   const [bookingEmail, setBookingEmail] = useState(initialArtist.bookingInfo.email)
@@ -858,8 +841,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroContentWidth !== (artist.heroContentWidth ?? "standard") ||
     accentTheme !== (artist.accentTheme ?? "matrix")
   const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
-  const isFeaturedReleaseDirty = JSON.stringify(featuredRelease) !== JSON.stringify(initialFeaturedRelease)
-  const isSelectedReleasesDirty = JSON.stringify(selectedReleases) !== JSON.stringify(initialSelectedReleases)
+  const isReleasesDirty = JSON.stringify(releases) !== JSON.stringify(initialReleases)
   const isGigsDirty = JSON.stringify(upcomingGigs) !== JSON.stringify(initialUpcomingGigs)
   const isDjSetsDirty = JSON.stringify(djSets) !== JSON.stringify(initialDjSets)
   const isVideosDirty = JSON.stringify(videos) !== JSON.stringify(initialVideos)
@@ -869,7 +851,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     pressKitEnabled !== artist.pressKit.enabled ||
     pressKitUrl !== artist.pressKit.downloadUrl ||
     JSON.stringify(pressKitAssets) !== JSON.stringify(artist.pressKit.assetsIncluded)
-  const isSaveDirty = isProfileDirty || isLinksDirty || isFeaturedReleaseDirty || isSelectedReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isGalleryFocalDirty
+  const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isGalleryFocalDirty
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
@@ -912,8 +894,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           accentTheme,
         },
         socialLinks,
-        featuredRelease,
-        selectedReleases: selectedReleases.map((r) => ({
+        releases: releases.map((r) => ({
+          isFeatured: r.isFeatured,
           title: r.title,
           label: r.label,
           credits: r.credits,
@@ -996,20 +978,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         label: link.label.trim(),
         url: link.url.trim(),
       })),
-      featuredRelease: featuredRelease
-        ? {
-            id: artist.featuredRelease?.id ?? "featured-release",
-            title: featuredRelease.title.trim(),
-            label: featuredRelease.label.trim(),
-            credits: featuredRelease.credits.trim() || undefined,
-            releaseDate: featuredRelease.releaseDate,
-            artworkUrl: featuredRelease.artworkUrl.trim(),
-            platformUrl: featuredRelease.platformUrl.trim(),
-            type: normalizeReleaseType(featuredRelease.type),
-          }
-        : undefined,
-      selectedReleases: selectedReleases.map((release) => ({
+      releases: releases.map((release) => ({
         id: release.id,
+        isFeatured: release.isFeatured,
         title: release.title.trim(),
         label: release.label.trim(),
         credits: release.credits.trim() || undefined,
@@ -1118,8 +1089,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroContentWidth(savedArtist.heroContentWidth ?? "standard")
     setAccentTheme(savedArtist.accentTheme ?? "matrix")
     setSocialLinks(getSocialLinkFormState(savedArtist))
-    setFeaturedRelease(getFeaturedReleaseFormState(savedArtist))
-    setSelectedReleases(getSelectedReleaseFormState(savedArtist))
+    setReleases(getReleaseFormState(savedArtist))
     setUpcomingGigs(getGigFormState(savedArtist))
     setDjSets(getDjSetFormState(savedArtist))
     setVideos(getVideoFormState(savedArtist))
@@ -1194,47 +1164,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
-  async function handleImportReleaseMetadata() {
-    if (!featuredRelease?.platformUrl.trim()) {
-      setSaveMessage("Paste a supported release URL first.")
-      return
-    }
-
-    setIsImportingReleaseMetadata(true)
-    setSaveMessage("")
-
-    try {
-      const response = await fetch("/api/import/release-metadata", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: featuredRelease.platformUrl,
-        }),
-      })
-
-      const result = (await response.json()) as ImportedReleaseMetadata & { error?: string }
-
-      if (!response.ok) {
-        throw new Error(result.error ?? "Unable to import release metadata. Please verify the release URL and try again.")
-      }
-
-      setFeaturedRelease((current) => (current ? mergeImportedReleaseFields(current, result) : current))
-      setSaveMessage("Release metadata imported. Review and save changes.")
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : "Unable to import release metadata. Please verify the release URL and try again."
-      setSaveMessage(message)
-    } finally {
-      setIsImportingReleaseMetadata(false)
-    }
-  }
-
-  async function handleImportSelectedReleaseMetadata(index: number) {
-    const release = selectedReleases[index]
+  async function handleImportReleaseMetadata(index: number) {
+    const release = releases[index]
 
     if (!release?.platformUrl.trim()) {
       setSaveMessage("Paste a supported release URL first.")
@@ -1261,13 +1192,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         throw new Error(result.error ?? "Unable to import release metadata. Please verify the release URL and try again.")
       }
 
-      setSelectedReleases((current) =>
+      setReleases((current) =>
         current.map((item, itemIndex) => {
           if (itemIndex !== index) return item
           const merged = mergeImportedReleaseFields(item, result)
 
-          // Populate platform-specific URL from the import provider (never overwrite existing)
-          const platformPatch: Partial<SelectedReleaseFormState> = {}
+          const platformPatch: Partial<ReleaseFormState> = {}
           if (result.provider === "spotify" && !merged.spotifyUrl) {
             platformPatch.spotifyUrl = result.platformUrl
           } else if (result.provider === "beatport" && !merged.beatportUrl) {
@@ -1276,7 +1206,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             platformPatch.soundcloudUrl = result.platformUrl
           }
 
-          // Version / remix detection
           if (!merged.versionType && result.title) {
             const { versionType: detectedType, remixer: detectedRemixer } = detectRemixFromTitle(result.title)
             if (detectedType) {
@@ -1307,16 +1236,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
-  function handleAddSelectedRelease() {
-    setSelectedReleases((current) => [...current, createEmptySelectedRelease()])
+  function handleAddRelease() {
+    setReleases((current) => [...current, createEmptyRelease()])
   }
 
-  function handleRemoveSelectedRelease(index: number) {
-    setSelectedReleases((current) => current.filter((_, itemIndex) => itemIndex !== index))
+  function handleRemoveRelease(index: number) {
+    setReleases((current) => current.filter((_, itemIndex) => itemIndex !== index))
   }
 
-  function handleMoveSelectedRelease(index: number, direction: "up" | "down") {
-    setSelectedReleases((current) => {
+  function handleMoveRelease(index: number, direction: "up" | "down") {
+    setReleases((current) => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
 
       if (nextIndex < 0 || nextIndex >= current.length) {
@@ -1328,6 +1257,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       next.splice(nextIndex, 0, item)
       return next
     })
+  }
+
+  function handleSetFeatured(index: number) {
+    setReleases((current) =>
+      current.map((r, i) => ({ ...r, isFeatured: i === index })),
+    )
   }
 
   async function handleImportDjSetMetadata(index: number) {
@@ -1839,13 +1774,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderOverview() {
-    const releaseCount = artist.selectedReleases.length + (artist.featuredRelease ? 1 : 0)
+    const releaseCount = artist.releases.length
     const completionChecks = [
       { label: "Name & handle", done: !!artist.artistName && !!artist.handle },
       { label: "Bio & location", done: !!artist.shortBio && !!artist.location },
       { label: "Social links", done: artist.socialLinks.length > 0 },
-      { label: "Featured release", done: !!artist.featuredRelease },
-      { label: "Selected releases", done: artist.selectedReleases.length > 0 },
+      { label: "Featured release", done: artist.releases.some((r) => r.isFeatured) },
+      { label: "Releases", done: artist.releases.length > 0 },
       { label: "DJ sets", done: artist.djSets.length > 0 },
       { label: "Videos", done: artist.videos.length > 0 },
       { label: "Gallery images", done: artist.galleryImages.length > 0 },
@@ -1889,11 +1824,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
-            {artist.featuredRelease?.artworkUrl && (
+            {(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0])?.artworkUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={artist.featuredRelease.artworkUrl}
-                alt={artist.featuredRelease.title}
+                src={(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0]).artworkUrl}
+                alt={(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0]).title}
                 className="h-[72px] w-[72px] shrink-0 rounded-lg object-cover opacity-80 ring-1 ring-white/[0.08]"
                 loading="lazy"
               />
@@ -1928,11 +1863,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {artist.isPublished ? "Public · visible to anyone" : "Draft · not publicly visible"}
             </p>
           </div>
-          {(artist.featuredRelease || artist.selectedReleases[0]) && (
+          {artist.releases[0] && (
             <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Featured release</p>
               <p className="mt-0.5 truncate text-xs text-foreground/70">
-                {artist.featuredRelease?.title ?? artist.selectedReleases[0]?.title}
+                {(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0]).title}
               </p>
             </div>
           )}
@@ -2925,126 +2860,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
-  function renderFeaturedRelease() {
-    if (!featuredRelease) {
-      return null
-    }
-
+  function renderReleases() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Featured Release</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">The primary release shown at the top of your profile.</p>
-        </div>
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <label htmlFor="releaseTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Title
-              </label>
-              <Input
-                id="releaseTitle"
-                value={featuredRelease.title}
-                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, title: event.target.value } : current))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="releaseLabel" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Label
-              </label>
-              <Input
-                id="releaseLabel"
-                value={featuredRelease.label}
-                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, label: event.target.value } : current))}
-              />
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="releaseCredits" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Artists
-              </label>
-              <Input
-                id="releaseCredits"
-                value={featuredRelease.credits}
-                placeholder="e.g. Artist 1, Artist 2"
-                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, credits: event.target.value } : current))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="releaseDate" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Release Date
-              </label>
-              <DatePicker
-                value={featuredRelease.releaseDate}
-                onChange={(v) =>
-                  setFeaturedRelease((current) => (current ? { ...current, releaseDate: v } : current))
-                }
-                allowClear
-                triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="releaseType" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Type
-              </label>
-              <Input
-                id="releaseType"
-                value={featuredRelease.type}
-                onChange={(event) => setFeaturedRelease((current) => (current ? { ...current, type: event.target.value } : current))}
-              />
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="releasePlatformUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Platform URL
-              </label>
-              <Input
-                id="releasePlatformUrl"
-                value={featuredRelease.platformUrl}
-                onChange={(event) =>
-                  setFeaturedRelease((current) => (current ? { ...current, platformUrl: event.target.value } : current))
-                }
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleImportReleaseMetadata}
-                disabled={isImportingReleaseMetadata || isSaving || isPublishing}
-                className="border-border bg-background/70"
-              >
-                {isImportingReleaseMetadata ? "Fetching..." : "Import metadata"}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Paste an open.spotify.com track or album link. Title, artwork, and platform URL are filled from public
-                Spotify data when available; Label, date, and type usually need manual entry.
-              </p>
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="releaseArtworkUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-                Artwork URL
-              </label>
-              <Input
-                id="releaseArtworkUrl"
-                value={featuredRelease.artworkUrl}
-                onChange={(event) =>
-                  setFeaturedRelease((current) => (current ? { ...current, artworkUrl: event.target.value } : current))
-                }
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  function renderSelectedReleases() {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Selected Releases</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Catalog releases shown in the public profile carousel. Featured Release stays separate.</p>
+          <h2 className="text-base font-semibold text-foreground">Releases</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">All releases shown on your profile. Star one to feature it at the top of your page.</p>
         </div>
         <div className="space-y-3">
-          {selectedReleases.map((release, index) => (
-            <div key={release.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
+          {releases.map((release, index) => (
+            <div key={release.id} className={cn("rounded-xl border bg-card/40 p-4 transition-colors duration-150 sm:p-5", release.isFeatured ? "border-accent/25" : "border-white/[0.06] hover:border-white/[0.09]")}>
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   {release.artworkUrl ? (
@@ -3065,7 +2890,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleMoveSelectedRelease(index, "up")}
+                    onClick={() => handleSetFeatured(index)}
+                    disabled={isSaving || isPublishing}
+                    title={release.isFeatured ? "Featured release" : "Set as featured"}
+                    className={cn("h-7 w-7 p-0", release.isFeatured ? "text-accent" : "text-muted-foreground hover:text-accent")}
+                  >
+                    <Star className={cn("h-3.5 w-3.5", release.isFeatured && "fill-current")} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleMoveRelease(index, "up")}
                     disabled={index === 0 || isSaving || isPublishing || importingSelectedReleaseIndex !== null}
                     title="Move up"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
@@ -3076,8 +2912,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleMoveSelectedRelease(index, "down")}
-                    disabled={index === selectedReleases.length - 1 || isSaving || isPublishing || importingSelectedReleaseIndex !== null}
+                    onClick={() => handleMoveRelease(index, "down")}
+                    disabled={index === releases.length - 1 || isSaving || isPublishing || importingSelectedReleaseIndex !== null}
                     title="Move down"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                   >
@@ -3087,7 +2923,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveSelectedRelease(index)}
+                    onClick={() => handleRemoveRelease(index)}
                     disabled={isSaving || isPublishing || importingSelectedReleaseIndex !== null}
                     title="Remove"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
@@ -3108,7 +2944,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     id={`selected-release-title-${index}`}
                     value={release.title}
                     onChange={(event) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index ? { ...item, title: event.target.value } : item,
                         ),
@@ -3127,7 +2963,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     id={`selected-release-label-${index}`}
                     value={release.label}
                     onChange={(event) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index ? { ...item, label: event.target.value } : item,
                         ),
@@ -3147,7 +2983,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     value={release.credits}
                     placeholder="e.g. Artist 1, Artist 2"
                     onChange={(event) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index ? { ...item, credits: event.target.value } : item,
                         ),
@@ -3165,7 +3001,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <DatePicker
                     value={release.releaseDate}
                     onChange={(v) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index ? { ...item, releaseDate: v } : item,
                         ),
@@ -3186,7 +3022,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     id={`selected-release-reltype-${index}`}
                     value={release.releaseType}
                     onChange={(event) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index ? { ...item, releaseType: event.target.value } : item,
                         ),
@@ -3211,7 +3047,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     id={`selected-release-version-${index}`}
                     value={release.versionType}
                     onChange={(event) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index
                             ? { ...item, versionType: event.target.value, customVersionType: "" }
@@ -3231,7 +3067,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       placeholder="Custom version / mix type"
                       value={release.customVersionType}
                       onChange={(event) =>
-                        setSelectedReleases((current) =>
+                        setReleases((current) =>
                           current.map((item, itemIndex) =>
                             itemIndex === index ? { ...item, customVersionType: event.target.value } : item,
                           ),
@@ -3253,7 +3089,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       placeholder="Artist name"
                       value={release.remixer}
                       onChange={(event) =>
-                        setSelectedReleases((current) =>
+                        setReleases((current) =>
                           current.map((item, itemIndex) =>
                             itemIndex === index ? { ...item, remixer: event.target.value } : item,
                           ),
@@ -3274,7 +3110,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     value={release.platformUrl}
                     placeholder="https://..."
                     onChange={(event) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index ? { ...item, platformUrl: event.target.value } : item,
                         ),
@@ -3287,12 +3123,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleImportSelectedReleaseMetadata(index)}
+                    onClick={() => handleImportReleaseMetadata(index)}
                     disabled={
                       importingSelectedReleaseIndex === index ||
                       isSaving ||
-                      isPublishing ||
-                      isImportingReleaseMetadata
+                      isPublishing
                     }
                     className="border-border bg-background/70"
                   >
@@ -3310,7 +3145,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     id={`selected-release-artwork-${index}`}
                     value={release.artworkUrl}
                     onChange={(event) =>
-                      setSelectedReleases((current) =>
+                      setReleases((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index ? { ...item, artworkUrl: event.target.value } : item,
                         ),
@@ -3350,7 +3185,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           value={release[key]}
                           placeholder="https://..."
                           onChange={(event) =>
-                            setSelectedReleases((current) =>
+                            setReleases((current) =>
                               current.map((item, itemIndex) =>
                                 itemIndex === index ? { ...item, [key]: event.target.value } : item,
                               ),
@@ -3364,16 +3199,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           ))}
-          {selectedReleases.length === 0 && (
+          {releases.length === 0 && (
             <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
               <Music className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
-              <p className="text-sm font-medium text-muted-foreground/50">No releases in catalog</p>
-              <p className="mt-1 text-xs text-muted-foreground/30">Add releases to showcase your discography on your profile.</p>
+              <p className="text-sm font-medium text-muted-foreground/50">No releases yet</p>
+              <p className="mt-1 text-xs text-muted-foreground/30">Add releases to showcase your discography. Star one to feature it at the top of your profile.</p>
             </div>
           )}
           <button
             type="button"
-            onClick={handleAddSelectedRelease}
+            onClick={handleAddRelease}
             disabled={isSaving || isPublishing || importingSelectedReleaseIndex !== null}
             className="flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70 disabled:pointer-events-none disabled:opacity-40"
           >
@@ -5045,10 +4880,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderProfile()
       case "links":
         return renderLinks()
-      case "featured-release":
-        return renderFeaturedRelease()
-      case "selected-releases":
-        return renderSelectedReleases()
+      case "releases":
+        return renderReleases()
       case "gigs":
         return renderGigs()
       case "dj-sets":
@@ -5125,7 +4958,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               !isSaveDirty ||
               isSaving ||
               isPublishing ||
-              isImportingReleaseMetadata ||
               importingSelectedReleaseIndex !== null ||
               importingVideoIndex !== null ||
               isUploadingHeroImage ||
