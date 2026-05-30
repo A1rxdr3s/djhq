@@ -1030,7 +1030,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <div className="space-y-0.5">
                         {recentSets.map((set, index) => {
                           const showTitle = set.event?.trim() || set.venue?.trim() || cleanDjSetTitle(set.title, artist.artistName)
-                          const showMeta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? ""))
+                          const showMeta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? "")?.replace(",", "") ?? null)
                           return (
                             <a
                               key={set.id}
@@ -1058,11 +1058,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-white transition-all duration-150 group-hover:translate-x-0.5">
+                                <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white transition-all duration-150 group-hover:translate-x-0.5">
                                   {showTitle}
                                 </p>
                                 {showMeta ? (
-                                  <p className="mt-0.5 truncate text-sm text-white/35">{showMeta}</p>
+                                  <p className="mt-0.5 truncate text-sm uppercase text-white/35">{showMeta}</p>
                                 ) : null}
                               </div>
                               <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 opacity-50 transition-all duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100 group-hover:text-accent/65" />
