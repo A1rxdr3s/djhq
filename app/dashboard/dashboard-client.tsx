@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertTriangle, ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Star, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Star, Trash2 } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -771,7 +771,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [pressKitPdfEnSize, setPressKitPdfEnSize] = useState(initialArtist.pressKit.pdfEnSize ?? "")
   const [pressKitPdfEsSize, setPressKitPdfEsSize] = useState(initialArtist.pressKit.pdfEsSize ?? "")
   const [pressKitUseGalleryPhotos, setPressKitUseGalleryPhotos] = useState(initialArtist.pressKit.useGalleryPhotos ?? true)
-  const [pressKitImportDone, setPressKitImportDone] = useState(false)
   const [pressKitAdvancedOpen, setPressKitAdvancedOpen] = useState(false)
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
@@ -4312,7 +4311,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function renderPressKit() {
     const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
 
-    const importResults = [
+    const activeDomain = customDomains.find((d) => d.status === "active")
+    const pressKitPublicUrl = activeDomain
+      ? `https://${activeDomain.domain}/presskit`
+      : `${APP_DISPLAY_HOST}/${artist.handle}/presskit`
+
+    const optionalLinks = [
       { label: "Bio & Text",      ok: Boolean(pressKitBioFolderUrl.trim()) },
       { label: "Logos & Artwork", ok: Boolean(pressKitLogosFolderUrl.trim()) },
       { label: "Press Photos",    ok: Boolean(pressKitMediaFolderUrl.trim()) },
@@ -4320,15 +4324,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       { label: "English PDF",     ok: Boolean(pressKitPdfEnUrl.trim()) },
       { label: "Spanish PDF",     ok: Boolean(pressKitPdfEsUrl.trim()) },
     ]
-    const hasMissing = importResults.some((r) => !r.ok)
 
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">
-            Configure your EPK landing page at{" "}
-            <span className="font-mono text-foreground/50">/{artist.handle}/presskit</span>.
+            Your EPK page is live at{" "}
+            <span className="font-mono text-foreground/50">{pressKitPublicUrl}</span>.
           </p>
         </div>
 
@@ -4383,9 +4386,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-semibold text-foreground">Press Kit Source</p>
+                <p className="text-sm font-semibold text-foreground">Root Folder</p>
                 <p className="mt-0.5 text-xs text-muted-foreground/45">
-                  Paste your Google Drive root folder. Organize it like:
+                  Link your Google Drive press kit folder. Organize it like:
                 </p>
                 <pre className="mt-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2.5 font-mono text-[10px] leading-relaxed text-muted-foreground/40">
 {`PRESSKIT-ARTIST/
@@ -4400,58 +4403,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
               <div className="space-y-1.5">
                 <label htmlFor="pressKitRootUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                  Google Drive Root Folder
+                  Google Drive Root Folder URL
                 </label>
                 <Input
                   id="pressKitRootUrl"
                   value={pressKitRootUrl}
-                  onChange={(e) => {
-                    setPressKitRootUrl(e.target.value)
-                    setPressKitImportDone(false)
-                  }}
+                  onChange={(e) => setPressKitRootUrl(e.target.value)}
                   placeholder="https://drive.google.com/drive/folders/…"
                   disabled={!pressKitEnabled}
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => setPressKitImportDone(true)}
-                disabled={!pressKitRootUrl.trim() || !pressKitEnabled}
-                className="h-9 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-foreground/60 transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.07] hover:text-foreground/85 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                Import Assets
-              </button>
-
-              {/* ── Import results checklist ────────────────────── */}
-              {pressKitImportDone && (
-                <div className="space-y-1">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
-                    Asset status
+              {/* ── Asset status ────────────────────────────────── */}
+              {pressKitRootUrl.trim() ? (
+                <div className="space-y-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 shrink-0 text-accent/70" />
+                    <span className="text-sm text-foreground/65">Root folder configured</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/40">
+                    Optional asset links can be added in Advanced Settings below for individual download buttons on your press kit page.
                   </p>
-                  {importResults.map(({ label, ok }) => (
-                    <div key={label} className="flex items-center gap-2.5">
-                      {ok ? (
-                        <Check className="h-3.5 w-3.5 shrink-0 text-accent/70" />
-                      ) : (
-                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500/50" />
-                      )}
-                      <span className={cn("text-sm", ok ? "text-foreground/65" : "text-muted-foreground/40")}>
-                        {label}
-                        {!ok && (
-                          <span className="ml-1.5 text-[10px] text-muted-foreground/30">
-                            — add in Advanced Settings
-                          </span>
-                        )}
-                      </span>
+                  {optionalLinks.some((l) => l.ok) && (
+                    <div className="mt-2 space-y-1 border-t border-white/[0.05] pt-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/35">
+                        Optional links configured
+                      </p>
+                      {optionalLinks.filter((l) => l.ok).map(({ label }) => (
+                        <div key={label} className="flex items-center gap-2">
+                          <Check className="h-3 w-3 shrink-0 text-accent/50" />
+                          <span className="text-xs text-foreground/55">{label}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {hasMissing && (
-                    <p className="mt-2 text-[11px] text-muted-foreground/35">
-                      Expand Advanced Settings below to configure missing items.
-                    </p>
                   )}
                 </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground/35">
+                  No root folder set. Visitors will see your bio, photos, and any individual links you configure below.
+                </p>
               )}
             </div>
           </div>

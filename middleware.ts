@@ -56,9 +56,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(APP_URL)
   }
 
-  // Internally serve /[handle] while the browser URL stays on the custom domain.
+  // Internally serve /[handle][/sub-path] while the browser URL stays on the custom domain.
+  // e.g. artistname.com/ → /[handle]
+  //      artistname.com/presskit → /[handle]/presskit
   const url = request.nextUrl.clone()
-  url.pathname = `/${artist.handle}`
+  const originalPath = url.pathname
+  if (originalPath === "/" || originalPath === `/${artist.handle}`) {
+    url.pathname = `/${artist.handle}`
+  } else {
+    url.pathname = `/${artist.handle}${originalPath}`
+  }
   return NextResponse.rewrite(url)
 }
 

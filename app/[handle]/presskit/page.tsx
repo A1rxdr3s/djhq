@@ -182,7 +182,10 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
   ].filter((f) => f.url)
 
   const hasPdfs = pk.pdfEnUrl || pk.pdfEsUrl
-  const hasAssets = assetFolders.length > 0 || hasPdfs
+  const hasIndividualLinks = assetFolders.length > 0 || hasPdfs
+  // Show root folder CTA only when no individual links exist but root URL is set
+  const showRootFolderCta = !hasIndividualLinks && Boolean(pk.rootUrl)
+  const hasAssets = hasIndividualLinks || showRootFolderCta
   const profileHref = `/${artist.handle}`
   const pressKitHref = `/${artist.handle}/presskit`
 
@@ -279,7 +282,18 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                       EPK ES{pk.pdfEsSize ? ` — ${pk.pdfEsSize}` : ""}
                     </a>
                   )}
-                  {!pk.pdfEnUrl && !pk.pdfEsUrl && pk.downloadUrl && (
+                  {showRootFolderCta && pk.rootUrl && (
+                    <a
+                      href={pk.rootUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-11 items-center gap-2.5 rounded-full bg-accent px-6 text-sm font-bold uppercase tracking-[0.12em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)]"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Open Full Press Kit Folder
+                    </a>
+                  )}
+                  {!pk.pdfEnUrl && !pk.pdfEsUrl && !showRootFolderCta && pk.downloadUrl && (
                     <a
                       href={pk.downloadUrl}
                       target="_blank"
@@ -296,7 +310,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           </div>
 
           {/* Press Asset Folders */}
-          {assetFolders.length > 0 && (
+          {assetFolders.length > 0 && !showRootFolderCta && (
             <div className="mt-6 overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02]">
               <div className="px-7 pb-3 pt-6 sm:px-8 sm:pt-7">
                 <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
