@@ -897,17 +897,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </div>
                     {/* Text block */}
                     <div className="mt-4 sm:mt-5">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">Featured Video</p>
-                      <h3 className="mt-2 text-balance text-xl font-black leading-tight tracking-[-0.01em] text-foreground sm:text-2xl">
-                        {featuredVideo.title}
+                      <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">Featured Performance</p>
+                      <h3 className="mt-2 text-balance text-xl font-black uppercase leading-tight tracking-[-0.02em] text-foreground sm:text-2xl">
+                        {artist.artistName} × {featuredVideo.title}
                       </h3>
-                      {(featuredVideo.venue ?? featuredVideo.videoDate) ? (
-                        <p className="mt-1.5 text-[13px] text-white/35">
-                          {[featuredVideo.venue, formatReleaseDate(featuredVideo.videoDate ?? "")].filter(Boolean).join(" · ")}
-                        </p>
+                      {featuredVideo.venue ? (
+                        <p className="mt-1.5 text-sm text-white/40">{featuredVideo.venue}</p>
                       ) : null}
                       <span className="mt-4 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
-                        WATCH ↗
+                        WATCH VIDEO ↗
                       </span>
                     </div>
                   </a>
@@ -915,7 +913,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Secondary videos — compact media rows */}
                   {secondaryVideos.length > 0 ? (
                     <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
-                      <p className="pb-1.5 pt-3.5 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">More Videos</p>
+                      <p className="pb-1.5 pt-3.5 text-[8px] font-semibold uppercase tracking-[0.3em] text-foreground/18">Archive</p>
                       <div className="space-y-0.5">
                         {secondaryVideos.map((video, index) => (
                           <a
@@ -994,83 +992,91 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </div>
                     <div className="mt-4 sm:mt-5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
-                        Featured Show
+                        Featured Set
                       </p>
-                      {/* Event name — poster-style uppercase primary title, no artist */}
-                      <h3 className="mt-2 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+                      {/* Event name — editorial primary title */}
+                      <h3 className="mt-2 text-balance text-4xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-5xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>
-                      {/* Venue — separate editorial line, only when event and venue differ */}
+                      {/* Artist name — attribution line */}
+                      <p className="mt-3 text-sm font-bold uppercase tracking-[0.1em] text-accent/55">
+                        {artist.artistName}
+                      </p>
+                      {/* Venue — uppercase, reduced emphasis */}
                       {featuredSet.venue?.trim() && featuredSet.event?.trim() ? (
-                        <p className="mt-3 text-sm font-medium text-white/50">
+                        <p className="mt-3 text-sm font-medium uppercase text-white/50">
                           {featuredSet.venue.trim()}
                         </p>
                       ) : null}
-                      {/* Date — uppercase, tracked, very muted */}
+                      {/* Date — editorial uppercase, very muted */}
                       {featuredSet.setDate ? (
                         <p className={cn(
-                          "text-[11px] font-semibold uppercase tracking-[0.18em] text-white/28",
+                          "text-[11px] font-semibold uppercase tracking-[0.25em] text-white/30",
                           featuredSet.venue?.trim() && featuredSet.event?.trim() ? "mt-1.5" : "mt-3",
                         )}>
                           {formatReleaseDate(featuredSet.setDate)?.replace(",", "").toUpperCase() ?? ""}
                         </p>
                       ) : null}
                       <span className="mt-5 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
-                        WATCH PERFORMANCE ↗
+                        LISTEN SET ↗
                       </span>
                     </div>
                   </a>
 
-                  {/* Highlights — curated list */}
+                  {/* Selected Sets — curated list */}
                   {recentSets.length > 0 ? (
-                    <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
-                      <p className="pb-1.5 pt-3.5 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">
-                        Highlights
-                      </p>
-                      <div className="space-y-0.5">
-                        {recentSets.map((set, index) => {
-                          const showTitle = set.event?.trim() || set.venue?.trim() || cleanDjSetTitle(set.title, artist.artistName)
-                          const showMeta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? "")?.replace(",", "") ?? null)
-                          return (
-                            <a
-                              key={set.id}
-                              href={set.platformUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.03]"
-                            >
-                              <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
-                                {String(index + 1).padStart(2, "0")}
-                              </span>
-                              <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl bg-secondary">
-                                {set.imageUrl ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={set.imageUrl}
-                                    alt=""
-                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-                                  />
-                                ) : (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-white/[0.04]">
-                                    <Play className="h-3 w-3 text-accent/50" />
-                                  </div>
-                                )}
-                                <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white transition-all duration-150 group-hover:translate-x-0.5">
-                                  {showTitle}
-                                </p>
-                                {showMeta ? (
-                                  <p className="mt-0.5 truncate text-sm uppercase text-white/35">{showMeta}</p>
-                                ) : null}
-                              </div>
-                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 opacity-50 transition-all duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100 group-hover:text-accent/65" />
-                            </a>
-                          )
-                        })}
+                    <>
+                      {/* Editorial divider */}
+                      <div className="mx-4 border-t border-white/[0.05] sm:mx-6" />
+                      <div className="px-4 pb-5 pt-6 sm:px-6 sm:pb-6">
+                        <p className="pb-2 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">
+                          Selected Sets
+                        </p>
+                        <div className="space-y-0.5">
+                          {recentSets.map((set, index) => {
+                            const showTitle = set.event?.trim() || set.venue?.trim() || cleanDjSetTitle(set.title, artist.artistName)
+                            const showMeta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? "")?.replace(",", "") ?? null)
+                            return (
+                              <a
+                                key={set.id}
+                                href={set.platformUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.03]"
+                              >
+                                <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
+                                  {String(index + 1).padStart(2, "0")}
+                                </span>
+                                <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl bg-secondary">
+                                  {set.imageUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={set.imageUrl}
+                                      alt=""
+                                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                                    />
+                                  ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-white/[0.04]">
+                                      <Play className="h-3 w-3 text-accent/50" />
+                                    </div>
+                                  )}
+                                  <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white transition-all duration-150 group-hover:translate-x-[2px]">
+                                    {showTitle}
+                                  </p>
+                                  {showMeta ? (
+                                    <p className="mt-0.5 truncate text-sm uppercase tracking-[0.18em] text-white/40">{showMeta}</p>
+                                  ) : null}
+                                </div>
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 opacity-35 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-[2px] group-hover:opacity-80 group-hover:text-accent/65" />
+                              </a>
+                            )
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    </>
                   ) : null}
                 </div>
               ) : null}
