@@ -21,7 +21,7 @@ import { mockArtist } from "@/data/mock-artist"
 import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
-import { PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
+import { formatPerformanceMetadata, formatPerformanceTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
@@ -994,13 +994,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         Latest {PERFORMANCE_TYPE_LABELS[featuredSet.performanceType] ?? "DJ Set"}
                       </p>
                       <h3 className="mt-2 text-balance text-xl font-black leading-tight tracking-[-0.01em] text-foreground">
-                        {cleanDjSetTitle(featuredSet.title, artist.artistName)}
+                        {formatPerformanceTitle(featuredSet.event, featuredSet.venue) ?? cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>
-                      {(featuredSet.event ?? featuredSet.venue ?? featuredSet.setDate) ? (
-                        <p className="mt-1.5 text-[13px] text-white/35">
-                          {[featuredSet.event, featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
-                        </p>
-                      ) : null}
+                      {(() => {
+                        const meta = formatPerformanceMetadata(featuredSet.event, featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? ""))
+                        return meta ? <p className="mt-1.5 text-[13px] text-white/35">{meta}</p> : null
+                      })()}
                       <span className="mt-4 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         PLAY ↗
                       </span>
@@ -1042,13 +1041,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium text-foreground/85 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-foreground">
-                                {cleanDjSetTitle(set.title, artist.artistName)}
+                                {formatPerformanceTitle(set.event, set.venue) ?? cleanDjSetTitle(set.title, artist.artistName)}
                               </p>
-                              {(set.event ?? set.venue ?? set.setDate) ? (
-                                <p className="mt-0.5 truncate text-[11px] text-white/32">
-                                  {[set.event, set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
-                                </p>
-                              ) : null}
+                              {(() => {
+                                const meta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? ""))
+                                return meta ? <p className="mt-0.5 truncate text-[11px] text-white/32">{meta}</p> : null
+                              })()}
                             </div>
                             <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/65" />
                           </a>
