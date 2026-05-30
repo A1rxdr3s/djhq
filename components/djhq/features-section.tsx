@@ -83,7 +83,7 @@ export function FeaturesSection() {
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="text-xs font-medium uppercase tracking-widest text-accent">What's on your page</span>
+            <span className="text-xs font-medium uppercase tracking-widest text-accent">What&apos;s on your page</span>
             <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               One link. Full artist context.
             </h2>
