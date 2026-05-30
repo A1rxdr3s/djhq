@@ -212,7 +212,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const pastGroups = hasPast ? groupByYear(visiblePast) : []
 
   return (
-    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:col-start-2 lg:row-start-2 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
+    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
       <SectionHeader>{sectionTitle}</SectionHeader>
 
       {/* Primary shows */}

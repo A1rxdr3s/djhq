@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react"
 import { cn } from "@/lib/utils"
 
-export function JoinTheFamily() {
+export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
   const [email, setEmail] = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
 
