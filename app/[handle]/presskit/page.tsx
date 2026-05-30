@@ -177,8 +177,11 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
   const pk = artist.pressKit
   const accentThemeConfig = getAccentTheme(artist.accentTheme ?? "matrix")
 
-  // Asset tiles — only rendered when URL is configured
-  const assetCards: AssetCard[] = [
+  const hasPdfs = Boolean(pk.pdfEnUrl || pk.pdfEsUrl)
+
+  // Individual folder cards — drive root is excluded from this count.
+  // The asset grid is only shown when at least one specific folder is configured.
+  const folderCards: AssetCard[] = [
     {
       id: "bio",
       label: "Bio & Text",
@@ -221,10 +224,8 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
     },
   ].filter((c) => Boolean(c.url))
 
-  const hasPdfs = Boolean(pk.pdfEnUrl || pk.pdfEsUrl)
-  const hasAssetCards = assetCards.length > 0
-  // Root-only mode: no individual folder links, no PDFs — just the root folder
-  const rootOnlyMode = !hasPdfs && !assetCards.some((c) => c.id !== "drive") && Boolean(pk.rootUrl)
+  // Only show the asset grid if at least one individual folder (not just root) is configured.
+  const hasIndividualFolders = folderCards.some((c) => c.id !== "drive")
 
   const profileHref = `/${artist.handle}`
   const pressKitHref = `/${artist.handle}/presskit`
@@ -300,94 +301,106 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
               <p className="mt-5 text-sm leading-relaxed text-white/50 sm:text-[15px]">
                 {artist.shortBio}
               </p>
-
-              {/* ── Hero CTAs ──────────────────────────────────────────── */}
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                {/* PDF EN — primary */}
-                {pk.pdfEnUrl && (
-                  <a
-                    href={pk.pdfEnUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-11 items-center gap-2.5 rounded-full bg-accent px-6 text-[11px] font-bold uppercase tracking-[0.1em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)]"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Download English Press Kit
-                  </a>
-                )}
-
-                {/* PDF ES — secondary when EN also exists, primary otherwise */}
-                {pk.pdfEsUrl && (
-                  <a
-                    href={pk.pdfEsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={
-                      pk.pdfEnUrl
-                        ? "flex h-11 items-center gap-2.5 rounded-full border border-accent/40 bg-transparent px-6 text-[11px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/70 hover:bg-accent/[0.08] hover:[box-shadow:0_0_18px_color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                        : "flex h-11 items-center gap-2.5 rounded-full bg-accent px-6 text-[11px] font-bold uppercase tracking-[0.1em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)]"
-                    }
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Descargar Press Kit Español
-                  </a>
-                )}
-
-                {/* Root folder — primary only when no PDFs exist */}
-                {!hasPdfs && pk.rootUrl && (
-                  <a
-                    href={pk.rootUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-11 items-center gap-2.5 rounded-full bg-accent px-6 text-[11px] font-bold uppercase tracking-[0.1em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)]"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Open Full Press Kit Folder
-                  </a>
-                )}
-
-                {/* Root folder — quiet secondary when PDFs already shown */}
-                {hasPdfs && pk.rootUrl && (
-                  <a
-                    href={pk.rootUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-9 items-center gap-1.5 text-[11px] font-semibold text-white/35 transition-colors duration-150 hover:text-white/60"
-                  >
-                    Open full package
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-
-                {/* Legacy fallback — only when no other CTAs exist */}
-                {!hasPdfs && !pk.rootUrl && pk.downloadUrl && (
-                  <a
-                    href={pk.downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-11 items-center gap-2.5 rounded-full bg-accent px-6 text-[11px] font-bold uppercase tracking-[0.1em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)]"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Press Kit
-                  </a>
-                )}
-              </div>
             </div>
           </div>
 
-          {/* ── Press Kit Assets ───────────────────────────────────────── */}
-          {hasAssetCards && (
+          {/* ── Press Kit Downloads ────────────────────────────────────── */}
+          <div className="mt-6">
+            <div className="mb-4">
+              <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
+                Press Kit Downloads
+              </p>
+              <h2 className="mt-1.5 text-xl font-black tracking-[-0.01em] text-foreground">
+                Choose your language
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+              {/* ESP */}
+              {pk.pdfEsUrl && (
+                <a
+                  href={pk.pdfEsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
+                >
+                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
+                  <Download className="h-6 w-6 text-accent/70" />
+                  <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
+                    {pk.pdfEsSize ? `PDF · ${pk.pdfEsSize}` : "Spanish PDF"}
+                  </p>
+                  <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-foreground">
+                    Press Kit ESP
+                  </p>
+                  <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
+                    Download ESP ↗
+                  </span>
+                </a>
+              )}
+
+              {/* ENG */}
+              {pk.pdfEnUrl && (
+                <a
+                  href={pk.pdfEnUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
+                >
+                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
+                  <Download className="h-6 w-6 text-accent/70" />
+                  <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
+                    {pk.pdfEnSize ? `PDF · ${pk.pdfEnSize}` : "English PDF"}
+                  </p>
+                  <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-foreground">
+                    Press Kit ENG
+                  </p>
+                  <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
+                    Download ENG ↗
+                  </span>
+                </a>
+              )}
+
+              {/* Fallback: no PDFs — root folder only */}
+              {!hasPdfs && pk.rootUrl && (
+                <a
+                  href={pk.rootUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03] sm:col-span-2"
+                >
+                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
+                  <FolderOpen className="h-6 w-6 text-accent/70" />
+                  <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
+                    Google Drive
+                  </p>
+                  <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-foreground">
+                    Full Press Kit Folder
+                  </p>
+                  <p className="mt-1.5 text-sm text-white/35">
+                    Open all assets in Google Drive
+                  </p>
+                  <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
+                    Open Drive ↗
+                  </span>
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* ── Asset Folders — only when individual folders are configured ── */}
+          {hasIndividualFolders && (
             <div className="mt-8">
               <div className="mb-4">
                 <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
                   Press Kit Assets
                 </p>
                 <h2 className="mt-1.5 text-xl font-black tracking-[-0.01em] text-foreground">
-                  {rootOnlyMode ? "Asset Package" : "Download Folders"}
+                  Download Folders
                 </h2>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {assetCards.map((card) => (
+                {folderCards.map((card) => (
                   <a
                     key={card.id}
                     href={card.url}
@@ -395,92 +408,20 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     rel="noopener noreferrer"
                     className="group relative overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
                   >
-                    {/* Hover glow */}
                     <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_5%,transparent),transparent_70%)]" />
-
                     <card.icon className="h-5 w-5 text-accent/70" />
-
                     <p className="mt-4 text-sm font-bold text-foreground/85 transition-colors duration-150 group-hover:text-foreground">
                       {card.label}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-white/30">
                       {card.description}
                     </p>
-
                     <div className="mt-4 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/60 transition-colors duration-150 group-hover:text-accent/90">
                       {card.cta}
                       <ExternalLink className="h-2.5 w-2.5" />
                     </div>
                   </a>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Downloads ──────────────────────────────────────────────── */}
-          {hasPdfs && (
-            <div className="mt-8">
-              <div className="mb-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
-                  Downloads
-                </p>
-                <h2 className="mt-1.5 text-xl font-black tracking-[-0.01em] text-foreground">
-                  PDF Press Kit
-                </h2>
-              </div>
-              <div className="space-y-3">
-                {pk.pdfEnUrl && (
-                  <a
-                    href={pk.pdfEnUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center justify-between gap-4 rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/[0.08]">
-                        <FileText className="h-4 w-4 text-accent/70" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground/85 transition-colors duration-150 group-hover:text-foreground">
-                          English Press Kit
-                        </p>
-                        <p className="mt-0.5 text-xs text-white/30">
-                          {pk.pdfEnSize ? `PDF · ${pk.pdfEnSize}` : "PDF"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent/20 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
-                      <Download className="h-2.5 w-2.5" />
-                      Download EN
-                    </span>
-                  </a>
-                )}
-                {pk.pdfEsUrl && (
-                  <a
-                    href={pk.pdfEsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center justify-between gap-4 rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/[0.08]">
-                        <FileText className="h-4 w-4 text-accent/70" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground/85 transition-colors duration-150 group-hover:text-foreground">
-                          Spanish Press Kit
-                        </p>
-                        <p className="mt-0.5 text-xs text-white/30">
-                          {pk.pdfEsSize ? `PDF · ${pk.pdfEsSize}` : "PDF"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent/20 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
-                      <Download className="h-2.5 w-2.5" />
-                      Download ES
-                    </span>
-                  </a>
-                )}
               </div>
             </div>
           )}
