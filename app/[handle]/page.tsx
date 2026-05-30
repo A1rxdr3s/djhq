@@ -605,9 +605,9 @@ function MainLink({ link }: { link: SocialLink }) {
       href={link.url}
       aria-label={`${link.label} for this artist`}
       title={link.label}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.05] text-accent backdrop-blur-sm transition-all duration-150 hover:scale-[1.05] hover:border-accent/40 hover:bg-accent/[0.10]"
+      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.05] text-accent backdrop-blur-sm transition-all duration-150 hover:scale-[1.05] hover:border-accent/40 hover:bg-accent/[0.10]"
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-4 w-4" />
       <span className="sr-only">{link.label}</span>
     </a>
   )
@@ -761,14 +761,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8 lg:pb-14 lg:pt-8">
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:px-8 lg:pb-12 lg:pt-8">
               {/* Cinematic content fade — stronger bottom lift */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
 
               <div className={cn(
                 "relative",
-                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.14] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-4",
-                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.09] bg-black/[0.22] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-5 sm:py-4",
+                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.14] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-3",
+                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.09] bg-black/[0.22] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-5 sm:py-3",
               )}>
                 {/* Subtle vertical gradient inside the surface — improves readability without a card look */}
                 {contentSurface !== "none" && (
@@ -777,7 +777,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* Genre chips — above logo, photo-safe overlay style */}
                 {artist.genres.length > 0 && (
-                  <div className="mb-5 flex flex-wrap gap-2 sm:mb-6">
+                  <div className="mb-3 flex flex-wrap gap-2 sm:mb-4">
                     {artist.genres.map((genre) => (
                       <span
                         key={genre}
@@ -812,7 +812,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Tagline — primary artistic proposition */}
                   {displayHeroTagline ? (
                     <p
-                      className="mt-2 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-3 sm:text-lg"
+                      className="mt-1.5 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-2 sm:text-lg"
                       style={{ textShadow: `0 0 12px rgba(0,0,0,0.45), 0 0 10px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
                     >
                       {displayHeroTagline}
@@ -820,18 +820,18 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   ) : null}
 
                   {/* Location — supporting metadata */}
-                  <p className={cn("flex items-center gap-2 text-sm text-white/70", displayHeroTagline ? "mt-2" : "mt-2.5")}>
+                  <p className={cn("flex items-center gap-2 text-sm text-white/70", displayHeroTagline ? "mt-1.5" : "mt-2.5")}>
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-white/70 sm:h-4 sm:w-4" />
                     {artist.location.replace(/\s*\/\s*/g, ' • ')}
                   </p>
 
-                  <p className="mt-3 max-w-[700px] text-base font-medium leading-[1.7] tracking-[0.02em] text-white/92 sm:mt-4">
+                  <p className="mt-2.5 max-w-[700px] text-base font-medium leading-[1.7] tracking-[0.02em] text-white/92 sm:mt-3">
                     {artist.shortBio}
                   </p>
 
                   {/* CTA row — BOOKINGS and/or PRESS KIT; hidden if neither is configured */}
                   {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                    <div className="mt-5 flex flex-wrap items-center gap-3 sm:mt-6">
+                    <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-5">
                       {artist.bookingInfo.email.trim() ? (
                         <div className="transition-transform duration-150 hover:-translate-y-0.5">
                           <BookingInquiryModal
@@ -844,7 +844,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       {hasPressKit ? (
                         <a
                           href={pressKitHref}
-                          className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-accent/50 bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/80 hover:bg-accent/10 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_18%,transparent)] sm:h-12"
+                          className="flex h-10 w-fit items-center gap-2.5 rounded-full border border-accent/50 bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/80 hover:bg-accent/10 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_18%,transparent)] sm:h-11"
                         >
                           <Download className="h-3.5 w-3.5" />
                           Press Kit
@@ -854,7 +854,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   ) : null}
 
                   {prioritizedLinks.length > 0 ? (
-                    <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5">
+                    <div className="mt-3 flex flex-wrap items-center gap-2.5 sm:mt-4">
                       {prioritizedLinks.map((link) => (
                         <MainLink key={`${link.platform}-${link.url}`} link={link} />
                       ))}
