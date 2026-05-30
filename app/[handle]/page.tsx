@@ -721,7 +721,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         )}
 
         <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
-          <div className="relative min-h-[420px] sm:min-h-[520px] lg:min-h-[680px]">
+          <div className="relative min-h-[340px] sm:min-h-[420px] lg:min-h-[540px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}

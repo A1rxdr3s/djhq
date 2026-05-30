@@ -72,11 +72,11 @@ export function HeroSection() {
         </div>
 
         <h1 className="max-w-4xl text-center text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-[4.25rem] lg:leading-[1.08]">
-          Your DJ profile, press kit, music, shows and booking links — in one place.
+          One public HQ for your DJ career.
         </h1>
 
         <p className="mt-6 max-w-[640px] text-center text-balance text-lg leading-relaxed text-muted-foreground">
-          One clean URL for every booker, promoter, and label that needs to know who you are.
+          Music, releases, shows, press kit, media and booking — presented in one premium artist profile.
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -168,29 +168,29 @@ export function HeroSection() {
                   </div>
 
                   <div className="mt-5 grid gap-3 md:grid-cols-3">
-                    <div className="rounded-xl border border-border/50 bg-secondary/20 p-3.5">
-                      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                        <Music2 className="h-3.5 w-3.5 text-accent" />
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+                      <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/70">
+                        <Music2 className="h-3 w-3 text-accent" />
                         Latest Release
                       </div>
-                      <p className="mt-3 text-sm font-semibold text-foreground">Midnight Protocol EP</p>
-                      <p className="text-xs text-muted-foreground/70">Out now on Drumcode</p>
+                      <p className="mt-2.5 text-sm font-black uppercase tracking-[-0.01em] text-foreground">SIGNAL EP</p>
+                      <p className="mt-0.5 text-[11px] uppercase tracking-[0.1em] text-muted-foreground/60">Out now · Drumcode</p>
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-secondary/20 p-3.5">
-                      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                        <Calendar className="h-3.5 w-3.5 text-accent" />
-                        Upcoming Gig
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+                      <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/70">
+                        <Calendar className="h-3 w-3 text-accent" />
+                        Next Show
                       </div>
-                      <p className="mt-3 text-sm font-semibold text-foreground">Fabric London</p>
-                      <p className="text-xs text-muted-foreground/70">Aug 15 - Room 1</p>
+                      <p className="mt-2.5 text-sm font-black uppercase tracking-[-0.01em] text-foreground">ICE FESTIVAL</p>
+                      <p className="mt-0.5 text-[11px] uppercase tracking-[0.1em] text-muted-foreground/60">Santiago · Feb 2025</p>
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-secondary/20 p-3.5">
-                      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                        <Play className="h-3.5 w-3.5 text-accent" />
-                        DJ Set / Mix
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+                      <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/70">
+                        <Play className="h-3 w-3 text-accent" />
+                        Featured Set
                       </div>
-                      <p className="mt-3 text-sm font-semibold text-foreground">Warehouse Hours 042</p>
-                      <p className="text-xs text-muted-foreground/70">68 min live club mix</p>
+                      <p className="mt-2.5 text-sm font-black uppercase tracking-[-0.01em] text-foreground">MISA SCL</p>
+                      <p className="mt-0.5 text-[11px] uppercase tracking-[0.1em] text-muted-foreground/60">Club Room · 68 min</p>
                     </div>
                   </div>
                 </div>
