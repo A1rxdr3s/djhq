@@ -102,6 +102,16 @@ type SaveBookingPayload = {
   pressKitEnabled: boolean
   pressKitUrl?: string | null
   pressKitAssets: string[]
+  pressKitRootUrl?: string | null
+  pressKitBioFolderUrl?: string | null
+  pressKitLogosFolderUrl?: string | null
+  pressKitMediaFolderUrl?: string | null
+  pressKitRiderFolderUrl?: string | null
+  pressKitPdfEnUrl?: string | null
+  pressKitPdfEsUrl?: string | null
+  pressKitPdfEnSize?: string | null
+  pressKitPdfEsSize?: string | null
+  pressKitUseGalleryPhotos: boolean
 }
 
 type SaveArtistPayload = {
@@ -416,6 +426,16 @@ export async function PATCH(request: Request) {
         press_kit_enabled: payload.booking.pressKitEnabled,
         press_kit_download_url: payload.booking.pressKitUrl?.trim() || null,
         press_kit_assets: payload.booking.pressKitAssets,
+        press_kit_root_url: payload.booking.pressKitRootUrl?.trim() || null,
+        press_kit_bio_folder_url: payload.booking.pressKitBioFolderUrl?.trim() || null,
+        press_kit_logos_folder_url: payload.booking.pressKitLogosFolderUrl?.trim() || null,
+        press_kit_media_folder_url: payload.booking.pressKitMediaFolderUrl?.trim() || null,
+        press_kit_rider_folder_url: payload.booking.pressKitRiderFolderUrl?.trim() || null,
+        press_kit_pdf_en_url: payload.booking.pressKitPdfEnUrl?.trim() || null,
+        press_kit_pdf_es_url: payload.booking.pressKitPdfEsUrl?.trim() || null,
+        press_kit_pdf_en_size: payload.booking.pressKitPdfEnSize?.trim() || null,
+        press_kit_pdf_es_size: payload.booking.pressKitPdfEsSize?.trim() || null,
+        press_kit_use_gallery_photos: payload.booking.pressKitUseGalleryPhotos,
       })
       .eq("id", artistId)
 

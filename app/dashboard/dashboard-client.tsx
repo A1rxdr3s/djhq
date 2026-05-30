@@ -58,6 +58,7 @@ const navGroups: NavGroup[] = [
     label: "Publishing",
     items: [
       { id: "booking", label: "Booking" },
+      { id: "press-kit", label: "Press Kit" },
       { id: "custom-domain", label: "Custom Domain" },
       { id: "publish", label: "Publish" },
     ],
@@ -760,6 +761,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [pressKitEnabled, setPressKitEnabled] = useState(initialArtist.pressKit.enabled)
   const [pressKitUrl, setPressKitUrl] = useState(initialArtist.pressKit.downloadUrl)
   const [pressKitAssets, setPressKitAssets] = useState<string[]>(initialArtist.pressKit.assetsIncluded)
+  const [pressKitRootUrl, setPressKitRootUrl] = useState(initialArtist.pressKit.rootUrl ?? "")
+  const [pressKitBioFolderUrl, setPressKitBioFolderUrl] = useState(initialArtist.pressKit.bioFolderUrl ?? "")
+  const [pressKitLogosFolderUrl, setPressKitLogosFolderUrl] = useState(initialArtist.pressKit.logosFolderUrl ?? "")
+  const [pressKitMediaFolderUrl, setPressKitMediaFolderUrl] = useState(initialArtist.pressKit.mediaFolderUrl ?? "")
+  const [pressKitRiderFolderUrl, setPressKitRiderFolderUrl] = useState(initialArtist.pressKit.riderFolderUrl ?? "")
+  const [pressKitPdfEnUrl, setPressKitPdfEnUrl] = useState(initialArtist.pressKit.pdfEnUrl ?? "")
+  const [pressKitPdfEsUrl, setPressKitPdfEsUrl] = useState(initialArtist.pressKit.pdfEsUrl ?? "")
+  const [pressKitPdfEnSize, setPressKitPdfEnSize] = useState(initialArtist.pressKit.pdfEnSize ?? "")
+  const [pressKitPdfEsSize, setPressKitPdfEsSize] = useState(initialArtist.pressKit.pdfEsSize ?? "")
+  const [pressKitUseGalleryPhotos, setPressKitUseGalleryPhotos] = useState(initialArtist.pressKit.useGalleryPhotos ?? true)
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -846,11 +857,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const isVideosDirty = JSON.stringify(videos) !== JSON.stringify(initialVideos)
   const isBookingDirty =
     bookingEmail !== artist.bookingInfo.email ||
-    bookingUrl !== (artist.bookingInfo.bookingUrl ?? "") ||
+    bookingUrl !== (artist.bookingInfo.bookingUrl ?? "")
+  const isPressKitDirty =
     pressKitEnabled !== artist.pressKit.enabled ||
     pressKitUrl !== artist.pressKit.downloadUrl ||
-    JSON.stringify(pressKitAssets) !== JSON.stringify(artist.pressKit.assetsIncluded)
-  const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isGalleryFocalDirty
+    JSON.stringify(pressKitAssets) !== JSON.stringify(artist.pressKit.assetsIncluded) ||
+    pressKitRootUrl !== (artist.pressKit.rootUrl ?? "") ||
+    pressKitBioFolderUrl !== (artist.pressKit.bioFolderUrl ?? "") ||
+    pressKitLogosFolderUrl !== (artist.pressKit.logosFolderUrl ?? "") ||
+    pressKitMediaFolderUrl !== (artist.pressKit.mediaFolderUrl ?? "") ||
+    pressKitRiderFolderUrl !== (artist.pressKit.riderFolderUrl ?? "") ||
+    pressKitPdfEnUrl !== (artist.pressKit.pdfEnUrl ?? "") ||
+    pressKitPdfEsUrl !== (artist.pressKit.pdfEsUrl ?? "") ||
+    pressKitPdfEnSize !== (artist.pressKit.pdfEnSize ?? "") ||
+    pressKitPdfEsSize !== (artist.pressKit.pdfEsSize ?? "") ||
+    pressKitUseGalleryPhotos !== (artist.pressKit.useGalleryPhotos ?? true)
+  const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isPressKitDirty || isGalleryFocalDirty
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
@@ -936,6 +958,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           pressKitEnabled,
           pressKitUrl: pressKitUrl || null,
           pressKitAssets,
+          pressKitRootUrl: pressKitRootUrl || null,
+          pressKitBioFolderUrl: pressKitBioFolderUrl || null,
+          pressKitLogosFolderUrl: pressKitLogosFolderUrl || null,
+          pressKitMediaFolderUrl: pressKitMediaFolderUrl || null,
+          pressKitRiderFolderUrl: pressKitRiderFolderUrl || null,
+          pressKitPdfEnUrl: pressKitPdfEnUrl || null,
+          pressKitPdfEsUrl: pressKitPdfEsUrl || null,
+          pressKitPdfEnSize: pressKitPdfEnSize || null,
+          pressKitPdfEsSize: pressKitPdfEsSize || null,
+          pressKitUseGalleryPhotos,
         },
       }),
     })
@@ -1058,6 +1090,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         enabled: pressKitEnabled,
         downloadUrl: pressKitUrl.trim(),
         assetsIncluded: pressKitAssets,
+        rootUrl: pressKitRootUrl.trim() || undefined,
+        bioFolderUrl: pressKitBioFolderUrl.trim() || undefined,
+        logosFolderUrl: pressKitLogosFolderUrl.trim() || undefined,
+        mediaFolderUrl: pressKitMediaFolderUrl.trim() || undefined,
+        riderFolderUrl: pressKitRiderFolderUrl.trim() || undefined,
+        pdfEnUrl: pressKitPdfEnUrl.trim() || undefined,
+        pdfEsUrl: pressKitPdfEsUrl.trim() || undefined,
+        pdfEnSize: pressKitPdfEnSize.trim() || undefined,
+        pdfEsSize: pressKitPdfEsSize.trim() || undefined,
+        useGalleryPhotos: pressKitUseGalleryPhotos,
       },
       updatedAt: new Date().toISOString(),
     }
@@ -1097,6 +1139,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setPressKitEnabled(savedArtist.pressKit.enabled)
     setPressKitUrl(savedArtist.pressKit.downloadUrl)
     setPressKitAssets(savedArtist.pressKit.assetsIncluded)
+    setPressKitRootUrl(savedArtist.pressKit.rootUrl ?? "")
+    setPressKitBioFolderUrl(savedArtist.pressKit.bioFolderUrl ?? "")
+    setPressKitLogosFolderUrl(savedArtist.pressKit.logosFolderUrl ?? "")
+    setPressKitMediaFolderUrl(savedArtist.pressKit.mediaFolderUrl ?? "")
+    setPressKitRiderFolderUrl(savedArtist.pressKit.riderFolderUrl ?? "")
+    setPressKitPdfEnUrl(savedArtist.pressKit.pdfEnUrl ?? "")
+    setPressKitPdfEsUrl(savedArtist.pressKit.pdfEsUrl ?? "")
+    setPressKitPdfEnSize(savedArtist.pressKit.pdfEnSize ?? "")
+    setPressKitPdfEsSize(savedArtist.pressKit.pdfEsSize ?? "")
+    setPressKitUseGalleryPhotos(savedArtist.pressKit.useGalleryPhotos ?? true)
     setSaveMessage(successMessage)
   }
 
@@ -4198,7 +4250,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function renderBooking() {
     const emailInvalid = Boolean(bookingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingEmail))
     const bookingUrlInvalid = Boolean(bookingUrl && !bookingUrl.startsWith("http"))
-    const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
 
     return (
       <div className="space-y-6">
@@ -4243,55 +4294,204 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           </div>
         </div>
+      </div>
+    )
+  }
 
-        {/* Press Kit */}
+  function renderPressKit() {
+    const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">
+            Configure your EPK landing page at{" "}
+            <span className="font-mono text-foreground/50">/{artist.handle}/presskit</span>.
+          </p>
+        </div>
+
+        {/* Status toggle */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-          <div className="space-y-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Press Kit Status</p>
+              <p className="mt-0.5 text-xs text-muted-foreground/45">
+                Enable to make your EPK page publicly accessible.
+              </p>
+            </div>
+            <div
+              role="group"
+              aria-label="Press kit enabled"
+              className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5"
+            >
+              <button
+                type="button"
+                onClick={() => setPressKitEnabled(true)}
+                aria-pressed={pressKitEnabled}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                  pressKitEnabled
+                    ? "bg-accent/[0.15] text-accent/80"
+                    : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                )}
+              >
+                On
+              </button>
+              <button
+                type="button"
+                onClick={() => setPressKitEnabled(false)}
+                aria-pressed={!pressKitEnabled}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                  !pressKitEnabled
+                    ? "bg-white/[0.06] text-foreground/60"
+                    : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                )}
+              >
+                Off
+              </button>
+            </div>
+          </div>
+        </div>
 
-            {/* Header + toggle */}
+        {/* All fields — dimmed when off */}
+        <div className={cn("space-y-4 transition-opacity duration-200", !pressKitEnabled && "pointer-events-none opacity-35")}>
+
+          {/* Asset folders */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+            <div className="space-y-4">
+              <p className="text-sm font-semibold text-foreground">Asset Folders</p>
+              <p className="text-xs text-muted-foreground/45">
+                Google Drive folder links for each asset category. These appear as download buttons on the press kit page.
+              </p>
+              <div className="grid gap-4 md:grid-cols-2">
+                {(
+                  [
+                    { label: "Bio & Text", value: pressKitBioFolderUrl, setter: setPressKitBioFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
+                    { label: "Logos & Artwork", value: pressKitLogosFolderUrl, setter: setPressKitLogosFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
+                    { label: "Press Photos", value: pressKitMediaFolderUrl, setter: setPressKitMediaFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
+                    { label: "Technical Rider", value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
+                  ] as const
+                ).map(({ label, value, setter, placeholder }) => (
+                  <div key={label} className="space-y-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                      {label}
+                    </label>
+                    <Input
+                      value={value}
+                      onChange={(e) => setter(e.target.value)}
+                      placeholder={placeholder}
+                      disabled={!pressKitEnabled}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* PDF downloads */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+            <div className="space-y-4">
+              <p className="text-sm font-semibold text-foreground">PDF Downloads</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">English PDF</p>
+                  <div className="space-y-1.5">
+                    <Input
+                      value={pressKitPdfEnUrl}
+                      onChange={(e) => setPressKitPdfEnUrl(e.target.value)}
+                      placeholder="https://…/epk-en.pdf"
+                      disabled={!pressKitEnabled}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Input
+                      value={pressKitPdfEnSize}
+                      onChange={(e) => setPressKitPdfEnSize(e.target.value)}
+                      placeholder="e.g. 4.2 MB"
+                      disabled={!pressKitEnabled}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Spanish PDF</p>
+                  <div className="space-y-1.5">
+                    <Input
+                      value={pressKitPdfEsUrl}
+                      onChange={(e) => setPressKitPdfEsUrl(e.target.value)}
+                      placeholder="https://…/epk-es.pdf"
+                      disabled={!pressKitEnabled}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Input
+                      value={pressKitPdfEsSize}
+                      onChange={(e) => setPressKitPdfEsSize(e.target.value)}
+                      placeholder="e.g. 3.8 MB"
+                      disabled={!pressKitEnabled}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Press photos source */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-foreground">Press Kit</p>
+                <p className="text-sm font-semibold text-foreground">Press Photos</p>
                 <p className="mt-0.5 text-xs text-muted-foreground/45">
-                  Make your EPK available to media and promoters.
+                  Show your gallery images in the press kit photo grid.
                 </p>
               </div>
               <div
                 role="group"
-                aria-label="Press kit enabled"
+                aria-label="Use gallery photos"
                 className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5"
               >
                 <button
                   type="button"
-                  onClick={() => setPressKitEnabled(true)}
-                  aria-pressed={pressKitEnabled}
+                  onClick={() => setPressKitUseGalleryPhotos(true)}
+                  aria-pressed={pressKitUseGalleryPhotos}
+                  disabled={!pressKitEnabled}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                    pressKitEnabled
+                    pressKitUseGalleryPhotos
                       ? "bg-accent/[0.15] text-accent/80"
                       : "text-muted-foreground/25 hover:text-muted-foreground/45",
                   )}
                 >
-                  On
+                  Gallery
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPressKitEnabled(false)}
-                  aria-pressed={!pressKitEnabled}
+                  onClick={() => setPressKitUseGalleryPhotos(false)}
+                  aria-pressed={!pressKitUseGalleryPhotos}
+                  disabled={!pressKitEnabled}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                    !pressKitEnabled
+                    !pressKitUseGalleryPhotos
                       ? "bg-white/[0.06] text-foreground/60"
                       : "text-muted-foreground/25 hover:text-muted-foreground/45",
                   )}
                 >
-                  Off
+                  Hidden
                 </button>
               </div>
             </div>
+          </div>
 
-            {/* Press kit URL + assets — dimmed when off */}
-            <div className={cn("space-y-5 transition-opacity duration-200", !pressKitEnabled && "pointer-events-none opacity-35")}>
+          {/* Legacy press kit URL + assets */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Legacy Direct Download</p>
+                <p className="mt-0.5 text-xs text-muted-foreground/45">
+                  Optional fallback URL shown when no folder links are configured.
+                </p>
+              </div>
               <div className="space-y-1.5">
                 <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                   Press Kit URL
@@ -4891,6 +5091,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderGallery()
       case "booking":
         return renderBooking()
+      case "press-kit":
+        return renderPressKit()
       case "custom-domain":
         return renderCustomDomain()
       case "publish":

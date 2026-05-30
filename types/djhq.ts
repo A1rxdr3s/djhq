@@ -336,10 +336,30 @@ export interface BookingInfo {
 export interface PressKit {
   /** Whether the press kit is publicly available. */
   enabled: boolean
-  /** Download or request URL for the press kit. */
+  /** Download or request URL for the press kit (legacy direct download). */
   downloadUrl: string
   /** List of assets included in the press kit. */
   assetsIncluded: string[]
+  /** Root Google Drive / storage folder URL (optional, used as fallback link). */
+  rootUrl?: string
+  /** Google Drive folder URL for bio documents. */
+  bioFolderUrl?: string
+  /** Google Drive folder URL for logo and artwork assets. */
+  logosFolderUrl?: string
+  /** Google Drive folder URL for press/media photos. */
+  mediaFolderUrl?: string
+  /** Google Drive folder URL for technical rider. */
+  riderFolderUrl?: string
+  /** Direct URL for the English PDF press kit. */
+  pdfEnUrl?: string
+  /** Direct URL for the Spanish PDF press kit. */
+  pdfEsUrl?: string
+  /** Human-readable file size for the English PDF (e.g. "4.2 MB"). */
+  pdfEnSize?: string
+  /** Human-readable file size for the Spanish PDF (e.g. "3.8 MB"). */
+  pdfEsSize?: string
+  /** Whether to pull the press photo grid from the artist's gallery images. */
+  useGalleryPhotos: boolean
 }
 
 /**

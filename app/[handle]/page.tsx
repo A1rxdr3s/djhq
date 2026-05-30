@@ -433,6 +433,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         enabled: artistRow.press_kit_enabled,
         downloadUrl: artistRow.press_kit_download_url ?? "",
         assetsIncluded: artistRow.press_kit_assets ?? [],
+        useGalleryPhotos: true,
       },
       plan: normalizePlan(artistRow.plan),
       customDomains: [],
@@ -586,8 +587,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     ? `translate(calc(-50% + ${logoOffsetX}px), ${logoOffsetY}px)`
     : `translate(calc(-50% + ${logoOffsetX}px), calc(-50% + ${logoOffsetY}px))`
   const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
-  const hasPressKit =
-    artist.pressKit.enabled && artist.pressKit.downloadUrl.trim().length > 0
+  const hasPressKit = artist.pressKit.enabled
+  const pressKitHref = `/${artist.handle}/presskit`
   const accentThemeConfig = getAccentTheme(isPro ? artist.accentTheme : "matrix")
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
   const prioritizedLinks = artist.socialLinks.filter((link) => link.url.trim().length > 0).sort((a, b) => {
@@ -752,13 +753,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           <BookingInquiryModal
                             artistHandle={artist.handle}
                             artistName={artist.artistName}
-                            pressKitUrl={hasPressKit ? artist.pressKit.downloadUrl : undefined}
+                            pressKitUrl={hasPressKit ? pressKitHref : undefined}
                           />
                         </div>
                       ) : null}
                       {hasPressKit ? (
                         <a
-                          href={artist.pressKit.downloadUrl}
+                          href={pressKitHref}
                           className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-accent/50 bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/80 hover:bg-accent/10 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_18%,transparent)] sm:h-12"
                         >
                           <Download className="h-3.5 w-3.5" />

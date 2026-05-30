@@ -26,6 +26,16 @@ type ArtistRow = {
   press_kit_enabled: boolean
   press_kit_download_url: string | null
   press_kit_assets: string[] | null
+  press_kit_root_url: string | null
+  press_kit_bio_folder_url: string | null
+  press_kit_logos_folder_url: string | null
+  press_kit_media_folder_url: string | null
+  press_kit_rider_folder_url: string | null
+  press_kit_pdf_en_url: string | null
+  press_kit_pdf_es_url: string | null
+  press_kit_pdf_en_size: string | null
+  press_kit_pdf_es_size: string | null
+  press_kit_use_gallery_photos: boolean
   plan: string
   show_header_branding: boolean
   browser_title: string | null
@@ -389,6 +399,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       enabled: artistRow.press_kit_enabled,
       downloadUrl: artistRow.press_kit_download_url ?? "",
       assetsIncluded: artistRow.press_kit_assets ?? [],
+      rootUrl: artistRow.press_kit_root_url ?? undefined,
+      bioFolderUrl: artistRow.press_kit_bio_folder_url ?? undefined,
+      logosFolderUrl: artistRow.press_kit_logos_folder_url ?? undefined,
+      mediaFolderUrl: artistRow.press_kit_media_folder_url ?? undefined,
+      riderFolderUrl: artistRow.press_kit_rider_folder_url ?? undefined,
+      pdfEnUrl: artistRow.press_kit_pdf_en_url ?? undefined,
+      pdfEsUrl: artistRow.press_kit_pdf_es_url ?? undefined,
+      pdfEnSize: artistRow.press_kit_pdf_en_size ?? undefined,
+      pdfEsSize: artistRow.press_kit_pdf_es_size ?? undefined,
+      useGalleryPhotos: artistRow.press_kit_use_gallery_photos ?? true,
     },
     plan: normalizePlan(artistRow.plan),
     customDomains: (customDomainsResult.data ?? []).map((d) => ({
