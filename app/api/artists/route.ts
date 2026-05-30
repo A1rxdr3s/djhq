@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { computeDjSetTitle, type PerformanceType } from "@/lib/dj-set-title"
+import { computeVideoTitle } from "@/lib/performance-title"
 
 type SaveProfilePayload = {
   artistName: string
@@ -88,6 +89,10 @@ type SaveDjSetPayload = {
 
 type SaveVideoPayload = {
   title: string
+  videoArtists: string[]
+  videoEvent?: string
+  videoCity?: string
+  videoCountry?: string
   venue?: string
   videoDate?: string
   thumbnailUrl?: string
@@ -205,10 +210,10 @@ function validatePayload(payload: SaveArtistPayload) {
     return "Each DJ set must include a platform URL."
   }
 
-  const invalidVideo = payload.videos.find((video) => !video.title.trim() || !video.platformUrl.trim())
+  const invalidVideo = payload.videos.find((video) => !video.platformUrl.trim())
 
   if (invalidVideo) {
-    return "Each video must include a title and platform URL."
+    return "Each video must include a platform URL."
   }
 
   const invalidRelease = payload.releases.find(
@@ -585,17 +590,31 @@ export async function PATCH(request: Request) {
 
     if (payload.videos.length > 0) {
       const { error: insertVideosError } = await supabase.from("videos").insert(
-        payload.videos.map((video, index) => ({
-          artist_id: artistId,
-          title: video.title.trim(),
-          venue: video.venue?.trim() || null,
-          video_date: video.videoDate || null,
-          thumbnail_url: video.thumbnailUrl?.trim() || null,
-          custom_thumbnail_url: video.customThumbnailUrl ?? null,
-          platform_url: video.platformUrl.trim(),
-          sort_order: index + 1,
-          is_published: video.isPublished,
-        })),
+        payload.videos.map((video, index) => {
+          const filledArtists = (video.videoArtists ?? []).filter(Boolean)
+          const generatedTitle = computeVideoTitle(
+            filledArtists,
+            video.videoEvent,
+            video.venue,
+            artistName,
+          )
+          const storedTitle = generatedTitle || video.title.trim() || video.platformUrl.trim()
+          return {
+            artist_id: artistId,
+            title: storedTitle,
+            video_artists: filledArtists,
+            video_event: video.videoEvent?.trim() || null,
+            video_city: video.videoCity?.trim() || null,
+            video_country: video.videoCountry?.trim() || null,
+            venue: video.venue?.trim() || null,
+            video_date: video.videoDate || null,
+            thumbnail_url: video.thumbnailUrl?.trim() || null,
+            custom_thumbnail_url: video.customThumbnailUrl ?? null,
+            platform_url: video.platformUrl.trim(),
+            sort_order: index + 1,
+            is_published: video.isPublished,
+          }
+        }),
       )
 
       if (insertVideosError) {

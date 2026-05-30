@@ -22,6 +22,7 @@ import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseTy
 import { cn } from "@/lib/utils"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
 import { formatPerformanceMetadata } from "@/lib/dj-set-title"
+import { computeVideoTitle } from "@/lib/performance-title"
 import { getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
@@ -140,6 +141,10 @@ type DjSetRow = {
 type VideoRow = {
   id: string
   title: string
+  video_artists: string[]
+  video_event: string | null
+  video_city: string | null
+  video_country: string | null
   venue: string | null
   video_date: string | null
   thumbnail_url: string | null
@@ -288,6 +293,28 @@ function parseVideoTitle(
   return { displayTitle: t, attribution: artistName }
 }
 
+// Resolves the display title and attribution for a video, preferring structured
+// metadata (videoArtists + videoEvent) over the legacy parseVideoTitle regex.
+function getVideoDisplayInfo(
+  video: Video,
+  fallbackArtistName: string,
+): { displayTitle: string; attribution: string } {
+  const hasStructured = video.videoArtists.length > 0 || !!video.videoEvent
+  if (hasStructured) {
+    const generated = computeVideoTitle(
+      video.videoArtists,
+      video.videoEvent,
+      video.venue,
+      fallbackArtistName,
+    )
+    const displayTitle = generated || video.title
+    const attribution =
+      video.videoArtists.filter(Boolean).join(" b2b ") || fallbackArtistName
+    return { displayTitle, attribution }
+  }
+  return parseVideoTitle(video.title, fallbackArtistName)
+}
+
 function mapReleaseRow(row: ReleaseRow): Release {
   return {
     id: row.id,
@@ -379,7 +406,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<DjSetRow[]>(),
       supabase
         .from("videos")
-        .select("id, title, venue, video_date, thumbnail_url, custom_thumbnail_url, platform_url, sort_order")
+        .select("id, title, video_artists, video_event, video_city, video_country, venue, video_date, thumbnail_url, custom_thumbnail_url, platform_url, sort_order")
         .eq("artist_id", artistRow.id)
         .eq("is_published", true)
         .order("sort_order", { ascending: true })
@@ -459,6 +486,10 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         (row): Video => ({
           id: row.id,
           title: row.title,
+          videoArtists: row.video_artists ?? [],
+          videoEvent: row.video_event ?? undefined,
+          videoCity: row.video_city ?? undefined,
+          videoCountry: row.video_country ?? undefined,
           venue: row.venue ?? undefined,
           videoDate: row.video_date ?? undefined,
           thumbnailUrl: row.thumbnail_url ?? undefined,
@@ -1105,7 +1136,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <div className="mt-4 sm:mt-5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">Featured Performance</p>
                       {(() => {
-                        const { displayTitle, attribution } = parseVideoTitle(featuredVideo.title, artist.artistName)
+                        const { displayTitle, attribution } = getVideoDisplayInfo(featuredVideo, artist.artistName)
                         const metaParts = [
                           featuredVideo.venue?.trim() || null,
                           featuredVideo.videoDate ? (formatReleaseDate(featuredVideo.videoDate)?.replace(",", "") ?? null) : null,
@@ -1139,7 +1170,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <p className="pb-1.5 pt-3.5 text-[8px] font-semibold uppercase tracking-[0.3em] text-foreground/18">Archive</p>
                       <div className="space-y-0.5">
                         {secondaryVideos.map((video, index) => {
-                          const { displayTitle, attribution } = parseVideoTitle(video.title, artist.artistName)
+                          const { displayTitle, attribution } = getVideoDisplayInfo(video, artist.artistName)
                           const metaParts = [
                             video.venue?.trim() || null,
                             video.videoDate ? (formatReleaseDate(video.videoDate)?.replace(",", "") ?? null) : null,

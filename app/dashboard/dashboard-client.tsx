@@ -225,7 +225,11 @@ type ImportedVideoMetadata = {
 
 type VideoFormState = {
   id: string
-  title: string
+  title: string          // stored fallback title (from YouTube import); not shown to user
+  videoArtists: string[]
+  videoEvent: string
+  videoCity: string
+  videoCountry: string
   venue: string
   videoDate: string
   thumbnailUrl: string
@@ -503,6 +507,10 @@ function getVideoFormState(artist: Artist): VideoFormState[] {
   return artist.videos.map((video) => ({
     id: video.id,
     title: video.title,
+    videoArtists: video.videoArtists.length > 0 ? video.videoArtists : [artist.artistName],
+    videoEvent: video.videoEvent ?? "",
+    videoCity: video.videoCity ?? "",
+    videoCountry: video.videoCountry ?? "",
     venue: video.venue ?? "",
     videoDate: video.videoDate ? toDateInputValue(video.videoDate) : "",
     thumbnailUrl: video.thumbnailUrl ?? "",
@@ -512,10 +520,14 @@ function getVideoFormState(artist: Artist): VideoFormState[] {
   }))
 }
 
-function createEmptyVideo(): VideoFormState {
+function createEmptyVideo(artistName: string): VideoFormState {
   return {
     id: `new-${crypto.randomUUID()}`,
     title: "",
+    videoArtists: [artistName],
+    videoEvent: "",
+    videoCity: "",
+    videoCountry: "",
     venue: "",
     videoDate: "",
     thumbnailUrl: "",

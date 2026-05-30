@@ -262,10 +262,18 @@ export interface DjSet {
 export interface Video {
   /** Stable unique identifier. */
   id: string
-  /** Video title (e.g. "Live at Fabric" or "Aftermovie – Watergate Berlin"). */
+  /** Stored title — used as fallback when structured fields are absent. */
   title: string
-  /** Venue or event name. */
+  /** Structured performance artists. When non-empty, the display title is generated. */
+  videoArtists: string[]
+  /** Event name for generated title (e.g. "ICE FEZTIVAL"). */
+  videoEvent?: string
+  /** Physical venue or club name. */
   venue?: string
+  /** City of the performance. */
+  videoCity?: string
+  /** ISO 3166-1 alpha-2 country code. */
+  videoCountry?: string
   /** Recording or event date in ISO-8601 format. */
   videoDate?: string
   /** Thumbnail image URL (auto-imported from platform). */
