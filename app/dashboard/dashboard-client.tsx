@@ -1097,23 +1097,32 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           venue: set.venue.trim() || undefined,
           event: set.event.trim() || undefined,
           setDate: set.setDate || undefined,
+          city: set.city.trim() || undefined,
           imageUrl: set.imageUrl.trim() || undefined,
           platformUrl: set.platformUrl.trim(),
           sortOrder: index + 1,
           isPublished: set.isPublished,
         }
       }),
-      videos: videos.map((video, index): Video => ({
-        id: video.id,
-        title: video.title.trim(),
-        venue: video.venue.trim() || undefined,
-        videoDate: video.videoDate || undefined,
-        thumbnailUrl: video.thumbnailUrl.trim() || undefined,
-        customThumbnailUrl: video.customThumbnailUrl ?? null,
-        platformUrl: video.platformUrl.trim(),
-        sortOrder: index + 1,
-        isPublished: video.isPublished,
-      })),
+      videos: videos.map((video, index): Video => {
+        const filledArtists = video.videoArtists.filter(Boolean)
+        const generated = computeVideoTitle(filledArtists, video.videoEvent || undefined, video.venue || undefined, artist.artistName)
+        return {
+          id: video.id,
+          title: generated || video.title.trim() || video.platformUrl.trim(),
+          videoArtists: filledArtists,
+          videoEvent: video.videoEvent.trim() || undefined,
+          videoCity: video.videoCity.trim() || undefined,
+          videoCountry: video.videoCountry.trim() || undefined,
+          venue: video.venue.trim() || undefined,
+          videoDate: video.videoDate || undefined,
+          thumbnailUrl: video.thumbnailUrl.trim() || undefined,
+          customThumbnailUrl: video.customThumbnailUrl ?? null,
+          platformUrl: video.platformUrl.trim(),
+          sortOrder: index + 1,
+          isPublished: video.isPublished,
+        }
+      }),
       bookingInfo: {
         email: bookingEmail.trim(),
         bookingUrl: bookingUrl.trim() || undefined,
@@ -3833,6 +3842,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderVideos() {
+    function updateVideo(index: number, patch: Partial<VideoFormState>) {
+      setVideos((current) => current.map((item, i) => (i === index ? { ...item, ...patch } : item)))
+    }
+
     return (
       <div className="space-y-6">
         <div>
@@ -3840,10 +3853,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <p className="mt-1 text-sm text-muted-foreground/60">YouTube performance videos shown on your public profile. First video is featured.</p>
         </div>
         <div className="space-y-3">
-          {videos.map((video, index) => (
-            <div key={video.id} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
+          {videos.map((video, index) => {
+            const filledArtists = video.videoArtists.filter(Boolean)
+            const generatedTitle = computeVideoTitle(filledArtists, video.videoEvent || undefined, video.venue || undefined, artist.artistName)
+            const displayTitle = generatedTitle || video.title || null
+            return (
+            <div key={video.id} className="rounded-xl border border-white/[0.06] bg-card/40 transition-colors duration-150 hover:border-white/[0.09]">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 sm:px-5">
+                <div className="flex items-center gap-2.5 min-w-0">
                   {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={(video.customThumbnailUrl ?? video.thumbnailUrl)!} alt="" className="h-9 w-16 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
@@ -3853,11 +3871,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </span>
                   )}
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-medium leading-none text-foreground">{video.title || <span className="text-muted-foreground/30">Untitled</span>}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Video {index + 1}{index === 0 ? " · Featured" : ""}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-xs font-medium leading-none text-foreground">
+                        {displayTitle ?? <span className="text-muted-foreground/30">Video {index + 1}</span>}
+                      </p>
+                      {index === 0 && (
+                        <span className="shrink-0 rounded border border-accent/25 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-accent/60">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground/40">
+                      {[video.videoEvent, video.venue].filter(Boolean).join(" · ") || `Video ${index + 1}`}
+                    </p>
                   </div>
                 </div>
-                <div className="flex gap-0.5">
+                <div className="flex gap-0.5 shrink-0">
                   <Button
                     type="button"
                     variant="ghost"
@@ -3893,89 +3922,166 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-4 border-t border-white/[0.04] pt-4 md:grid-cols-2">
+
+              {/* Fields */}
+              <div className="space-y-4 border-t border-white/[0.04] px-4 py-4 sm:px-5">
+
+                {/* Artists */}
                 <div className="space-y-1.5">
-                  <label
-                    htmlFor={`video-title-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Title
-                  </label>
-                  <Input
-                    id={`video-title-${index}`}
-                    value={video.title}
-                    onChange={(event) =>
-                      setVideos((current) =>
-                        current.map((item, i) => (i === index ? { ...item, title: event.target.value } : item)),
-                      )
-                    }
-                  />
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Artists</p>
+                  <div className="space-y-2">
+                    {video.videoArtists.map((name, ai) => (
+                      <div key={ai} className="flex gap-2">
+                        <Input
+                          value={name}
+                          placeholder="Artist name"
+                          onChange={(e) => {
+                            const next = [...video.videoArtists]
+                            next[ai] = e.target.value
+                            updateVideo(index, { videoArtists: next })
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const next = video.videoArtists.filter((_, j) => j !== ai)
+                            updateVideo(index, { videoArtists: next.length > 0 ? next : [""] })
+                          }}
+                          disabled={video.videoArtists.length <= 1 || isSaving || isPublishing}
+                          className="h-9 w-9 shrink-0 p-0 text-muted-foreground/40 hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => updateVideo(index, { videoArtists: [...video.videoArtists, ""] })}
+                      disabled={isSaving || isPublishing}
+                      className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add artist
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`video-venue-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Venue / Event
-                  </label>
-                  <Input
-                    id={`video-venue-${index}`}
-                    value={video.venue}
-                    onChange={(event) =>
-                      setVideos((current) =>
-                        current.map((item, i) => (i === index ? { ...item, venue: event.target.value } : item)),
-                      )
-                    }
-                  />
+
+                {/* Event · Venue · Date */}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`video-event-${index}`}
+                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                    >
+                      Event
+                    </label>
+                    <Input
+                      id={`video-event-${index}`}
+                      value={video.videoEvent}
+                      placeholder="Boiler Room, ICE…"
+                      onChange={(e) => updateVideo(index, { videoEvent: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`video-venue-${index}`}
+                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                    >
+                      Venue
+                    </label>
+                    <Input
+                      id={`video-venue-${index}`}
+                      value={video.venue}
+                      placeholder="Club, stage…"
+                      onChange={(e) => updateVideo(index, { venue: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`video-date-${index}`}
+                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
+                    >
+                      Date
+                    </label>
+                    <DatePicker
+                      value={video.videoDate ?? ""}
+                      onChange={(v) => updateVideo(index, { videoDate: v })}
+                      allowClear
+                      triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`video-date-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Date
-                  </label>
-                  <DatePicker
-                    value={video.videoDate ?? ""}
-                    onChange={(v) =>
-                      setVideos((current) =>
-                        current.map((item, i) => (i === index ? { ...item, videoDate: v } : item)),
-                      )
-                    }
-                    allowClear
-                    triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
-                  />
+
+                {/* City · Country (optional) */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`video-city-${index}`}
+                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
+                    >
+                      City
+                    </label>
+                    <Input
+                      id={`video-city-${index}`}
+                      value={video.videoCity}
+                      placeholder="Santiago, Berlin…"
+                      onChange={(e) => updateVideo(index, { videoCity: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`video-country-${index}`}
+                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
+                    >
+                      Country
+                    </label>
+                    <Input
+                      id={`video-country-${index}`}
+                      value={video.videoCountry}
+                      placeholder="CL, DE…"
+                      onChange={(e) => updateVideo(index, { videoCountry: e.target.value })}
+                    />
+                  </div>
                 </div>
+
+                {/* Platform URL */}
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`video-platform-${index}`}
                     className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
                   >
-                    Platform URL
+                    Video URL
                   </label>
-                  <Input
-                    id={`video-platform-${index}`}
-                    value={video.platformUrl}
-                    onChange={(event) =>
-                      setVideos((current) =>
-                        current.map((item, i) => (i === index ? { ...item, platformUrl: event.target.value } : item)),
-                      )
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleImportVideoMetadata(index)}
-                    disabled={importingVideoIndex === index || isSaving || isPublishing}
-                    className="border-border bg-background/70"
-                  >
-                    {importingVideoIndex === index ? "Fetching..." : "Import metadata"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Paste a youtube.com link. Title and thumbnail are filled from public YouTube data when available.
+                  <div className="flex gap-2">
+                    <Input
+                      id={`video-platform-${index}`}
+                      value={video.platformUrl}
+                      placeholder="youtube.com/watch?v=…"
+                      onChange={(e) => updateVideo(index, { platformUrl: e.target.value })}
+                      className="min-w-0 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleImportVideoMetadata(index)}
+                      disabled={importingVideoIndex === index || isSaving || isPublishing}
+                      className="shrink-0 border-border bg-background/70 text-xs"
+                      title="Import thumbnail from YouTube"
+                    >
+                      {importingVideoIndex === index ? "…" : "Import"}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/35">
+                    Paste a YouTube link — thumbnail is filled automatically when available.
                   </p>
                 </div>
-                <div className="space-y-1.5 md:col-span-2">
+
+                {/* Thumbnail URL */}
+                <div className="space-y-1.5">
                   <label
                     htmlFor={`video-thumbnail-${index}`}
                     className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
@@ -3985,11 +4091,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <Input
                     id={`video-thumbnail-${index}`}
                     value={video.thumbnailUrl}
-                    onChange={(event) =>
-                      setVideos((current) =>
-                        current.map((item, i) => (i === index ? { ...item, thumbnailUrl: event.target.value } : item)),
-                      )
-                    }
+                    onChange={(e) => updateVideo(index, { thumbnailUrl: e.target.value })}
                   />
                 </div>
                 {/* Custom Thumbnail — PRO only */}
