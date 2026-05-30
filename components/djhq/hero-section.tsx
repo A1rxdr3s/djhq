@@ -68,28 +68,28 @@ export function HeroSection() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-50" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
           </span>
-          <span className="text-xs font-semibold uppercase tracking-widest text-accent">Premium DJ Link Pages</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-accent">DJHQ for Artists</span>
         </div>
 
         <h1 className="max-w-4xl text-center text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-[4.25rem] lg:leading-[1.08]">
-          One premium page for your entire DJ identity.
+          Your DJ profile, press kit, music, shows and booking links — in one place.
         </h1>
 
-        <p className="mt-6 max-w-[720px] text-center text-balance text-lg leading-relaxed text-muted-foreground">
-          DJHQ helps DJs share their music, upcoming gigs, releases, DJ sets, photos, and booking links through one clean professional page.
+        <p className="mt-6 max-w-[640px] text-center text-balance text-lg leading-relaxed text-muted-foreground">
+          One clean URL for every booker, promoter, and label that needs to know who you are.
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Button asChild size="lg" className="h-12 bg-accent px-8 text-sm font-semibold text-accent-foreground hover:bg-accent/90">
-            <Link href="#pricing">
-              Start free
+            <a href="mailto:access@djhq.co">
+              Request Access
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            </a>
           </Button>
           <Button asChild size="lg" variant="outline" className="h-12 border-border/60 text-sm text-foreground hover:bg-secondary/60">
-            <Link href="#profile">
+            <Link href="/andresherrera">
               <Play className="mr-2 h-4 w-4" />
-              View DJ example
+              View Example
             </Link>
           </Button>
         </div>

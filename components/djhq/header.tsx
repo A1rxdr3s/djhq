@@ -21,21 +21,21 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
-          <Link href="#profile" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Examples
+          <Link href="/andresherrera" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            Example
           </Link>
-          <Link href="#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Pricing
+          <Link href="#product" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            Features
           </Link>
         </nav>
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-4 md:flex">
-          <Link href="#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <Link href="/sign-in" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Login
           </Link>
           <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="#pricing">Start Free</Link>
+            <a href="mailto:access@djhq.co">Request Access</a>
           </Button>
         </div>
 
@@ -60,20 +60,20 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="border-t border-border bg-background md:hidden">
           <nav id="mobile-navigation" className="flex flex-col gap-4 px-4 py-6">
-            <Link href="#profile" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
-              Examples
+            <Link href="/andresherrera" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
+              Example
             </Link>
-            <Link href="#pricing" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
-              Pricing
+            <Link href="#product" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
+              Features
             </Link>
             <hr className="border-border" />
-            <Link href="#pricing" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <Link href="/sign-in" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
               Login
             </Link>
             <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              <Link href="#pricing" onClick={() => setMobileMenuOpen(false)}>
-                Start Free
-              </Link>
+              <a href="mailto:access@djhq.co" onClick={() => setMobileMenuOpen(false)}>
+                Request Access
+              </a>
             </Button>
           </nav>
         </div>

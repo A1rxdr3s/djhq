@@ -2,10 +2,9 @@ import Link from "next/link"
 import { Instagram, Youtube } from "lucide-react"
 
 const footerLinks = [
-  { label: "Examples", href: "#profile" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Login", href: "#pricing" },
-  { label: "Start Free", href: "#pricing" },
+  { label: "Example", href: "/andresherrera" },
+  { label: "Features", href: "#product" },
+  { label: "Login", href: "/sign-in" },
 ]
 
 export function Footer() {
@@ -21,7 +20,7 @@ export function Footer() {
               <span className="text-lg font-bold tracking-tight text-foreground">DJHQ</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              A premium link-in-bio and electronic press kit page built specifically for DJs.
+              A premium profile and press kit page built specifically for DJs and electronic artists.
             </p>
           </div>
 

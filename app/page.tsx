@@ -1,8 +1,6 @@
 import { Header } from "@/components/djhq/header"
 import { HeroSection } from "@/components/djhq/hero-section"
 import { FeaturesSection } from "@/components/djhq/features-section"
-import { ProfileDemoSection } from "@/components/djhq/profile-demo-section"
-import { PricingSection } from "@/components/djhq/pricing-section"
 import { Footer } from "@/components/djhq/footer"
 
 export default function HomePage() {
@@ -11,8 +9,6 @@ export default function HomePage() {
       <Header />
       <HeroSection />
       <FeaturesSection />
-      <ProfileDemoSection />
-      <PricingSection />
       <Footer />
     </main>
   )
