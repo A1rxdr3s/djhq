@@ -1146,14 +1146,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         ].filter(Boolean)
                         return (
                           <>
-                            <h3 className="mt-1.5 text-balance text-xl font-black uppercase leading-tight tracking-[-0.02em] text-white sm:text-2xl">
+                            <h3 className="mt-1.5 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.02em] text-white sm:text-3xl lg:text-4xl">
                               {displayTitle}
                             </h3>
                             <p className="mt-1.5 text-sm font-bold uppercase tracking-[0.10em] text-accent/55">
                               {attribution}
                             </p>
                             {metaParts.length > 0 ? (
-                              <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-white/38">
+                              <p className="mt-1 text-xs uppercase tracking-[0.16em] text-white/38">
                                 {metaParts.join(" · ")}
                               </p>
                             ) : null}
@@ -1242,17 +1242,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     rel="noopener noreferrer"
                     className="group block p-4 sm:p-5"
                   >
-                    {/* Compact artwork — object-contain preserves flyer proportions */}
+                    {/* Poster showcase — object-contain, centered, premium dark field */}
                     {featuredSet.imageUrl ? (
-                      <div className="relative flex w-full items-center justify-center overflow-hidden rounded-[22px] bg-black shadow-md shadow-black/30" style={{ maxHeight: "220px" }}>
+                      <div className="relative w-full overflow-hidden rounded-[22px] bg-[#080808] shadow-md shadow-black/35" style={{ maxHeight: "220px" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={featuredSet.imageUrl}
                           alt={`${featuredSet.title} artwork`}
-                          className="block max-h-[220px] w-auto object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+                          className="mx-auto block max-h-[220px] max-w-full w-auto object-contain transition-transform duration-200 group-hover:scale-[1.01]"
                         />
-                        <div className="pointer-events-none absolute inset-0 bg-black/[0.06]" />
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_55%,_rgba(0,0,0,0.30)_100%)]" />
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/25 to-transparent" />
                       </div>
                     ) : (
                       <div className="relative w-full overflow-hidden rounded-[22px] bg-secondary" style={{ aspectRatio: "3/2", maxHeight: "220px" }}>
@@ -1266,7 +1266,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         Featured Set
                       </p>
                       {/* Event name · City — editorial primary title */}
-                      <h3 className="mt-1.5 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-3xl">
+                      <h3 className="mt-1.5 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-3xl lg:text-4xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                         {featuredSet.city?.trim() && (
                           <span className="opacity-65"> · {featuredSet.city.trim()}</span>
