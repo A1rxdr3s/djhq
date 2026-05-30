@@ -30,7 +30,6 @@ import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { JoinTheFamily } from "@/components/djhq/join-the-family"
 import { MobileTabManager, MobileSection, MobileArchive } from "@/components/profile/mobile-tab-manager"
-import { SetArtworkBanner, SetArtworkPlaceholder } from "@/components/profile/set-artwork-banner"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -1115,10 +1114,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     href={featuredVideo.platformUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group block p-5 sm:p-6"
+                    className="group block p-4 sm:p-5"
                   >
                     {/* Cinematic thumbnail */}
-                    <div className="relative aspect-video w-full overflow-hidden rounded-[20px] bg-secondary shadow-lg shadow-black/40">
+                    <div className="relative aspect-[21/9] max-h-[260px] w-full overflow-hidden rounded-[22px] bg-secondary shadow-lg shadow-black/40">
                       {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1137,7 +1136,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       </div>
                     </div>
                     {/* Text block */}
-                    <div className="mt-4 sm:mt-5">
+                    <div className="mt-3">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">Featured Performance</p>
                       {(() => {
                         const { displayTitle, attribution } = getVideoDisplayInfo(featuredVideo, artist.artistName)
@@ -1147,21 +1146,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         ].filter(Boolean)
                         return (
                           <>
-                            <h3 className="mt-2 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.02em] text-white sm:text-3xl">
+                            <h3 className="mt-1.5 text-balance text-xl font-black uppercase leading-tight tracking-[-0.02em] text-white sm:text-2xl">
                               {displayTitle}
                             </h3>
-                            <p className="mt-2 text-sm font-bold uppercase tracking-[0.10em] text-accent/55">
+                            <p className="mt-1.5 text-sm font-bold uppercase tracking-[0.10em] text-accent/55">
                               {attribution}
                             </p>
                             {metaParts.length > 0 ? (
-                              <p className="mt-1 text-sm uppercase tracking-[0.16em] text-white/38">
+                              <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-white/38">
                                 {metaParts.join(" · ")}
                               </p>
                             ) : null}
                           </>
                         )
                       })()}
-                      <span className="mt-4 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
+                      <span className="mt-3 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         WATCH VIDEO ↗
                       </span>
                     </div>
@@ -1241,30 +1240,40 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     href={featuredSet.platformUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group block p-5 sm:p-6"
+                    className="group block p-4 sm:p-5"
                   >
-                    {/* Smart artwork — portrait images preserve ratio; landscape fills 16/9 */}
+                    {/* Compact artwork — object-contain preserves flyer proportions */}
                     {featuredSet.imageUrl ? (
-                      <SetArtworkBanner
-                        src={featuredSet.imageUrl}
-                        alt={`${featuredSet.title} artwork`}
-                      />
+                      <div className="relative flex w-full items-center justify-center overflow-hidden rounded-[22px] bg-black shadow-md shadow-black/30" style={{ maxHeight: "220px" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={featuredSet.imageUrl}
+                          alt={`${featuredSet.title} artwork`}
+                          className="block max-h-[220px] w-auto object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+                        />
+                        <div className="pointer-events-none absolute inset-0 bg-black/[0.06]" />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      </div>
                     ) : (
-                      <SetArtworkPlaceholder />
+                      <div className="relative w-full overflow-hidden rounded-[22px] bg-secondary" style={{ aspectRatio: "3/2", maxHeight: "220px" }}>
+                        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                          <Play className="h-10 w-10 text-accent/70" />
+                        </div>
+                      </div>
                     )}
-                    <div className="mt-4 sm:mt-5">
+                    <div className="mt-3">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
                         Featured Set
                       </p>
                       {/* Event name · City — editorial primary title */}
-                      <h3 className="mt-2 text-balance text-4xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-5xl">
+                      <h3 className="mt-1.5 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-3xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                         {featuredSet.city?.trim() && (
                           <span className="opacity-65"> · {featuredSet.city.trim()}</span>
                         )}
                       </h3>
                       {/* Artist attribution */}
-                      <p className="mt-2 text-sm font-bold uppercase tracking-[0.1em] text-accent/55">
+                      <p className="mt-1.5 text-sm font-bold uppercase tracking-[0.1em] text-accent/55">
                         {buildPerformanceArtist(featuredSet.performanceType, featuredSet.performanceArtists, artist.artistName)}
                       </p>
                       {/* Venue · Date — merged into one editorial line */}
@@ -1278,7 +1287,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           </p>
                         ) : null
                       })()}
-                      <span className="mt-5 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
+                      <span className="mt-3 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         LISTEN SET ↗
                       </span>
                     </div>
@@ -1290,7 +1299,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <>
                       {/* Editorial divider */}
                       <div className="mx-4 border-t border-white/[0.05] sm:mx-6" />
-                      <div className="px-4 pb-5 pt-6 sm:px-6 sm:pb-6">
+                      <div className="px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
                         <p className="pb-2 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">
                           Selected Sets
                         </p>
@@ -1310,7 +1319,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
                                   {String(index + 1).padStart(2, "0")}
                                 </span>
-                                <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl bg-secondary">
+                                <div className="relative h-14 w-[44px] shrink-0 overflow-hidden rounded-xl bg-secondary">
                                   {set.imageUrl ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
