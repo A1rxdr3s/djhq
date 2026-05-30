@@ -322,7 +322,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .eq("is_published", true)
         .order("sort_order", { ascending: true })
         .order("set_date", { ascending: false })
-        .limit(4)
+        .limit(6)
         .returns<DjSetRow[]>(),
       supabase
         .from("videos")
@@ -331,7 +331,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .eq("is_published", true)
         .order("sort_order", { ascending: true })
         .order("video_date", { ascending: false })
-        .limit(3)
+        .limit(6)
         .returns<VideoRow[]>(),
     ])
 
@@ -549,9 +549,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const upcomingGigs = artist.upcomingGigs
   const galleryImages = artist.galleryImages
   const featuredSet = artist.djSets[0] ?? null
-  const recentSets = artist.djSets.slice(1, 4)
+  const recentSets = artist.djSets.slice(1, 6)
   const featuredVideo = artist.videos[0] ?? null
-  const secondaryVideos = artist.videos.slice(1, 3)
+  const secondaryVideos = artist.videos.slice(1, 6)
   const featuredReleaseYear = featuredRelease ? new Date(featuredRelease.releaseDate).getUTCFullYear() : null
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -888,22 +888,22 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                        <Play className="h-12 w-12 fill-white/80 text-white/80" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <Play className="h-12 w-12 fill-white/75 text-white/75" />
                       </div>
                     </div>
                     {/* Text block */}
                     <div className="mt-4 sm:mt-5">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-accent/70">Featured Video</p>
-                      <h3 className="mt-2 text-balance text-xl font-black leading-tight text-foreground sm:text-2xl">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">Featured Video</p>
+                      <h3 className="mt-2 text-balance text-xl font-black leading-tight tracking-[-0.01em] text-foreground sm:text-2xl">
                         {featuredVideo.title}
                       </h3>
                       {(featuredVideo.venue ?? featuredVideo.videoDate) ? (
-                        <p className="mt-1.5 text-sm text-white/40">
+                        <p className="mt-1.5 text-[13px] text-white/35">
                           {[featuredVideo.venue, formatReleaseDate(featuredVideo.videoDate ?? "")].filter(Boolean).join(" · ")}
                         </p>
                       ) : null}
-                      <span className="mt-4 inline-flex h-8 items-center rounded-full border border-accent/35 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-150 group-hover:border-accent/50 group-hover:bg-accent/10">
+                      <span className="mt-4 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         WATCH ↗
                       </span>
                     </div>
@@ -911,8 +911,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                   {/* Secondary videos — compact media rows */}
                   {secondaryVideos.length > 0 ? (
-                    <div className="border-t border-white/[0.05] px-4 pb-4 sm:px-6 sm:pb-5">
-                      <p className="pb-2 pt-4 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/30">More Videos</p>
+                    <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
+                      <p className="pb-1.5 pt-3.5 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">More Videos</p>
                       <div className="space-y-0.5">
                         {secondaryVideos.map((video, index) => (
                           <a
@@ -920,9 +920,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             href={video.platformUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors duration-150 hover:bg-white/[0.03]"
+                            className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.03]"
                           >
-                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/22">
+                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
                               {String(index + 2).padStart(2, "0")}
                             </span>
                             <div className="relative aspect-video w-[72px] shrink-0 overflow-hidden rounded-lg bg-secondary">
@@ -938,18 +938,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   <Play className="h-3 w-3 text-accent/50" />
                                 </div>
                               )}
+                              <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-foreground/80 transition-colors duration-150 group-hover:text-foreground">
+                              <p className="truncate text-sm font-medium text-foreground/85 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-foreground">
                                 {video.title}
                               </p>
                               {(video.venue ?? video.videoDate) ? (
-                                <p className="mt-0.5 truncate text-[11px] text-white/40">
+                                <p className="mt-0.5 truncate text-[11px] text-white/32">
                                   {[video.venue, formatReleaseDate(video.videoDate ?? "")].filter(Boolean).join(" · ")}
                                 </p>
                               ) : null}
                             </div>
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/40 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/70" />
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/65" />
                           </a>
                         ))}
                       </div>
@@ -963,7 +964,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <div
                   className={cn(
                     "flex flex-col",
-                    featuredVideo && "border-t border-white/[0.05] lg:border-t-0 lg:border-l lg:border-white/[0.05]",
+                    featuredVideo && "border-t border-white/[0.04] lg:border-t-0 lg:border-l lg:border-white/[0.04]",
                   )}
                 >
                   <a
@@ -986,20 +987,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           <Play className="h-10 w-10 text-accent/70" />
                         </div>
                       )}
+                      <div className="pointer-events-none absolute inset-0 bg-black/[0.06]" />
                     </div>
                     <div className="mt-4 sm:mt-5">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-accent/70">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
                         Latest {PERFORMANCE_TYPE_LABELS[featuredSet.performanceType] ?? "DJ Set"}
                       </p>
-                      <h3 className="mt-2 text-balance text-xl font-black leading-tight text-foreground">
+                      <h3 className="mt-2 text-balance text-xl font-black leading-tight tracking-[-0.01em] text-foreground">
                         {cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>
                       {(featuredSet.event ?? featuredSet.venue ?? featuredSet.setDate) ? (
-                        <p className="mt-1.5 text-sm text-white/40">
+                        <p className="mt-1.5 text-[13px] text-white/35">
                           {[featuredSet.event, featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? "")].filter(Boolean).join(" · ")}
                         </p>
                       ) : null}
-                      <span className="mt-4 inline-flex h-8 w-fit items-center rounded-full border border-accent/35 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-150 group-hover:border-accent/50 group-hover:bg-accent/10">
+                      <span className="mt-4 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         PLAY ↗
                       </span>
                     </div>
@@ -1007,8 +1009,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                   {/* Recent sets — compact rows with thumbnail */}
                   {recentSets.length > 0 ? (
-                    <div className="border-t border-white/[0.05] px-4 pb-4 sm:px-6 sm:pb-5">
-                      <p className="pb-2 pt-4 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/30">
+                    <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
+                      <p className="pb-1.5 pt-3.5 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">
                         Recent
                       </p>
                       <div className="space-y-0.5">
@@ -1018,9 +1020,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             href={set.platformUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors duration-150 hover:bg-white/[0.03]"
+                            className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.03]"
                           >
-                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/22">
+                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
                               {String(index + 1).padStart(2, "0")}
                             </span>
                             <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-secondary">
@@ -1036,18 +1038,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   <Play className="h-3 w-3 text-accent/50" />
                                 </div>
                               )}
+                              <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-foreground/80 transition-colors duration-150 group-hover:text-foreground">
+                              <p className="truncate text-sm font-medium text-foreground/85 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-foreground">
                                 {cleanDjSetTitle(set.title, artist.artistName)}
                               </p>
                               {(set.event ?? set.venue ?? set.setDate) ? (
-                                <p className="mt-0.5 truncate text-[11px] text-white/40">
+                                <p className="mt-0.5 truncate text-[11px] text-white/32">
                                   {[set.event, set.venue, formatReleaseDate(set.setDate ?? "")].filter(Boolean).join(" · ")}
                                 </p>
                               ) : null}
                             </div>
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/40 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/70" />
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/65" />
                           </a>
                         ))}
                       </div>
