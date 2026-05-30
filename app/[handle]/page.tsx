@@ -238,6 +238,18 @@ function cleanDjSetTitle(title: string, artistName: string): string {
   return cleaned || title.trim()
 }
 
+function buildPerformanceArtist(
+  performanceType: PerformanceType,
+  performanceArtists: string[],
+  fallback: string,
+): string {
+  const artists = performanceArtists.filter(Boolean)
+  if (artists.length === 0) return fallback
+  if (performanceType === "b2b") return artists.join(" B2B ")
+  if (performanceType === "b3b") return artists.join(" B3B ")
+  return artists[0] || fallback
+}
+
 function mapReleaseRow(row: ReleaseRow): Release {
   return {
     id: row.id,
@@ -999,25 +1011,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <h3 className="mt-2 text-balance text-4xl font-black uppercase leading-tight tracking-[-0.03em] text-foreground sm:text-5xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>
-                      {/* Artist name — attribution line */}
-                      <p className="mt-3 text-sm font-bold uppercase tracking-[0.1em] text-accent/55">
-                        {artist.artistName}
+                      {/* Artist attribution */}
+                      <p className="mt-2 text-sm font-bold uppercase tracking-[0.1em] text-accent/55">
+                        {buildPerformanceArtist(featuredSet.performanceType, featuredSet.performanceArtists, artist.artistName)}
                       </p>
-                      {/* Venue — uppercase, reduced emphasis */}
-                      {featuredSet.venue?.trim() && featuredSet.event?.trim() ? (
-                        <p className="mt-3 text-sm font-medium uppercase text-white/50">
-                          {featuredSet.venue.trim()}
-                        </p>
-                      ) : null}
-                      {/* Date — editorial uppercase, very muted */}
-                      {featuredSet.setDate ? (
-                        <p className={cn(
-                          "text-[11px] font-semibold uppercase tracking-[0.25em] text-white/30",
-                          featuredSet.venue?.trim() && featuredSet.event?.trim() ? "mt-1.5" : "mt-3",
-                        )}>
-                          {formatReleaseDate(featuredSet.setDate)?.replace(",", "").toUpperCase() ?? ""}
-                        </p>
-                      ) : null}
+                      {/* Venue · Date — merged into one editorial line */}
+                      {(() => {
+                        const venuePart = (featuredSet.venue?.trim() && featuredSet.event?.trim()) ? featuredSet.venue.trim() : null
+                        const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "").toUpperCase() ?? null) : null
+                        const combined = [venuePart, datePart].filter(Boolean).join(" · ")
+                        return combined ? (
+                          <p className="mt-1 text-sm uppercase tracking-[0.16em] text-white/38">
+                            {combined}
+                          </p>
+                        ) : null
+                      })()}
                       <span className="mt-5 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         LISTEN SET ↗
                       </span>
@@ -1037,13 +1045,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           {recentSets.map((set, index) => {
                             const showTitle = set.event?.trim() || set.venue?.trim() || cleanDjSetTitle(set.title, artist.artistName)
                             const showMeta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? "")?.replace(",", "") ?? null)
+                            const performanceArtist = buildPerformanceArtist(set.performanceType, set.performanceArtists, artist.artistName)
                             return (
                               <a
                                 key={set.id}
                                 href={set.platformUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.03]"
+                                className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-white/[0.03]"
                               >
                                 <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
                                   {String(index + 1).padStart(2, "0")}
@@ -1067,8 +1076,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white transition-all duration-150 group-hover:translate-x-[2px]">
                                     {showTitle}
                                   </p>
+                                  <p className="mt-[2px] truncate text-[11px] font-bold uppercase tracking-[0.18em] text-accent/50 transition-colors duration-150 group-hover:text-accent/70">
+                                    {performanceArtist}
+                                  </p>
                                   {showMeta ? (
-                                    <p className="mt-0.5 truncate text-sm uppercase tracking-[0.18em] text-white/40">{showMeta}</p>
+                                    <p className="mt-[2px] truncate text-[11px] uppercase tracking-[0.18em] text-white/35">{showMeta}</p>
                                   ) : null}
                                 </div>
                                 <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 opacity-35 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-[2px] group-hover:opacity-80 group-hover:text-accent/65" />
