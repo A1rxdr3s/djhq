@@ -1169,8 +1169,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Secondary videos — compact media rows */}
                   {secondaryVideos.length > 0 ? (
                     <MobileArchive label="View Archive ↓">
-                    <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
-                      <p className="pb-1.5 pt-3.5 text-[8px] font-semibold uppercase tracking-[0.3em] text-foreground/18">Archive</p>
+                    <div className="border-t border-white/[0.05] px-4 pb-4 sm:px-6 sm:pb-5">
+                      <p className="pb-2 pt-3 text-[8px] font-semibold uppercase tracking-[0.28em] text-foreground/20">Archive</p>
                       <div className="space-y-0.5">
                         {secondaryVideos.map((video, index) => {
                           const { displayTitle, attribution } = getVideoDisplayInfo(video, artist.artistName)
@@ -1208,16 +1208,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white/90 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-white">
                                   {displayTitle}
                                 </p>
-                                <p className="mt-[2px] truncate text-[11px] font-bold uppercase tracking-[0.18em] text-accent/50 transition-colors duration-150 group-hover:text-accent/70">
-                                  {attribution}
+                                <p className="mt-[2px] truncate text-[11px] uppercase tracking-[0.15em] text-white/40">
+                                  <span className="font-bold text-accent/55 transition-colors duration-150 group-hover:text-accent/70">{attribution}</span>
+                                  {metaParts.length > 0 ? <span className="text-white/30"> · {metaParts.join(" · ")}</span> : null}
                                 </p>
-                                {metaParts.length > 0 ? (
-                                  <p className="mt-[2px] truncate text-[11px] uppercase tracking-[0.18em] text-white/35">
-                                    {metaParts.join(" · ")}
-                                  </p>
-                                ) : null}
                               </div>
-                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/65" />
+                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-foreground/25 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent/60" />
                             </a>
                           )
                         })}
@@ -1300,7 +1296,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       {/* Editorial divider */}
                       <div className="mx-4 border-t border-white/[0.05] sm:mx-6" />
                       <div className="px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
-                        <p className="pb-2 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">
+                        <p className="pb-2 text-[8px] font-semibold uppercase tracking-[0.28em] text-foreground/20">
                           Selected Sets
                         </p>
                         <div className="space-y-0.5">
@@ -1314,7 +1310,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 href={set.platformUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-white/[0.03]"
+                                className="group flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-white/[0.03]"
                               >
                                 <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
                                   {String(index + 1).padStart(2, "0")}
@@ -1338,14 +1334,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white transition-all duration-150 group-hover:translate-x-[2px]">
                                     {showTitle}{set.city?.trim() && <span className="opacity-55"> · {set.city.trim()}</span>}
                                   </p>
-                                  <p className="mt-[2px] truncate text-[11px] font-bold uppercase tracking-[0.18em] text-accent/50 transition-colors duration-150 group-hover:text-accent/70">
-                                    {performanceArtist}
+                                  <p className="mt-[2px] truncate text-[11px] uppercase tracking-[0.15em] text-white/40">
+                                    <span className="font-bold text-accent/55 transition-colors duration-150 group-hover:text-accent/70">{performanceArtist}</span>
+                                    {showMeta ? <span className="text-white/30"> · {showMeta}</span> : null}
                                   </p>
-                                  {showMeta ? (
-                                    <p className="mt-[2px] truncate text-[11px] uppercase tracking-[0.18em] text-white/35">{showMeta}</p>
-                                  ) : null}
                                 </div>
-                                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 opacity-35 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-[2px] group-hover:opacity-80 group-hover:text-accent/65" />
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-foreground/25 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-[2px] group-hover:text-accent/60" />
                               </a>
                             )
                           })}
