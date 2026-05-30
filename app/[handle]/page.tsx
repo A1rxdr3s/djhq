@@ -133,6 +133,7 @@ type DjSetRow = {
   venue: string | null
   event: string | null
   set_date: string | null
+  city: string | null
   image_url: string | null
   platform_url: string
   sort_order: number
@@ -397,7 +398,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<GalleryImageRow[]>(),
       supabase
         .from("dj_sets")
-        .select("id, title, performance_type, performance_artists, venue, event, set_date, image_url, platform_url, sort_order")
+        .select("id, title, performance_type, performance_artists, venue, event, set_date, city, image_url, platform_url, sort_order")
         .eq("artist_id", artistRow.id)
         .eq("is_published", true)
         .order("sort_order", { ascending: true })
