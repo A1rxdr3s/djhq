@@ -250,6 +250,43 @@ function buildPerformanceArtist(
   return artists[0] || fallback
 }
 
+// Parses scraped video titles that may contain the artist name as a prefix.
+// e.g. "ARTIST X EVENT NAME" → { displayTitle: "EVENT NAME", attribution: "ARTIST" }
+//      "ARTIST b2b OTHER" → { displayTitle: "B2B OTHER", attribution: "ARTIST B2B OTHER" }
+//      "VENUE NAME" → { displayTitle: "VENUE NAME", attribution: "ARTIST" }
+function parseVideoTitle(
+  title: string,
+  artistName: string,
+): { displayTitle: string; attribution: string } {
+  const t = title.trim()
+  if (!t) return { displayTitle: t, attribution: artistName }
+
+  const looseArtist = artistName
+    .trim()
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/[: ]+/g, "[: ]+")
+
+  const b2bMatch = t.match(new RegExp(`^${looseArtist}\\s+b2b\\s+(.+)$`, "i"))
+  if (b2bMatch) {
+    const other = b2bMatch[1].trim()
+    return { displayTitle: `B2B ${other}`, attribution: `${artistName} B2B ${other}` }
+  }
+
+  const b3bMatch = t.match(new RegExp(`^${looseArtist}\\s+b3b\\s+(.+)$`, "i"))
+  if (b3bMatch) {
+    const other = b3bMatch[1].trim()
+    return { displayTitle: `B3B ${other}`, attribution: `${artistName} B3B ${other}` }
+  }
+
+  // Standard separators: X / x / × / — / – / @ / --
+  const sepMatch = t.match(new RegExp(`^${looseArtist}\\s*(?:[Xx×–—@]|-{1,2})\\s+(.+)$`))
+  if (sepMatch) {
+    return { displayTitle: sepMatch[1].trim(), attribution: artistName }
+  }
+
+  return { displayTitle: t, attribution: artistName }
+}
+
 function mapReleaseRow(row: ReleaseRow): Release {
   return {
     id: row.id,
@@ -911,12 +948,28 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     {/* Text block */}
                     <div className="mt-4 sm:mt-5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">Featured Performance</p>
-                      <h3 className="mt-2 text-balance text-xl font-black uppercase leading-tight tracking-[-0.02em] text-foreground sm:text-2xl">
-                        {artist.artistName} × {featuredVideo.title}
-                      </h3>
-                      {featuredVideo.venue ? (
-                        <p className="mt-1.5 text-sm text-white/40">{featuredVideo.venue}</p>
-                      ) : null}
+                      {(() => {
+                        const { displayTitle, attribution } = parseVideoTitle(featuredVideo.title, artist.artistName)
+                        const metaParts = [
+                          featuredVideo.venue?.trim() || null,
+                          featuredVideo.videoDate ? (formatReleaseDate(featuredVideo.videoDate)?.replace(",", "") ?? null) : null,
+                        ].filter(Boolean)
+                        return (
+                          <>
+                            <h3 className="mt-2 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.02em] text-white sm:text-3xl">
+                              {displayTitle}
+                            </h3>
+                            <p className="mt-2 text-sm font-bold uppercase tracking-[0.10em] text-accent/55">
+                              {attribution}
+                            </p>
+                            {metaParts.length > 0 ? (
+                              <p className="mt-1 text-sm uppercase tracking-[0.16em] text-white/38">
+                                {metaParts.join(" · ")}
+                              </p>
+                            ) : null}
+                          </>
+                        )
+                      })()}
                       <span className="mt-4 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         WATCH VIDEO ↗
                       </span>
@@ -928,45 +981,55 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
                       <p className="pb-1.5 pt-3.5 text-[8px] font-semibold uppercase tracking-[0.3em] text-foreground/18">Archive</p>
                       <div className="space-y-0.5">
-                        {secondaryVideos.map((video, index) => (
-                          <a
-                            key={video.id}
-                            href={video.platformUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.03]"
-                          >
-                            <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
-                              {String(index + 2).padStart(2, "0")}
-                            </span>
-                            <div className="relative aspect-video w-[72px] shrink-0 overflow-hidden rounded-lg bg-secondary">
-                              {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={(video.customThumbnailUrl ?? video.thumbnailUrl)!}
-                                  alt=""
-                                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-                                />
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03]">
-                                  <Play className="h-3 w-3 text-accent/50" />
-                                </div>
-                              )}
-                              <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-foreground/85 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-foreground">
-                                {video.title}
-                              </p>
-                              {(video.venue ?? video.videoDate) ? (
-                                <p className="mt-0.5 truncate text-[11px] text-white/32">
-                                  {[video.venue, formatReleaseDate(video.videoDate ?? "")].filter(Boolean).join(" · ")}
+                        {secondaryVideos.map((video, index) => {
+                          const { displayTitle, attribution } = parseVideoTitle(video.title, artist.artistName)
+                          const metaParts = [
+                            video.venue?.trim() || null,
+                            video.videoDate ? (formatReleaseDate(video.videoDate)?.replace(",", "") ?? null) : null,
+                          ].filter(Boolean)
+                          return (
+                            <a
+                              key={video.id}
+                              href={video.platformUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.03]"
+                            >
+                              <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
+                                {String(index + 2).padStart(2, "0")}
+                              </span>
+                              <div className="relative aspect-video w-[72px] shrink-0 overflow-hidden rounded-lg bg-secondary">
+                                {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={(video.customThumbnailUrl ?? video.thumbnailUrl)!}
+                                    alt=""
+                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03]">
+                                    <Play className="h-3 w-3 text-accent/50" />
+                                  </div>
+                                )}
+                                <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-white/90 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-white">
+                                  {displayTitle}
                                 </p>
-                              ) : null}
-                            </div>
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/65" />
-                          </a>
-                        ))}
+                                <p className="mt-[2px] truncate text-[11px] font-bold uppercase tracking-[0.18em] text-accent/50 transition-colors duration-150 group-hover:text-accent/70">
+                                  {attribution}
+                                </p>
+                                {metaParts.length > 0 ? (
+                                  <p className="mt-[2px] truncate text-[11px] uppercase tracking-[0.18em] text-white/35">
+                                    {metaParts.join(" · ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/65" />
+                            </a>
+                          )
+                        })}
                       </div>
                     </div>
                   ) : null}
