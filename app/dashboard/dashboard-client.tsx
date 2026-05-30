@@ -3526,6 +3526,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             const previewMeta = [
               PERFORMANCE_TYPE_LABELS[set.performanceType],
               set.event,
+              set.city,
               set.venue,
               formatDjSetDate(set.setDate),
             ].filter(Boolean).join(" · ")
@@ -3684,8 +3685,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </div>
                   )}
 
-                  {/* Row 3: Date · Venue · Event */}
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  {/* Row 3: Date · Venue · City · Event */}
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="space-y-1.5">
                       <label
                         htmlFor={`djset-date-${index}`}
@@ -3708,6 +3709,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         value={set.venue}
                         onChange={(v) => updateSet(index, { venue: v })}
                         onSelect={(entry) => updateSet(index, { venue: entry.name })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor={`djset-city-${index}`}
+                        className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
+                      >
+                        City
+                      </label>
+                      <Input
+                        id={`djset-city-${index}`}
+                        value={set.city}
+                        placeholder="Santiago, Berlin…"
+                        onChange={(e) => updateSet(index, { city: e.target.value })}
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -4170,7 +4185,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
           {videos.length === 0 && (
             <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
               <Play className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
