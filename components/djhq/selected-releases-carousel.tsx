@@ -32,6 +32,9 @@ const RELEASE_TYPE_LABELS: Record<string, string> = {
   va:          "VA",
 }
 
+// Version types that are the default/expected — omit badge to reduce noise
+const SUPPRESSED_VERSION_TYPES = new Set(["original_mix", "original"])
+
 function isReleaseRemix(release: Release): boolean {
   if (release.versionType === "remix") return true
   return /remix/i.test(release.title) || /remix/i.test(release.credits ?? "")
@@ -157,7 +160,12 @@ export function SelectedReleasesCarousel({ releases }: Props) {
           const versionDisplay = isRemixVersion && release.remixer
             ? `${release.remixer} Remix`
             : versionLabel
-          const badges = [typeLabel, versionDisplay].filter(Boolean) as string[]
+          // Suppress default/noise versions (original mix, original); show everything else
+          const versionBadge = versionDisplay &&
+            (!release.versionType || !SUPPRESSED_VERSION_TYPES.has(release.versionType))
+            ? versionDisplay
+            : null
+          const badges = [typeLabel, versionBadge].filter(Boolean) as string[]
 
           return (
             <article
@@ -166,7 +174,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
               className="w-[min(72vw,200px)] shrink-0 snap-start sm:w-[200px] lg:w-[200px]"
             >
               {/* Artwork with hover lift + overlay */}
-              <div className="group relative aspect-square overflow-hidden rounded-2xl bg-secondary shadow-md shadow-black/30 transition-all duration-200 hover:-translate-y-1 hover:scale-[1.02]">
+              <div className="group relative aspect-square overflow-hidden rounded-2xl border border-white/[0.06] bg-secondary shadow-md shadow-black/30 transition-all duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-accent/40 hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
                 {hasArtwork ? (
                   <Image
                     src={release.artworkUrl}
@@ -220,11 +228,11 @@ export function SelectedReleasesCarousel({ releases }: Props) {
 
                 <p className="mt-0.5 text-sm text-white/45 line-clamp-1">{release.credits ?? ""}</p>
 
-                <p className="mt-1.5 line-clamp-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+                <p className="mt-1.5 line-clamp-1 text-[9px] uppercase tracking-[0.18em] text-white/35">
                   {release.label}
                 </p>
                 {releaseYear && (
-                  <p className="mt-1 text-xs tracking-[0.12em] text-white/35">
+                  <p className="mt-1 text-xs tracking-[0.12em] text-white/25">
                     {releaseYear}
                   </p>
                 )}
