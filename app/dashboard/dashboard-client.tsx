@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Star, Trash2 } from "lucide-react"
+import { AlertTriangle, ArrowDown, ArrowUp, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Star, Trash2 } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -771,6 +771,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [pressKitPdfEnSize, setPressKitPdfEnSize] = useState(initialArtist.pressKit.pdfEnSize ?? "")
   const [pressKitPdfEsSize, setPressKitPdfEsSize] = useState(initialArtist.pressKit.pdfEsSize ?? "")
   const [pressKitUseGalleryPhotos, setPressKitUseGalleryPhotos] = useState(initialArtist.pressKit.useGalleryPhotos ?? true)
+  const [pressKitImportDone, setPressKitImportDone] = useState(false)
+  const [pressKitAdvancedOpen, setPressKitAdvancedOpen] = useState(false)
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -3466,8 +3468,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Performance Archive</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Recorded or broadcast sets. First set is featured on your public profile.</p>
+          <h2 className="text-base font-semibold text-foreground">Performances</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">
+            Curated shows displayed on your profile. The first set is your <span className="font-medium text-foreground/60">Featured Show</span>; the rest appear as <span className="font-medium text-foreground/60">Selected Shows</span>.
+          </p>
         </div>
         <div className="space-y-3">
           {djSets.map((set, index) => {
@@ -3502,11 +3506,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </span>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-medium leading-none text-foreground">
-                        {displayTitle || <span className="text-muted-foreground/30">Set {index + 1}</span>}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-xs font-medium leading-none text-foreground">
+                          {displayTitle || <span className="text-muted-foreground/30">Set {index + 1}</span>}
+                        </p>
+                        {index === 0 && (
+                          <span className="shrink-0 rounded border border-accent/25 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-accent/60">
+                            Featured
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-0.5 truncate text-[10px] text-muted-foreground/40">
-                        {previewMeta || `Set ${index + 1}${index === 0 ? " · Featured" : ""}`}
+                        {previewMeta || `Set ${index + 1}`}
                       </p>
                     </div>
                   </div>
@@ -4301,6 +4312,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function renderPressKit() {
     const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
 
+    const importResults = [
+      { label: "Bio & Text",      ok: Boolean(pressKitBioFolderUrl.trim()) },
+      { label: "Logos & Artwork", ok: Boolean(pressKitLogosFolderUrl.trim()) },
+      { label: "Press Photos",    ok: Boolean(pressKitMediaFolderUrl.trim()) },
+      { label: "Technical Rider", ok: Boolean(pressKitRiderFolderUrl.trim()) },
+      { label: "English PDF",     ok: Boolean(pressKitPdfEnUrl.trim()) },
+      { label: "Spanish PDF",     ok: Boolean(pressKitPdfEsUrl.trim()) },
+    ]
+    const hasMissing = importResults.some((r) => !r.ok)
+
     return (
       <div className="space-y-6">
         <div>
@@ -4315,7 +4336,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-foreground">Press Kit Status</p>
+              <p className="text-sm font-semibold text-foreground">Status</p>
               <p className="mt-0.5 text-xs text-muted-foreground/45">
                 Enable to make your EPK page publicly accessible.
               </p>
@@ -4358,92 +4379,90 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* All fields — dimmed when off */}
         <div className={cn("space-y-4 transition-opacity duration-200", !pressKitEnabled && "pointer-events-none opacity-35")}>
 
-          {/* Asset folders */}
+          {/* ── Press Kit Source ──────────────────────────────────────── */}
           <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
             <div className="space-y-4">
-              <p className="text-sm font-semibold text-foreground">Asset Folders</p>
-              <p className="text-xs text-muted-foreground/45">
-                Google Drive folder links for each asset category. These appear as download buttons on the press kit page.
-              </p>
-              <div className="grid gap-4 md:grid-cols-2">
-                {(
-                  [
-                    { label: "Bio & Text", value: pressKitBioFolderUrl, setter: setPressKitBioFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
-                    { label: "Logos & Artwork", value: pressKitLogosFolderUrl, setter: setPressKitLogosFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
-                    { label: "Press Photos", value: pressKitMediaFolderUrl, setter: setPressKitMediaFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
-                    { label: "Technical Rider", value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl, placeholder: "https://drive.google.com/drive/folders/…" },
-                  ] as const
-                ).map(({ label, value, setter, placeholder }) => (
-                  <div key={label} className="space-y-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                      {label}
-                    </label>
-                    <Input
-                      value={value}
-                      onChange={(e) => setter(e.target.value)}
-                      placeholder={placeholder}
-                      disabled={!pressKitEnabled}
-                    />
-                  </div>
-                ))}
+              <div>
+                <p className="text-sm font-semibold text-foreground">Press Kit Source</p>
+                <p className="mt-0.5 text-xs text-muted-foreground/45">
+                  Paste your Google Drive root folder. Organize it like:
+                </p>
+                <pre className="mt-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2.5 font-mono text-[10px] leading-relaxed text-muted-foreground/40">
+{`PRESSKIT-ARTIST/
+├── BIO/
+├── LOGOS/
+├── MEDIA/
+├── RIDER & HOSPITALITY/
+├── ENG_ARTIST_PRESSKIT.pdf
+└── ESP_ARTIST_PRESSKIT.pdf`}
+                </pre>
               </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="pressKitRootUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                  Google Drive Root Folder
+                </label>
+                <Input
+                  id="pressKitRootUrl"
+                  value={pressKitRootUrl}
+                  onChange={(e) => {
+                    setPressKitRootUrl(e.target.value)
+                    setPressKitImportDone(false)
+                  }}
+                  placeholder="https://drive.google.com/drive/folders/…"
+                  disabled={!pressKitEnabled}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPressKitImportDone(true)}
+                disabled={!pressKitRootUrl.trim() || !pressKitEnabled}
+                className="h-9 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-foreground/60 transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.07] hover:text-foreground/85 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                Import Assets
+              </button>
+
+              {/* ── Import results checklist ────────────────────── */}
+              {pressKitImportDone && (
+                <div className="space-y-1">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                    Asset status
+                  </p>
+                  {importResults.map(({ label, ok }) => (
+                    <div key={label} className="flex items-center gap-2.5">
+                      {ok ? (
+                        <Check className="h-3.5 w-3.5 shrink-0 text-accent/70" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500/50" />
+                      )}
+                      <span className={cn("text-sm", ok ? "text-foreground/65" : "text-muted-foreground/40")}>
+                        {label}
+                        {!ok && (
+                          <span className="ml-1.5 text-[10px] text-muted-foreground/30">
+                            — add in Advanced Settings
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                  {hasMissing && (
+                    <p className="mt-2 text-[11px] text-muted-foreground/35">
+                      Expand Advanced Settings below to configure missing items.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* PDF downloads */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-            <div className="space-y-4">
-              <p className="text-sm font-semibold text-foreground">PDF Downloads</p>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-3">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">English PDF</p>
-                  <div className="space-y-1.5">
-                    <Input
-                      value={pressKitPdfEnUrl}
-                      onChange={(e) => setPressKitPdfEnUrl(e.target.value)}
-                      placeholder="https://…/epk-en.pdf"
-                      disabled={!pressKitEnabled}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Input
-                      value={pressKitPdfEnSize}
-                      onChange={(e) => setPressKitPdfEnSize(e.target.value)}
-                      placeholder="e.g. 4.2 MB"
-                      disabled={!pressKitEnabled}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Spanish PDF</p>
-                  <div className="space-y-1.5">
-                    <Input
-                      value={pressKitPdfEsUrl}
-                      onChange={(e) => setPressKitPdfEsUrl(e.target.value)}
-                      placeholder="https://…/epk-es.pdf"
-                      disabled={!pressKitEnabled}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Input
-                      value={pressKitPdfEsSize}
-                      onChange={(e) => setPressKitPdfEsSize(e.target.value)}
-                      placeholder="e.g. 3.8 MB"
-                      disabled={!pressKitEnabled}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Press photos source */}
+          {/* ── Press Photos ─────────────────────────────────────────── */}
           <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-foreground">Press Photos</p>
                 <p className="mt-0.5 text-xs text-muted-foreground/45">
-                  Show your gallery images in the press kit photo grid.
+                  Show gallery images in the press kit photo grid.
                 </p>
               </div>
               <div
@@ -4483,92 +4502,159 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           </div>
 
-          {/* Legacy press kit URL + assets */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Legacy Direct Download</p>
-                <p className="mt-0.5 text-xs text-muted-foreground/45">
-                  Optional fallback URL shown when no folder links are configured.
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                  Press Kit URL
-                </label>
-                <Input
-                  id="pressKitUrl"
-                  value={pressKitUrl}
-                  onChange={(e) => setPressKitUrl(e.target.value)}
-                  placeholder="https://artist.com/epk"
-                  disabled={!pressKitEnabled}
-                />
-                {pressKitUrlInvalid && (
-                  <p className="text-[10px] text-amber-400/60">Should start with https://</p>
+          {/* ── Advanced Settings ─────────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 overflow-hidden transition-colors duration-150 hover:border-white/[0.09]">
+            <button
+              type="button"
+              onClick={() => setPressKitAdvancedOpen((v) => !v)}
+              className="flex w-full items-center justify-between px-5 py-4 sm:px-6"
+            >
+              <span className="text-sm font-semibold text-foreground/70">Advanced Settings</span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 text-muted-foreground/40 transition-transform duration-200",
+                  pressKitAdvancedOpen && "rotate-180",
                 )}
-              </div>
+              />
+            </button>
 
-              {/* Assets chips */}
-              <div className="space-y-2">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                  Assets Included
-                </p>
-                {pressKitAssets.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {pressKitAssets.map((asset, i) => (
-                      <span
-                        key={i}
-                        className="flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-foreground/60"
-                      >
-                        {asset}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAsset(i)}
-                          aria-label={`Remove ${asset}`}
-                          className="leading-none text-muted-foreground/30 transition-colors duration-100 hover:text-foreground/60"
-                        >
-                          ×
-                        </button>
-                      </span>
+            {pressKitAdvancedOpen && (
+              <div className="space-y-5 border-t border-white/[0.05] px-5 pb-5 pt-4 sm:px-6">
+
+                {/* Asset folder URLs */}
+                <div className="space-y-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                    Asset Folders
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {(
+                      [
+                        { label: "Bio & Text", value: pressKitBioFolderUrl, setter: setPressKitBioFolderUrl },
+                        { label: "Logos & Artwork", value: pressKitLogosFolderUrl, setter: setPressKitLogosFolderUrl },
+                        { label: "Press Photos", value: pressKitMediaFolderUrl, setter: setPressKitMediaFolderUrl },
+                        { label: "Technical Rider", value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl },
+                      ] as const
+                    ).map(({ label, value, setter }) => (
+                      <div key={label} className="space-y-1.5">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                          {label}
+                        </label>
+                        <Input
+                          value={value}
+                          onChange={(e) => setter(e.target.value)}
+                          placeholder="https://drive.google.com/drive/folders/…"
+                          disabled={!pressKitEnabled}
+                        />
+                      </div>
                     ))}
                   </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newAssetInput}
-                    onChange={(e) => setNewAssetInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        handleAddAsset()
-                      }
-                    }}
-                    placeholder="Add asset… e.g. Press photos"
+                </div>
+
+                {/* PDF URLs */}
+                <div className="space-y-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                    PDF Downloads
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">English PDF URL</label>
+                      <Input value={pressKitPdfEnUrl} onChange={(e) => setPressKitPdfEnUrl(e.target.value)} placeholder="https://…/epk-en.pdf" disabled={!pressKitEnabled} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">English PDF Size</label>
+                      <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder="e.g. 4.2 MB" disabled={!pressKitEnabled} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Spanish PDF URL</label>
+                      <Input value={pressKitPdfEsUrl} onChange={(e) => setPressKitPdfEsUrl(e.target.value)} placeholder="https://…/epk-es.pdf" disabled={!pressKitEnabled} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Spanish PDF Size</label>
+                      <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder="e.g. 3.8 MB" disabled={!pressKitEnabled} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Legacy download URL */}
+                <div className="space-y-1.5">
+                  <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                    Legacy Download URL
+                  </label>
+                  <Input
+                    id="pressKitUrl"
+                    value={pressKitUrl}
+                    onChange={(e) => setPressKitUrl(e.target.value)}
+                    placeholder="https://artist.com/epk"
                     disabled={!pressKitEnabled}
-                    aria-label="New asset name"
-                    className={cn(
-                      "h-9 min-w-0 flex-1 rounded-lg border border-white/[0.07] bg-white/[0.025]",
-                      "px-3 text-sm font-medium text-foreground",
-                      "placeholder:text-muted-foreground/30",
-                      "outline-none transition-colors duration-150",
-                      "focus:border-white/[0.14] focus:bg-white/[0.04]",
-                      "disabled:cursor-not-allowed",
-                    )}
                   />
-                  <button
-                    type="button"
-                    onClick={handleAddAsset}
-                    disabled={!pressKitEnabled || !newAssetInput.trim()}
-                    aria-label="Add asset"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.025] text-muted-foreground/40 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
+                  {pressKitUrlInvalid && (
+                    <p className="text-[10px] text-amber-400/60">Should start with https://</p>
+                  )}
+                </div>
+
+                {/* Assets chips */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                    Assets Included
+                  </p>
+                  {pressKitAssets.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {pressKitAssets.map((asset, i) => (
+                        <span
+                          key={i}
+                          className="flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-foreground/60"
+                        >
+                          {asset}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAsset(i)}
+                            aria-label={`Remove ${asset}`}
+                            className="leading-none text-muted-foreground/30 transition-colors duration-100 hover:text-foreground/60"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newAssetInput}
+                      onChange={(e) => setNewAssetInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          handleAddAsset()
+                        }
+                      }}
+                      placeholder="Add asset… e.g. Press photos"
+                      disabled={!pressKitEnabled}
+                      aria-label="New asset name"
+                      className={cn(
+                        "h-9 min-w-0 flex-1 rounded-lg border border-white/[0.07] bg-white/[0.025]",
+                        "px-3 text-sm font-medium text-foreground",
+                        "placeholder:text-muted-foreground/30",
+                        "outline-none transition-colors duration-150",
+                        "focus:border-white/[0.14] focus:bg-white/[0.04]",
+                        "disabled:cursor-not-allowed",
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddAsset}
+                      disabled={!pressKitEnabled || !newAssetInput.trim()}
+                      aria-label="Add asset"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.025] text-muted-foreground/40 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
+
         </div>
       </div>
     )
