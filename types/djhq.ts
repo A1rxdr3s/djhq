@@ -246,6 +246,8 @@ export interface DjSet {
   event?: string
   /** Recording or air date in ISO-8601 format. */
   setDate?: string
+  /** City where the performance took place. */
+  city?: string
   /** Optional cover/thumbnail image URL. */
   imageUrl?: string
   /** Platform URL (SoundCloud, YouTube, Mixcloud, RA, etc.). */

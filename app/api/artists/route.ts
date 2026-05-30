@@ -82,6 +82,7 @@ type SaveDjSetPayload = {
   venue?: string
   event?: string
   setDate?: string
+  city?: string
   imageUrl?: string
   platformUrl: string
   isPublished: boolean
@@ -569,6 +570,7 @@ export async function PATCH(request: Request) {
             venue: set.venue?.trim() || null,
             event: set.event?.trim() || null,
             set_date: set.setDate || null,
+            city: set.city?.trim() || null,
             image_url: set.imageUrl?.trim() || null,
             platform_url: set.platformUrl.trim(),
             sort_order: index + 1,

@@ -123,6 +123,7 @@ type DjSetRow = {
   venue: string | null
   event: string | null
   set_date: string | null
+  city: string | null
   image_url: string | null
   platform_url: string
   sort_order: number
@@ -132,6 +133,10 @@ type DjSetRow = {
 type VideoRow = {
   id: string
   title: string
+  video_artists: string[]
+  video_event: string | null
+  video_city: string | null
+  video_country: string | null
   venue: string | null
   video_date: string | null
   thumbnail_url: string | null
@@ -276,7 +281,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<GalleryImageRow[]>(),
     supabase
       .from("dj_sets")
-      .select("id, title, performance_type, performance_artists, custom_performance_type, title_override, venue, event, set_date, image_url, platform_url, sort_order, is_published")
+      .select("id, title, performance_type, performance_artists, custom_performance_type, title_override, venue, event, set_date, city, image_url, platform_url, sort_order, is_published")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<DjSetRow[]>(),
