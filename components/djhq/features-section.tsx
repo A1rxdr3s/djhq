@@ -2,7 +2,6 @@ import Link from "next/link"
 import {
   ArrowRight,
   CalendarCheck,
-  Clock,
   Disc3,
   Download,
   Globe,
@@ -14,181 +13,190 @@ import {
   Zap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { SectionHeader } from "@/components/djhq/section-header"
 
 const contextCards = [
   {
     icon: User2,
-    title: "Artist Identity",
-    description: "Bio, genres, base city, and social links — everything a booker needs in one glance.",
-  },
-  {
-    icon: Play,
-    title: "DJ Sets & Mixes",
-    description: "Featured and archived sets with artwork, metadata, and streaming links.",
+    label: "Artist Profile",
+    desc: "Bio, genres, location, and social links — in one read.",
   },
   {
     icon: Disc3,
-    title: "Releases",
-    description: "Latest and catalog releases with label, date, and buy/stream links.",
+    label: "Releases",
+    desc: "Catalog with label, date, and streaming links.",
   },
   {
     icon: CalendarCheck,
-    title: "Shows",
-    description: "Upcoming gigs with venue, city, and ticket links. Always current.",
+    label: "Shows",
+    desc: "Upcoming gigs with venue, city, and ticket links.",
+  },
+  {
+    icon: Play,
+    label: "DJ Sets",
+    desc: "Performance archive with artwork and streaming.",
+  },
+  {
+    icon: Play,
+    label: "Videos",
+    desc: "Live performance recordings and music videos.",
   },
   {
     icon: ImageIcon,
-    title: "Press Photos",
-    description: "High-res gallery with precise crop control — ready for promoters to download.",
+    label: "Gallery",
+    desc: "High-res press photos, ready for promoters.",
   },
   {
     icon: Download,
-    title: "Press Kit",
-    description: "One-click EPK download. Everything a label or promoter needs, packaged.",
+    label: "Press Kit",
+    desc: "One-click EPK — bio, photos, technical rider.",
   },
   {
     icon: Link2,
-    title: "Booking & Contact",
-    description: "Direct booking links, management contact, and all social handles in one place.",
+    label: "Booking",
+    desc: "Direct contact, management, and all social handles.",
   },
 ]
 
 const workflowCards = [
   {
-    icon: Globe,
-    title: "Custom domain",
-    description: "Use your own domain. Your name, your URL, your brand.",
+    icon: Zap,
+    label: "Send to promoters",
+    desc: "Everything they need. One link, no follow-up email.",
   },
   {
-    icon: Zap,
-    title: "Import from link",
-    description: "Paste a YouTube, SoundCloud, or Beatport URL. Fields fill themselves.",
+    icon: Globe,
+    label: "Your own domain",
+    desc: "Use your URL. Your name, your brand.",
   },
   {
     icon: Smartphone,
-    title: "Any screen, any context",
-    description: "Looks right on a phone link, a desktop deep-dive, or a booking email.",
+    label: "Updated once, everywhere",
+    desc: "Change it in your dashboard. Your page is live instantly.",
   },
   {
-    icon: Clock,
-    title: "Live in minutes",
-    description: "No design tools, no waiting. Your profile is live as soon as you save.",
+    icon: ImageIcon,
+    label: "Always looks right",
+    desc: "On a phone, on desktop, embedded in a booking email.",
   },
 ]
 
 export function FeaturesSection() {
   return (
-    <div id="product">
-      {/* One link. Full artist context. */}
-      <section className="py-20">
+    <div id="product" className="space-y-0">
+      {/* What DJHQ brings together */}
+      <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="text-xs font-medium uppercase tracking-widest text-accent">What&apos;s on your page</span>
-            <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              One link. Full artist context.
-            </h2>
-            <p className="mt-4 text-balance text-sm leading-relaxed text-muted-foreground">
-              Every section a booker, label, or promoter might need — structured so nothing gets buried.
-            </p>
-          </div>
+          <SectionHeader variant="primary">What DJHQ brings together</SectionHeader>
+          <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground/75">
+            Everything a promoter, label, or fan needs — structured so nothing gets buried.
+          </p>
 
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {contextCards.map((card) => (
               <div
-                key={card.title}
-                className="rounded-xl border border-border/60 bg-card/60 p-5 transition-colors hover:border-accent/40"
+                key={card.label}
+                className="group rounded-[1.5rem] border border-white/[0.06] bg-white/[0.02] p-5 transition-colors duration-200 hover:border-accent/25 hover:bg-white/[0.035]"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                  <card.icon className="h-5 w-5 text-accent" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                    <card.icon className="h-4 w-4 text-accent" />
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">{card.label}</p>
                 </div>
-                <h3 className="mt-4 text-sm font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{card.description}</p>
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground/55">{card.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Built for real DJ workflows */}
-      <section className="border-t border-border/50 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="text-xs font-medium uppercase tracking-widest text-accent">How it works</span>
-            <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Built for real DJ workflows.
-            </h2>
-          </div>
+      {/* Divider */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+      </div>
 
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Built for real artist workflows */}
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeader>Built for real artist workflows</SectionHeader>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {workflowCards.map((card) => (
               <div
-                key={card.title}
-                className="rounded-xl border border-border/60 bg-card/60 p-5 transition-colors hover:border-accent/40"
+                key={card.label}
+                className="rounded-[1.5rem] border border-white/[0.06] bg-white/[0.02] p-5 transition-colors duration-200 hover:border-accent/25 hover:bg-white/[0.035]"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                  <card.icon className="h-5 w-5 text-accent" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
+                  <card.icon className="h-4 w-4 text-accent" />
                 </div>
-                <h3 className="mt-4 text-sm font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{card.description}</p>
+                <p className="mt-3.5 text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">{card.label}</p>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground/55">{card.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* See a real DJHQ profile */}
-      <section className="border-t border-border/50 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 px-8 py-14 text-center sm:px-12">
-            <div className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.04] blur-[100px]" />
-            <span className="relative text-xs font-medium uppercase tracking-widest text-accent">Live example</span>
-            <h2 className="relative mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              See a real DJHQ profile.
-            </h2>
-            <p className="relative mt-3 text-sm text-muted-foreground">
-              Browse a live artist page — no signup required.
-            </p>
-            <div className="relative mt-8">
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-11 border-border/60 px-8 text-sm text-foreground hover:bg-secondary/60"
-              >
-                <Link href="/andresherrera">
-                  View ANDRES:HERRERA
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Divider */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+      </div>
 
-      {/* Request Access */}
-      <section className="border-t border-border/50 py-20">
+      {/* Live example + Request Access — two-column on desktop */}
+      <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl border border-accent/20 bg-accent/[0.04] px-8 py-14 text-center sm:px-12">
-            <div className="pointer-events-none absolute left-1/2 top-0 h-[240px] w-[480px] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[100px]" />
-            <span className="relative text-xs font-semibold uppercase tracking-widest text-accent">Early access</span>
-            <h2 className="relative mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              DJHQ is opening gradually.
-            </h2>
-            <p className="relative mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-              We&apos;re onboarding artists by hand. No open signup — every profile is reviewed before it goes live.
-            </p>
-            <div className="relative mt-8">
-              <Button
-                asChild
-                size="lg"
-                className="h-11 bg-accent px-8 text-sm font-semibold text-accent-foreground hover:bg-accent/90"
-              >
-                <a href="mailto:access@djhq.co">
-                  Request Access
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+
+            {/* Live Example */}
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-white/[0.02] px-7 py-8 sm:px-8 sm:py-10">
+              <div className="pointer-events-none absolute left-1/2 top-0 h-[180px] w-[320px] -translate-x-1/2 rounded-full bg-accent/[0.05] blur-[70px]" />
+              <div className="relative">
+                <SectionHeader>Live Example</SectionHeader>
+                <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.02em] text-foreground sm:text-3xl">
+                  ANDRES:HERRERA
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground/70">
+                  Browse a live DJHQ artist profile — no signup required.
+                </p>
+                <p className="mt-2 font-mono text-[11px] text-accent/50">djhq.com/andresherrera</p>
+                <div className="mt-6">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-white/[0.10] bg-transparent text-sm hover:bg-white/[0.05]"
+                  >
+                    <Link href="/andresherrera">
+                      View Profile
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             </div>
+
+            {/* Request Access */}
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-accent/20 bg-accent/[0.03] px-7 py-8 sm:px-8 sm:py-10">
+              <div className="pointer-events-none absolute left-1/2 top-0 h-[180px] w-[320px] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[70px]" />
+              <div className="relative">
+                <SectionHeader variant="primary">Early Access</SectionHeader>
+                <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.02em] text-foreground sm:text-3xl">
+                  DJHQ is opening gradually.
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground/70">
+                  We&apos;re onboarding artists by hand. Every profile is reviewed before it goes live.
+                </p>
+                <div className="mt-6">
+                  <Button asChild className="bg-accent text-sm text-accent-foreground hover:bg-accent/90">
+                    <a href="mailto:access@djhq.co">
+                      Request Access
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
