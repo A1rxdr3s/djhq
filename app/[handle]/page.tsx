@@ -996,28 +996,36 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
                         Featured Show
                       </p>
-                      {/* Artist name as primary headline, event as secondary */}
-                      <h3 className="mt-2 text-balance text-xl font-black leading-tight tracking-[-0.01em] text-foreground">
-                        {artist.artistName}
-                      </h3>
-                      <p className="mt-1 text-balance text-sm font-semibold tracking-[0.01em] text-foreground/55">
+                      {/* Event name — poster-style uppercase primary title, no artist */}
+                      <h3 className="mt-2 text-balance text-2xl font-black uppercase leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
-                      </p>
-                      {(() => {
-                        const meta = formatPerformanceMetadata(featuredSet.event, featuredSet.venue, formatReleaseDate(featuredSet.setDate ?? ""))
-                        return meta ? <p className="mt-1.5 text-[13px] text-white/35">{meta}</p> : null
-                      })()}
-                      <span className="mt-4 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
+                      </h3>
+                      {/* Venue — separate editorial line, only when event and venue differ */}
+                      {featuredSet.venue?.trim() && featuredSet.event?.trim() ? (
+                        <p className="mt-3 text-sm font-medium text-white/50">
+                          {featuredSet.venue.trim()}
+                        </p>
+                      ) : null}
+                      {/* Date — uppercase, tracked, very muted */}
+                      {featuredSet.setDate ? (
+                        <p className={cn(
+                          "text-[11px] font-semibold uppercase tracking-[0.18em] text-white/28",
+                          featuredSet.venue?.trim() && featuredSet.event?.trim() ? "mt-1.5" : "mt-3",
+                        )}>
+                          {formatReleaseDate(featuredSet.setDate)?.replace(",", "").toUpperCase() ?? ""}
+                        </p>
+                      ) : null}
+                      <span className="mt-5 inline-flex h-8 w-fit items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
                         WATCH PERFORMANCE ↗
                       </span>
                     </div>
                   </a>
 
-                  {/* Selected Shows — curated list */}
+                  {/* Highlights — curated list */}
                   {recentSets.length > 0 ? (
                     <div className="border-t border-white/[0.04] px-4 pb-4 sm:px-6 sm:pb-5">
                       <p className="pb-1.5 pt-3.5 text-[9px] font-medium uppercase tracking-[0.22em] text-foreground/22">
-                        Selected Shows
+                        Highlights
                       </p>
                       <div className="space-y-0.5">
                         {recentSets.map((set, index) => {
@@ -1034,13 +1042,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                               <span className="w-5 shrink-0 text-right font-mono text-[10px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/35">
                                 {String(index + 1).padStart(2, "0")}
                               </span>
-                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-secondary">
+                              <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl bg-secondary">
                                 {set.imageUrl ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={set.imageUrl}
                                     alt=""
-                                    className="h-full w-full object-cover"
+                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
                                   />
                                 ) : (
                                   <div className="absolute inset-0 flex items-center justify-center bg-white/[0.04]">
@@ -1050,18 +1058,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                {/* Editorial layout: artist eyebrow + show name */}
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent/55">
-                                  {artist.artistName}
-                                </p>
-                                <p className="mt-0.5 truncate text-sm font-semibold text-foreground/90 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-foreground">
+                                <p className="truncate text-sm font-semibold text-white transition-all duration-150 group-hover:translate-x-0.5">
                                   {showTitle}
                                 </p>
                                 {showMeta ? (
-                                  <p className="mt-0.5 truncate text-[11px] text-white/32">{showMeta}</p>
+                                  <p className="mt-0.5 truncate text-sm text-white/35">{showMeta}</p>
                                 ) : null}
                               </div>
-                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent/65" />
+                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-accent/35 opacity-50 transition-all duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100 group-hover:text-accent/65" />
                             </a>
                           )
                         })}
