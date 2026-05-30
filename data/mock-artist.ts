@@ -88,6 +88,12 @@ export const mockArtist: Artist = {
       focalY: 50,
     },
   ],
+  playlist: {
+    title: "STATE OF HOUSE SELECTIONS",
+    url: "https://open.spotify.com/playlist/000001",
+    source: "spotify",
+    artworkUrl: "/placeholder.jpg",
+  },
   bookingInfo: {
     email: "booking@andresherrera.com",
     bookingUrl: "https://www.andresherrera.com/booking",

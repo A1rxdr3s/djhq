@@ -26,6 +26,8 @@ import { getAccentTheme } from "@/lib/accent-themes"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
+import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
+import { JoinTheFamily } from "@/components/djhq/join-the-family"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -1059,6 +1061,22 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </section>
         ) : null}
+
+        {artist.playlist && (
+          <section className="mt-10 lg:mt-14">
+            <SectionHeader>Selected Tracks</SectionHeader>
+            <div className="mt-4">
+              <SelectedTracksSection playlist={artist.playlist} />
+            </div>
+          </section>
+        )}
+
+        <section className="mt-10 lg:mt-14">
+          <SectionHeader>Join the Family</SectionHeader>
+          <div className="mt-4">
+            <JoinTheFamily />
+          </div>
+        </section>
 
         <footer className="py-10 text-center sm:py-12">
           <Link

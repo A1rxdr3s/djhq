@@ -299,6 +299,26 @@ export interface GalleryImage {
 }
 
 /**
+ * Supported streaming sources for a curated playlist.
+ */
+export type PlaylistSource = "spotify" | "soundcloud"
+
+/**
+ * Curated playlist the artist showcases on their profile.
+ * MVP: one playlist per artist, rendered as a preview card.
+ */
+export interface Playlist {
+  /** Display title of the playlist. */
+  title: string
+  /** Public URL to the playlist on the streaming platform. */
+  url: string
+  /** Source streaming platform. */
+  source: PlaylistSource
+  /** Optional playlist cover artwork URL. */
+  artworkUrl?: string
+}
+
+/**
  * Artist booking contact details.
  */
 export interface BookingInfo {
@@ -364,6 +384,8 @@ export interface Artist {
   videos: Video[]
   /** Gallery preview images. */
   galleryImages: GalleryImage[]
+  /** Optional curated playlist shown on the profile. Hidden when absent. */
+  playlist?: Playlist
   /** Booking configuration and contact info. */
   bookingInfo: BookingInfo
   /** Press kit configuration. */
