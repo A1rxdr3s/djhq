@@ -49,16 +49,16 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
             </div>
           ) : (
             <>
-              <h2 className="text-[1.75rem] font-black leading-none tracking-[-0.02em] text-foreground sm:text-[2.25rem]">
+              <h2 className="text-[1.3rem] font-black leading-none tracking-[-0.02em] text-foreground sm:text-[2.25rem]">
                 GET ON THE LIST
               </h2>
 
               {/* 2×2 benefits grid — visual anchor of the section */}
-              <div className="mx-auto mt-5 grid max-w-[300px] grid-cols-2 gap-x-6 gap-y-0 sm:max-w-[360px]">
+              <div className="mx-auto mt-3 grid max-w-[300px] grid-cols-2 gap-x-6 gap-y-0 sm:mt-5 sm:max-w-[360px]">
                 {["Guest Lists", "Early Access", "Free Downloads", "New Music"].map((benefit) => (
                   <div
                     key={benefit}
-                    className="border-t border-white/[0.07] py-3 text-left"
+                    className="border-t border-white/[0.07] py-1.5 text-left sm:py-3"
                   >
                     <p className="text-[0.82rem] font-black uppercase leading-none tracking-[-0.01em] text-foreground/78 sm:text-[1rem]">
                       {benefit}
@@ -71,7 +71,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
               <form
                 onSubmit={handleSubmit}
                 noValidate
-                className="mx-auto mt-3 flex max-w-[300px] items-center gap-2.5 sm:max-w-[360px]"
+                className="mx-auto mt-2 flex max-w-[300px] items-center gap-2.5 sm:mt-3 sm:max-w-[360px]"
               >
                 <input
                   type="email"
@@ -105,7 +105,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
                   Please enter a valid email address.
                 </p>
               ) : (
-                <p className="mt-2.5 text-[10px] text-white/18">
+                <p className="mt-1.5 text-[10px] text-white/18 sm:mt-2.5">
                   Occasional updates only.
                 </p>
               )}

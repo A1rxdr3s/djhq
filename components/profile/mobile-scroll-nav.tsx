@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils"
 
 const SECTIONS = [
   { id: "shows",       label: "Shows"       },
+  { id: "media",       label: "Moments"     },
   { id: "music",       label: "Music"       },
   { id: "performance", label: "Performance" },
-  { id: "media",       label: "Media"       },
   { id: "contact",     label: "Contact"     },
 ] as const
 
