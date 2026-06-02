@@ -6,17 +6,23 @@ import { Music2 } from "lucide-react"
 import type { Release } from "@/types/djhq"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
 
+// Number of recent releases shown in the always-visible carousel strip
+const CAROUSEL_LIMIT = 6
+
 type Props = {
   featured: Release | null
   all: Release[]
 }
 
 export function CollapsibleMobileReleases({ featured, all }: Props) {
-  const [expanded, setExpanded] = useState(false)
+  const [viewAll, setViewAll] = useState(false)
 
   if (!featured && all.length === 0) return null
 
-  const hasMore = all.length > (featured ? 1 : 0)
+  // all[0] is featured (shown in the card above); rest are non-featured
+  const recentReleases = all.slice(1, CAROUSEL_LIMIT + 1)
+  const remainingReleases = all.slice(CAROUSEL_LIMIT + 1)
+  const hasMore = remainingReleases.length > 0
 
   return (
     <div>
@@ -63,22 +69,29 @@ export function CollapsibleMobileReleases({ featured, all }: Props) {
         </a>
       )}
 
-      {/* Expand / collapse toggle */}
-      {hasMore && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/50 transition-colors duration-150 hover:text-accent"
-        >
-          {expanded ? "Collapse ↑" : "View All Releases →"}
-        </button>
+      {/* Recent releases carousel — always visible, 4–6 items */}
+      {recentReleases.length > 0 && (
+        <div className="mt-4">
+          <SelectedReleasesCarousel releases={recentReleases} />
+        </div>
       )}
 
-      {/* Full catalog — shown when expanded */}
-      {expanded && (
-        <div className="mt-3">
-          <SelectedReleasesCarousel releases={all} />
+      {/* Remaining releases — shown when expanded */}
+      {viewAll && remainingReleases.length > 0 && (
+        <div className="mt-2">
+          <SelectedReleasesCarousel releases={remainingReleases} />
         </div>
+      )}
+
+      {/* View All CTA — gateway to full discography */}
+      {hasMore && !viewAll && (
+        <button
+          type="button"
+          onClick={() => setViewAll(true)}
+          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/50 transition-colors duration-150 hover:text-accent"
+        >
+          View All Releases →
+        </button>
       )}
     </div>
   )
