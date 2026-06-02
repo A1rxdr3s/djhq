@@ -37,7 +37,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
       <div className="mx-auto max-w-7xl">
 
         {/* ── Layer 1 + 2: Newsletter ── */}
-        <div className="py-6 text-center sm:py-8">
+        <div className="py-4 text-center sm:py-8">
           {status === "success" ? (
             <div>
               <p className="text-[1.5rem] font-black tracking-[-0.02em] text-foreground">
@@ -113,25 +113,39 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
           )}
         </div>
 
-        {/* ── Layer 3: Artist signature ── */}
-        <div className="border-t border-white/[0.04] pt-5 sm:pt-6">
-          <div className="lg:flex lg:items-start lg:justify-between">
+        {/* ── Layer 3: Artist signature — mobile: centered minimal / desktop: two-column ── */}
 
-            {/* Left: name + location */}
+        {/* Mobile: centered, no location */}
+        <div className="border-t border-white/[0.04] py-5 text-center lg:hidden">
+          <p className="text-[0.9rem] font-black uppercase leading-none tracking-[-0.02em] text-foreground/82">
+            {artistName}
+          </p>
+          {hasBooking && (
+            <a
+              href={`mailto:${bookingEmail}`}
+              className="mt-2.5 block text-[11px] text-white/35 transition-colors duration-150 hover:text-accent"
+            >
+              {bookingEmail}
+            </a>
+          )}
+          <p className="mt-2.5 text-[10px] text-white/16">
+            © {year} {artistName}
+          </p>
+        </div>
+
+        {/* Desktop: two-column layout, with location */}
+        <div className="hidden border-t border-white/[0.04] pt-5 sm:pt-6 lg:block">
+          <div className="flex items-start justify-between">
             <div>
               <p className="text-[0.95rem] font-black uppercase leading-none tracking-[-0.02em] text-foreground/85">
                 {artistName}
               </p>
               {locationStr && (
-                <p className="mt-1.5 text-[11px] text-white/28">
-                  {locationStr}
-                </p>
+                <p className="mt-1.5 text-[11px] text-white/28">{locationStr}</p>
               )}
             </div>
-
-            {/* Right: booking */}
             {hasBooking && (
-              <div className="mt-4 lg:mt-0 lg:text-right">
+              <div className="text-right">
                 <p className="text-[9px] font-semibold uppercase tracking-[0.20em] text-white/22">
                   Booking
                 </p>
@@ -143,10 +157,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
                 </a>
               </div>
             )}
-
           </div>
-
-          {/* Copyright — full width below both columns */}
           <p className="mt-4 pb-6 text-[10px] text-white/16 sm:pb-7">
             © {year} {artistName}
           </p>

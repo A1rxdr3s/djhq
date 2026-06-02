@@ -1072,7 +1072,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           {/* Upcoming Gigs → Live tab */}
           {upcomingGigs.length > 0 && (
             <MobileSection tab="live" id="shows" className="lg:col-start-2 lg:row-start-2">
-              <GigsSection gigs={upcomingGigs} />
+              {/* Mobile: skip first gig — already shown in the Highlights card */}
+              <div className="lg:hidden">
+                <GigsSection gigs={upcomingGigs.slice(1)} />
+              </div>
+              {/* Desktop: all gigs */}
+              <div className="hidden lg:block">
+                <GigsSection gigs={upcomingGigs} />
+              </div>
             </MobileSection>
           )}
 
@@ -1226,11 +1233,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 </div>
               ) : null}
 
-              {/* ── Right: Featured Show ── */}
+              {/* ── Right: Featured Show — hidden on mobile (shown in Highlights card) ── */}
               {featuredSet ? (
                 <div
                   className={cn(
-                    "flex flex-col",
+                    "max-lg:hidden flex flex-col",
                     featuredVideo && "border-t border-white/[0.03] lg:border-t-0 lg:border-l lg:border-white/[0.03]",
                   )}
                 >
