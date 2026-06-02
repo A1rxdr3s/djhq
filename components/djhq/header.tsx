@@ -3,40 +3,36 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/[0.04] bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-accent">
-            <span className="text-sm font-bold text-accent-foreground">DJ</span>
-          </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">DJHQ</span>
+
+        {/* Wordmark */}
+        <Link
+          href="/"
+          className="font-mono text-[13px] font-bold uppercase tracking-[0.20em] text-foreground"
+        >
+          DJHQ
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-8 md:flex">
-          <Link href="/andresherrera" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Example
-          </Link>
-          <Link href="#product" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Features
-          </Link>
-        </nav>
-
-        {/* Desktop CTA */}
-        <div className="hidden items-center gap-4 md:flex">
-          <Link href="/sign-in" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+        {/* Desktop right */}
+        <div className="hidden items-center gap-6 md:flex">
+          <Link
+            href="/sign-in"
+            className="text-[12px] text-white/38 transition-colors hover:text-white/65"
+          >
             Login
           </Link>
-          <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <a href="mailto:access@djhq.co">Request Access</a>
-          </Button>
+          <a
+            href="mailto:access@djhq.co"
+            className="inline-flex h-9 items-center rounded-full bg-accent px-5 text-[12px] font-bold uppercase tracking-[0.08em] text-accent-foreground transition-all duration-150 hover:bg-accent/90"
+          >
+            Request Access
+          </a>
         </div>
 
         {/* Mobile menu button */}
@@ -49,32 +45,31 @@ export function Header() {
           aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? (
-            <X className="h-6 w-6 text-foreground" />
+            <X className="h-5 w-5 text-white/50" />
           ) : (
-            <Menu className="h-6 w-6 text-foreground" />
+            <Menu className="h-5 w-5 text-white/50" />
           )}
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="border-t border-border bg-background md:hidden">
+        <div className="border-t border-white/[0.04] bg-background md:hidden">
           <nav id="mobile-navigation" className="flex flex-col gap-4 px-4 py-6">
-            <Link href="/andresherrera" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
-              Example
-            </Link>
-            <Link href="#product" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
-              Features
-            </Link>
-            <hr className="border-border" />
-            <Link href="/sign-in" className="text-sm text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <Link
+              href="/sign-in"
+              className="text-[13px] text-white/38"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Login
             </Link>
-            <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              <a href="mailto:access@djhq.co" onClick={() => setMobileMenuOpen(false)}>
-                Request Access
-              </a>
-            </Button>
+            <a
+              href="mailto:access@djhq.co"
+              className="inline-flex h-10 items-center justify-center rounded-full bg-accent text-[12px] font-bold uppercase tracking-[0.08em] text-accent-foreground"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Request Access
+            </a>
           </nav>
         </div>
       )}

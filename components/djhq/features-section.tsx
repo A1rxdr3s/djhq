@@ -1,189 +1,255 @@
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
-const pillars = [
+const fragments = [
+  "Linktree",
+  "Dropbox folders",
+  "Press PDFs",
+  "Booking PDFs",
+  "Random social links",
+  "Old SoundCloud pages",
+]
+
+const contentBlocks = [
   {
-    label: "Music",
-    body: "Releases, selected tracks, DJ sets and streaming links in one place.",
-    items: ["Release catalog", "Streaming links", "Performance archive", "Selected tracks"],
+    num: "01",
+    name: "Releases",
+    desc: "Latest music, labels, artwork and streaming links.",
   },
   {
-    label: "Live",
-    body: "Upcoming shows, past performances, video archive and venue context.",
-    items: ["Upcoming shows", "Past gigs", "Video archive", "Ticket links"],
+    num: "02",
+    name: "Shows",
+    desc: "Upcoming gigs, venues, tickets and performance history.",
   },
   {
-    label: "Press",
-    body: "Photos, bio, press kit, booking contact and assets ready to share.",
-    items: ["Artist bio", "Press photos", "One-click EPK", "Booking contact"],
+    num: "03",
+    name: "Videos",
+    desc: "Live recordings and artist content.",
+  },
+  {
+    num: "04",
+    name: "Press Kit",
+    desc: "Bio, photography and technical information.",
+  },
+  {
+    num: "05",
+    name: "Booking",
+    desc: "Management, contacts and direct inquiries.",
   },
 ]
 
-const steps = [
-  {
-    step: "01",
-    label: "Build your artist HQ",
-    body: "Profile, links, releases, shows, media and press kit.",
-  },
-  {
-    step: "02",
-    label: "Share one URL",
-    body: "Send it to promoters, clubs, labels, festivals and fans.",
-  },
-  {
-    step: "03",
-    label: "Keep it current",
-    body: "Update once. Your public profile stays ready.",
-  },
+const metrics = [
+  { value: "38", label: "Performances" },
+  { value: "12", label: "Releases" },
+  { value: "4",  label: "Countries" },
+  { value: "1",  label: "Public Profile" },
 ]
 
 export function FeaturesSection() {
   return (
-    <div id="product">
+    <div>
 
-      {/* ── Thin rule ── */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-      </div>
-
-      {/* ── Editorial pillars ── */}
-      <section className="py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-
-          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/55">
-            What&apos;s inside
-          </p>
-          <h2 className="mt-4 max-w-xl text-balance text-2xl font-black leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[1.75rem]">
-            Everything a promoter needs,{" "}
-            <span className="text-white/45">without sending five links.</span>
-          </h2>
-
-          {/* Three-column pillar grid — editorial, no card boxes */}
-          <div className="mt-12 sm:grid sm:grid-cols-3">
-            {pillars.map((pillar, i) => (
-              <div
-                key={pillar.label}
-                className={[
-                  "relative overflow-hidden py-8 sm:px-8 lg:px-10 lg:py-10",
-                  i > 0 ? "border-t border-white/[0.04] sm:border-t-0 sm:border-l sm:border-white/[0.04]" : "",
-                ].join(" ")}
-              >
-                {/* Ghost number — large editorial background digit */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute right-0 top-0 select-none font-mono text-[8rem] font-black leading-none text-white/[0.022]"
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-
-                <p className="text-[9px] font-bold uppercase tracking-[0.32em] text-accent/50">
-                  {pillar.label}
-                </p>
-                <p className="mt-4 text-[14px] leading-[1.65] text-white/48">
-                  {pillar.body}
-                </p>
-                <ul className="mt-7 space-y-2.5">
-                  {pillar.items.map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-[12px] text-white/32">
-                      <span className="h-px w-4 shrink-0 bg-accent/28" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── Thin rule ── */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-      </div>
-
-      {/* ── Three-step workflow ── */}
-      <section className="py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-
-          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/55">
-            How it works
-          </p>
-
-          <div className="relative mt-12 grid gap-10 sm:grid-cols-3 sm:gap-12">
-            {/* Horizontal connector line — desktop only, sits at dot center */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute left-0 right-0 top-[5px] hidden h-px bg-white/[0.06] sm:block"
-            />
-
-            {steps.map((s, i) => (
-              <div key={s.step}>
-                {/* Dot indicator */}
-                <div
-                  aria-hidden
-                  className={[
-                    "relative mb-4 h-[10px] w-[10px] rounded-full ring-1",
-                    i === 0
-                      ? "bg-accent/40 ring-accent/25"
-                      : "bg-white/[0.06] ring-white/[0.08]",
-                  ].join(" ")}
-                />
-                <p className="font-mono text-[10px] tracking-[0.24em] text-accent/30">
-                  {s.step}
-                </p>
-                <p className="mt-3 text-[15px] font-bold tracking-[-0.005em] text-foreground/88">
-                  {s.label}
-                </p>
-                <p className="mt-2 text-[13px] leading-[1.65] text-white/38">
-                  {s.body}
-                </p>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── Thin rule ── */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-      </div>
-
-      {/* ── Final CTA ── */}
+      {/* ─────────────────────────────────────────── */}
+      {/* SECTION 2 — Problem                        */}
+      {/* ─────────────────────────────────────────── */}
       <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/55">
-            DJHQ
-          </p>
-          <h2 className="mt-4 max-w-sm text-balance text-2xl font-black leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[1.75rem]">
-            <span className="block">See the profile.</span>
-            <span className="block text-white/42">Request access when ready.</span>
-          </h2>
-          {/* Accent rule under split headline */}
-          <div className="mt-4 h-px w-10 bg-accent/35" />
+          {/* Thin rule */}
+          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
-          <p className="mt-5 max-w-xs text-[14px] leading-[1.65] text-white/35">
-            DJHQ is opening gradually for selected artists.
-          </p>
+          <div className="pt-20 sm:pt-28 lg:grid lg:grid-cols-2 lg:gap-20">
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              href="/andresherrera"
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/[0.10] px-6 text-[13px] font-medium text-white/60 transition-all duration-150 hover:border-white/[0.22] hover:text-white/90"
-            >
-              View ANDRES:HERRERA
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            <a
-              href="mailto:access@djhq.co"
-              className="inline-flex h-11 items-center rounded-full bg-accent px-7 text-[13px] font-bold uppercase tracking-[0.08em] text-accent-foreground transition-all duration-150 hover:bg-accent/90 hover:[box-shadow:0_0_28px_color-mix(in_srgb,var(--accent)_25%,transparent)]"
-            >
-              Request Access
-            </a>
+            {/* Left: headline + strikethrough list */}
+            <div>
+              <h2 className="max-w-sm text-[2rem] font-black leading-[1.05] tracking-[-0.025em] text-foreground sm:text-[2.5rem]">
+                Artists don&apos;t need<br />
+                five different links.
+              </h2>
+
+              <ul className="mt-10 space-y-0">
+                {fragments.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-4 border-b border-white/[0.04] py-3"
+                  >
+                    <span className="font-mono text-[11px] text-white/22">×</span>
+                    <span className="text-[1.05rem] font-semibold text-white/22 line-through decoration-white/[0.12] decoration-1 sm:text-[1.2rem]">
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Right: strong editorial statement */}
+            <div className="mt-14 flex flex-col justify-center lg:mt-0">
+              <p className="max-w-sm text-[16px] leading-[1.75] text-white/40">
+                Promoters, clubs, labels and festivals should find everything
+                in one place. Not scattered across six different links and
+                email threads.
+              </p>
+              <p className="mt-6 max-w-sm text-[16px] leading-[1.75] text-white/40">
+                One URL. Everything current.
+              </p>
+            </div>
+
           </div>
+        </div>
+      </section>
 
+      {/* ─────────────────────────────────────────── */}
+      {/* SECTION 3 — Content blocks                 */}
+      {/* ─────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+          {/* Thin rule */}
+          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
+          <div className="pt-20 sm:pt-28">
+            <h2 className="max-w-lg text-[2rem] font-black leading-[1.05] tracking-[-0.025em] text-foreground sm:text-[2.5rem]">
+              Everything needed<br />
+              to get booked.
+            </h2>
+
+            <div className="mt-12">
+              {contentBlocks.map((block) => (
+                <div
+                  key={block.num}
+                  className="grid border-t border-white/[0.05] py-7 sm:grid-cols-[4rem_1fr_auto] sm:items-baseline sm:gap-10 md:grid-cols-[5rem_16rem_1fr]"
+                >
+                  <span className="mb-2 font-mono text-[10px] tracking-[0.22em] text-white/18 sm:mb-0">
+                    {block.num}
+                  </span>
+                  <p className="text-[1.15rem] font-black uppercase tracking-[-0.01em] text-foreground sm:text-[1.3rem]">
+                    {block.name}
+                  </p>
+                  <p className="mt-1.5 text-[14px] leading-[1.65] text-white/38 sm:mt-0">
+                    {block.desc}
+                  </p>
+                </div>
+              ))}
+              <div className="h-px bg-white/[0.05]" />
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────── */}
+      {/* SECTION 4 — Case study                     */}
+      {/* ─────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+          {/* Thin rule */}
+          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
+          <div className="pt-20 sm:pt-28">
+
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-accent/55">
+              A working example
+            </p>
+
+            {/* Two-column: editorial left, photo right */}
+            <div className="mt-6 lg:grid lg:grid-cols-[1fr_auto] lg:items-start lg:gap-16">
+
+              <div>
+                {/* Large artist name as headline */}
+                <h2 className="text-[3rem] font-black uppercase leading-[0.95] tracking-[-0.03em] text-foreground sm:text-[4.5rem] lg:text-[5.5rem]">
+                  ANDRES:<br />HERRERA
+                </h2>
+
+                {/* Metrics strip */}
+                <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-white/[0.05] pt-8 sm:grid-cols-4">
+                  {metrics.map((m) => (
+                    <div key={m.label}>
+                      <p className="text-[2.2rem] font-black leading-none tracking-[-0.02em] text-foreground sm:text-[2.8rem]">
+                        {m.value}
+                      </p>
+                      <p className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.22em] text-white/32">
+                        {m.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Editorial paragraph */}
+                <p className="mt-10 max-w-md text-[15px] leading-[1.78] text-white/40">
+                  One public profile centralizes everything that promoters,
+                  venues and fans need — releases, shows, press assets and
+                  booking contact. All current, all in one URL.
+                </p>
+
+                <Link
+                  href="/andresherrera"
+                  className="mt-7 inline-flex items-center gap-2 text-[12px] font-medium text-white/45 transition-colors hover:text-white/75"
+                >
+                  View profile
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              {/* Editorial photo — constrained, not dominant */}
+              <div className="relative mt-14 lg:mt-0 lg:w-[260px] xl:w-[300px]">
+                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl">
+                  <Image
+                    src="/images/dj-hero.jpg"
+                    alt="ANDRES:HERRERA"
+                    fill
+                    sizes="300px"
+                    className="object-cover object-[center_15%]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent" />
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────── */}
+      {/* SECTION 5 — Closing CTA                    */}
+      {/* ─────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+          {/* Thin rule */}
+          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
+          <div className="pt-20 sm:pt-28">
+
+            <h2 className="max-w-sm text-[2rem] font-black leading-[1.05] tracking-[-0.025em] text-foreground sm:text-[2.5rem]">
+              <span className="block">One profile.</span>
+              <span className="block text-white/38">Always current.</span>
+            </h2>
+            <div className="mt-4 h-px w-10 bg-accent/35" />
+
+            <p className="mt-7 max-w-xs text-[15px] leading-[1.72] text-white/38">
+              Update once. Everything stays ready for promoters, festivals
+              and fans.
+            </p>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                href="/andresherrera"
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-white/[0.10] px-6 text-[13px] font-medium text-white/55 transition-all duration-150 hover:border-white/[0.22] hover:text-white/85"
+              >
+                View Live Example
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <a
+                href="mailto:access@djhq.co"
+                className="inline-flex h-11 items-center rounded-full bg-accent px-7 text-[13px] font-bold uppercase tracking-[0.08em] text-accent-foreground transition-all duration-150 hover:bg-accent/90 hover:[box-shadow:0_0_28px_color-mix(in_srgb,var(--accent)_25%,transparent)]"
+              >
+                Request Access
+              </a>
+            </div>
+
+          </div>
         </div>
       </section>
 
