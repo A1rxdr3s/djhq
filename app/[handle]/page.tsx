@@ -28,8 +28,7 @@ import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
-import { ConnectSection } from "@/components/djhq/connect-section"
-import { ArtistFooter } from "@/components/djhq/artist-footer"
+import { ProfileClosing } from "@/components/djhq/profile-closing"
 import { MobileTabManager, MobileSection, MobileArchive } from "@/components/profile/mobile-tab-manager"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
@@ -1359,14 +1358,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        {/* Connect → Community tab */}
-        <MobileSection tab="community">
-          <section className="mt-6 lg:mt-8">
-            <ConnectSection />
-          </section>
-        </MobileSection>
-
-        <ArtistFooter
+        <ProfileClosing
           artistName={artist.artistName}
           location={artist.location}
           bookingEmail={artist.bookingInfo.email}
