@@ -634,6 +634,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       if (timeB === null) return -1
       return timeB - timeA
     })
+  // Mobile carousel includes the featured release as first item (its standalone card is hidden on mobile)
+  const mobileReleasesForDisplay = featuredRelease
+    ? [featuredRelease, ...selectedReleasesForDisplay]
+    : selectedReleasesForDisplay
   const upcomingGigs = artist.upcomingGigs
   const galleryImages = artist.galleryImages
   const featuredSet = artist.djSets[0] ?? null
@@ -688,7 +692,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   return (
     <>
       <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}`}</style>
-      <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      <main className="relative min-h-screen bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
           src={artist.heroImageUrl}
@@ -722,7 +726,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         )}
 
         <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
-          <div className="relative min-h-[340px] sm:min-h-[420px] lg:min-h-[540px]">
+          <div className="relative min-h-[500px] sm:min-h-[420px] lg:min-h-[540px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
@@ -1019,7 +1023,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8">
           {/* Featured Release → Music tab */}
           {featuredRelease && (
-          <MobileSection tab="music" id="music" className="max-lg:[order:3] lg:col-start-2 lg:row-start-1">
+          <MobileSection tab="music" className="max-lg:hidden lg:col-start-2 lg:row-start-1">
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-4">
             <SectionHeader>Featured Release</SectionHeader>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
@@ -1071,15 +1075,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
           {/* Upcoming Gigs → Live tab */}
           {upcomingGigs.length > 0 && (
-            <MobileSection tab="live" id="shows" className="max-lg:[order:2] lg:col-start-2 lg:row-start-2">
-              {/* Mobile: skip first gig — already shown in the Highlights card */}
-              <div className="lg:hidden">
-                <GigsSection gigs={upcomingGigs.slice(1)} />
-              </div>
-              {/* Desktop: all gigs */}
-              <div className="hidden lg:block">
-                <GigsSection gigs={upcomingGigs} />
-              </div>
+            <MobileSection tab="live" id="shows" className="lg:col-start-2 lg:row-start-2">
+              <GigsSection gigs={upcomingGigs} />
             </MobileSection>
           )}
 
