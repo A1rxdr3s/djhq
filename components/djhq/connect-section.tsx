@@ -53,7 +53,7 @@ export function ConnectSection() {
               placeholder="your@email.com"
               aria-label="Email address"
               className={cn(
-                "h-9 min-w-0 flex-1 border-b bg-transparent px-0 text-center text-[13px] text-foreground outline-none transition-colors duration-150 placeholder:text-white/20",
+                "h-9 min-w-0 flex-1 border-b bg-transparent px-0 text-[13px] text-foreground outline-none transition-colors duration-150 placeholder:text-white/20",
                 status === "error"
                   ? "border-red-500/40 focus:border-red-500/60"
                   : "border-white/[0.14] focus:border-accent/40",
