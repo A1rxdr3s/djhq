@@ -45,17 +45,13 @@ export function MobileTabManager({ children }: { children: React.ReactNode }) {
  * On mobile (< lg):  always visible — content is no longer tab-gated.
  *                    Pass `id` to register the section as a scroll-nav anchor.
  */
-export function MobileSection({
-  tab: _tab,
-  children,
-  className,
-  id,
-}: {
+export function MobileSection(props: {
   tab: MobileTab | MobileTab[]
   children: React.ReactNode
   className?: string
   id?: string
 }) {
+  const { children, className, id } = props
   return (
     <div id={id} className={cn(className, id && "scroll-mt-28")}>
       {children}

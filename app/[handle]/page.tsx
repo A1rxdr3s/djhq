@@ -30,6 +30,7 @@ import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { ProfileClosing } from "@/components/djhq/profile-closing"
 import { MobileTabManager, MobileSection, MobileArchive } from "@/components/profile/mobile-tab-manager"
+import { MobileScrollNav } from "@/components/profile/mobile-scroll-nav"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -866,7 +867,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </div>
         </section>
 
-        {/* ── Mobile tab navigation (desktop: all sections always visible) ── */}
+        {/* ── Sticky mobile scroll nav (hidden on desktop) ── */}
+        <MobileScrollNav />
+
+        {/* ── Content sections ── */}
         <MobileTabManager>
 
         {/* ── Mobile Home Overview: compact digest, hidden on desktop ── */}
@@ -1015,7 +1019,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="relative grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8">
           {/* Featured Release → Music tab */}
           {featuredRelease && (
-          <MobileSection tab="music" className="lg:col-start-2 lg:row-start-1">
+          <MobileSection tab="music" id="music" className="lg:col-start-2 lg:row-start-1">
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-4">
             <SectionHeader>Featured Release</SectionHeader>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
@@ -1067,13 +1071,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
           {/* Upcoming Gigs → Live tab */}
           {upcomingGigs.length > 0 && (
-            <MobileSection tab="live" className="lg:col-start-2 lg:row-start-2">
+            <MobileSection tab="live" id="shows" className="lg:col-start-2 lg:row-start-2">
               <GigsSection gigs={upcomingGigs} />
             </MobileSection>
           )}
 
           {/* Gallery / Moments → Media tab */}
-          <MobileSection tab="media" className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          <MobileSection tab="media" id="media" className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <section className="flex flex-col">
               <SectionHeader variant="primary">Moments</SectionHeader>
               <GallerySection images={galleryImages} />
@@ -1097,7 +1101,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {/* Performance → Live tab */}
         {(featuredVideo ?? featuredSet) ? (
-          <MobileSection tab="live">
+          <MobileSection tab="live" id="press">
           <section className="mt-6 lg:mt-8">
             <SectionHeader>Performance</SectionHeader>
             <div
@@ -1358,12 +1362,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        <ProfileClosing
-          artistName={artist.artistName}
-          location={artist.location}
-          bookingEmail={artist.bookingInfo.email}
-          isPro={isPro}
-        />
+        <div id="contact" className="scroll-mt-28">
+          <ProfileClosing
+            artistName={artist.artistName}
+            location={artist.location}
+            bookingEmail={artist.bookingInfo.email}
+            isPro={isPro}
+          />
+        </div>
 
         </MobileTabManager>
       </div>
