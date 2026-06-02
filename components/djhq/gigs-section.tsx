@@ -198,24 +198,27 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   // Reverse so most recent past is first
   const past = [...gigs.filter((g) => g.date.slice(0, 10) < today)].reverse()
 
-  const hasUpcoming = upcoming.length > 0
-  const hasPast = past.length > 0
-
-  // Primary list: upcoming (up to 3), or most recent past if no upcoming
-  const primaryGigs = hasUpcoming ? upcoming.slice(0, 3) : past.slice(0, 3)
+  // Fill primary list to a minimum of 3 rows: upcoming first, then most recent past
+  const upcomingSlice = upcoming.slice(0, 3)
+  const fillCount = 3 - upcomingSlice.length
+  const fillFromPast = past.slice(0, fillCount)
+  const primaryGigs = [...upcomingSlice, ...fillFromPast]
   if (primaryGigs.length === 0) return null
 
-  const sectionTitle = hasUpcoming ? "Shows" : "Recent Shows"
+  // Past shows available for the toggle — exclude rows already shown as fill
+  const pastForToggle = past.slice(fillCount)
+  const hasPastToggle = pastForToggle.length > 0
+
   const PAST_PAGE = 10
-  const visiblePast = showAllPast ? past : past.slice(0, PAST_PAGE)
-  const hasMorePast = past.length > PAST_PAGE
-  const pastGroups = hasPast ? groupByYear(visiblePast) : []
+  const visiblePast = showAllPast ? pastForToggle : pastForToggle.slice(0, PAST_PAGE)
+  const hasMorePast = pastForToggle.length > PAST_PAGE
+  const pastGroups = hasPastToggle ? groupByYear(visiblePast) : []
 
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
-      <SectionHeader>{sectionTitle}</SectionHeader>
+      <SectionHeader>Shows</SectionHeader>
 
-      {/* Primary shows */}
+      {/* Primary shows — upcoming first, then most recent past fills remaining slots */}
       <motion.div
         className="mt-4 flex flex-col gap-1.5"
         variants={container}
@@ -225,13 +228,13 @@ export function GigsSection({ gigs }: GigsSectionProps) {
       >
         {primaryGigs.map((gig, i) => (
           <motion.div key={gig.id} variants={item}>
-            <GigRow gig={gig} isNext={hasUpcoming && i === 0} isPast={!hasUpcoming} />
+            <GigRow gig={gig} isNext={i === 0 && upcomingSlice.length > 0} isPast={false} />
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Past shows toggle — only shown when upcoming is the primary content */}
-      {hasUpcoming && hasPast && (
+      {/* Past shows toggle */}
+      {hasPastToggle && (
         <button
           type="button"
           onClick={() => setPastExpanded((v) => !v)}
@@ -243,7 +246,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
 
       {/* Past shows — grouped by year, most recent first */}
       <AnimatePresence initial={false}>
-        {hasUpcoming && pastExpanded && hasPast && (
+        {pastExpanded && hasPastToggle && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
