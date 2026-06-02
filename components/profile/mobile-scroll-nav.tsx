@@ -15,8 +15,8 @@ export function MobileScrollNav() {
   const [activeId, setActiveId] = useState<string>("")
 
   useEffect(() => {
-    // 64px fixed header + 48px sticky nav + 8px buffer
-    const OFFSET = 124
+    // 48px sticky nav + 8px buffer
+    const OFFSET = 56
 
     const update = () => {
       for (let i = SECTIONS.length - 1; i >= 0; i--) {
@@ -42,7 +42,7 @@ export function MobileScrollNav() {
   return (
     <nav
       aria-label="Profile sections"
-      className="sticky top-16 z-40 border-b border-white/[0.06] bg-background/[0.97] backdrop-blur-sm lg:hidden"
+      className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/[0.97] backdrop-blur-sm lg:hidden"
     >
       <div className="flex h-12 items-center overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map(({ id, label }) => {

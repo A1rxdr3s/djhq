@@ -688,7 +688,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   return (
     <>
       <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}`}</style>
-      <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
           src={artist.heroImageUrl}
@@ -873,8 +873,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {/* ── Content sections ── */}
         <MobileTabManager>
 
-        {/* ── Mobile Home Overview: compact digest, hidden on desktop ── */}
-        <MobileSection tab="home" className="lg:hidden mt-6">
+        {/* ── Mobile Home Overview: removed — content available in main sections ── */}
+        <MobileSection tab="home" className="hidden">
           <div className="space-y-3">
 
             {/* Compact Featured Release */}
@@ -1016,10 +1016,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             aria-hidden
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
           />
-        <div className="relative grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8">
+        <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8">
           {/* Featured Release → Music tab */}
           {featuredRelease && (
-          <MobileSection tab="music" id="music" className="lg:col-start-2 lg:row-start-1">
+          <MobileSection tab="music" id="music" className="max-lg:[order:3] lg:col-start-2 lg:row-start-1">
           <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-4">
             <SectionHeader>Featured Release</SectionHeader>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
@@ -1071,7 +1071,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
           {/* Upcoming Gigs → Live tab */}
           {upcomingGigs.length > 0 && (
-            <MobileSection tab="live" id="shows" className="lg:col-start-2 lg:row-start-2">
+            <MobileSection tab="live" id="shows" className="max-lg:[order:2] lg:col-start-2 lg:row-start-2">
               {/* Mobile: skip first gig — already shown in the Highlights card */}
               <div className="lg:hidden">
                 <GigsSection gigs={upcomingGigs.slice(1)} />
@@ -1084,7 +1084,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           )}
 
           {/* Gallery / Moments → Media tab */}
-          <MobileSection tab="media" id="media" className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          <MobileSection tab="media" id="media" className="max-lg:[order:1] lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <section className="flex flex-col">
               <SectionHeader variant="primary">Moments</SectionHeader>
               <GallerySection images={galleryImages} />
@@ -1369,7 +1369,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        <div id="contact" className="scroll-mt-28">
+        <div id="contact" className="scroll-mt-16">
           <ProfileClosing
             artistName={artist.artistName}
             location={artist.location}

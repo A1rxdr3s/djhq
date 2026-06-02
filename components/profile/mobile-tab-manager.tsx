@@ -53,7 +53,7 @@ export function MobileSection(props: {
 }) {
   const { children, className, id } = props
   return (
-    <div id={id} className={cn(className, id && "scroll-mt-28")}>
+    <div id={id} className={cn(className, id && "scroll-mt-16")}>
       {children}
     </div>
   )
