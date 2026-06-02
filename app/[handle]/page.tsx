@@ -21,6 +21,7 @@ import { mockArtist } from "@/data/mock-artist"
 import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
+import { CollapsibleMobileReleases } from "@/components/djhq/collapsible-mobile-releases"
 import { formatPerformanceMetadata } from "@/lib/dj-set-title"
 import { computeVideoTitle } from "@/lib/performance-title"
 import { getAccentTheme } from "@/lib/accent-themes"
@@ -726,7 +727,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         )}
 
         <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
-          <div className="relative min-h-[430px] sm:min-h-[420px] lg:min-h-[540px]">
+          <div className="relative min-h-[390px] sm:min-h-[420px] lg:min-h-[540px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
@@ -1362,14 +1363,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </section>
           </MobileSection>
         ) : null}
-
-        {/* Moments → mobile only, appears after Performance (desktop uses grid column) */}
-        {galleryImages.length > 0 && (
-          <section id="media" className="mt-10 scroll-mt-16 lg:hidden">
-            <SectionHeader variant="primary">Moments</SectionHeader>
-            <GallerySection images={galleryImages} />
-          </section>
-        )}
 
         {/* Playlist → Community tab */}
         {artist.playlist && (
