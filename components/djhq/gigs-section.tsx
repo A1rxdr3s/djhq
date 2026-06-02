@@ -218,20 +218,53 @@ export function GigsSection({ gigs }: GigsSectionProps) {
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5">
       <SectionHeader>Shows</SectionHeader>
 
-      {/* Primary shows — upcoming first, then most recent past fills remaining slots */}
-      <motion.div
-        className="mt-4 flex flex-col gap-1.5"
-        variants={container}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-24px" }}
-      >
-        {primaryGigs.map((gig, i) => (
-          <motion.div key={gig.id} variants={item}>
-            <GigRow gig={gig} isNext={i === 0 && upcomingSlice.length > 0} isPast={false} />
-          </motion.div>
-        ))}
-      </motion.div>
+      <div className="mt-4">
+        {/* Upcoming group — label only shown when a Recent group also exists */}
+        {upcomingSlice.length > 0 && (
+          <>
+            {fillFromPast.length > 0 && (
+              <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/25">
+                Upcoming
+              </p>
+            )}
+            <motion.div
+              className="flex flex-col gap-1.5"
+              variants={container}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-24px" }}
+            >
+              {upcomingSlice.map((gig, i) => (
+                <motion.div key={gig.id} variants={item}>
+                  <GigRow gig={gig} isNext={i === 0} isPast={false} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </>
+        )}
+
+        {/* Recent group — fill rows that pad upcoming count to 3 */}
+        {fillFromPast.length > 0 && (
+          <div className={upcomingSlice.length > 0 ? "mt-4" : ""}>
+            <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/25">
+              Recent
+            </p>
+            <motion.div
+              className="flex flex-col gap-1.5"
+              variants={container}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-24px" }}
+            >
+              {fillFromPast.map((gig) => (
+                <motion.div key={gig.id} variants={item}>
+                  <GigRow gig={gig} isNext={false} isPast={false} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        )}
+      </div>
 
       {/* Past shows toggle */}
       {hasPastToggle && (
