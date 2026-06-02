@@ -37,7 +37,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
       <div className="mx-auto max-w-7xl">
 
         {/* ── Layer 1 + 2: Newsletter ── */}
-        <div className="py-8 text-center sm:py-9">
+        <div className="py-6 text-center sm:py-8">
           {status === "success" ? (
             <div>
               <p className="text-[1.5rem] font-black tracking-[-0.02em] text-foreground">
@@ -53,10 +53,25 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
                 GET ON THE LIST
               </h2>
 
+              {/* 2×2 benefits grid — visual anchor of the section */}
+              <div className="mx-auto mt-5 grid max-w-[300px] grid-cols-2 gap-x-6 gap-y-0 sm:max-w-[360px]">
+                {["Guest Lists", "Early Access", "Free Downloads", "New Music"].map((benefit) => (
+                  <div
+                    key={benefit}
+                    className="border-t border-white/[0.06] py-2.5 text-left"
+                  >
+                    <p className="text-[0.82rem] font-black uppercase leading-none tracking-[-0.005em] text-foreground/62">
+                      {benefit}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Email form — secondary to the grid */}
               <form
                 onSubmit={handleSubmit}
                 noValidate
-                className="mx-auto mt-5 flex max-w-xs items-center gap-2.5 sm:max-w-sm"
+                className="mx-auto mt-5 flex max-w-[300px] items-center gap-2.5 sm:max-w-[360px]"
               >
                 <input
                   type="email"
@@ -86,12 +101,12 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
               </form>
 
               {status === "error" ? (
-                <p className="mt-3 text-[10px] text-red-400/70">
+                <p className="mt-2.5 text-[10px] text-red-400/70">
                   Please enter a valid email address.
                 </p>
               ) : (
-                <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-white/30">
-                  Guest Lists&nbsp;•&nbsp;Early Access&nbsp;•&nbsp;Free Downloads
+                <p className="mt-2.5 text-[10px] text-white/18">
+                  Occasional updates only.
                 </p>
               )}
             </>
