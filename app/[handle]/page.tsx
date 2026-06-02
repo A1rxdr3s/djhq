@@ -1092,12 +1092,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </div>
 
         {/* Releases → Music tab */}
-        {selectedReleasesForDisplay.length > 0 && (
-          <MobileSection tab="music">
+        {artist.releases.length > 0 && (
+          <MobileSection tab="music" id="music">
           <section className="mt-10 lg:mt-12">
             <SectionHeader variant="primary">Releases</SectionHeader>
             <div className="mt-4">
-              <SelectedReleasesCarousel releases={selectedReleasesForDisplay} />
+              {/* Mobile: include featured release as first item (standalone card hidden on mobile) */}
+              <div className="lg:hidden">
+                <SelectedReleasesCarousel releases={mobileReleasesForDisplay} />
+              </div>
+              {/* Desktop: featured release shown in the separate card above */}
+              <div className="hidden lg:block">
+                {selectedReleasesForDisplay.length > 0 && (
+                  <SelectedReleasesCarousel releases={selectedReleasesForDisplay} />
+                )}
+              </div>
             </div>
           </section>
           </MobileSection>
@@ -1105,7 +1114,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {/* Performance → Live tab */}
         {(featuredVideo ?? featuredSet) ? (
-          <MobileSection tab="live" id="press">
+          <MobileSection tab="live" id="performance">
           <section className="mt-6 lg:mt-8">
             <SectionHeader>Performance</SectionHeader>
             <div
