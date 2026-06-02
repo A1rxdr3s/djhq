@@ -62,13 +62,10 @@ export function ConnectSection() {
             <button
               type="submit"
               disabled={status === "loading"}
-              aria-label="Subscribe"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.10] text-white/30 transition-all duration-150 hover:border-accent/40 hover:text-accent disabled:opacity-40"
+              className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/[0.12] px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-white/45 transition-all duration-150 hover:border-accent/40 hover:text-accent disabled:opacity-40"
             >
-              {status === "loading" ? (
-                <span className="text-[9px]">···</span>
-              ) : (
-                <ArrowRight className="h-3.5 w-3.5" />
+              {status === "loading" ? "···" : (
+                <>Join <ArrowRight className="h-3 w-3" /></>
               )}
             </button>
           </form>
@@ -78,7 +75,7 @@ export function ConnectSection() {
               Please enter a valid email address.
             </p>
           ) : (
-            <p className="mt-4 text-[10px] uppercase tracking-[0.18em] text-white/25">
+            <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-white/30">
               Guest Lists&nbsp;•&nbsp;Early Access&nbsp;•&nbsp;Free Downloads
             </p>
           )}
