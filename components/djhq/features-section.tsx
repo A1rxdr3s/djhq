@@ -1,205 +1,165 @@
 import Link from "next/link"
-import {
-  ArrowRight,
-  CalendarCheck,
-  Disc3,
-  Download,
-  Globe,
-  ImageIcon,
-  Link2,
-  Play,
-  Smartphone,
-  User2,
-  Zap,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { SectionHeader } from "@/components/djhq/section-header"
+import { ArrowRight } from "lucide-react"
 
-const contextCards = [
+const pillars = [
   {
-    icon: User2,
-    label: "Artist Profile",
-    desc: "Bio, genres, location, and social links — in one read.",
+    label: "Music",
+    body: "Releases, selected tracks, DJ sets and streaming links in one place.",
+    items: ["Release catalog", "Streaming links", "Performance archive", "Selected tracks"],
   },
   {
-    icon: Disc3,
-    label: "Releases",
-    desc: "Catalog with label, date, and streaming links.",
+    label: "Live",
+    body: "Upcoming shows, past performances, video archive and venue context.",
+    items: ["Upcoming shows", "Past gigs", "Video archive", "Ticket links"],
   },
   {
-    icon: CalendarCheck,
-    label: "Shows",
-    desc: "Upcoming gigs with venue, city, and ticket links.",
-  },
-  {
-    icon: Play,
-    label: "DJ Sets",
-    desc: "Performance archive with artwork and streaming.",
-  },
-  {
-    icon: Play,
-    label: "Videos",
-    desc: "Live performance recordings and music videos.",
-  },
-  {
-    icon: ImageIcon,
-    label: "Gallery",
-    desc: "High-res press photos, ready for promoters.",
-  },
-  {
-    icon: Download,
-    label: "Press Kit",
-    desc: "One-click EPK — bio, photos, technical rider.",
-  },
-  {
-    icon: Link2,
-    label: "Booking",
-    desc: "Direct contact, management, and all social handles.",
+    label: "Press",
+    body: "Photos, bio, press kit, booking contact and assets ready to share.",
+    items: ["Artist bio", "Press photos", "One-click EPK", "Booking contact"],
   },
 ]
 
-const workflowCards = [
+const steps = [
   {
-    icon: Zap,
-    label: "Send to promoters",
-    desc: "Everything they need. One link, no follow-up email.",
+    step: "01",
+    label: "Build your artist HQ",
+    body: "Profile, links, releases, shows, media and press kit.",
   },
   {
-    icon: Globe,
-    label: "Your own domain",
-    desc: "Use your URL. Your name, your brand.",
+    step: "02",
+    label: "Share one URL",
+    body: "Send it to promoters, clubs, labels, festivals and fans.",
   },
   {
-    icon: Smartphone,
-    label: "Updated once, everywhere",
-    desc: "Change it in your dashboard. Your page is live instantly.",
-  },
-  {
-    icon: ImageIcon,
-    label: "Always looks right",
-    desc: "On a phone, on desktop, embedded in a booking email.",
+    step: "03",
+    label: "Keep it current",
+    body: "Update once. Your public profile stays ready.",
   },
 ]
 
 export function FeaturesSection() {
   return (
-    <div id="product" className="space-y-0">
-      {/* What DJHQ brings together */}
-      <section className="py-16 sm:py-20">
+    <div id="product">
+
+      {/* ── Thin rule ── */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+      </div>
+
+      {/* ── Editorial pillars ── */}
+      <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader variant="primary">What DJHQ brings together</SectionHeader>
-          <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground/75">
-            Everything a promoter, label, or fan needs — structured so nothing gets buried.
+
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/55">
+            What&apos;s inside
+          </p>
+          <h2 className="mt-4 max-w-xl text-balance text-2xl font-black leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[1.75rem]">
+            Everything a promoter needs,{" "}
+            <span className="text-white/45">without sending five links.</span>
+          </h2>
+
+          {/* Three-column pillar grid — gap-px trick for thin dividers */}
+          <div className="mt-12 overflow-hidden rounded-[20px] border border-white/[0.05] bg-white/[0.04] sm:grid sm:grid-cols-3">
+            {pillars.map((pillar, i) => (
+              <div
+                key={pillar.label}
+                className={[
+                  "bg-background px-7 py-8 lg:px-9 lg:py-10",
+                  i > 0 ? "border-t border-white/[0.04] sm:border-t-0 sm:border-l sm:border-white/[0.04]" : "",
+                ].join(" ")}
+              >
+                <p className="text-[9px] font-bold uppercase tracking-[0.32em] text-accent/50">
+                  {pillar.label}
+                </p>
+                <p className="mt-4 text-[14px] leading-[1.65] text-white/48">
+                  {pillar.body}
+                </p>
+                <ul className="mt-7 space-y-2.5">
+                  {pillar.items.map((item) => (
+                    <li key={item} className="flex items-center gap-3 text-[12px] text-white/32">
+                      <span className="h-px w-4 shrink-0 bg-accent/28" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── Thin rule ── */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+      </div>
+
+      {/* ── Three-step workflow ── */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/55">
+            How it works
           </p>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {contextCards.map((card) => (
-              <div
-                key={card.label}
-                className="group rounded-[1.5rem] border border-white/[0.06] bg-white/[0.02] p-5 transition-colors duration-200 hover:border-accent/25 hover:bg-white/[0.035]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                    <card.icon className="h-4 w-4 text-accent" />
-                  </div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">{card.label}</p>
-                </div>
-                <p className="mt-3 text-xs leading-relaxed text-muted-foreground/55">{card.desc}</p>
+          <div className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-12">
+            {steps.map((s) => (
+              <div key={s.step}>
+                <p className="font-mono text-[10px] tracking-[0.24em] text-accent/30">
+                  {s.step}
+                </p>
+                <p className="mt-3 text-[15px] font-bold tracking-[-0.005em] text-foreground/88">
+                  {s.label}
+                </p>
+                <p className="mt-2 text-[13px] leading-[1.65] text-white/38">
+                  {s.body}
+                </p>
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
-      {/* Divider */}
+      {/* ── Thin rule ── */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
       </div>
 
-      {/* Built for real artist workflows */}
-      <section className="py-16 sm:py-20">
+      {/* ── Final CTA ── */}
+      <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader>Built for real artist workflows</SectionHeader>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {workflowCards.map((card) => (
-              <div
-                key={card.label}
-                className="rounded-[1.5rem] border border-white/[0.06] bg-white/[0.02] p-5 transition-colors duration-200 hover:border-accent/25 hover:bg-white/[0.035]"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
-                  <card.icon className="h-4 w-4 text-accent" />
-                </div>
-                <p className="mt-3.5 text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70">{card.label}</p>
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground/55">{card.desc}</p>
-              </div>
-            ))}
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/55">
+            DJHQ
+          </p>
+          <h2 className="mt-4 max-w-sm text-balance text-2xl font-black leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[1.75rem]">
+            See the profile.{" "}
+            <span className="text-white/42">Request access when ready.</span>
+          </h2>
+          <p className="mt-4 max-w-xs text-[14px] leading-[1.65] text-white/35">
+            DJHQ is opening gradually for selected artists.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link
+              href="/andresherrera"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/[0.10] px-6 text-[13px] font-medium text-white/60 transition-all duration-150 hover:border-white/[0.22] hover:text-white/90"
+            >
+              View ANDRES:HERRERA
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+            <a
+              href="mailto:access@djhq.co"
+              className="inline-flex h-11 items-center rounded-full bg-accent px-7 text-[13px] font-bold uppercase tracking-[0.08em] text-accent-foreground transition-all duration-150 hover:bg-accent/90 hover:[box-shadow:0_0_28px_color-mix(in_srgb,var(--accent)_25%,transparent)]"
+            >
+              Request Access
+            </a>
           </div>
+
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-      </div>
-
-      {/* Live example + Request Access — two-column on desktop */}
-      <section className="py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-
-            {/* Live Example */}
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-white/[0.02] px-7 py-8 sm:px-8 sm:py-10">
-              <div className="pointer-events-none absolute left-1/2 top-0 h-[180px] w-[320px] -translate-x-1/2 rounded-full bg-accent/[0.05] blur-[70px]" />
-              <div className="relative">
-                <SectionHeader>Live Example</SectionHeader>
-                <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.02em] text-foreground sm:text-3xl">
-                  ANDRES:HERRERA
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground/70">
-                  Browse a live DJHQ artist profile — no signup required.
-                </p>
-                <p className="mt-2 font-mono text-[11px] text-accent/50">djhq.com/andresherrera</p>
-                <div className="mt-6">
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="border-white/[0.10] bg-transparent text-sm hover:bg-white/[0.05]"
-                  >
-                    <Link href="/andresherrera">
-                      View Profile
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Request Access */}
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-accent/20 bg-accent/[0.03] px-7 py-8 sm:px-8 sm:py-10">
-              <div className="pointer-events-none absolute left-1/2 top-0 h-[180px] w-[320px] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[70px]" />
-              <div className="relative">
-                <SectionHeader variant="primary">Early Access</SectionHeader>
-                <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.02em] text-foreground sm:text-3xl">
-                  DJHQ is opening gradually.
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground/70">
-                  We&apos;re onboarding artists by hand. Every profile is reviewed before it goes live.
-                </p>
-                <div className="mt-6">
-                  <Button asChild className="bg-accent text-sm text-accent-foreground hover:bg-accent/90">
-                    <a href="mailto:access@djhq.co">
-                      Request Access
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
