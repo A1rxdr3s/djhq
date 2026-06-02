@@ -219,50 +219,43 @@ export function GigsSection({ gigs }: GigsSectionProps) {
       <SectionHeader>Shows</SectionHeader>
 
       <div className="mt-4">
-        {/* Upcoming group — label only shown when a Recent group also exists */}
+        {/* Upcoming rows */}
         {upcomingSlice.length > 0 && (
-          <>
-            {fillFromPast.length > 0 && (
-              <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/25">
-                Upcoming
-              </p>
-            )}
-            <motion.div
-              className="flex flex-col gap-1.5"
-              variants={container}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-24px" }}
-            >
-              {upcomingSlice.map((gig, i) => (
-                <motion.div key={gig.id} variants={item}>
-                  <GigRow gig={gig} isNext={i === 0} isPast={false} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </>
+          <motion.div
+            className="flex flex-col gap-1.5"
+            variants={container}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-24px" }}
+          >
+            {upcomingSlice.map((gig, i) => (
+              <motion.div key={gig.id} variants={item}>
+                <GigRow gig={gig} isNext={i === 0} isPast={false} />
+              </motion.div>
+            ))}
+          </motion.div>
         )}
 
-        {/* Recent group — fill rows that pad upcoming count to 3 */}
+        {/* Divider — only in the mixed state */}
+        {upcomingSlice.length > 0 && fillFromPast.length > 0 && (
+          <div className="mt-3 mb-3 h-px bg-white/[0.08]" />
+        )}
+
+        {/* Recent filler rows */}
         {fillFromPast.length > 0 && (
-          <div className={upcomingSlice.length > 0 ? "mt-4" : ""}>
-            <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/25">
-              Recent
-            </p>
-            <motion.div
-              className="flex flex-col gap-1.5"
-              variants={container}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-24px" }}
-            >
-              {fillFromPast.map((gig) => (
-                <motion.div key={gig.id} variants={item}>
-                  <GigRow gig={gig} isNext={false} isPast={false} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
+          <motion.div
+            className="flex flex-col gap-1.5"
+            variants={container}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-24px" }}
+          >
+            {fillFromPast.map((gig) => (
+              <motion.div key={gig.id} variants={item}>
+                <GigRow gig={gig} isNext={false} isPast={false} />
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </div>
 
