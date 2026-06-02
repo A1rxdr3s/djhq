@@ -1371,6 +1371,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           genres={artist.genres}
           location={artist.location}
           bookingEmail={artist.bookingInfo.email}
+          tagline={artist.tagline ?? undefined}
           isPro={isPro}
         />
 

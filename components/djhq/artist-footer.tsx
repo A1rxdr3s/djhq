@@ -5,67 +5,75 @@ type Props = {
   genres: string[]
   location: string
   bookingEmail: string
+  tagline?: string
   isPro: boolean
 }
 
-export function ArtistFooter({ artistName, genres, location, bookingEmail, isPro }: Props) {
+export function ArtistFooter({ artistName, genres, location, bookingEmail, tagline, isPro }: Props) {
   const year = new Date().getFullYear()
   const hasBooking = !!bookingEmail.trim()
   const genreStr = genres.join(" / ")
   const locationStr = location.replace(/\s*\/\s*/g, " • ")
 
   return (
-    <footer className="border-t border-white/[0.05] px-4 pt-8 pb-10 sm:px-6 sm:pt-10 sm:pb-12 lg:px-8">
-
-      {/* Main footer row */}
+    <footer className="border-t border-white/[0.05] px-4 pt-7 pb-8 sm:px-6 sm:pt-8 sm:pb-10 lg:px-8">
       <div className="mx-auto max-w-7xl lg:flex lg:items-start lg:justify-between">
 
         {/* Left: artist identity */}
-        <div>
-          <p className="text-[0.95rem] font-black uppercase tracking-[-0.01em] text-foreground/80">
+        <div className="space-y-1.5">
+          <p className="text-[1.05rem] font-black uppercase leading-none tracking-[-0.02em] text-foreground/90">
             {artistName}
           </p>
-          {(genreStr || locationStr) && (
-            <p className="mt-1 text-[11px] leading-[1.6] text-white/28">
-              {[genreStr, locationStr].filter(Boolean).join(" · ")}
+          {genreStr && (
+            <p className="text-[11px] text-white/32">
+              {genreStr}
+            </p>
+          )}
+          {locationStr && (
+            <p className="text-[11px] text-white/22">
+              {locationStr}
+            </p>
+          )}
+          {tagline && (
+            <p className="pt-0.5 text-[11px] text-white/16">
+              {tagline}
             </p>
           )}
         </div>
 
         {/* Right: booking + copyright */}
-        <div className="mt-6 lg:mt-0 lg:text-right">
+        <div className="mt-5 space-y-3 lg:mt-0 lg:text-right">
           {hasBooking && (
-            <div className="mb-3">
+            <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.20em] text-white/22">
                 Booking
               </p>
               <a
                 href={`mailto:${bookingEmail}`}
-                className="mt-0.5 block text-[11px] text-white/40 transition-colors duration-150 hover:text-accent"
+                className="mt-1 block text-[11px] text-white/38 transition-colors duration-150 hover:text-accent"
               >
                 {bookingEmail}
               </a>
             </div>
           )}
-          <p className="text-[10px] text-white/18">
-            © {year} {artistName}. All Rights Reserved.
+          <p className="text-[10px] text-white/16">
+            © {year} {artistName}
           </p>
         </div>
 
       </div>
 
-      {/* Free plan attribution — white-label on pro */}
+      {/* Free plan attribution — absent on pro */}
       {!isPro && (
-        <div className="mx-auto mt-8 max-w-7xl border-t border-white/[0.03] pt-5">
+        <div className="mx-auto mt-5 max-w-7xl border-t border-white/[0.03] pt-4">
           <Link
             href="/"
-            className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/16 transition-colors duration-150 hover:text-white/35"
+            className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/14 transition-colors duration-150 hover:text-white/32"
           >
             Powered by DJHQ
           </Link>
         </div>
       )}
-
     </footer>
   )
 }
