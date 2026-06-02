@@ -726,7 +726,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         )}
 
         <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
-          <div className="relative min-h-[500px] sm:min-h-[420px] lg:min-h-[540px]">
+          <div className="relative min-h-[430px] sm:min-h-[420px] lg:min-h-[540px]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
@@ -766,7 +766,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:px-8 lg:pb-12 lg:pt-8">
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-10 sm:pt-6 lg:px-8 lg:pb-12 lg:pt-8">
               {/* Cinematic content fade — stronger bottom lift */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
 
@@ -1015,7 +1015,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </MobileSection>
 
         {/* Atmospheric lamina — unifies Press Photos / Featured Release / Gigs visually */}
-        <div className="relative mt-8 lg:mt-10">
+        <div className="relative mt-3 lg:mt-10">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"

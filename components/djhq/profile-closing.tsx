@@ -60,7 +60,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
                     key={benefit}
                     className="border-t border-white/[0.07] py-3 text-left"
                   >
-                    <p className="text-[1rem] font-black uppercase leading-none tracking-[-0.01em] text-foreground/78">
+                    <p className="text-[0.82rem] font-black uppercase leading-none tracking-[-0.01em] text-foreground/78 sm:text-[1rem]">
                       {benefit}
                     </p>
                   </div>
