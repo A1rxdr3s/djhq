@@ -1361,11 +1361,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {/* Connect → Community tab */}
         <MobileSection tab="community">
           <section className="mt-6 lg:mt-8">
-            <ConnectSection
-              bookingEmail={artist.bookingInfo.email}
-              bookingUrl={artist.bookingInfo.bookingUrl}
-              socialLinks={prioritizedLinks}
-            />
+            <ConnectSection />
           </section>
         </MobileSection>
 
