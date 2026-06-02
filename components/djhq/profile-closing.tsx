@@ -37,7 +37,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
       <div className="mx-auto max-w-7xl">
 
         {/* ── Layer 1 + 2: Newsletter ── */}
-        <div className="py-4 text-center sm:py-8">
+        <div className="py-2 text-center sm:py-8">
           {status === "success" ? (
             <div>
               <p className="text-[1.5rem] font-black tracking-[-0.02em] text-foreground">

@@ -1093,14 +1093,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </div>
 
         {/* Releases → Music tab */}
+        {/* Moments → mobile only, appears before Releases (desktop uses grid column) */}
+        {galleryImages.length > 0 && (
+          <section id="media" className="mt-10 scroll-mt-16 lg:hidden">
+            <SectionHeader variant="primary">Moments</SectionHeader>
+            <GallerySection images={galleryImages} />
+          </section>
+        )}
+
         {artist.releases.length > 0 && (
           <MobileSection tab="music" id="music">
           <section className="mt-10 lg:mt-12">
             <SectionHeader variant="primary">Releases</SectionHeader>
             <div className="mt-4">
-              {/* Mobile: include featured release as first item (standalone card hidden on mobile) */}
+              {/* Mobile: featured card + collapsible full catalog */}
               <div className="lg:hidden">
-                <SelectedReleasesCarousel releases={mobileReleasesForDisplay} />
+                <CollapsibleMobileReleases
+                  featured={featuredRelease}
+                  all={mobileReleasesForDisplay}
+                />
               </div>
               {/* Desktop: featured release shown in the separate card above */}
               <div className="hidden lg:block">
