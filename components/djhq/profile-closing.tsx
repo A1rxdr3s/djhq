@@ -58,9 +58,9 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
                 {["Guest Lists", "Early Access", "Free Downloads", "New Music"].map((benefit) => (
                   <div
                     key={benefit}
-                    className="border-t border-white/[0.06] py-2.5 text-left"
+                    className="border-t border-white/[0.07] py-3 text-left"
                   >
-                    <p className="text-[0.82rem] font-black uppercase leading-none tracking-[-0.005em] text-foreground/62">
+                    <p className="text-[1rem] font-black uppercase leading-none tracking-[-0.01em] text-foreground/78">
                       {benefit}
                     </p>
                   </div>
@@ -71,7 +71,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
               <form
                 onSubmit={handleSubmit}
                 noValidate
-                className="mx-auto mt-5 flex max-w-[300px] items-center gap-2.5 sm:max-w-[360px]"
+                className="mx-auto mt-3 flex max-w-[300px] items-center gap-2.5 sm:max-w-[360px]"
               >
                 <input
                   type="email"
@@ -92,7 +92,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
                 <button
                   type="submit"
                   disabled={status === "loading"}
-                  className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/[0.12] px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-white/45 transition-all duration-150 hover:border-accent/40 hover:text-accent disabled:opacity-40"
+                  className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-accent px-5 text-[11px] font-bold uppercase tracking-[0.12em] text-accent-foreground transition-all duration-150 hover:bg-accent/90 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_28%,transparent)] disabled:opacity-50"
                 >
                   {status === "loading" ? "···" : (
                     <>Join <ArrowRight className="h-3 w-3" /></>
