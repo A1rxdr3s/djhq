@@ -85,7 +85,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
       >
         <span
           className={cn(
-            "text-[26px] font-black leading-none tracking-tight",
+            "text-xl font-black leading-none tracking-tight",
             isPast ? "text-foreground/22" : "text-foreground/82",
           )}
         >
@@ -106,7 +106,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         <div className="flex min-w-0 items-center gap-2">
           <p
             className={cn(
-              "min-w-0 truncate text-[13px] font-bold uppercase leading-tight tracking-[0.06em]",
+              "min-w-0 truncate text-sm font-semibold uppercase leading-tight tracking-[0.04em]",
               isPast ? "text-foreground/30" : "text-foreground/92",
             )}
           >
@@ -127,8 +127,8 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         {gig.clubVenue && (
           <p
             className={cn(
-              "mt-0.5 truncate text-sm leading-tight",
-              isPast ? "text-white/18" : "text-white/60",
+              "mt-0.5 truncate text-xs leading-tight",
+              isPast ? "text-white/18" : "text-white/55",
             )}
           >
             {gig.clubVenue}
@@ -138,7 +138,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         {locationStr && (
           <p
             className={cn(
-              "mt-0.5 truncate text-xs font-medium uppercase tracking-[0.08em]",
+              "mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.08em]",
               isPast ? "text-white/14" : "text-white/35",
             )}
           >

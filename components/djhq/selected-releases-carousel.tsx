@@ -190,11 +190,11 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                   </div>
                 )}
 
-                <h3 className="text-balance text-base font-bold leading-tight text-foreground">
+                <h3 className="text-balance text-sm font-bold leading-tight text-foreground">
                   {release.title}
                 </h3>
 
-                <p className="mt-0.5 text-sm text-white/45 line-clamp-1">{release.credits ?? ""}</p>
+                <p className="mt-0.5 text-[12px] text-white/55 line-clamp-1">{release.credits ?? ""}</p>
 
                 <p className="mt-1.5 line-clamp-1 text-[9px] uppercase tracking-[0.18em] text-white/35">
                   {release.label}

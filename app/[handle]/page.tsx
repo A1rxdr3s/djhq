@@ -1039,7 +1039,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
                   {featuredRelease.type}
                 </p>
-                <h2 className="mt-1.5 text-balance text-2xl font-black leading-[1.05] tracking-[-0.01em] text-foreground sm:mt-2 sm:text-[1.65rem] lg:text-[1.5rem] lg:leading-[1.08] xl:text-[1.625rem]">
+                <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl">
                   {featuredRelease.title}
                 </h2>
                 {featuredRelease.credits ? (
@@ -1146,7 +1146,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         ].filter(Boolean)
                         return (
                           <>
-                            <h3 className="mt-0.5 text-balance text-base font-black uppercase leading-[0.95] tracking-[-0.01em] text-white md:text-lg lg:text-xl">
+                            <h3 className="mt-0.5 text-balance text-lg font-black uppercase leading-[0.95] tracking-[-0.01em] text-white md:text-xl">
                               {displayTitle}
                             </h3>
                             <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-accent/50">
@@ -1205,11 +1205,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-xs font-semibold uppercase tracking-[-0.005em] text-white/80 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-white/95">
+                                <p className="truncate text-sm font-semibold uppercase tracking-[-0.005em] text-white/80 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-white/95">
                                   {displayTitle}
                                 </p>
-                                <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.12em] text-white/25">
-                                  <span className="font-bold text-accent/45 transition-colors duration-150 group-hover:text-accent/60">{attribution}</span>
+                                <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.12em] text-white/30">
+                                  <span className="text-[11px] font-bold text-accent/55 transition-colors duration-150 group-hover:text-accent/70">{attribution}</span>
                                   {metaParts.length > 0 ? <span> · {metaParts.join(" · ")}</span> : null}
                                 </p>
                               </div>
@@ -1262,7 +1262,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         Featured Set
                       </p>
                       {/* Event name · City — editorial primary title */}
-                      <h3 className="mt-0.5 text-balance text-base font-black uppercase leading-[0.95] tracking-[-0.01em] text-foreground md:text-lg lg:text-xl">
+                      <h3 className="mt-0.5 text-balance text-lg font-black uppercase leading-[0.95] tracking-[-0.01em] text-foreground md:text-xl">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                         {featuredSet.city?.trim() && (
                           <span className="text-white/45"> · {featuredSet.city.trim()}</span>
@@ -1331,11 +1331,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   <div className="pointer-events-none absolute inset-0 bg-black/[0.08]" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="truncate text-xs font-semibold uppercase text-white/80 transition-all duration-150 group-hover:translate-x-[2px] group-hover:text-white/95">
+                                  <p className="truncate text-sm font-semibold uppercase text-white/80 transition-all duration-150 group-hover:translate-x-[2px] group-hover:text-white/95">
                                     {showTitle}{set.city?.trim() && <span className="opacity-40"> · {set.city.trim()}</span>}
                                   </p>
-                                  <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.14em] text-white/25">
-                                    <span className="font-bold text-accent/45 transition-colors duration-150 group-hover:text-accent/60">{performanceArtist}</span>
+                                  <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.14em] text-white/30">
+                                    <span className="text-[11px] font-bold text-accent/55 transition-colors duration-150 group-hover:text-accent/70">{performanceArtist}</span>
                                     {showMeta ? <span> · {showMeta}</span> : null}
                                   </p>
                                 </div>

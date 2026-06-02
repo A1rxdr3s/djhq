@@ -42,7 +42,7 @@ export function SelectedTracksSection({ playlist }: Props) {
           <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
             {SOURCE_LABELS[playlist.source] ?? "Playlist"}
           </p>
-          <h3 className="mt-2 truncate text-xl font-black tracking-[-0.01em] text-foreground sm:text-2xl">
+          <h3 className="mt-2 truncate text-lg font-black tracking-[-0.01em] text-foreground md:text-xl">
             {playlist.title}
           </h3>
           <span className="mt-4 inline-flex h-8 items-center rounded-full border border-accent/20 bg-transparent px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-accent transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_14px_color-mix(in_srgb,var(--accent)_10%,transparent)]">
