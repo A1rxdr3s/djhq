@@ -4,18 +4,18 @@ import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 
 const SECTIONS = [
-  { id: "music",   label: "Music"   },
-  { id: "shows",   label: "Shows"   },
-  { id: "media",   label: "Media"   },
-  { id: "press",   label: "Press"   },
-  { id: "contact", label: "Contact" },
+  { id: "shows",       label: "Shows"       },
+  { id: "music",       label: "Music"       },
+  { id: "performance", label: "Performance" },
+  { id: "media",       label: "Media"       },
+  { id: "contact",     label: "Contact"     },
 ] as const
 
 export function MobileScrollNav() {
   const [activeId, setActiveId] = useState<string>("")
 
   useEffect(() => {
-    // 48px sticky nav + 8px buffer
+    // 48px sticky nav height + 8px buffer
     const OFFSET = 56
 
     const update = () => {

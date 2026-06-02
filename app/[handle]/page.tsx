@@ -1363,6 +1363,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         ) : null}
 
+        {/* Moments → mobile only, appears after Performance (desktop uses grid column) */}
+        {galleryImages.length > 0 && (
+          <section id="media" className="mt-10 scroll-mt-16 lg:hidden">
+            <SectionHeader variant="primary">Moments</SectionHeader>
+            <GallerySection images={galleryImages} />
+          </section>
+        )}
+
         {/* Playlist → Community tab */}
         {artist.playlist && (
           <MobileSection tab="community">
