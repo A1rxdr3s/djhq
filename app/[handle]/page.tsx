@@ -29,6 +29,7 @@ import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { ConnectSection } from "@/components/djhq/connect-section"
+import { ArtistFooter } from "@/components/djhq/artist-footer"
 import { MobileTabManager, MobileSection, MobileArchive } from "@/components/profile/mobile-tab-manager"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
@@ -1365,16 +1366,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </section>
         </MobileSection>
 
-        <footer className="py-10 text-center sm:py-12">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/80 transition-colors hover:text-foreground"
-          >
-            <span className="h-px w-8 bg-border" />
-            DJHQ
-            <span className="h-px w-8 bg-border" />
-          </Link>
-        </footer>
+        <ArtistFooter
+          artistName={artist.artistName}
+          genres={artist.genres}
+          location={artist.location}
+          bookingEmail={artist.bookingInfo.email}
+          isPro={isPro}
+        />
 
         </MobileTabManager>
       </div>
