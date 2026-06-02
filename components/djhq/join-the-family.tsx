@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
+import { ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
+export function JoinTheFamily() {
   const [email, setEmail] = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
 
@@ -23,74 +24,31 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
 
   if (status === "success") {
     return (
-      <div className={cn(
-        "flex items-center overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02]",
-        compact ? "min-h-[64px] px-5 py-4" : "min-h-[120px] p-6 sm:p-8",
-      )}>
-        <div className={compact ? "" : "text-left"}>
-          <p className={cn("font-black tracking-[-0.01em] text-foreground", compact ? "text-sm" : "text-base")}>
-            You&apos;re on the list.
-          </p>
-          {!compact && <p className="mt-1 text-[13px] text-white/35">We&apos;ll be in touch.</p>}
-        </div>
-      </div>
-    )
-  }
-
-  if (compact) {
-    return (
-      <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] px-5 py-3.5">
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="flex items-center gap-2.5"
-        >
-          <p className="shrink-0 text-[13px] font-bold uppercase tracking-[0.08em] text-foreground/70">
-            Direct to Inbox
-          </p>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value)
-              if (status === "error") setStatus("idle")
-            }}
-            placeholder="your@email.com"
-            aria-label="Email address"
-            className={cn(
-              "h-9 min-w-0 flex-1 rounded-full border bg-white/[0.04] px-4 text-sm text-foreground outline-none transition-all duration-150 placeholder:text-white/25",
-              status === "error"
-                ? "border-red-500/40 focus:border-red-500/60"
-                : "border-white/[0.08] focus:border-accent/30",
-            )}
-          />
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            className="h-9 shrink-0 rounded-full bg-accent px-5 text-sm font-bold uppercase tracking-[0.1em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_22%,transparent)] disabled:opacity-60"
-          >
-            {status === "loading" ? "···" : "Subscribe"}
-          </button>
-        </form>
-        {status === "error" && (
-          <p className="mt-2 text-[11px] text-red-400/70">
-            Please enter a valid email address.
-          </p>
-        )}
+      <div className="border-t border-white/[0.06] py-6">
+        <p className="text-[13px] font-semibold tracking-[-0.005em] text-foreground/80">
+          You&apos;re on the list.
+        </p>
+        <p className="mt-1 text-[12px] text-white/30">We&apos;ll be in touch.</p>
       </div>
     )
   }
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-6 sm:p-8">
-      <p className="text-[13px] leading-[1.75] text-white/40">
-        New music. Upcoming shows.<br />Guest list announcements.
+    <div className="border-t border-white/[0.06] py-6">
+      <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-accent/55">
+        Join the list
+      </p>
+
+      <p className="mt-3 text-[13px] leading-[1.75] text-white/38">
+        New music.<br />
+        Upcoming dates.<br />
+        Guest list access.
       </p>
 
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="mt-5 flex max-w-sm flex-col gap-3 sm:flex-row"
+        className="mt-4 flex items-center gap-3"
       >
         <input
           type="email"
@@ -99,26 +57,31 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
             setEmail(e.target.value)
             if (status === "error") setStatus("idle")
           }}
-          placeholder="email address"
+          placeholder="your@email.com"
           aria-label="Email address"
           className={cn(
-            "h-10 flex-1 rounded-full border bg-white/[0.04] px-5 text-sm text-foreground outline-none transition-all duration-150 placeholder:text-white/28",
+            "h-9 min-w-0 flex-1 border-b bg-transparent px-0 text-[13px] text-foreground outline-none transition-colors duration-150 placeholder:text-white/18",
             status === "error"
               ? "border-red-500/40 focus:border-red-500/60"
-              : "border-white/[0.08] focus:border-accent/30",
+              : "border-white/[0.12] focus:border-accent/35",
           )}
         />
         <button
           type="submit"
           disabled={status === "loading"}
-          className="h-10 rounded-full bg-accent px-6 text-sm font-bold uppercase tracking-[0.12em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)] disabled:opacity-60 disabled:hover:translate-y-0"
+          aria-label="Subscribe"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.10] text-white/35 transition-all duration-150 hover:border-accent/40 hover:text-accent disabled:opacity-40"
         >
-          {status === "loading" ? "···" : "Subscribe"}
+          {status === "loading" ? (
+            <span className="text-[10px] tracking-widest">···</span>
+          ) : (
+            <ArrowRight className="h-3.5 w-3.5" />
+          )}
         </button>
       </form>
 
       {status === "error" && (
-        <p className="mt-3 text-[11px] text-red-400/70">
+        <p className="mt-2 text-[11px] text-red-400/70">
           Please enter a valid email address.
         </p>
       )}

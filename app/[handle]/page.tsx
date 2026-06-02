@@ -1358,20 +1358,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        {/* Direct to Inbox → Community tab (compact on mobile, full on desktop) */}
+        {/* Join the List → Community tab */}
         <MobileSection tab="community">
-          <section className="mt-8 lg:mt-12">
-            <div className="hidden lg:block">
-              <SectionHeader>Direct to Inbox</SectionHeader>
-            </div>
-            <div className="mt-4">
-              <div className="lg:hidden">
-                <JoinTheFamily compact />
-              </div>
-              <div className="hidden lg:block">
-                <JoinTheFamily />
-              </div>
-            </div>
+          <section className="mt-6 lg:mt-8">
+            <JoinTheFamily />
           </section>
         </MobileSection>
 
