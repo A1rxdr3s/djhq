@@ -58,16 +58,24 @@ export function FeaturesSection() {
             <span className="text-white/45">without sending five links.</span>
           </h2>
 
-          {/* Three-column pillar grid — gap-px trick for thin dividers */}
-          <div className="mt-12 overflow-hidden rounded-[20px] border border-white/[0.05] bg-white/[0.04] sm:grid sm:grid-cols-3">
+          {/* Three-column pillar grid — editorial, no card boxes */}
+          <div className="mt-12 sm:grid sm:grid-cols-3">
             {pillars.map((pillar, i) => (
               <div
                 key={pillar.label}
                 className={[
-                  "bg-background px-7 py-8 lg:px-9 lg:py-10",
+                  "relative overflow-hidden py-8 sm:px-8 lg:px-10 lg:py-10",
                   i > 0 ? "border-t border-white/[0.04] sm:border-t-0 sm:border-l sm:border-white/[0.04]" : "",
                 ].join(" ")}
               >
+                {/* Ghost number — large editorial background digit */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute right-0 top-0 select-none font-mono text-[8rem] font-black leading-none text-white/[0.022]"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+
                 <p className="text-[9px] font-bold uppercase tracking-[0.32em] text-accent/50">
                   {pillar.label}
                 </p>
@@ -102,9 +110,25 @@ export function FeaturesSection() {
             How it works
           </p>
 
-          <div className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-12">
-            {steps.map((s) => (
+          <div className="relative mt-12 grid gap-10 sm:grid-cols-3 sm:gap-12">
+            {/* Horizontal connector line — desktop only, sits at dot center */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-0 right-0 top-[5px] hidden h-px bg-white/[0.06] sm:block"
+            />
+
+            {steps.map((s, i) => (
               <div key={s.step}>
+                {/* Dot indicator */}
+                <div
+                  aria-hidden
+                  className={[
+                    "relative mb-4 h-[10px] w-[10px] rounded-full ring-1",
+                    i === 0
+                      ? "bg-accent/40 ring-accent/25"
+                      : "bg-white/[0.06] ring-white/[0.08]",
+                  ].join(" ")}
+                />
                 <p className="font-mono text-[10px] tracking-[0.24em] text-accent/30">
                   {s.step}
                 </p>
@@ -134,10 +158,13 @@ export function FeaturesSection() {
             DJHQ
           </p>
           <h2 className="mt-4 max-w-sm text-balance text-2xl font-black leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[1.75rem]">
-            See the profile.{" "}
-            <span className="text-white/42">Request access when ready.</span>
+            <span className="block">See the profile.</span>
+            <span className="block text-white/42">Request access when ready.</span>
           </h2>
-          <p className="mt-4 max-w-xs text-[14px] leading-[1.65] text-white/35">
+          {/* Accent rule under split headline */}
+          <div className="mt-4 h-px w-10 bg-accent/35" />
+
+          <p className="mt-5 max-w-xs text-[14px] leading-[1.65] text-white/35">
             DJHQ is opening gradually for selected artists.
           </p>
 

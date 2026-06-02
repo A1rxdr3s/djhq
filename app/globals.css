@@ -143,3 +143,14 @@
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.35 0 0);
 }
+
+/* Homepage animations */
+@keyframes hp-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hp-drift {
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  50%       { transform: scale(1.12) translate(3%, 4%); }
+}

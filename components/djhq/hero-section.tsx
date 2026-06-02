@@ -5,28 +5,42 @@ import { ArrowRight } from "lucide-react"
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden pt-16">
-      {/* Ambient — one subtle accent bloom, nothing else */}
-      <div className="pointer-events-none absolute left-0 top-0 h-[700px] w-[700px] rounded-full bg-accent/[0.04] blur-[180px]" />
+      {/* Ambient accent bloom — slow drift */}
+      <div className="pointer-events-none absolute left-0 top-0 h-[700px] w-[700px] rounded-full bg-accent/[0.04] blur-[180px] motion-safe:[animation:hp-drift_14s_ease-in-out_infinite]" />
 
       <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
 
         {/* ── Left: editorial copy ── */}
         <div className="flex flex-col justify-center py-16 lg:py-24">
 
-          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/65">
+          <p
+            className="text-[10px] font-bold uppercase tracking-[0.32em] text-accent/65 motion-safe:[animation:hp-fade-up_0.65s_ease_both]"
+            style={{ animationDelay: "0ms" }}
+          >
             DJHQ for Artists
           </p>
 
-          <h1 className="mt-5 max-w-[520px] text-balance text-[2.6rem] font-black leading-[1.02] tracking-[-0.025em] text-foreground sm:text-5xl lg:text-[3.1rem]">
-            Your DJ career needs more than a link in bio.
+          <h1
+            className="mt-5 max-w-[520px] text-[2.6rem] font-black leading-[1.02] tracking-[-0.03em] text-foreground motion-safe:[animation:hp-fade-up_0.65s_ease_both] sm:text-5xl lg:text-[3.1rem]"
+            style={{ animationDelay: "80ms" }}
+          >
+            <span className="block">Your DJ career</span>
+            <span className="block">needs more than</span>
+            <span className="block text-white/35">a link in bio.</span>
           </h1>
 
-          <p className="mt-5 max-w-[420px] text-[15px] leading-[1.7] text-white/42">
+          <p
+            className="mt-5 max-w-[420px] text-[15px] leading-[1.7] text-white/42 motion-safe:[animation:hp-fade-up_0.65s_ease_both]"
+            style={{ animationDelay: "200ms" }}
+          >
             A premium public profile for your music, shows, media, press kit
             and booking — built for artists who need to look ready.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          <div
+            className="mt-9 flex flex-wrap items-center gap-3 motion-safe:[animation:hp-fade-up_0.65s_ease_both]"
+            style={{ animationDelay: "320ms" }}
+          >
             <a
               href="mailto:access@djhq.co"
               className="inline-flex h-11 items-center rounded-full bg-accent px-7 text-[13px] font-bold uppercase tracking-[0.08em] text-accent-foreground transition-all duration-150 hover:bg-accent/90 hover:[box-shadow:0_0_28px_color-mix(in_srgb,var(--accent)_28%,transparent)]"
@@ -42,14 +56,20 @@ export function HeroSection() {
             </Link>
           </div>
 
-          <p className="mt-8 text-[10px] uppercase tracking-[0.24em] text-white/18">
+          <p
+            className="mt-8 text-[10px] uppercase tracking-[0.24em] text-white/18 motion-safe:[animation:hp-fade-up_0.65s_ease_both]"
+            style={{ animationDelay: "400ms" }}
+          >
             Opening for selected artists
           </p>
         </div>
 
         {/* ── Right: real profile preview ── */}
-        <div className="relative flex items-center pb-10 lg:py-12">
-          <div className="relative w-full overflow-hidden rounded-[22px] border border-white/[0.07] shadow-2xl shadow-black/60">
+        <div
+          className="relative flex items-center pb-10 motion-safe:[animation:hp-fade-up_0.65s_ease_both] lg:py-12"
+          style={{ animationDelay: "240ms" }}
+        >
+          <div className="relative w-full overflow-hidden rounded-[22px] border border-white/[0.07] shadow-2xl shadow-black/60 transition-all duration-500 hover:-translate-y-2 hover:border-white/[0.12] hover:[box-shadow:0_12px_48px_color-mix(in_srgb,var(--accent)_8%,transparent),0_24px_60px_rgba(0,0,0,0.7)]">
 
             {/* URL bar — minimal tag, not a fake browser */}
             <div className="flex items-center gap-2 border-b border-white/[0.04] bg-black/60 px-4 py-2.5 backdrop-blur-sm">
