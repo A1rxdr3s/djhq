@@ -24,14 +24,14 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
   if (status === "success") {
     return (
       <div className={cn(
-        "flex items-center justify-center overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02]",
-        compact ? "min-h-[80px] px-5 py-4" : "min-h-[200px] p-8 sm:p-12",
+        "flex items-center overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02]",
+        compact ? "min-h-[64px] px-5 py-4" : "min-h-[120px] p-6 sm:p-8",
       )}>
-        <div className="text-center">
-          <p className={cn("font-black tracking-[-0.01em] text-foreground", compact ? "text-sm" : "text-lg sm:text-xl")}>
+        <div className={compact ? "" : "text-left"}>
+          <p className={cn("font-black tracking-[-0.01em] text-foreground", compact ? "text-sm" : "text-base")}>
             You&apos;re on the list.
           </p>
-          {!compact && <p className="mt-2 text-sm text-white/35">We&apos;ll be in touch.</p>}
+          {!compact && <p className="mt-1 text-[13px] text-white/35">We&apos;ll be in touch.</p>}
         </div>
       </div>
     )
@@ -39,14 +39,14 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] px-5 py-4">
+      <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] px-5 py-3.5">
         <form
           onSubmit={handleSubmit}
           noValidate
           className="flex items-center gap-2.5"
         >
-          <p className="shrink-0 text-sm font-black tracking-[-0.01em] text-foreground">
-            Join the Family
+          <p className="shrink-0 text-[13px] font-bold uppercase tracking-[0.08em] text-foreground/70">
+            Direct to Inbox
           </p>
           <input
             type="email"
@@ -69,7 +69,7 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
             disabled={status === "loading"}
             className="h-9 shrink-0 rounded-full bg-accent px-5 text-sm font-bold uppercase tracking-[0.1em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_22%,transparent)] disabled:opacity-60"
           >
-            {status === "loading" ? "···" : "Join"}
+            {status === "loading" ? "···" : "Subscribe"}
           </button>
         </form>
         {status === "error" && (
@@ -82,18 +82,15 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 text-center sm:p-12">
-      <h2 className="text-2xl font-black tracking-[-0.01em] text-foreground sm:text-3xl">
-        Join the Family
-      </h2>
-      <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-white/40">
-        Get updates about new music, shows, radioshows, releases, guest lists and special events.
+    <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-6 sm:p-8">
+      <p className="text-[13px] leading-[1.75] text-white/40">
+        New music. Upcoming shows.<br />Guest list announcements.
       </p>
 
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="mx-auto mt-7 flex max-w-sm flex-col gap-3 sm:flex-row"
+        className="mt-5 flex max-w-sm flex-col gap-3 sm:flex-row"
       >
         <input
           type="email"
@@ -105,7 +102,7 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
           placeholder="email address"
           aria-label="Email address"
           className={cn(
-            "h-11 flex-1 rounded-full border bg-white/[0.04] px-5 text-sm text-foreground outline-none transition-all duration-150 placeholder:text-white/28",
+            "h-10 flex-1 rounded-full border bg-white/[0.04] px-5 text-sm text-foreground outline-none transition-all duration-150 placeholder:text-white/28",
             status === "error"
               ? "border-red-500/40 focus:border-red-500/60"
               : "border-white/[0.08] focus:border-accent/30",
@@ -114,9 +111,9 @@ export function JoinTheFamily({ compact = false }: { compact?: boolean }) {
         <button
           type="submit"
           disabled={status === "loading"}
-          className="h-11 rounded-full bg-accent px-7 text-sm font-bold uppercase tracking-[0.12em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)] disabled:opacity-60 disabled:hover:translate-y-0"
+          className="h-10 rounded-full bg-accent px-6 text-sm font-bold uppercase tracking-[0.12em] text-accent-foreground shadow-md shadow-accent/10 transition-all duration-150 hover:-translate-y-0.5 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_22%,transparent)] disabled:opacity-60 disabled:hover:translate-y-0"
         >
-          {status === "loading" ? "···" : "Join"}
+          {status === "loading" ? "···" : "Subscribe"}
         </button>
       </form>
 

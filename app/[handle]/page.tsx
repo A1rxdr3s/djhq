@@ -1139,19 +1139,16 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <div className="mt-1">
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/45">Featured Performance</p>
                       {(() => {
-                        const { displayTitle, attribution } = getVideoDisplayInfo(featuredVideo, artist.artistName)
+                        const { displayTitle } = getVideoDisplayInfo(featuredVideo, artist.artistName)
                         const metaParts = [
                           featuredVideo.venue?.trim() || null,
                           featuredVideo.videoDate ? (formatReleaseDate(featuredVideo.videoDate)?.replace(",", "") ?? null) : null,
                         ].filter(Boolean)
                         return (
                           <>
-                            <h3 className="mt-0.5 text-balance text-[1.75rem] font-black uppercase leading-[0.9] tracking-[-0.02em] text-white md:text-[2rem]">
+                            <h3 className="mt-0.5 text-balance text-[18px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-white sm:text-[20px] md:text-[22px]">
                               {displayTitle}
                             </h3>
-                            <p className="mt-0.5 text-[14px] font-semibold uppercase tracking-[0.10em] text-accent/55">
-                              {attribution}
-                            </p>
                             {metaParts.length > 0 ? (
                               <p className="mt-0.5 text-[12px] uppercase tracking-[0.10em] text-white/32">
                                 {metaParts.join(" · ")}
@@ -1173,7 +1170,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <p className="pb-1 pt-1 text-[8px] font-semibold uppercase tracking-[0.28em] text-foreground/18">Archive</p>
                       <div className="space-y-px">
                         {secondaryVideos.map((video, index) => {
-                          const { displayTitle, attribution } = getVideoDisplayInfo(video, artist.artistName)
+                          const { displayTitle } = getVideoDisplayInfo(video, artist.artistName)
                           const metaParts = [
                             video.venue?.trim() || null,
                             video.videoDate ? (formatReleaseDate(video.videoDate)?.replace(",", "") ?? null) : null,
@@ -1208,10 +1205,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 <p className="truncate text-[13px] font-semibold uppercase tracking-[-0.005em] text-white/75 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-white">
                                   {displayTitle}
                                 </p>
-                                <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.12em] text-white/30">
-                                  <span className="text-[11px] font-bold text-accent/55 transition-colors duration-150 group-hover:text-accent/70">{attribution}</span>
-                                  {metaParts.length > 0 ? <span> · {metaParts.join(" · ")}</span> : null}
-                                </p>
+                                {metaParts.length > 0 ? (
+                                  <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.12em] text-white/28">
+                                    {metaParts.join(" · ")}
+                                  </p>
+                                ) : null}
                               </div>
                               <ExternalLink className="h-3 w-3 shrink-0 text-foreground/20 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent/50" />
                             </a>
@@ -1261,22 +1259,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/45">
                         Featured Set
                       </p>
-                      {/* Event name · City — editorial primary title */}
-                      <h3 className="mt-0.5 text-balance text-[1.75rem] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground md:text-[2rem]">
+                      {/* Event name — editorial primary title */}
+                      <h3 className="mt-0.5 text-balance text-[18px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground sm:text-[20px] md:text-[22px]">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
-                        {featuredSet.city?.trim() && (
-                          <span className="text-white/45"> · {featuredSet.city.trim()}</span>
-                        )}
                       </h3>
-                      {/* Artist attribution */}
-                      <p className="mt-0.5 text-[14px] font-semibold uppercase tracking-[0.10em] text-accent/55">
-                        {buildPerformanceArtist(featuredSet.performanceType, featuredSet.performanceArtists, artist.artistName)}
-                      </p>
-                      {/* Venue · Date — merged into one editorial line */}
+                      {/* City · Date — tighter editorial metadata */}
                       {(() => {
-                        const venuePart = (featuredSet.venue?.trim() && featuredSet.event?.trim()) ? featuredSet.venue.trim() : null
+                        const cityPart = featuredSet.city?.trim() || null
                         const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "").toUpperCase() ?? null) : null
-                        const combined = [venuePart, datePart].filter(Boolean).join(" · ")
+                        const combined = [cityPart, datePart].filter(Boolean).join(" · ")
                         return combined ? (
                           <p className="mt-0.5 text-[12px] uppercase tracking-[0.10em] text-white/32">
                             {combined}
@@ -1303,7 +1294,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           {recentSets.map((set, index) => {
                             const showTitle = set.event?.trim() || set.venue?.trim() || cleanDjSetTitle(set.title, artist.artistName)
                             const showMeta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? "")?.replace(",", "") ?? null)
-                            const performanceArtist = buildPerformanceArtist(set.performanceType, set.performanceArtists, artist.artistName)
                             return (
                               <a
                                 key={set.id}
@@ -1332,12 +1322,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-[13px] font-semibold uppercase text-white/75 transition-all duration-150 group-hover:translate-x-[2px] group-hover:text-white">
-                                    {showTitle}{set.city?.trim() && <span className="opacity-40"> · {set.city.trim()}</span>}
+                                    {showTitle}
                                   </p>
-                                  <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.14em] text-white/30">
-                                    <span className="text-[11px] font-bold text-accent/55 transition-colors duration-150 group-hover:text-accent/70">{performanceArtist}</span>
-                                    {showMeta ? <span> · {showMeta}</span> : null}
-                                  </p>
+                                  {showMeta ? (
+                                    <p className="mt-[1px] truncate text-[10px] uppercase tracking-[0.14em] text-white/28">
+                                      {showMeta}
+                                    </p>
+                                  ) : null}
                                 </div>
                                 <ExternalLink className="h-3 w-3 shrink-0 text-foreground/18 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-[2px] group-hover:text-accent/45" />
                               </a>
@@ -1367,11 +1358,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        {/* Join the Family → Community tab (compact on mobile, full on desktop) */}
+        {/* Direct to Inbox → Community tab (compact on mobile, full on desktop) */}
         <MobileSection tab="community">
-          <section className="mt-10 lg:mt-14">
+          <section className="mt-8 lg:mt-12">
             <div className="hidden lg:block">
-              <SectionHeader>Join the Family</SectionHeader>
+              <SectionHeader>Direct to Inbox</SectionHeader>
             </div>
             <div className="mt-4">
               <div className="lg:hidden">
