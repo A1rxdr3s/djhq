@@ -871,11 +871,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
           </div>
         </section>
+      </div>
 
-        {/* ── Sticky mobile scroll nav (hidden on desktop) ── */}
-        <MobileScrollNav />
+      {/* ── Sticky mobile scroll nav — outside padded wrapper so it spans the full viewport ── */}
+      <MobileScrollNav />
 
-        {/* ── Content sections ── */}
+      {/* ── Content sections ── */}
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <MobileTabManager>
 
         {/* ── Mobile Home Overview: removed — content available in main sections ── */}

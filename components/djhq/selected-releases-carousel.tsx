@@ -120,7 +120,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
     >
       <div
         ref={scrollRef}
-        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 select-none [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pl-4 select-none [scrollbar-width:none] sm:gap-4 sm:pl-6 lg:pl-0 [&::-webkit-scrollbar]:hidden"
         style={{ cursor: "grab" }}
       >
         {items.map((release, i) => {
@@ -210,6 +210,8 @@ export function SelectedReleasesCarousel({ releases }: Props) {
             </article>
           )
         })}
+        {/* Trailing spacer — prevents last card from being clipped by scroll boundary */}
+        <div className="flex-none w-4 sm:w-6 lg:hidden" aria-hidden />
       </div>
 
       {/* Right fade hint */}

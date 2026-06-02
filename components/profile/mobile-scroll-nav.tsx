@@ -44,7 +44,7 @@ export function MobileScrollNav() {
       aria-label="Profile sections"
       className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/[0.97] backdrop-blur-sm lg:hidden"
     >
-      <div className="flex h-12 items-center overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex h-12 items-center overflow-x-auto pl-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map(({ id, label }) => {
           const isActive = activeId === id
           return (
@@ -67,6 +67,8 @@ export function MobileScrollNav() {
             </button>
           )
         })}
+        {/* Trailing spacer — ensures "Contact" scrolls fully into view */}
+        <span className="flex-none w-4" aria-hidden />
       </div>
     </nav>
   )
