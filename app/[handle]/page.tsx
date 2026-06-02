@@ -1081,7 +1081,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           )}
 
           {/* Gallery / Moments → Media tab */}
-          <MobileSection tab="media" id="media" className="max-lg:[order:1] lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          <MobileSection tab="media" className="max-lg:hidden lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <section className="flex flex-col">
               <SectionHeader variant="primary">Moments</SectionHeader>
               <GallerySection images={galleryImages} />
@@ -1230,11 +1230,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 </div>
               ) : null}
 
-              {/* ── Right: Featured Show — hidden on mobile (shown in Highlights card) ── */}
+              {/* ── Right: Featured Show ── */}
               {featuredSet ? (
                 <div
                   className={cn(
-                    "max-lg:hidden flex flex-col",
+                    "flex flex-col",
                     featuredVideo && "border-t border-white/[0.03] lg:border-t-0 lg:border-l lg:border-white/[0.03]",
                   )}
                 >
