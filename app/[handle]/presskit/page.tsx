@@ -275,7 +275,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 <img
                   src={artist.heroLogoUrl}
                   alt={artist.artistName}
-                  className="mb-1 max-h-[68px] max-w-[190px] object-contain opacity-85 sm:max-h-[80px] sm:max-w-[250px]"
+                  className="max-h-[80px] max-w-[200px] object-contain opacity-85 sm:max-h-[90px] sm:max-w-[240px] lg:max-h-[100px] lg:max-w-[280px]"
                 />
               ) : (
                 <h1 className="text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl">
@@ -284,7 +284,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
               )}
 
               {/* Genres + location on one muted line */}
-              <p className="mt-2 text-[12px] text-white/38">
+              <p className="mt-1.5 text-[12px] text-white/38">
                 {[
                   artist.genres.join(" · "),
                   artist.location,
@@ -292,7 +292,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
               </p>
 
               {/* Helper text */}
-              <p className="mt-3 text-[13px] leading-relaxed text-white/28">
+              <p className="mt-2 text-[13px] leading-relaxed text-white/28">
                 Download press materials, artist assets and booking information.
               </p>
             </div>
