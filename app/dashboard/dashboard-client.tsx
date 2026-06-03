@@ -366,13 +366,6 @@ function toDateInputValue(value: string) {
   return value.slice(0, 10)
 }
 
-function getSocialLinkFormState(artist: Artist): SocialLinkFormState[] {
-  return artist.socialLinks.map((link) => ({
-    platform: link.platform,
-    label: link.label,
-    url: link.url,
-  }))
-}
 
 function getReleaseFormState(artist: Artist): ReleaseFormState[] {
   return artist.releases.map((release) => {
