@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { checkRateLimit, getClientIp } from "@/lib/request-security"
+import { brand } from "@/lib/brand"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
 
   const resend = new Resend(resendApiKey)
   const { error: sendError } = await resend.emails.send({
-    from: "DJHQ Booking <bookings@djhq.app>",
+    from: brand.bookingFromEmail,
     to: artistRow.booking_email,
     replyTo: email,
     subject,

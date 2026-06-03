@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { resolveSafeHref } from "@/lib/safe-url"
+import { brand } from "@/lib/brand"
 
 type Props = {
   artistName: string
@@ -174,7 +175,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
               href="/"
               className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/14 transition-colors duration-150 hover:text-white/32"
             >
-              Powered by DJHQ
+              {brand.copy.poweredBy}
             </Link>
           </div>
         </div>

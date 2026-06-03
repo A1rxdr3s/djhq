@@ -18,6 +18,7 @@ import { GigCard } from "@/components/dashboard/gig-card"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
+import { brand } from "@/lib/brand"
 
 // Natural dimensions of the virtual hero used for CSS-scale preview.
 // The preview container scales this viewport-equivalent canvas down to fit.
@@ -5893,7 +5894,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <span className="font-mono text-foreground/70">yourname.com</span> to your DJHQ profile.
             </p>
             <a
-              href="mailto:hello@djhq.com"
+              href={`mailto:${brand.supportEmail}`}
               className="mt-4 inline-flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70"
             >
               <Mail className="h-3.5 w-3.5" />
@@ -6104,7 +6105,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   This domain is suspended. Contact DJHQ to reactivate it.
                 </p>
                 <a
-                  href="mailto:hello@djhq.com"
+                  href={`mailto:${brand.supportEmail}`}
                   className="inline-flex items-center gap-1.5 text-xs text-accent/70 transition-colors hover:text-accent"
                 >
                   <Mail className="h-3 w-3" />

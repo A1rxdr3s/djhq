@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { brand } from '@/lib/brand'
 import './globals.css'
 
 const inter = Inter({
@@ -14,9 +15,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'DJHQ — Professional Presence for Electronic Music Artists',
-  description: 'One professional destination for your DJ career. Press kit, artist profile, shows, releases and booking contact — one URL.',
-  keywords: ['DJ', 'producer', 'electronic music', 'press kit', 'booking', 'artist profile', 'music industry'],
+  title: brand.copy.metaTitle,
+  description: brand.copy.metaDescription,
+  keywords: [...brand.copy.metaKeywords],
   icons: {
     icon: [
       {
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0B0F14',
+  themeColor: '#0B0F14', // design token — not brand-driven
   width: 'device-width',
   initialScale: 1,
 }

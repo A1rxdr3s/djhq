@@ -1,15 +1,74 @@
-# v0 sandbox internal files
+# ── Next.js ───────────────────────────────────────────────────────────────────
+.next/
+out/
+.turbo/
+
+# ── Node ──────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── TypeScript build cache ────────────────────────────────────────────────────
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# ── Environment variables ─────────────────────────────────────────────────────
+# .env.local.example is intentionally tracked as a setup template.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Vercel ────────────────────────────────────────────────────────────────────
+.vercel/
+
+# ── AI coding assistants ──────────────────────────────────────────────────────
+# Local tool configs and session state — not project configuration.
+.claude/
+.cursor/
+.windsurf/
+.continue/
+.aider/
+.aider.tags.cache.v3/
+.aider.chat.history.md
+.aider.input.history
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Coverage & test reports ───────────────────────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+
+# ── Archives & temp files ─────────────────────────────────────────────────────
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+
+# ── Local uploads & temporary media ──────────────────────────────────────────
+# Public assets intentionally committed (icons, placeholder images) are tracked.
+# Any locally-generated uploads go here if added.
+uploads/
+tmp/
+
+# ── v0 sandbox artifacts (legacy) ────────────────────────────────────────────
 __v0_runtime_loader.js
 __v0_devtools.tsx
 __v0_jsx-dev-runtime.ts
 .snowflake/
 .v0-trash/
-.vercel/
-
-# Environment variables
-.env*.local
-
-# Common ignores
-node_modules
-.next/
-.DS_Store

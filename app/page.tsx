@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Check, ExternalLink, Music2, Radio, Play, Youtube, Instagram } from "lucide-react"
+import { brand } from "@/lib/brand"
 
 // ─── Scroll reveal hook ───────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ function Nav() {
       }}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-        <span className="text-[13px] font-bold tracking-[0.04em] text-[#F5F5F3]">DJHQ</span>
+        <span className="text-[13px] font-bold tracking-[0.04em] text-[#F5F5F3]">{brand.name}</span>
         <div className="flex items-center gap-6">
           <Link href="/andresherrera" className="hidden text-[13px] text-[#71717A] transition-colors hover:text-[#F5F5F3] sm:block">
             Demo
@@ -115,7 +116,7 @@ function Hero() {
           >
             <span className="h-1.5 w-1.5 rounded-full bg-[#6D5DFC]" />
             <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[#6D5DFC]">
-              For electronic music artists
+              {brand.copy.heroLabel}
             </span>
           </div>
 
@@ -137,8 +138,7 @@ function Hero() {
             className="mb-8 max-w-[440px] text-[16px] leading-[1.7] text-[#71717A]"
             style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.26s both" }}
           >
-            DJHQ gives you one professional destination — press kit, profile, shows,
-            releases and booking contact. Everything a promoter needs. One URL.
+            {brand.copy.heroSubheading}
           </p>
 
           {/* CTAs */}
@@ -150,7 +150,7 @@ function Hero() {
               href="mailto:access@djhq.co"
               className="flex h-12 items-center gap-2.5 rounded-md bg-[#6D5DFC] px-7 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-[#5D4EE8] hover:shadow-[0_0_36px_rgba(109,93,252,0.55)]"
             >
-              Create Your DJHQ
+              Create Your {brand.name}
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link
@@ -893,7 +893,7 @@ function ClosingCTA() {
               href="mailto:access@djhq.co"
               className="flex h-13 items-center gap-2.5 rounded-md bg-[#6D5DFC] px-9 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-[#5D4EE8] hover:shadow-[0_0_48px_rgba(109,93,252,0.60)]"
             >
-              Create Your DJHQ
+              Create Your {brand.name}
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link
@@ -919,13 +919,13 @@ function Footer() {
   return (
     <footer style={{ background: "#090C11", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "28px 0" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
-        <span className="text-[13px] font-bold tracking-[0.04em]" style={{ color: "rgba(245,245,243,0.25)" }}>DJHQ</span>
+        <span className="text-[13px] font-bold tracking-[0.04em]" style={{ color: "rgba(245,245,243,0.25)" }}>{brand.name}</span>
         <div className="flex items-center gap-6">
           <Link href="/sign-in" className="font-mono text-[11px] transition-colors hover:text-[#F5F5F3]" style={{ color: "#3F3F46" }}>
             Login
           </Link>
           <span className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
-            © {new Date().getFullYear()} DJHQ
+            © {new Date().getFullYear()} {brand.name}
           </span>
         </div>
       </div>
