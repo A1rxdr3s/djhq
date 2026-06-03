@@ -2,144 +2,84 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, ExternalLink } from "lucide-react"
+import { ArrowRight, Check, ExternalLink } from "lucide-react"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Scroll reveal hook ───────────────────────────────────────────────────────
 
-const ARTISTS = [
-  {
-    name: "ANDRES:HERRERA",
-    genre: "House / Tech House",
-    city: "Buenos Aires",
-    handle: "andresherrera",
-    gradient: "from-[#0D1A14] via-[#0A1410] to-[#080C0B]",
-    accentGlow: "bg-[oklch(0.45_0.10_155)]",
-  },
-  {
-    name: "VERA K.",
-    genre: "Minimal Techno",
-    city: "Berlin",
-    handle: "andresherrera",
-    gradient: "from-[#12100A] via-[#0E0C08] to-[#080807]",
-    accentGlow: "bg-[oklch(0.40_0.08_85)]",
-  },
-  {
-    name: "MARIN",
-    genre: "Melodic House",
-    city: "Amsterdam",
-    handle: "andresherrera",
-    gradient: "from-[#0A0E18] via-[#080C12] to-[#080807]",
-    accentGlow: "bg-[oklch(0.38_0.08_230)]",
-  },
-]
-
-const PLATFORMS = [
-  { name: "Instagram", note: "Not professional" },
-  { name: "Linktree", note: "Just links" },
-  { name: "Dropbox", note: "Links expire" },
-  { name: "Google Drive", note: "Hard to navigate" },
-  { name: "PDF press kit", note: "Goes outdated" },
-  { name: "WhatsApp", note: "Unprofessional" },
-  { name: "Spotify link", note: "No booking info" },
-  { name: "Beatport", note: "No press info" },
-  { name: "SoundCloud", note: "No bio, no shows" },
-]
-
-// ─── Hooks ────────────────────────────────────────────────────────────────────
-
-function useScrollReveal(threshold = 0.15) {
+function useReveal(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
-
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect() } },
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); io.disconnect() } },
       { threshold }
     )
-    observer.observe(el)
-    return () => observer.disconnect()
+    io.observe(el)
+    return () => io.disconnect()
   }, [threshold])
-
   return { ref, visible }
 }
 
-// ─── Atoms ────────────────────────────────────────────────────────────────────
-
-function MonoLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <span className={`font-mono text-[10px] font-semibold uppercase tracking-[0.28em] ${className}`}>
-      {children}
-    </span>
-  )
-}
-
-function RevealDiv({
+function Reveal({
   children,
-  className = "",
   delay = 0,
+  className = "",
 }: {
   children: React.ReactNode
-  className?: string
   delay?: number
+  className?: string
 }) {
-  const { ref, visible } = useScrollReveal()
+  const { ref, visible } = useReveal()
   return (
     <div
       ref={ref}
-      className={`transition-all duration-700 ${
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
-      } ${className}`}
-      style={{ transitionDelay: visible ? `${delay}ms` : "0ms", transitionTimingFunction: "cubic-bezier(0.25,0,0,1)" }}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(14px)",
+        transition: `opacity 0.55s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.55s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+      }}
     >
       {children}
     </div>
   )
 }
 
-// ─── Navigation ───────────────────────────────────────────────────────────────
+// ─── Nav ──────────────────────────────────────────────────────────────────────
 
 function Nav() {
-  const [scrolled, setScrolled] = useState(false)
-
+  const [solid, setSolid] = useState(false)
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40)
-    window.addEventListener("scroll", handler, { passive: true })
-    return () => window.removeEventListener("scroll", handler)
+    const h = () => setSolid(window.scrollY > 60)
+    window.addEventListener("scroll", h, { passive: true })
+    return () => window.removeEventListener("scroll", h)
   }, [])
 
   return (
     <nav
-      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "border-b border-white/[0.06] bg-[#0C0C0B]/92 backdrop-blur-xl"
-          : "bg-transparent"
-      }`}
-      style={{ animation: "brand-nav-fade 0.6s cubic-bezier(0.25,0,0,1) 0.2s both" }}
+      className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+      style={{
+        background: solid ? "rgba(11,15,20,0.92)" : "transparent",
+        backdropFilter: solid ? "blur(16px)" : "none",
+        borderBottom: solid ? "1px solid rgba(255,255,255,0.06)" : "none",
+      }}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-        <span className="font-mono text-[13px] font-bold uppercase tracking-[0.22em] text-[#F4F2EE]">
-          DJHQ
-        </span>
+        <span className="text-[13px] font-bold tracking-[0.04em] text-[#F5F5F3]">DJHQ</span>
         <div className="flex items-center gap-6">
-          <Link
-            href="/andresherrera"
-            className="font-mono text-[11px] text-[#F4F2EE]/35 transition-colors hover:text-[#F4F2EE]/65"
-          >
-            Demo →
+          <Link href="/andresherrera" className="hidden text-[13px] text-[#71717A] transition-colors hover:text-[#F5F5F3] sm:block">
+            Demo
           </Link>
-          <Link
-            href="/sign-in"
-            className="font-mono text-[11px] text-[#F4F2EE]/35 transition-colors hover:text-[#F4F2EE]/65"
-          >
+          <Link href="/sign-in" className="hidden text-[13px] text-[#71717A] transition-colors hover:text-[#F5F5F3] sm:block">
             Sign in
           </Link>
           <a
             href="mailto:access@djhq.co"
-            className="inline-flex h-8 items-center rounded-full border border-white/[0.14] bg-white/[0.04] px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[#F4F2EE]/80 transition-all duration-200 hover:border-white/[0.22] hover:bg-white/[0.08] hover:text-[#F4F2EE]"
+            className="rounded-md bg-[#6D5DFC] px-4 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:bg-[#7E70FD] hover:shadow-[0_0_20px_rgba(109,93,252,0.35)]"
           >
-            Request Access
+            Get started
           </a>
         </div>
       </div>
@@ -147,722 +87,611 @@ function Nav() {
   )
 }
 
-// ─── Section 1: Cover ─────────────────────────────────────────────────────────
+// ─── Hero ─────────────────────────────────────────────────────────────────────
 
-function CoverSection() {
+function Hero() {
   return (
-    <section className="relative flex min-h-screen items-end overflow-hidden bg-[#080807]">
-      {/* Atmospheric background — warm dark gradient simulating stage lighting */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-[#0D1A14] via-[#0A0E0C] to-[#080807]"
-          style={{ animation: "brand-scale-in 1.2s cubic-bezier(0.25,0,0,1) both" }}
-        />
-        {/* Primary glow — accent, large, centered-left */}
-        <div
-          className="pointer-events-none absolute left-[10%] top-[20%] h-[70vh] w-[60vw] rounded-full opacity-[0.055]"
-          style={{
-            background: "radial-gradient(ellipse at center, oklch(0.70 0.15 155), transparent 70%)",
-            animation: "brand-glow-pulse 18s ease-in-out infinite",
-          }}
-        />
-        {/* Secondary glow — warm amber, right */}
-        <div
-          className="pointer-events-none absolute right-[5%] top-[40%] h-[40vh] w-[35vw] rounded-full opacity-[0.03]"
-          style={{
-            background: "radial-gradient(ellipse at center, oklch(0.72 0.12 85), transparent 70%)",
-          }}
-        />
-      </div>
+    <section
+      className="relative overflow-hidden pt-14"
+      style={{ background: "#0B0F14", minHeight: "100vh" }}
+    >
+      {/* Indigo radial glow — behind right column */}
+      <div
+        className="pointer-events-none absolute right-0 top-0 h-[700px] w-[700px]"
+        style={{
+          background: "radial-gradient(ellipse at 70% 30%, rgba(109,93,252,0.09) 0%, transparent 65%)",
+          animation: "hp-indigo-pulse 12s ease-in-out infinite",
+        }}
+      />
 
-      {/* Content — bottom-left anchored like a magazine cover */}
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 pt-32">
-        <div className="max-w-3xl">
-          {/* Eyebrow */}
+      <div className="mx-auto grid min-h-[calc(100vh-56px)] max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+
+        {/* Left */}
+        <div>
+          {/* Label */}
           <div
-            className="mb-8"
-            style={{ animation: "brand-reveal 0.7s cubic-bezier(0.25,0,0,1) 0.4s both" }}
+            className="mb-6 inline-flex items-center gap-2"
+            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both" }}
           >
-            <span className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.70_0.15_155)]" style={{ animation: "brand-glow-pulse 3s ease-in-out infinite" }} />
-              <MonoLabel className="text-[#F4F2EE]/50">Private access · Now open</MonoLabel>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#6D5DFC]" />
+            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[#6D5DFC]">
+              For electronic music artists
             </span>
           </div>
 
-          {/* Headline — serif, large */}
+          {/* Headline */}
           <h1
-            className="mb-8 font-serif text-[clamp(56px,8vw,110px)] font-light leading-[0.95] tracking-[0.005em] text-[#F4F2EE]"
-            style={{ animation: "brand-reveal 0.9s cubic-bezier(0.25,0,0,1) 0.55s both" }}
+            className="mb-5 text-[clamp(38px,5vw,68px)] font-bold leading-[1.06] tracking-[-0.03em] text-[#F5F5F3]"
+            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.18s both" }}
           >
-            Your career
+            Your music is{" "}
+            <span style={{ color: "#F5F5F3" }}>professional.</span>
             <br />
-            <em className="italic text-[#F4F2EE]/70">deserves a better</em>
+            <span style={{ color: "#71717A" }}>Your online presence</span>
             <br />
-            first impression.
+            <span style={{ color: "#71717A" }}>probably isn&apos;t.</span>
           </h1>
 
-          {/* Subheadline */}
+          {/* Sub */}
           <p
-            className="mb-10 max-w-[460px] text-[16px] leading-[1.78] text-[#F4F2EE]/42"
-            style={{ animation: "brand-reveal 0.9s cubic-bezier(0.25,0,0,1) 0.72s both" }}
+            className="mb-8 max-w-[440px] text-[16px] leading-[1.7] text-[#71717A]"
+            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.26s both" }}
           >
-            DJHQ gives you one professional destination — bio, press kit, shows,
+            DJHQ gives you one professional destination — press kit, profile, shows,
             releases and booking contact. Everything a promoter needs. One URL.
           </p>
 
           {/* CTAs */}
           <div
-            className="flex flex-wrap items-center gap-4"
-            style={{ animation: "brand-reveal 0.9s cubic-bezier(0.25,0,0,1) 0.85s both" }}
+            className="mb-8 flex flex-wrap items-center gap-4"
+            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.34s both" }}
           >
             <a
               href="mailto:access@djhq.co"
-              className="group inline-flex h-12 items-center gap-2.5 rounded-full bg-[oklch(0.70_0.15_155)] px-7 font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-[#0A0C0B] transition-all duration-300 hover:bg-[oklch(0.74_0.16_155)] hover:[box-shadow:0_0_40px_color-mix(in_srgb,oklch(0.70_0.15_155)_28%,transparent)]"
+              className="flex h-11 items-center gap-2 rounded-md bg-[#6D5DFC] px-6 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-[#7E70FD] hover:shadow-[0_0_28px_rgba(109,93,252,0.40)]"
             >
-              Build your profile
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              Get started — it&apos;s free
+              <ArrowRight className="h-4 w-4" />
             </a>
             <Link
               href="/andresherrera"
-              className="inline-flex h-12 items-center gap-2 font-mono text-[12px] text-[#F4F2EE]/38 transition-colors hover:text-[#F4F2EE]/65"
+              className="flex items-center gap-1.5 text-[14px] text-[#71717A] transition-colors hover:text-[#F5F5F3]"
             >
               See a live example
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
-        </div>
 
-        {/* Artist credit — bottom right */}
-        <div
-          className="absolute bottom-20 right-6 text-right"
-          style={{ animation: "brand-reveal 0.9s cubic-bezier(0.25,0,0,1) 1.1s both" }}
-        >
-          <MonoLabel className="text-[#F4F2EE]/20">ANDRES:HERRERA · Buenos Aires</MonoLabel>
-        </div>
-      </div>
-
-      {/* Bottom fade */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#0C0C0B] to-transparent" />
-    </section>
-  )
-}
-
-// ─── Section 2: Identity statement ───────────────────────────────────────────
-
-function IdentitySection() {
-  const { ref, visible } = useScrollReveal(0.2)
-
-  return (
-    <section className="bg-[#0C0C0B] py-32">
-      <div className="mx-auto max-w-7xl px-6">
-        <div ref={ref} className="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr]">
-          {/* Left — large serif statement */}
-          <h2
-            className={`font-serif text-[clamp(44px,5.5vw,80px)] font-light leading-[1.04] tracking-[0.005em] text-[#F4F2EE] transition-all duration-1000 ${
-              visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ transitionTimingFunction: "cubic-bezier(0.25,0,0,1)" }}
-          >
-            Your career.
-            <br />
-            <em className="text-[#F4F2EE]/55 italic">One destination.</em>
-          </h2>
-
-          {/* Right — body */}
+          {/* Trust */}
           <div
-            className={`transition-all duration-1000 delay-200 ${
-              visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ transitionTimingFunction: "cubic-bezier(0.25,0,0,1)" }}
+            className="flex flex-wrap items-center gap-5"
+            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.42s both" }}
           >
-            <p className="text-[16px] leading-[1.85] text-[#F4F2EE]/40">
-              A promoter Googles you tonight.
-              A festival booker asks for your press kit tomorrow.
-              A label wants your bio next week.
-            </p>
-            <p className="mt-5 text-[16px] leading-[1.85] text-[#F4F2EE]/60">
-              DJHQ is what they find — professional, complete, and always current.
-            </p>
-            <div className="mt-8 h-px w-12 bg-[oklch(0.70_0.15_155)]/40" />
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Section 3: Artists grid ──────────────────────────────────────────────────
-
-function ArtistsSection() {
-  return (
-    <section className="bg-[#0C0C0B] py-24">
-      <div className="mx-auto max-w-7xl px-6">
-        <RevealDiv className="mb-12">
-          <MonoLabel className="text-[#F4F2EE]/30">Real artists · Live profiles</MonoLabel>
-        </RevealDiv>
-
-        {/* Editorial grid — asymmetric like a magazine spread */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {/* Large card */}
-          <RevealDiv delay={0} className="md:col-span-2">
-            <ArtistCard artist={ARTISTS[0]} large />
-          </RevealDiv>
-
-          {/* Stacked small cards */}
-          <div className="flex flex-col gap-4">
-            <RevealDiv delay={120}>
-              <ArtistCard artist={ARTISTS[1]} />
-            </RevealDiv>
-            <RevealDiv delay={200}>
-              <ArtistCard artist={ARTISTS[2]} />
-            </RevealDiv>
+            {["No credit card", "Free to start", "Setup in under an hour"].map((t) => (
+              <div key={t} className="flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-[#6D5DFC]" />
+                <span className="text-[12px] text-[#52525B]">{t}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <RevealDiv delay={280} className="mt-8 text-center">
-          <MonoLabel className="text-[#F4F2EE]/18">
-            Every profile is live. Every link works.
-          </MonoLabel>
-        </RevealDiv>
-      </div>
-    </section>
-  )
-}
-
-function ArtistCard({ artist, large = false }: { artist: (typeof ARTISTS)[0]; large?: boolean }) {
-  return (
-    <Link
-      href={`/${artist.handle}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group relative block overflow-hidden rounded-2xl border border-white/[0.07] bg-[#111410] transition-all duration-500 hover:border-white/[0.14] ${
-        large ? "aspect-[16/9]" : "aspect-[4/3]"
-      }`}
-    >
-      {/* Atmospheric gradient background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${artist.gradient} transition-all duration-700 group-hover:opacity-80`} />
-
-      {/* Glow */}
-      <div
-        className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100`}
-        style={{ background: `radial-gradient(ellipse at 30% 60%, color-mix(in srgb, oklch(0.70 0.15 155) 8%, transparent), transparent 65%)` }}
-      />
-
-      {/* Content */}
-      <div className="absolute inset-0 flex flex-col justify-between p-6 sm:p-8">
-        <div className="flex items-start justify-between">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 backdrop-blur-sm">
-            <MonoLabel className="text-[#F4F2EE]/45">{artist.genre}</MonoLabel>
-          </span>
-          <ExternalLink className="h-4 w-4 text-[#F4F2EE]/20 transition-all duration-200 group-hover:text-[#F4F2EE]/55" />
-        </div>
-
-        <div>
-          <p
-            className={`font-serif font-light leading-none tracking-[0.01em] text-[#F4F2EE] ${
-              large ? "text-[clamp(32px,4vw,56px)]" : "text-[clamp(24px,3vw,38px)]"
-            }`}
+        {/* Right — product screenshot */}
+        <div style={{ animation: "hp-fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.28s both" }}>
+          <div
+            className="overflow-hidden"
+            style={{
+              borderRadius: "16px",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 0 0 1px rgba(109,93,252,0.08), 0 32px 80px rgba(0,0,0,0.6)",
+            }}
           >
-            {artist.name}
-          </p>
-          <p className="mt-2 font-mono text-[11px] text-[#F4F2EE]/32">{artist.city}</p>
-          <div className="mt-4 flex items-center gap-1.5">
-            <MonoLabel className="text-[#F4F2EE]/20">djhq.co / {artist.handle}</MonoLabel>
-          </div>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-// ─── Section 4: The Problem ───────────────────────────────────────────────────
-
-function ProblemSection() {
-  return (
-    <section className="bg-[#080807] py-32">
-      <div className="mx-auto max-w-7xl px-6">
-        <RevealDiv className="mb-5">
-          <MonoLabel className="text-[#F4F2EE]/28">The current reality</MonoLabel>
-        </RevealDiv>
-
-        <RevealDiv delay={80} className="mb-16 max-w-2xl">
-          <h2 className="font-serif text-[clamp(36px,4.5vw,64px)] font-light leading-[1.06] tracking-[0.005em] text-[#F4F2EE]">
-            What a booker finds
-            <br />
-            <em className="italic text-[#F4F2EE]/45">when they Google you today.</em>
-          </h2>
-        </RevealDiv>
-
-        {/* Platform tiles */}
-        <div className="mb-16 grid grid-cols-3 gap-3 sm:grid-cols-3 md:grid-cols-9">
-          {PLATFORMS.map((platform, i) => (
-            <RevealDiv key={platform.name} delay={i * 40} className="md:col-span-1">
-              <div className="group rounded-xl border border-white/[0.04] bg-white/[0.015] p-4 transition-all duration-300 hover:border-white/[0.07]">
-                <p className="text-[12px] font-medium text-[#F4F2EE]/28">{platform.name}</p>
-                <p className="mt-1 font-mono text-[9px] text-[#F4F2EE]/16">{platform.note}</p>
-              </div>
-            </RevealDiv>
-          ))}
-        </div>
-
-        {/* Pivot */}
-        <RevealDiv delay={400} className="mb-14 flex items-center gap-6">
-          <div className="h-px flex-1 bg-white/[0.05]" />
-          <MonoLabel className="text-[#F4F2EE]/25">DJHQ replaces all of it</MonoLabel>
-          <div className="h-px flex-1 bg-white/[0.05]" />
-        </RevealDiv>
-
-        {/* Problem paragraph */}
-        <RevealDiv delay={480} className="mx-auto max-w-2xl text-center">
-          <p className="text-[16px] leading-[1.85] text-[#F4F2EE]/42">
-            A festival booker asks for your press kit at 11pm.
-            You send a Dropbox link that expired.
-            A label finds your Linktree with five broken links.
-            A journalist Googles you and finds your SoundCloud from 2019.
-          </p>
-          <p className="mt-5 font-serif text-[20px] italic text-[#F4F2EE]/55">
-            DJHQ is the thing you should have had three years ago.
-          </p>
-        </RevealDiv>
-      </div>
-    </section>
-  )
-}
-
-// ─── Section 5: Three outcome panels ─────────────────────────────────────────
-
-function OutcomesSection() {
-  const outcomes = [
-    {
-      anchor: "One URL. Everything.",
-      body: "Your bio, shows, releases, press kit and booking contact — in a single professional destination that looks like you hired a web designer. You didn't.",
-      detail: "No web designer required  ·  Setup in under an hour",
-    },
-    {
-      anchor: "Stop sending Dropbox folders.",
-      body: "Your EPK lives at a permanent URL. PDFs in English and Spanish, press photos, technical rider, asset folders. Send one link. They have everything. It never expires.",
-      detail: "Always current  ·  English and Spanish PDFs",
-    },
-    {
-      anchor: "Prove you're a working artist.",
-      body: "Upcoming shows, past venues, release catalog, streaming links — all in one place. When a festival asks where you've played, you send one link instead of a photo album.",
-      detail: "Show history  ·  Automatic sorting by date",
-    },
-  ]
-
-  return (
-    <section className="bg-[#0C0C0B] py-32">
-      <div className="mx-auto max-w-7xl px-6">
-        <RevealDiv className="mb-5">
-          <MonoLabel className="text-[#F4F2EE]/28">What changes</MonoLabel>
-        </RevealDiv>
-        <RevealDiv delay={60} className="mb-16">
-          <h2 className="font-serif text-[clamp(36px,4.5vw,64px)] font-light leading-[1.06] tracking-[0.005em] text-[#F4F2EE]">
-            Three things that happen
-            <br />
-            <em className="italic text-[#F4F2EE]/45">the moment you join.</em>
-          </h2>
-        </RevealDiv>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {outcomes.map((o, i) => (
-            <RevealDiv key={o.anchor} delay={i * 100} className="h-full">
-              <div className="group flex h-full flex-col rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.035]">
-                <div className="mb-5 flex h-5 w-5 items-center justify-center">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.70_0.15_155)]/60" />
-                </div>
-                <h3 className="mb-4 font-serif text-[22px] font-light leading-[1.2] text-[#F4F2EE]/90">
-                  {o.anchor}
-                </h3>
-                <p className="flex-1 text-[14px] leading-[1.8] text-[#F4F2EE]/38">{o.body}</p>
-                <div className="mt-6 border-t border-white/[0.05] pt-5">
-                  <MonoLabel className="text-[#F4F2EE]/20">{o.detail}</MonoLabel>
-                </div>
-              </div>
-            </RevealDiv>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Section 6: Product evidence ─────────────────────────────────────────────
-
-function ProductSection() {
-  return (
-    <section className="bg-[#080807] py-32">
-      <div className="mx-auto max-w-7xl px-6">
-        <RevealDiv className="mb-5">
-          <MonoLabel className="text-[#F4F2EE]/28">The product</MonoLabel>
-        </RevealDiv>
-        <RevealDiv delay={60} className="mb-16 max-w-xl">
-          <h2 className="font-serif text-[clamp(36px,4.5vw,64px)] font-light leading-[1.06] tracking-[0.005em] text-[#F4F2EE]">
-            What the right people
-            <br />
-            <em className="italic text-[#F4F2EE]/45">see when they find you.</em>
-          </h2>
-        </RevealDiv>
-
-        {/* Browser frame — minimal, elegant */}
-        <RevealDiv delay={150}>
-          <div className="overflow-hidden rounded-[20px] border border-white/[0.08] shadow-[0_32px_80px_rgba(0,0,0,0.55)]">
-            {/* URL bar */}
-            <div className="flex items-center gap-3 border-b border-white/[0.06] bg-[#0E0E0D] px-5 py-3">
+            {/* Browser bar */}
+            <div
+              className="flex items-center gap-3 px-4 py-2.5"
+              style={{ background: "#0D1018", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+            >
               <div className="flex gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-white/[0.06]" />
-                <div className="h-2.5 w-2.5 rounded-full bg-white/[0.06]" />
-                <div className="h-2.5 w-2.5 rounded-full bg-white/[0.06]" />
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-2.5 w-2.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }} />
+                ))}
               </div>
-              <div className="flex-1 rounded-md bg-white/[0.04] py-1 text-center font-mono text-[11px] text-[#F4F2EE]/28">
+              <div
+                className="flex-1 rounded-md px-3 py-1 text-center font-mono text-[11px]"
+                style={{ background: "rgba(255,255,255,0.04)", color: "#52525B" }}
+              >
                 andresherrera.djhq.co
               </div>
             </div>
 
-            {/* Profile preview — editorial quality */}
-            <div className="bg-[#0A0C0B]">
-              {/* Hero */}
-              <div className="relative overflow-hidden" style={{ height: "220px" }}>
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0D1A14] via-[#0A1008] to-[#080807]" />
-                <div className="pointer-events-none absolute left-[15%] top-[10%] h-[280px] w-[500px] rounded-full opacity-[0.08]"
-                  style={{ background: "radial-gradient(ellipse at center, oklch(0.70 0.15 155), transparent 70%)" }} />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C0B] via-[#0A0C0B]/30 to-transparent" />
-                <div className="absolute bottom-6 left-8 right-8">
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {["House", "Tech House", "Producer"].map((g) => (
-                      <span key={g} className="rounded-full border border-[oklch(0.70_0.15_155)]/30 bg-black/40 px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.10em] text-[#F4F2EE]/65 backdrop-blur-sm">
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="font-serif text-[clamp(28px,4vw,48px)] font-light leading-none text-[#F4F2EE]">
-                    ANDRES:HERRERA
-                  </p>
-                  <p className="mt-1.5 font-mono text-[11px] text-[#F4F2EE]/38">Buenos Aires, Argentina</p>
-                </div>
-              </div>
-
-              {/* Content row */}
-              <div className="grid divide-x divide-white/[0.04] border-t border-white/[0.05] md:grid-cols-3">
-                {/* Shows */}
-                <div className="p-6">
-                  <MonoLabel className="mb-4 block text-[oklch(0.70_0.15_155)]/60">Upcoming Shows</MonoLabel>
-                  <div className="space-y-3.5">
-                    {[
-                      { date: "Jun 28", venue: "ICE Festival", city: "Buenos Aires" },
-                      { date: "Jul 23", venue: "Club Room", city: "Barcelona" },
-                    ].map((s) => (
-                      <div key={s.venue} className="flex items-center gap-3">
-                        <div className="w-9 shrink-0 text-center">
-                          <p className="font-mono text-[8px] font-bold uppercase tracking-widest text-[oklch(0.70_0.15_155)]/50">{s.date.split(" ")[0]}</p>
-                          <p className="text-[18px] font-black leading-none text-[#F4F2EE]/80">{s.date.split(" ")[1]}</p>
-                        </div>
-                        <div>
-                          <p className="text-[12px] font-semibold text-[#F4F2EE]/75">{s.venue}</p>
-                          <p className="font-mono text-[10px] text-[#F4F2EE]/32">{s.city}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Releases */}
-                <div className="p-6">
-                  <MonoLabel className="mb-4 block text-[oklch(0.70_0.15_155)]/60">Latest Releases</MonoLabel>
-                  <div className="space-y-3">
-                    {[
-                      { title: "Thank You", label: "Groove People Records", year: "2025" },
-                      { title: "Sky Sunset", label: "Misa Records", year: "2024" },
-                      { title: "Arrival", label: "Groove People Records", year: "2024" },
-                    ].map((r, i) => (
-                      <div key={r.title} className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 shrink-0 rounded-md"
-                          style={{ background: `linear-gradient(135deg, oklch(${0.32 + i * 0.04} 0.10 ${155 + i * 22}), oklch(0.08 0 0))` }} />
-                        <div>
-                          <p className="text-[11px] font-semibold text-[#F4F2EE]/75">{r.title}</p>
-                          <p className="font-mono text-[9px] text-[#F4F2EE]/28">{r.year}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Press / Booking */}
-                <div className="p-6">
-                  <MonoLabel className="mb-4 block text-[oklch(0.70_0.15_155)]/60">Contact & Press</MonoLabel>
-                  <div className="space-y-3">
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <MonoLabel className="text-[#F4F2EE]/25">Booking</MonoLabel>
-                      <p className="mt-1 font-mono text-[10px] text-[oklch(0.70_0.15_155)]/70">booking@andresherrera.music</p>
-                    </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <MonoLabel className="text-[#F4F2EE]/25">Press Kit</MonoLabel>
-                      <p className="mt-1 font-mono text-[10px] text-[#F4F2EE]/35">andresherrera.djhq.co/presskit</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Profile */}
+            <ProfileMockup />
           </div>
-        </RevealDiv>
-
-        <RevealDiv delay={250} className="mt-6 text-center">
-          <Link href="/andresherrera" target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 font-mono text-[11px] text-[#F4F2EE]/28 transition-colors hover:text-[#F4F2EE]/55">
-            Open live profile
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        </RevealDiv>
+        </div>
       </div>
     </section>
   )
 }
 
-// ─── Section 7: Press Kit ─────────────────────────────────────────────────────
+function ProfileMockup() {
+  return (
+    <div style={{ background: "#0B0F14" }}>
+      {/* Hero area */}
+      <div className="relative overflow-hidden" style={{ height: 200 }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(135deg, #0D1A14 0%, #0A0E14 60%, #0B0F14 100%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute"
+          style={{
+            left: "10%", top: "10%",
+            width: 380, height: 280,
+            background: "radial-gradient(ellipse at center, rgba(109,93,252,0.10) 0%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to top, #0B0F14 0%, rgba(11,15,20,0.2) 55%, transparent 100%)" }}
+        />
+        <div className="absolute bottom-5 left-6">
+          <div className="mb-2.5 flex gap-1.5">
+            {["House", "Tech House", "Producer"].map((g) => (
+              <span
+                key={g}
+                className="rounded-full px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.08em]"
+                style={{ border: "1px solid rgba(109,93,252,0.30)", background: "rgba(0,0,0,0.40)", color: "rgba(245,245,243,0.70)" }}
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+          <p className="text-[22px] font-bold uppercase leading-none tracking-[-0.02em] text-[#F5F5F3]">
+            ANDRES:HERRERA
+          </p>
+          <p className="mt-1 font-mono text-[11px]" style={{ color: "#52525B" }}>Buenos Aires, Argentina</p>
+        </div>
+      </div>
 
-function PressKitSection() {
-  const downloads = [
-    { lang: "ENG", flag: "🇬🇧", size: "4.2 MB" },
-    { lang: "ESP", flag: "🇪🇸", size: "3.8 MB" },
+      {/* Content grid */}
+      <div
+        className="grid"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+      >
+        {/* Shows */}
+        <div className="p-5" style={{ borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+          <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
+            Upcoming Shows
+          </p>
+          <div className="space-y-3">
+            {[
+              { day: "28", mon: "JUN", venue: "ICE Festival", city: "Buenos Aires" },
+              { day: "23", mon: "JUL", venue: "Club Room", city: "Barcelona" },
+            ].map((s) => (
+              <div key={s.venue} className="flex items-center gap-3">
+                <div className="w-8 shrink-0 text-center">
+                  <p className="font-mono text-[8px] font-bold uppercase tracking-widest" style={{ color: "rgba(109,93,252,0.60)" }}>{s.mon}</p>
+                  <p className="text-[18px] font-bold leading-none text-[#F5F5F3]">{s.day}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] font-semibold text-[#F5F5F3]">{s.venue}</p>
+                  <p className="font-mono text-[10px]" style={{ color: "#52525B" }}>{s.city}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Releases */}
+        <div className="p-5" style={{ borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+          <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
+            Latest Releases
+          </p>
+          <div className="space-y-2.5">
+            {[
+              { title: "Thank You", year: "2025", hue: 280 },
+              { title: "Sky Sunset", year: "2024", hue: 240 },
+              { title: "Arrival", year: "2024", hue: 200 },
+            ].map((r) => (
+              <div key={r.title} className="flex items-center gap-2.5">
+                <div
+                  className="h-8 w-8 shrink-0 rounded-md"
+                  style={{ background: `linear-gradient(135deg, oklch(0.30 0.12 ${r.hue}), oklch(0.10 0 0))` }}
+                />
+                <div>
+                  <p className="text-[11px] font-semibold text-[#F5F5F3]">{r.title}</p>
+                  <p className="font-mono text-[9px]" style={{ color: "#52525B" }}>{r.year}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Booking */}
+        <div className="p-5">
+          <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
+            Booking
+          </p>
+          <div
+            className="rounded-lg p-3"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <p className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: "#52525B" }}>Email</p>
+            <p className="mt-1 font-mono text-[10px]" style={{ color: "rgba(109,93,252,0.75)" }}>booking@andresherrera.music</p>
+          </div>
+          <div
+            className="mt-2 rounded-lg p-3"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <p className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: "#52525B" }}>Press Kit</p>
+            <p className="mt-1 font-mono text-[10px]" style={{ color: "#52525B" }}>andresherrera.djhq.co/presskit</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Problem section ──────────────────────────────────────────────────────────
+
+function ProblemSection() {
+  const tiles = [
+    { name: "Instagram", note: "Not professional" },
+    { name: "Linktree", note: "Just links" },
+    { name: "Dropbox", note: "Links expire" },
+    { name: "Google Drive", note: "Impossible to navigate" },
+    { name: "PDF press kit", note: "Goes outdated" },
+    { name: "WhatsApp", note: "Embarrassing" },
+    { name: "Spotify link", note: "No booking info" },
+    { name: "Beatport", note: "Incomplete profile" },
+    { name: "SoundCloud", note: "2019 called" },
   ]
 
   return (
-    <section className="bg-[#0C0C0B] py-32">
+    <section style={{ background: "#090C11", padding: "96px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
       <div className="mx-auto max-w-7xl px-6">
-        <div className="grid items-center gap-16 lg:grid-cols-[1fr_1fr]">
-          {/* Left — copy */}
+        <Reveal>
+          <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#52525B" }}>
+            The current reality
+          </p>
+        </Reveal>
+        <Reveal delay={60}>
+          <h2 className="mb-14 text-[clamp(28px,4vw,48px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+            What a booker finds when they Google you.
+          </h2>
+        </Reveal>
+
+        <div className="mb-12 grid grid-cols-3 gap-3 sm:grid-cols-3 lg:grid-cols-9">
+          {tiles.map((t, i) => (
+            <Reveal key={t.name} delay={i * 35} className="lg:col-span-1">
+              <div
+                className="rounded-xl p-4 transition-colors duration-200"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.04)",
+                  background: "rgba(255,255,255,0.015)",
+                }}
+              >
+                <p className="text-[12px] font-medium" style={{ color: "rgba(245,245,243,0.30)" }}>{t.name}</p>
+                <p className="mt-1 font-mono text-[9px]" style={{ color: "#52525B" }}>{t.note}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        {/* Pivot */}
+        <Reveal delay={360}>
+          <div className="flex items-center gap-5 py-8">
+            <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#52525B" }}>
+              DJHQ replaces all of it
+            </span>
+            <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.06)" }} />
+          </div>
+        </Reveal>
+
+        <Reveal delay={420}>
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-[16px] leading-[1.8]" style={{ color: "#71717A" }}>
+              A festival booker receives 200 artist inquiries a year. They can tell in four seconds
+              whether an artist is professional. Expired Dropbox links, outdated PDFs and missing
+              photos tell them everything — about you.
+            </p>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+// ─── Product proof ────────────────────────────────────────────────────────────
+
+function ProductSection() {
+  const panels = [
+    {
+      label: "Artist Destination",
+      headline: "One URL. The whole picture.",
+      body: "Your bio, sound, genre, city and social links — in a page that looks like you hired someone serious to build it. You didn't.",
+    },
+    {
+      label: "Electronic Press Kit",
+      headline: "Stop sending Dropbox folders.",
+      body: "Press photos, PDFs in English and Spanish, tech rider, asset folders. One link. Permanent URL. Always current.",
+    },
+    {
+      label: "Shows & History",
+      headline: "Prove you're a working artist.",
+      body: "Upcoming dates, past performances, venue history. When a festival asks where you've played, you send one link.",
+    },
+    {
+      label: "Release Catalog",
+      headline: "Your catalog. Not a Spotify link.",
+      body: "Every release with artwork, streaming links and label info. Featured at the top. Full history below.",
+    },
+  ]
+
+  return (
+    <section style={{ background: "#0B0F14", padding: "96px 0" }}>
+      <div className="mx-auto max-w-7xl px-6">
+        <Reveal>
+          <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#52525B" }}>
+            What you get
+          </p>
+        </Reveal>
+        <Reveal delay={60}>
+          <h2 className="mb-14 text-[clamp(28px,4vw,48px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+            Everything they need to know.
+            <br />
+            <span style={{ color: "#71717A" }}>Nothing missing.</span>
+          </h2>
+        </Reveal>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {panels.map((p, i) => (
+            <Reveal key={p.label} delay={i * 80}>
+              <div
+                className="rounded-2xl p-8 transition-colors duration-300"
+                style={{
+                  background: "#111520",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  minHeight: 200,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(109,93,252,0.25)"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"
+                }}
+              >
+                <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#6D5DFC" }}>
+                  {p.label}
+                </p>
+                <h3 className="mb-3 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
+                  {p.headline}
+                </h3>
+                <p className="text-[14px] leading-[1.7]" style={{ color: "#71717A" }}>
+                  {p.body}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Press kit focus ──────────────────────────────────────────────────────────
+
+function PressKitSection() {
+  return (
+    <section style={{ background: "#090C11", padding: "96px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="grid items-center gap-14 lg:grid-cols-2">
+          {/* Copy */}
           <div>
-            <RevealDiv className="mb-5">
-              <MonoLabel className="text-[#F4F2EE]/28">Press kit</MonoLabel>
-            </RevealDiv>
-            <RevealDiv delay={60}>
-              <h2 className="mb-6 font-serif text-[clamp(36px,4vw,58px)] font-light leading-[1.06] tracking-[0.005em] text-[#F4F2EE]">
+            <Reveal>
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#52525B" }}>
+                Press kit
+              </p>
+            </Reveal>
+            <Reveal delay={60}>
+              <h2 className="mb-5 text-[clamp(28px,3.5vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
                 Stop sending
-                <br />
-                <em className="italic text-[#F4F2EE]/45">Dropbox folders.</em>
+                Dropbox folders.
               </h2>
-            </RevealDiv>
-            <RevealDiv delay={140}>
-              <p className="mb-6 text-[15px] leading-[1.85] text-[#F4F2EE]/40">
-                Your press kit lives at a permanent URL. Bio, press photos, PDFs
-                in English and Spanish, technical rider and asset folders —
-                connected, professional, always current.
+            </Reveal>
+            <Reveal delay={120}>
+              <p className="mb-7 text-[15px] leading-[1.8]" style={{ color: "#71717A" }}>
+                Your EPK lives at a permanent URL. Bio, press photos, PDFs in English and Spanish,
+                technical rider and asset folders — connected, professional, always current.
+                Send one link. They have everything. It never expires.
               </p>
-              <p className="text-[15px] leading-[1.85] text-[#F4F2EE]/60">
-                Send one link. They have everything. The URL never expires.
-              </p>
-            </RevealDiv>
-            <RevealDiv delay={220} className="mt-8">
-              <div className="space-y-2.5">
+            </Reveal>
+            <Reveal delay={180}>
+              <ul className="space-y-3">
                 {[
                   "Available in English and Spanish",
-                  "Updates automatically when your profile updates",
-                  "Your URL. Not a generic link.",
+                  "Updates when your profile updates",
+                  "Permanent URL — never expires",
+                  "Your domain, not a generic link",
                 ].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <span className="h-1 w-1 rounded-full bg-[oklch(0.70_0.15_155)]/50" />
-                    <span className="text-[13px] text-[#F4F2EE]/45">{item}</span>
-                  </div>
+                  <li key={item} className="flex items-center gap-3">
+                    <Check className="h-4 w-4 shrink-0" style={{ color: "#6D5DFC" }} />
+                    <span className="text-[14px]" style={{ color: "#A1A1AA" }}>{item}</span>
+                  </li>
                 ))}
-              </div>
-            </RevealDiv>
+              </ul>
+            </Reveal>
           </div>
 
-          {/* Right — press kit preview */}
-          <RevealDiv delay={180}>
-            <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0E0E0D]">
-              {/* EPK header */}
-              <div className="border-b border-white/[0.05] p-6">
-                <MonoLabel className="text-[oklch(0.70_0.15_155)]/60">Electronic Press Kit</MonoLabel>
-                <p className="mt-2 font-serif text-[22px] font-light text-[#F4F2EE]">ANDRES:HERRERA</p>
-                <p className="mt-0.5 font-mono text-[11px] text-[#F4F2EE]/30">House · Tech House · Buenos Aires</p>
+          {/* Press kit UI */}
+          <Reveal delay={140}>
+            <div
+              className="overflow-hidden rounded-2xl"
+              style={{ border: "1px solid rgba(255,255,255,0.08)", background: "#111520" }}
+            >
+              <div className="border-b p-6" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+                <p className="font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
+                  Electronic Press Kit
+                </p>
+                <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-[#F5F5F3]">ANDRES:HERRERA</p>
+                <p className="font-mono text-[11px]" style={{ color: "#52525B" }}>House · Tech House · Buenos Aires</p>
               </div>
 
-              {/* Download cards */}
+              {/* Downloads */}
               <div className="grid grid-cols-2 gap-3 p-4">
-                {downloads.map((d) => (
-                  <div key={d.lang}
-                    className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.025] p-5 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]">
-                    <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                      style={{ background: "radial-gradient(ellipse at top left, color-mix(in srgb, oklch(0.70 0.15 155) 6%, transparent), transparent 70%)" }} />
-                    <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.03] text-[16px]">
-                      {d.flag}
-                    </div>
-                    <p className="text-[13px] font-semibold text-[#F4F2EE]/80">Press Kit {d.lang}</p>
-                    <p className="mt-0.5 font-mono text-[10px] text-[#F4F2EE]/30">PDF · {d.size}</p>
-                    <div className="mt-4 flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[oklch(0.70_0.15_155)]/55 transition-colors group-hover:text-[oklch(0.70_0.15_155)]/85">
-                      Download
-                      <ArrowRight className="h-3 w-3" />
-                    </div>
+                {[
+                  { lang: "Press Kit ENG", size: "4.2 MB", flag: "🇬🇧" },
+                  { lang: "Press Kit ESP", size: "3.8 MB", flag: "🇪🇸" },
+                ].map((d) => (
+                  <div
+                    key={d.lang}
+                    className="cursor-pointer rounded-xl p-5 transition-all duration-200 hover:border-[rgba(109,93,252,0.30)]"
+                    style={{ border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
+                  >
+                    <span className="text-[18px]">{d.flag}</span>
+                    <p className="mt-3 text-[12px] font-semibold text-[#F5F5F3]">{d.lang}</p>
+                    <p className="font-mono text-[10px]" style={{ color: "#52525B" }}>PDF · {d.size}</p>
+                    <p className="mt-3 font-mono text-[10px] font-medium" style={{ color: "#6D5DFC" }}>Download ↗</p>
                   </div>
                 ))}
               </div>
 
               {/* Folders */}
-              <div className="border-t border-white/[0.05] p-4">
-                <MonoLabel className="mb-3 block text-[#F4F2EE]/22">Asset Folders</MonoLabel>
-                <div className="space-y-1.5">
-                  {["Full Drive Package", "Press Photos", "Technical Rider", "Logos & Artwork"].map((f) => (
-                    <div key={f} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.015] px-3.5 py-2.5">
-                      <span className="text-[12px] text-[#F4F2EE]/55">{f}</span>
-                      <span className="font-mono text-[9px] text-[oklch(0.70_0.15_155)]/50">Open ↗</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Photo preview */}
-              <div className="border-t border-white/[0.05] p-4">
-                <MonoLabel className="mb-3 block text-[#F4F2EE]/22">Press Photos Preview</MonoLabel>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className="aspect-square rounded-md"
-                      style={{ background: `linear-gradient(135deg, oklch(${0.14 + i * 0.02} 0.03 ${155 + i * 28}), oklch(0.07 0 0))` }} />
-                  ))}
-                </div>
+              <div className="border-t p-4" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+                {["Full Drive Package", "Press Photos", "Technical Rider", "Logos & Artwork"].map((f) => (
+                  <div
+                    key={f}
+                    className="mb-2 flex items-center justify-between rounded-lg px-4 py-3"
+                    style={{ border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.015)" }}
+                  >
+                    <span className="text-[12px]" style={{ color: "#A1A1AA" }}>{f}</span>
+                    <span className="font-mono text-[10px]" style={{ color: "#6D5DFC" }}>Open ↗</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </RevealDiv>
+          </Reveal>
         </div>
       </div>
     </section>
   )
 }
 
-// ─── Section 8: Invitation ────────────────────────────────────────────────────
-
-function InvitationSection() {
-  return (
-    <section className="relative overflow-hidden bg-[#080807] py-40">
-      {/* Atmospheric glow */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/2 h-[600px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.042]"
-          style={{
-            background: "radial-gradient(ellipse at center, oklch(0.70 0.15 155), transparent 65%)",
-            animation: "brand-glow-pulse 20s ease-in-out infinite",
-          }} />
-      </div>
-
-      <div className="relative mx-auto max-w-5xl px-6 text-center">
-        <RevealDiv>
-          <h2 className="font-serif text-[clamp(48px,7vw,100px)] font-light leading-[1.0] tracking-[0.005em] text-[#F4F2EE]">
-            Your career
-            <br />
-            <em className="italic text-[#F4F2EE]/48">is already happening.</em>
-          </h2>
-        </RevealDiv>
-        <RevealDiv delay={120} className="mx-auto mt-8 max-w-md">
-          <p className="text-[16px] leading-[1.8] text-[#F4F2EE]/38">
-            Make sure it looks the part.
-          </p>
-        </RevealDiv>
-      </div>
-    </section>
-  )
-}
-
-// ─── Section 9: Who it's for ──────────────────────────────────────────────────
+// ─── For whom ─────────────────────────────────────────────────────────────────
 
 function ForSection() {
-  const forItems = [
-    "You play clubs, festivals or events regularly",
-    "You receive booking inquiries and share your information by email",
-    "You appear on lineups that promoters and agencies look up",
-    "You want to look professional when someone Googles your name",
-  ]
-
-  const notForItems = [
-    "Artists just starting out with no shows yet",
-    "Booking management or CRM software",
-    "Music distribution",
-    "Social media management",
-  ]
-
   return (
-    <section className="bg-[#0C0C0B] py-32">
+    <section style={{ background: "#0B0F14", padding: "96px 0" }}>
       <div className="mx-auto max-w-7xl px-6">
-        <RevealDiv className="mb-16">
-          <h2 className="font-serif text-[clamp(32px,4vw,52px)] font-light leading-[1.1] tracking-[0.005em] text-[#F4F2EE]">
+        <Reveal>
+          <h2 className="mb-12 text-[clamp(24px,3.5vw,40px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
             Built for electronic music artists
             <br />
-            <em className="italic text-[#F4F2EE]/45">who take their career seriously.</em>
+            <span style={{ color: "#71717A" }}>who take their career seriously.</span>
           </h2>
-        </RevealDiv>
+        </Reveal>
 
-        <div className="grid gap-16 md:grid-cols-2">
-          <RevealDiv delay={100}>
-            <MonoLabel className="mb-6 block text-[#F4F2EE]/28">DJHQ is for you if</MonoLabel>
+        <div className="grid gap-12 lg:grid-cols-2">
+          <Reveal delay={80}>
+            <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#6D5DFC" }}>
+              DJHQ is for you if
+            </p>
             <ul className="space-y-4">
-              {forItems.map((item) => (
-                <li key={item} className="flex items-start gap-4">
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[oklch(0.70_0.15_155)]/55" />
-                  <span className="text-[15px] leading-[1.7] text-[#F4F2EE]/58">{item}</span>
+              {[
+                "You play clubs, festivals or events regularly",
+                "You receive booking inquiries by email",
+                "You appear on lineups that promoters Google",
+                "You want to look as professional as your music sounds",
+                "You're tired of assembling information every time someone asks",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-3.5">
+                  <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#6D5DFC" }} />
+                  <span className="text-[15px] leading-[1.6]" style={{ color: "#A1A1AA" }}>{item}</span>
                 </li>
               ))}
             </ul>
-          </RevealDiv>
+          </Reveal>
 
-          <RevealDiv delay={200}>
-            <MonoLabel className="mb-6 block text-[#F4F2EE]/18">DJHQ is probably not for you if</MonoLabel>
+          <Reveal delay={160}>
+            <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#52525B" }}>
+              Probably not for you if
+            </p>
             <ul className="space-y-4">
-              {notForItems.map((item) => (
-                <li key={item} className="flex items-start gap-4">
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-white/[0.12]" />
-                  <span className="text-[15px] leading-[1.7] text-[#F4F2EE]/28">{item}</span>
+              {[
+                "You haven't played a real show yet",
+                "You want a booking management platform",
+                "You want music distribution",
+                "You want social media management tools",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-3.5">
+                  <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "rgba(255,255,255,0.10)" }} />
+                  <span className="text-[15px] leading-[1.6]" style={{ color: "#52525B" }}>{item}</span>
                 </li>
               ))}
             </ul>
-          </RevealDiv>
+          </Reveal>
         </div>
       </div>
     </section>
   )
 }
 
-// ─── Section 10: Close ────────────────────────────────────────────────────────
+// ─── Final CTA ────────────────────────────────────────────────────────────────
 
-function CloseSection() {
+function ClosingCTA() {
   return (
-    <section className="relative overflow-hidden bg-[#080807] py-40">
-      {/* Peak glow — the brightest moment on the page */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/2 h-[700px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.06]"
-          style={{ background: "radial-gradient(ellipse at center, oklch(0.70 0.15 155), transparent 60%)" }} />
-      </div>
+    <section
+      className="relative overflow-hidden"
+      style={{ background: "#090C11", padding: "120px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+    >
+      {/* Indigo glow behind CTA */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        style={{
+          width: 700,
+          height: 500,
+          background: "radial-gradient(ellipse at center, rgba(109,93,252,0.10) 0%, transparent 60%)",
+          animation: "hp-indigo-pulse 16s ease-in-out infinite",
+        }}
+      />
 
       <div className="relative mx-auto max-w-3xl px-6 text-center">
-        <RevealDiv>
-          <h2 className="mb-8 font-serif text-[clamp(44px,6vw,82px)] font-light leading-[1.04] tracking-[0.005em] text-[#F4F2EE]">
-            Build your
-            <br />
+        <Reveal>
+          <h2 className="mb-5 text-[clamp(34px,5vw,62px)] font-bold leading-[1.08] tracking-[-0.03em] text-[#F5F5F3]">
+            Start building your
             professional presence.
           </h2>
-        </RevealDiv>
-
-        <RevealDiv delay={100} className="mb-10">
-          <p className="text-[16px] leading-[1.8] text-[#F4F2EE]/38">
-            Join the artists who look as serious as they actually are.
+        </Reveal>
+        <Reveal delay={80}>
+          <p className="mb-10 text-[16px] leading-[1.7]" style={{ color: "#71717A" }}>
+            Join artists who look as serious as they actually are.
+            Takes under an hour. Free to start.
           </p>
-        </RevealDiv>
-
-        <RevealDiv delay={180} className="flex flex-col items-center gap-5">
-          <a
-            href="mailto:access@djhq.co"
-            className="group inline-flex h-14 items-center gap-3 rounded-full bg-[oklch(0.70_0.15_155)] px-10 font-mono text-[13px] font-bold uppercase tracking-[0.14em] text-[#0A0C0B] transition-all duration-300 hover:bg-[oklch(0.74_0.16_155)] hover:[box-shadow:0_0_60px_color-mix(in_srgb,oklch(0.70_0.15_155)_32%,transparent)]"
-          >
-            Start building — it&apos;s free
-            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-          </a>
-
-          <Link href="/andresherrera" target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 font-mono text-[12px] text-[#F4F2EE]/30 transition-colors hover:text-[#F4F2EE]/60">
-            See andresherrera.djhq.co →
-          </Link>
-
-          <p className="font-mono text-[10px] text-[#F4F2EE]/18">
-            No credit card  ·  Under one hour  ·  Free to start
-          </p>
-        </RevealDiv>
+        </Reveal>
+        <Reveal delay={160}>
+          <div className="flex flex-col items-center gap-4">
+            <a
+              href="mailto:access@djhq.co"
+              className="flex h-12 items-center gap-2.5 rounded-md bg-[#6D5DFC] px-8 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-[#7E70FD] hover:shadow-[0_0_40px_rgba(109,93,252,0.45)]"
+            >
+              Get started — it&apos;s free
+              <ArrowRight className="h-4.5 w-4.5" />
+            </a>
+            <Link
+              href="/andresherrera"
+              className="text-[14px] transition-colors hover:text-[#F5F5F3]"
+              style={{ color: "#52525B" }}
+            >
+              See andresherrera.djhq.co →
+            </Link>
+            <p className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
+              No credit card  ·  Free plan  ·  Setup in 60 minutes
+            </p>
+          </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -872,18 +701,16 @@ function CloseSection() {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/[0.05] bg-[#080807] py-8">
+    <footer style={{ background: "#090C11", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "28px 0" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
-        <span className="font-mono text-[12px] font-bold uppercase tracking-[0.22em] text-[#F4F2EE]/30">
-          DJHQ
-        </span>
+        <span className="text-[13px] font-bold tracking-[0.04em]" style={{ color: "rgba(245,245,243,0.25)" }}>DJHQ</span>
         <div className="flex items-center gap-6">
-          <Link href="/sign-in" className="font-mono text-[10px] text-[#F4F2EE]/18 transition-colors hover:text-[#F4F2EE]/45">
+          <Link href="/sign-in" className="font-mono text-[11px] transition-colors hover:text-[#F5F5F3]" style={{ color: "#3F3F46" }}>
             Login
           </Link>
-          <p className="font-mono text-[10px] text-[#F4F2EE]/12">
+          <span className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
             © {new Date().getFullYear()} DJHQ
-          </p>
+          </span>
         </div>
       </div>
     </footer>
@@ -894,18 +721,14 @@ function Footer() {
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#080807] text-[#F4F2EE]">
+    <main style={{ background: "#0B0F14" }}>
       <Nav />
-      <CoverSection />
-      <IdentitySection />
-      <ArtistsSection />
+      <Hero />
       <ProblemSection />
-      <OutcomesSection />
       <ProductSection />
       <PressKitSection />
-      <InvitationSection />
       <ForSection />
-      <CloseSection />
+      <ClosingCTA />
       <Footer />
     </main>
   )

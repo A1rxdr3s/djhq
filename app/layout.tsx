@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono, Cormorant_Garamond } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
@@ -13,16 +13,9 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono"
 });
 
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
-});
-
 export const metadata: Metadata = {
-  title: 'DJHQ — The Digital Headquarters for Modern DJs',
-  description: 'One profile. Every release. Every gig. Every link. Every asset. DJHQ gives DJs and producers a premium public profile, smart links, press kit, release hub, booking assets, and producer tools.',
+  title: 'DJHQ — Professional Presence for Electronic Music Artists',
+  description: 'One professional destination for your DJ career. Press kit, artist profile, shows, releases and booking contact — one URL.',
   keywords: ['DJ', 'producer', 'electronic music', 'press kit', 'booking', 'artist profile', 'music industry'],
   icons: {
     icon: [
@@ -44,7 +37,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0d0d0d',
+  themeColor: '#0B0F14',
   width: 'device-width',
   initialScale: 1,
 }
@@ -56,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} ${cormorant.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
