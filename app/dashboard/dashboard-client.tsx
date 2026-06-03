@@ -3990,22 +3990,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               const isEditing   = set.id === expandedSetId
               const isMenuOpen  = setMenuOpenId === set.id
 
-              const generatedTitle = computeDjSetTitle(
-                set.performanceType,
-                set.performanceArtists,
-                set.customPerformanceType || undefined,
-                set.event || undefined,
-                set.venue || undefined,
-                artist.artistName,
-              )
-              const displayTitle = set.titleOverride.trim() || generatedTitle
               const typeLabel = PERFORMANCE_TYPE_LABELS[set.performanceType]
-
-              // Date formatted as "Jul 27, 2025"
               const dateDisplay = formatDjSetDate(set.setDate ?? "")
-
-              // Artists line — always show for B2B/B3B; show for solo too per spec
               const artistsLine = set.performanceArtists.filter(Boolean).join(", ")
+
+              // Event name is the primary label; fall back to title override → venue → type
+              const primaryLabel = set.event?.trim()
+                || set.titleOverride?.trim()
+                || set.venue?.trim()
+                || typeLabel
 
               return (
                 <div
@@ -4019,25 +4012,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         : "border-white/[0.06] hover:border-white/[0.10]",
                   )}
                 >
-                  {/* Cover image */}
-                  <div className="relative aspect-square w-full overflow-hidden bg-secondary/40">
+                  {/* Cover image — landscape ratio for density */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary/40">
                     {set.imageUrl?.trim() ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={set.imageUrl}
-                        alt={displayTitle || "Set cover"}
-                        className="h-full w-full object-cover"
+                        alt={primaryLabel || "Set cover"}
+                        className="h-full w-full object-cover object-top"
                         loading="lazy"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <Headphones className="h-7 w-7 text-muted-foreground/15" />
+                        <Headphones className="h-6 w-6 text-muted-foreground/12" />
                       </div>
                     )}
-                    {/* Featured: small star only */}
+                    {/* Featured pill — more visible than a bare star */}
                     {isFeatured && (
-                      <div className="absolute left-1.5 top-1.5">
-                        <Star className="h-3.5 w-3.5 fill-accent text-accent [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.7))]" />
+                      <div className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 backdrop-blur-sm">
+                        <Star className="h-2.5 w-2.5 fill-accent text-accent" />
+                        <span className="text-[8px] font-bold uppercase tracking-wider text-accent">Featured</span>
                       </div>
                     )}
                     {/* Type badge */}
@@ -4046,33 +4040,36 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </div>
                   </div>
 
-                  {/* Metadata */}
+                  {/* Metadata — event first, venue·city second, date third, artist last */}
                   <div className="px-3 pb-2 pt-2">
+                    {/* Primary: event name */}
                     <p className="truncate text-sm font-semibold leading-tight text-foreground/88">
-                      {displayTitle || <span className="text-muted-foreground/28">Untitled</span>}
+                      {primaryLabel || <span className="text-muted-foreground/28">Untitled</span>}
                     </p>
-                    {artistsLine && (
-                      <p className="mt-px truncate text-[11px] text-muted-foreground/45">{artistsLine}</p>
+                    {/* Secondary: venue · city */}
+                    {(set.venue || set.city) && (
+                      <p className="mt-px flex items-center gap-1 truncate text-[11px] text-muted-foreground/45">
+                        {set.venue && <span className="truncate">{set.venue}</span>}
+                        {set.venue && set.city && <span className="shrink-0 text-muted-foreground/22">•</span>}
+                        {set.city && <span className="shrink-0">{set.city}</span>}
+                      </p>
                     )}
-                    <div className="mt-1 space-y-0.5">
-                      {/* Venue · City */}
-                      {(set.venue || set.city) && (
-                        <p className="flex items-center gap-1 truncate text-[10px] text-muted-foreground/38">
-                          {set.venue && <span className="truncate">{set.venue}</span>}
-                          {set.venue && set.city && <span className="text-muted-foreground/20">•</span>}
-                          {set.city && <span className="shrink-0">{set.city}</span>}
-                        </p>
-                      )}
-                      {/* Date */}
+                    {/* Meta: date + artists */}
+                    <div className="mt-1 flex items-center gap-2">
                       {dateDisplay && (
-                        <p className="text-[10px] text-muted-foreground/28">{dateDisplay}</p>
+                        <span className="shrink-0 text-[10px] text-muted-foreground/28">{dateDisplay}</span>
+                      )}
+                      {artistsLine && dateDisplay && (
+                        <span className="text-muted-foreground/18">·</span>
+                      )}
+                      {artistsLine && (
+                        <span className="truncate text-[10px] text-muted-foreground/30">{artistsLine}</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions — Star, Edit, ⋯ (no View) */}
                   <div className="flex items-center border-t border-white/[0.04] px-2 py-1">
-                    {/* Feature star */}
                     <button
                       type="button"
                       onClick={() => handleSetFeaturedDjSet(index)}
@@ -4080,20 +4077,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       title={isFeatured ? "Featured" : "Set as featured"}
                       className={cn(
                         "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150",
-                        isFeatured ? "text-accent" : "text-muted-foreground/30 hover:text-accent disabled:opacity-30",
+                        isFeatured ? "text-accent" : "text-muted-foreground/30 hover:text-accent",
                       )}
                     >
                       <Star className={cn("h-3.5 w-3.5", isFeatured && "fill-current")} />
                     </button>
-                    {/* Edit */}
                     <button
                       type="button"
                       onClick={() => {
-                        if (isEditing) {
-                          setExpandedSetId(null)
-                        } else {
-                          setExpandedSetId(set.id)
-                        }
+                        setExpandedSetId(isEditing ? null : set.id)
                         setSetMenuOpenId(null)
                       }}
                       className={cn(
@@ -4103,19 +4095,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     >
                       {isEditing ? "Close" : "Edit"}
                     </button>
-                    {/* View / Listen */}
-                    {set.platformUrl?.trim() && (
-                      <a
-                        href={set.platformUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-0.5 flex h-7 items-center rounded-md px-2 text-[11px] font-medium text-muted-foreground/42 transition-colors duration-150 hover:text-foreground"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View
-                      </a>
-                    )}
-                    {/* ⋯ overflow */}
                     <div className="relative ml-auto">
                       <button
                         type="button"
