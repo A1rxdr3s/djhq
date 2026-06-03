@@ -148,12 +148,6 @@ const HERO_PRESETS: HeroPreset[] = [
   },
 ]
 
-type SocialLinkFormState = {
-  platform: string
-  label: string
-  url: string
-}
-
 type ReleaseFormState = {
   id: string
   isFeatured: boolean
@@ -238,19 +232,6 @@ type VideoFormState = {
   platformUrl: string
   isPublished: boolean
 }
-
-const socialPlatforms: SocialPlatform[] = [
-  "beatport",
-  "spotify",
-  "soundcloud",
-  "youtube",
-  "instagram",
-  "tiktok",
-  "resident-advisor",
-  "bandsintown",
-  "website",
-  "other",
-]
 
 // Fixed platform list — users manage URLs only; labels and icons are system-defined
 const PLATFORM_CONFIG: {
@@ -823,6 +804,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   })
   const initialVideos = getVideoFormState(artist)
   const [videos, setVideos] = useState(initialVideos)
+  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -3097,63 +3079,133 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderLinks() {
+    const connected   = PLATFORM_CONFIG.filter(({ id }) => linkUrls[id]?.trim())
+    const available   = PLATFORM_CONFIG.filter(({ id }) => !linkUrls[id]?.trim())
+    const connectedN  = connected.length
+    const totalN      = PLATFORM_CONFIG.length
+
+    function PlatformRow({
+      id, label, Icon, placeholder, isConnected,
+    }: { id: string; label: string; Icon: React.ComponentType<{ className?: string }>; placeholder: string; isConnected: boolean }) {
+      const isExpanded = expandedLinkId === id
+      const url = linkUrls[id] ?? ""
+
+      return (
+        <div key={id} className="border-b border-white/[0.04] last:border-0">
+          {/* Collapsed row */}
+          <button
+            type="button"
+            onClick={() => setExpandedLinkId(isExpanded ? null : id)}
+            className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-white/[0.025]"
+          >
+            <Icon className={`h-3.5 w-3.5 shrink-0 ${isConnected ? "text-accent/55" : "text-muted-foreground/28"}`} />
+            <span className={`flex-1 text-sm font-medium ${isConnected ? "text-foreground/82" : "text-muted-foreground/48"}`}>
+              {label}
+            </span>
+            {isConnected ? (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-accent/70">
+                <Check className="h-3 w-3" />
+                Connected
+              </span>
+            ) : (
+              <span className="text-[11px] font-medium text-muted-foreground/35 transition-colors group-hover:text-accent/60">
+                + Connect
+              </span>
+            )}
+            <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground/30 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+          </button>
+
+          {/* Expanded editor */}
+          {isExpanded && (
+            <div className="border-t border-white/[0.04] bg-white/[0.015] px-4 pb-4 pt-3">
+              <label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
+                URL
+              </label>
+              <Input
+                autoFocus
+                value={url}
+                onChange={(e) => setLinkUrls((prev) => ({ ...prev, [id]: e.target.value }))}
+                placeholder={placeholder}
+                className="h-9 border-white/[0.06] bg-white/[0.03] text-sm placeholder:text-muted-foreground/22 focus:border-accent/30"
+              />
+              <div className="mt-3 flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setExpandedLinkId(null)}
+                  className="h-7 bg-accent/90 px-3 text-[11px] text-accent-foreground hover:bg-accent"
+                >
+                  Done
+                </Button>
+                {isConnected && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLinkUrls((prev) => ({ ...prev, [id]: "" }))
+                      setExpandedLinkId(null)
+                    }}
+                    className="text-[11px] text-muted-foreground/40 transition-colors hover:text-destructive/70"
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-5">
         <div>
           <h2 className="text-base font-semibold text-foreground">Links</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">
-            Only connected platforms will be displayed on your public profile.
+            Only connected platforms appear on your public profile.
           </p>
         </div>
 
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 divide-y divide-white/[0.04]">
-          {PLATFORM_CONFIG.map(({ id, label, Icon, placeholder }) => {
-            const url    = linkUrls[id] ?? ""
-            const active = url.trim().length > 0
-            return (
-              <div
-                key={id}
-                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
-              >
-                {/* Platform identity — fixed, not editable */}
-                <div className="flex shrink-0 items-center gap-2.5 sm:w-40">
-                  <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-accent/60" : "text-muted-foreground/30"}`} />
-                  <span className={`text-sm font-medium ${active ? "text-foreground/80" : "text-muted-foreground/50"}`}>
-                    {label}
-                  </span>
-                </div>
-
-                {/* URL input */}
-                <div className="flex-1">
-                  <Input
-                    id={`link-url-${id}`}
-                    value={url}
-                    onChange={(e) =>
-                      setLinkUrls((prev) => ({ ...prev, [id]: e.target.value }))
-                    }
-                    placeholder={placeholder}
-                    className="h-8 border-white/[0.06] bg-white/[0.025] text-xs placeholder:text-muted-foreground/25 focus:border-accent/30"
-                  />
-                </div>
-
-                {/* Connection status */}
-                <div className="shrink-0 sm:w-28">
-                  {active ? (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-accent/75">
-                      <Check className="h-3 w-3" />
-                      Connected
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/28">
-                      <span className="h-1.5 w-1.5 rounded-full border border-white/[0.12]" />
-                      Not connected
-                    </span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
+        {/* Summary card */}
+        <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-card/40 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-foreground/75">Connected Platforms</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground/40">
+              {connectedN} of {totalN} platforms active on your profile
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold tabular-nums text-foreground/85">{connectedN}</p>
+            <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/35">/ {totalN}</p>
+          </div>
         </div>
+
+        {/* Connected platforms */}
+        {connected.length > 0 && (
+          <div>
+            <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
+              Connected
+            </p>
+            <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/40">
+              {connected.map((p) => (
+                <PlatformRow key={p.id} {...p} isConnected={true} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Available platforms */}
+        {available.length > 0 && (
+          <div>
+            <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
+              Available
+            </p>
+            <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/30">
+              {available.map((p) => (
+                <PlatformRow key={p.id} {...p} isConnected={false} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
