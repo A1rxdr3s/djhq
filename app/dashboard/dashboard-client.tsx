@@ -3721,12 +3721,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         year: String(d.getUTCFullYear()),
       }
     }
-    function formatDateLine(date: string): string {
-      if (!date) return ""
-      const d = new Date(`${date}T00:00:00Z`)
-      if (isNaN(d.getTime())) return ""
-      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
-    }
+
 
     // Payment status badge colours (restrained capsule tones)
     const PAY_CLASS: Record<string, string> = {
@@ -3951,39 +3946,78 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             <span className="text-[10px] text-muted-foreground/22">{yearGigs.length}</span>
                           </div>
 
-                          {/* Shows in this year — compact timeline rows */}
-                          <div className="border-l border-white/[0.05] pl-4">
+                          {/* Past show archived cards — same structure as Upcoming, reduced emphasis */}
+                          <div className="space-y-1.5">
                             {yearGigs.map((gig) => {
-                              const isOpen = expandedGigId === gig.id
-                              const location = [gig.city, gig.country].filter(Boolean).join(", ")
+                              const isOpen    = expandedGigId === gig.id
+                              const location  = [gig.city, gig.country].filter(Boolean).join(", ")
+                              const dp        = formatDateShort(gig.date)
+
                               return (
-                                <div key={gig.id} className="mb-1 last:mb-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => setExpandedGigId(isOpen ? null : gig.id)}
-                                    className={cn(
-                                      "group flex w-full items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition-colors duration-150 hover:bg-white/[0.03]",
-                                      isOpen && "bg-white/[0.03]",
+                                <div key={gig.id}>
+                                  <div className={cn(
+                                    "flex overflow-hidden rounded-xl border transition-all duration-150",
+                                    isOpen
+                                      ? "border-white/[0.10]"
+                                      : "border-white/[0.04] hover:border-white/[0.08]",
+                                  )}>
+                                    {/* Date block — muted, no tint */}
+                                    {dp ? (
+                                      <div className="flex w-[60px] shrink-0 flex-col items-center justify-center px-2 py-3 text-center">
+                                        <span className="text-[1.25rem] font-black leading-none tabular-nums text-foreground/40">
+                                          {dp.day}
+                                        </span>
+                                        <span className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/28">
+                                          {dp.mon}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex w-[60px] shrink-0 items-center justify-center text-muted-foreground/18">
+                                        <span className="text-sm font-bold">—</span>
+                                      </div>
                                     )}
-                                  >
-                                    <div className="min-w-0 flex-1">
-                                      <span className="text-xs font-medium text-foreground/65 transition-colors group-hover:text-foreground/82">
-                                        {gig.venue || "—"}
-                                      </span>
+
+                                    {/* Thin separator */}
+                                    <div className="w-px shrink-0 bg-white/[0.03]" />
+
+                                    {/* Event content */}
+                                    <div className="min-w-0 flex-1 px-3 py-2.5">
+                                      <p className="truncate text-xs font-medium text-foreground/55">
+                                        {gig.venue || <span className="text-muted-foreground/22">—</span>}
+                                      </p>
                                       {location && (
-                                        <span className="ml-2 text-[10px] text-muted-foreground/30">
-                                          {location}
+                                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/28">{location}</p>
+                                      )}
+                                      {gig.paymentStatus && (
+                                        <span className={cn(
+                                          "mt-1 inline-flex rounded-full px-1.5 py-px text-[8px] font-bold uppercase tracking-wider",
+                                          PAY_CLASS[gig.paymentStatus] ?? "bg-white/[0.04] text-muted-foreground/30",
+                                        )}>
+                                          {gig.paymentStatus}
                                         </span>
                                       )}
                                     </div>
-                                    <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/25">
-                                      {formatDateLine(gig.date)}
-                                    </span>
-                                  </button>
 
-                                  {/* Inline edit */}
+                                    {/* Edit action — very subdued */}
+                                    <div className="flex shrink-0 items-center px-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setExpandedGigId(isOpen ? null : gig.id)}
+                                        className={cn(
+                                          "flex h-7 items-center rounded-md px-2 text-[10px] font-medium transition-colors duration-150",
+                                          isOpen
+                                            ? "bg-white/[0.06] text-foreground/55"
+                                            : "text-muted-foreground/25 hover:text-foreground/45",
+                                        )}
+                                      >
+                                        {isOpen ? "Close" : "Edit"}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Inline edit form */}
                                   {isOpen && (
-                                    <div className="mt-1 ml-0 rounded-xl border border-white/[0.07] bg-card/35 p-0.5">
+                                    <div className="mt-1 rounded-xl border border-white/[0.06] bg-card/25 p-0.5">
                                       <GigCard
                                         gig={gig}
                                         onChange={handleGigChange}
