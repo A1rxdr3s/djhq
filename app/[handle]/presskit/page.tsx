@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { headers as nextHeaders } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
@@ -66,10 +67,36 @@ function normalizePlan(plan: string): SubscriptionPlan {
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true"
 
-async function getArtistPressKit(handle: string) {
+// ─── Perf timing ─────────────────────────────────────────────────────────────
+
+type PerfContext = { host: string; pathname: string }
+type QueryTiming = { artistMs: number; galleryMs: number; totalMs: number }
+
+function perfLog(
+  query: string,
+  ctx: PerfContext,
+  extra: Record<string, unknown>,
+): void {
+  console.info("[presskit-perf]", JSON.stringify({ query, host: ctx.host, pathname: ctx.pathname, ...extra }))
+}
+
+// ─── Data fetching ────────────────────────────────────────────────────────────
+
+type GetArtistPressKitOpts = {
+  perf?: boolean
+  perfCtx?: PerfContext
+}
+
+async function getArtistPressKit(
+  handle: string,
+  { perf = false, perfCtx }: GetArtistPressKitOpts = {},
+): Promise<(ReturnType<typeof buildArtistResult> & { _timing?: QueryTiming }) | null> {
   if (USE_MOCK && handle === mockArtist.handle) {
-    return mockArtist
+    return mockArtist as unknown as ReturnType<typeof buildArtistResult>
   }
+
+  const ctx = perfCtx ?? { host: "unknown", pathname: `/${handle}/presskit` }
+  const t0 = performance.now()
 
   // Uses the anon key — relies on RLS select policies for published artists and
   // their gallery images. Service role is not needed for public read-only access.
@@ -79,6 +106,7 @@ async function getArtistPressKit(handle: string) {
     { auth: { autoRefreshToken: false, persistSession: false } },
   )
 
+  const tArtist0 = performance.now()
   const { data: artistRow } = await supabase
     .from("artists")
     .select(
@@ -87,9 +115,15 @@ async function getArtistPressKit(handle: string) {
     .eq("handle", handle)
     .eq("is_published", true)
     .maybeSingle<ArtistRow>()
+  const artistMs = Math.round(performance.now() - tArtist0)
+
+  if (perf) {
+    perfLog("artist", ctx, { durationMs: artistMs, found: artistRow !== null })
+  }
 
   if (!artistRow) return null
 
+  const tGallery0 = performance.now()
   const galleryResult = artistRow.press_kit_use_gallery_photos
     ? await supabase
         .from("gallery_images")
@@ -99,6 +133,15 @@ async function getArtistPressKit(handle: string) {
         .limit(6)
         .returns<GalleryImageRow[]>()
     : { data: [] }
+  const galleryMs = Math.round(performance.now() - tGallery0)
+
+  if (perf) {
+    perfLog("gallery", ctx, {
+      durationMs: galleryMs,
+      count: (galleryResult.data ?? []).length,
+      skipped: !artistRow.press_kit_use_gallery_photos,
+    })
+  }
 
   const galleryImages: GalleryImage[] = (galleryResult.data ?? []).map((row) => ({
     id: row.id,
@@ -111,7 +154,22 @@ async function getArtistPressKit(handle: string) {
 
   const plan = normalizePlan(artistRow.plan)
   const isPro = plan === "pro"
+  const totalMs = Math.round(performance.now() - t0)
 
+  if (perf) {
+    perfLog("total", ctx, { durationMs: totalMs, artistMs, galleryMs })
+  }
+
+  const result = buildArtistResult(artistRow, galleryImages, plan, isPro)
+  return perf ? { ...result, _timing: { artistMs, galleryMs, totalMs } } : result
+}
+
+function buildArtistResult(
+  artistRow: ArtistRow,
+  galleryImages: GalleryImage[],
+  plan: SubscriptionPlan,
+  isPro: boolean,
+) {
   return {
     id: artistRow.id,
     handle: artistRow.handle,
@@ -149,6 +207,7 @@ async function getArtistPressKit(handle: string) {
     accentTheme: isPro ? (artistRow.artist_accent_theme as "matrix" | "electric_blue" | "signal_red" | undefined) : "matrix",
     plan,
     showHeaderBranding: artistRow.show_header_branding,
+    _timing: undefined as QueryTiming | undefined,
   }
 }
 
@@ -183,7 +242,15 @@ type AssetCard = {
 
 export default async function PressKitPage({ params }: PressKitPageProps) {
   const { handle } = await params
-  const artist = await getArtistPressKit(handle)
+
+  const reqHeaders = await nextHeaders()
+  const host = reqHeaders.get("host") ?? "unknown"
+  const pathname = `/${handle}/presskit`
+  const perfCtx: PerfContext = { host, pathname }
+
+  // Timing is captured inside getArtistPressKit and emitted via [presskit-perf] logs.
+  // Server-Timing response headers cannot be set from RSC pages; read console logs instead.
+  const artist = await getArtistPressKit(handle, { perf: true, perfCtx })
 
   if (!artist || !artist.pressKit.enabled) {
     notFound()
