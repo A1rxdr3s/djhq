@@ -1865,212 +1865,358 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderHome() {
+    // ── Profile completion ──────────────────────────────────────────────────
     const completionChecks = [
-      { label: "Name & handle", done: !!artist.artistName && !!artist.handle },
-      { label: "Bio & location", done: !!artist.shortBio && !!artist.location },
-      { label: "Social links", done: artist.socialLinks.length > 0 },
-      { label: "Featured release", done: artist.releases.some((r) => r.isFeatured) },
-      { label: "Releases", done: artist.releases.length > 0 },
-      { label: "Sets", done: artist.djSets.length > 0 },
-      { label: "Media", done: artist.videos.length > 0 },
-      { label: "Gallery", done: artist.galleryImages.length > 0 },
-      { label: "Hero image", done: !!artist.heroImageUrl && !artist.heroImageUrl.includes("dj-hero") && !artist.heroImageUrl.includes("placeholder") },
+      { label: "Name & handle",   done: !!artist.artistName && !!artist.handle },
+      { label: "Bio & location",  done: !!artist.shortBio && !!artist.location },
+      { label: "Social links",    done: artist.socialLinks.length > 0 },
+      { label: "Featured release",done: artist.releases.some((r) => r.isFeatured) },
+      { label: "Releases",        done: artist.releases.length > 0 },
+      { label: "Sets",            done: artist.djSets.length > 0 },
+      { label: "Media",           done: artist.videos.length > 0 },
+      { label: "Gallery",         done: artist.galleryImages.length > 0 },
+      { label: "Hero image",      done: !!artist.heroImageUrl && !artist.heroImageUrl.includes("dj-hero") && !artist.heroImageUrl.includes("placeholder") },
     ]
-    const completionDone = completionChecks.filter((c) => c.done).length
-    const completionPct = Math.round((completionDone / completionChecks.length) * 100)
+    const completionDone  = completionChecks.filter((c) => c.done).length
+    const completionPct   = Math.round((completionDone / completionChecks.length) * 100)
+    const isComplete      = completionPct === 100
 
-    const recentReleases = [...artist.releases]
-      .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
-      .slice(0, 3)
-    const recentShows = [...artist.upcomingGigs]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 3)
-    const recentSets = artist.djSets.slice(0, 3)
+    // ── Hero image / avatar ─────────────────────────────────────────────────
+    const heroThumb = artist.avatarUrl?.trim() || artist.heroImageUrl?.trim()
+    const initials  = artist.artistName
+      .split(/[\s:_-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? "")
+      .join("")
+
+    // ── Last updated ────────────────────────────────────────────────────────
+    const lastUpdated = new Date(artist.updatedAt).toLocaleDateString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+    })
+
+    // ── Publishing status ───────────────────────────────────────────────────
+    const hasActiveDomain   = customDomains.some((d) => d.status === "active")
+    const hasBooking        = !!artist.bookingInfo.email.trim()
+    const hasPressKit       = pressKitEnabled
+
+    // ── Activity timeline ───────────────────────────────────────────────────
+    type ActivityEntry = { id: string; verb: string; name: string; date: Date; section: string }
+    const rawActivities: ActivityEntry[] = [
+      ...artist.releases.map((r) => ({
+        id:      `release-${r.id}`,
+        verb:    "Released",
+        name:    r.title,
+        date:    new Date(r.releaseDate),
+        section: "releases",
+      })),
+      ...artist.upcomingGigs.map((g) => ({
+        id:      `show-${g.id}`,
+        verb:    "Added show",
+        name:    g.venue,
+        date:    new Date(g.date),
+        section: "shows",
+      })),
+      ...artist.djSets.map((s) => ({
+        id:      `set-${s.id}`,
+        verb:    "Published set",
+        name:    s.event?.trim() || s.venue?.trim() || s.title,
+        date:    s.setDate ? new Date(s.setDate) : new Date(0),
+        section: "sets",
+      })),
+      ...artist.videos.map((v) => ({
+        id:      `video-${v.id}`,
+        verb:    "Added video",
+        name:    v.title,
+        date:    v.videoDate ? new Date(v.videoDate) : new Date(0),
+        section: "media",
+      })),
+    ]
+      .filter((a) => a.date.getTime() > 0)
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5)
 
     return (
       <div className="space-y-4">
 
-        {/* Artist identity + status */}
+        {/* ── 1. Artist Header ──────────────────────────────────────────── */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold tracking-tight text-foreground">{artist.artistName}</h2>
-              <p className="mt-0.5 font-mono text-xs text-muted-foreground/60">@{artist.handle}</p>
-              <div className="mt-3 flex items-center gap-2.5">
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+          <div className="flex items-start gap-4">
+
+            {/* Avatar / hero thumbnail */}
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-secondary ring-1 ring-white/[0.08]">
+              {heroThumb ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={heroThumb}
+                  alt={artist.artistName}
+                  className="h-full w-full object-cover object-top brightness-90"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-base font-bold text-muted-foreground/60">
+                  {initials}
+                </div>
+              )}
+            </div>
+
+            {/* Identity */}
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-bold leading-tight tracking-tight text-foreground">
+                {artist.artistName}
+              </h2>
+              <p className="mt-0.5 font-mono text-xs text-muted-foreground/50">
+                @{artist.handle}
+              </p>
+
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
                   artist.isPublished
-                    ? "border-accent/20 bg-accent/10 text-accent"
+                    ? "border-accent/25 bg-accent/10 text-accent"
                     : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
                 }`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`} />
                   {artist.isPublished ? "Published" : "Draft"}
                 </span>
+                <span className="font-mono text-[10px] text-muted-foreground/35">
+                  Updated {lastUpdated}
+                </span>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
                 <a
                   href={publicProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground/50 transition-colors duration-150 hover:text-accent/70"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground"
                 >
-                  View profile
                   <ExternalLink className="h-3 w-3" />
+                  View Profile
                 </a>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("profile")}
+                  className="inline-flex h-7 items-center rounded-md border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground"
+                >
+                  Edit Profile
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Profile completion */}
+          {/* Profile completion — compact */}
           <div className="mt-4 border-t border-white/[0.04] pt-4">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
-                Profile Completion
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/40">
+                  Profile Completion
+                </p>
+                {isComplete && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-px text-[10px] font-medium text-accent/70">
+                    <Check className="h-2.5 w-2.5" />
+                    Fully optimized
+                  </span>
+                )}
+              </div>
+              <p className="shrink-0 text-[11px] font-bold tabular-nums text-foreground/60">
+                {completionPct}%
               </p>
-              <p className="text-[11px] font-bold tabular-nums text-foreground/70">{completionPct}%</p>
             </div>
-            <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.05]">
               <div
-                className={`h-full rounded-full transition-all duration-700 ${
-                  completionPct === 100 ? "bg-accent/70" : "bg-accent/45"
-                }`}
+                className={`h-full rounded-full transition-all duration-700 ${isComplete ? "bg-accent/65" : "bg-accent/40"}`}
                 style={{ width: `${completionPct}%` }}
               />
             </div>
+            {!isComplete && (
+              <p className="mt-1.5 text-[10px] text-muted-foreground/35">
+                {completionChecks.filter((c) => !c.done).map((c) => c.label).join(" · ")}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/40">
+        {/* ── 2. Quick Actions ──────────────────────────────────────────── */}
+        <div>
+          <p className="mb-2.5 px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/30">
             Quick Actions
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
-              { label: "Edit Profile", section: "profile" },
-              { label: "Add Release", section: "releases" },
-              { label: "Add Show", section: "shows" },
-              { label: "Add Set", section: "sets" },
-            ].map(({ label, section }) => (
+              { label: "Add Release",   sub: "Upload your latest track", section: "releases" },
+              { label: "Add Show",      sub: "Schedule an upcoming gig",  section: "shows"    },
+              { label: "Add Set",       sub: "Publish a recorded mix",    section: "sets"     },
+              { label: "Upload Media",  sub: "Add photos and videos",     section: "media"    },
+            ].map(({ label, sub, section }) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => setActiveSection(section)}
-                className="rounded-lg border border-white/[0.06] bg-secondary/20 px-3 py-2.5 text-xs font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.10] hover:bg-secondary/40 hover:text-foreground"
+                className="group flex flex-col rounded-xl border border-white/[0.06] bg-card/30 p-4 text-left transition-all duration-150 hover:border-white/[0.12] hover:bg-card/50"
               >
-                {label}
+                <p className="text-sm font-semibold text-foreground/85 transition-colors group-hover:text-foreground">
+                  {label}
+                </p>
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground/40">
+                  {sub}
+                </p>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Recent content */}
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+          <div className="space-y-4">
 
-          {/* Recent Releases */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
-                Recent Releases
+            {/* ── 3. Recent Activity ──────────────────────────────────── */}
+            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/40">
+                Recent Activity
               </p>
-              <button type="button" onClick={() => setActiveSection("releases")} className="text-[10px] text-accent/60 hover:text-accent">
-                Manage →
-              </button>
+              {rawActivities.length > 0 ? (
+                <div className="space-y-3">
+                  {rawActivities.map((activity) => (
+                    <button
+                      key={activity.id}
+                      type="button"
+                      onClick={() => setActiveSection(activity.section)}
+                      className="group flex w-full items-center gap-3 text-left"
+                    >
+                      <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent/40" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm text-foreground/75 transition-colors group-hover:text-foreground">
+                          <span className="font-medium text-muted-foreground/50">{activity.verb}:</span>{" "}
+                          {activity.name}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-[10px] tabular-nums text-muted-foreground/30">
+                        {activity.date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground/30">No activity yet — add your first release, show or set.</p>
+              )}
             </div>
-            {recentReleases.length > 0 ? (
-              <div className="space-y-2">
-                {recentReleases.map((r) => (
-                  <div key={r.id} className="flex items-center gap-2 min-w-0">
-                    {r.artworkUrl?.trim() ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.artworkUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover opacity-70 ring-1 ring-white/[0.06]" />
-                    ) : (
-                      <div className="h-8 w-8 shrink-0 rounded bg-secondary/60" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium text-foreground/80">{r.title}</p>
-                      <p className="text-[10px] text-muted-foreground/40">{r.releaseDate?.slice(0, 4)}</p>
+
+            {/* ── 4. Content Overview ─────────────────────────────────── */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Releases", count: artist.releases.length,      section: "releases" },
+                { label: "Shows",    count: artist.upcomingGigs.length,  section: "shows"    },
+                { label: "Sets",     count: artist.djSets.length,        section: "sets"     },
+                { label: "Media",    count: artist.videos.length,        section: "media"    },
+              ].map(({ label, count, section }) => (
+                <div
+                  key={label}
+                  className="rounded-xl border border-white/[0.06] bg-card/30 p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/40">
+                        {label}
+                      </p>
+                      <p className="mt-1 text-2xl font-bold tabular-nums text-foreground/85">
+                        {count}
+                      </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection(section)}
+                      className="shrink-0 rounded-md border border-white/[0.06] bg-secondary/30 px-2.5 py-1 text-[10px] font-medium text-muted-foreground/50 transition-all duration-150 hover:border-white/[0.12] hover:text-foreground"
+                    >
+                      Manage
+                    </button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground/30">No releases yet</p>
-            )}
-          </div>
-
-          {/* Recent Shows */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
-                Recent Shows
-              </p>
-              <button type="button" onClick={() => setActiveSection("shows")} className="text-[10px] text-accent/60 hover:text-accent">
-                Manage →
-              </button>
+                </div>
+              ))}
             </div>
-            {recentShows.length > 0 ? (
-              <div className="space-y-2">
-                {recentShows.map((g) => (
-                  <div key={g.id} className="min-w-0">
-                    <p className="truncate text-xs font-medium text-foreground/80">{g.venue}</p>
-                    <p className="text-[10px] text-muted-foreground/40">
-                      {new Date(g.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      {g.city ? ` · ${g.city}` : ""}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground/30">No shows yet</p>
-            )}
           </div>
 
-          {/* Recent Sets */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
-                Recent Sets
+          {/* ── Right column ─────────────────────────────────────────── */}
+          <div className="space-y-4">
+
+            {/* ── 5. Publishing Status ──────────────────────────────── */}
+            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/40">
+                Publishing Status
               </p>
-              <button type="button" onClick={() => setActiveSection("sets")} className="text-[10px] text-accent/60 hover:text-accent">
-                Manage →
-              </button>
-            </div>
-            {recentSets.length > 0 ? (
-              <div className="space-y-2">
-                {recentSets.map((s) => (
-                  <div key={s.id} className="min-w-0">
-                    <p className="truncate text-xs font-medium text-foreground/80">
-                      {s.event?.trim() || s.venue?.trim() || s.title}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/40">
-                      {s.setDate ? new Date(s.setDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}
-                    </p>
-                  </div>
+              <div className="space-y-2.5">
+                {[
+                  {
+                    label:  "Public Profile",
+                    ok:     artist.isPublished,
+                    onText: "Live",
+                    offText:"Draft",
+                    section:"publish",
+                  },
+                  {
+                    label:  "Custom Domain",
+                    ok:     hasActiveDomain,
+                    onText: "Connected",
+                    offText:"Not set",
+                    section:"domain",
+                  },
+                  {
+                    label:  "Booking Form",
+                    ok:     hasBooking,
+                    onText: "Active",
+                    offText:"Not set",
+                    section:"booking",
+                  },
+                  {
+                    label:  "Press Kit",
+                    ok:     hasPressKit,
+                    onText: "Published",
+                    offText:"Disabled",
+                    section:"press-kit",
+                  },
+                ].map(({ label, ok, onText, offText, section }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setActiveSection(section)}
+                    className="group flex w-full items-center justify-between gap-2 rounded-lg px-1 py-0.5 transition-colors duration-150 hover:bg-white/[0.03]"
+                  >
+                    <span className="text-xs text-muted-foreground/60 transition-colors group-hover:text-foreground/70">
+                      {label}
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${
+                      ok ? "text-accent/80" : "text-muted-foreground/35"
+                    }`}>
+                      {ok ? <Check className="h-3 w-3" /> : <span className="h-1.5 w-1.5 rounded-full bg-white/[0.10]" />}
+                      {ok ? onText : offText}
+                    </span>
+                  </button>
                 ))}
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground/30">No sets yet</p>
-            )}
-          </div>
+            </div>
 
-        </div>
-
-        {/* Profile Status */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
-            Profile Status
-          </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
-            {completionChecks.map((check) => (
-              <div key={check.label} className="flex items-center gap-1.5">
-                {check.done ? (
-                  <Check className="h-3 w-3 shrink-0 text-accent/60" />
-                ) : (
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/[0.08]" />
-                )}
-                <span className={`text-xs ${check.done ? "text-foreground/55" : "text-muted-foreground/35"}`}>
-                  {check.label}
+            {/* ── 6. Audience Insights placeholder ─────────────────── */}
+            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/40">
+                  Audience Insights
+                </p>
+                <span className="rounded-full border border-white/[0.06] bg-secondary/30 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/35">
+                  Coming soon
                 </span>
               </div>
-            ))}
+              <div className="mt-4 space-y-2.5">
+                {[
+                  { label: "Profile views",  value: "—" },
+                  { label: "Link clicks",    value: "—" },
+                  { label: "Top release",    value: "—" },
+                  { label: "Top show",       value: "—" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground/35">{label}</span>
+                    <span className="text-xs font-medium tabular-nums text-muted-foreground/20">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
 
