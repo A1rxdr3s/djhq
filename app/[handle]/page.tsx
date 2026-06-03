@@ -23,6 +23,7 @@ import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
+import { resolveSafeHref } from "@/lib/safe-url"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
 import { CollapsibleMobileReleases } from "@/components/djhq/collapsible-mobile-releases"
 import { formatPerformanceMetadata } from "@/lib/dj-set-title"
@@ -604,13 +605,17 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
 
 
 function MainLink({ link }: { link: SocialLink }) {
+  const href = resolveSafeHref(link.url)
+  if (!href) return null
   const Icon = socialIcons[link.platform]
 
   return (
     <a
-      href={link.url}
+      href={href}
       aria-label={`${link.label} for this artist`}
       title={link.label}
+      target="_blank"
+      rel="noopener noreferrer"
       className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.05] text-accent backdrop-blur-sm transition-all duration-150 hover:scale-[1.05] hover:border-accent/40 hover:bg-accent/[0.10]"
     >
       <Icon className="h-4 w-4" />

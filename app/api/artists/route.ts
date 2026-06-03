@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { computeDjSetTitle, type PerformanceType } from "@/lib/dj-set-title"
 import { computeVideoTitle } from "@/lib/performance-title"
+import { assertAllowedOrigin } from "@/lib/request-security"
 
 type SaveProfilePayload = {
   artistName: string
@@ -282,6 +283,9 @@ async function getArtistForWrite(supabase: SupabaseAdminClient, artistId: string
 }
 
 export async function POST(request: Request) {
+  const originError = assertAllowedOrigin(request)
+  if (originError) return originError
+
   const authClient = await createSupabaseServerClient()
   const {
     data: { user },
@@ -360,12 +364,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ artist: createdArtist }, { status: 201 })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to create artist profile."
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[artists POST]", error)
+    return NextResponse.json({ error: "Unable to create artist profile." }, { status: 500 })
   }
 }
 
 export async function PATCH(request: Request) {
+  const originError = assertAllowedOrigin(request)
+  if (originError) return originError
+
   const authClient = await createSupabaseServerClient()
   const {
     data: { user },
@@ -628,7 +635,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to save artist changes."
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[artists PATCH]", error)
+    return NextResponse.json({ error: "Unable to save artist changes." }, { status: 500 })
   }
 }

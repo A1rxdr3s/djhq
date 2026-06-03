@@ -1,5 +1,6 @@
 import type { ImportedReleaseMetadata } from "@/lib/release-metadata/types"
 import { getMetaContent, getPageTitle } from "@/lib/release-metadata/html"
+import { fetchJsonWithTimeout, fetchTextWithGuards, fetchWithTimeout } from "@/lib/release-metadata/fetch"
 
 type SoundCloudOEmbedResponse = {
   title?: string
@@ -28,13 +29,12 @@ export async function resolveSoundCloudUrl(url: URL): Promise<URL> {
     return resolved
   }
 
-  const response = await fetch(resolved.toString(), {
+  const response = await fetchWithTimeout(resolved.toString(), {
     headers: {
       Accept: "text/html",
       "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
     },
     redirect: "follow",
-    next: { revalidate: 0 },
   })
 
   if (response.url) {
@@ -51,16 +51,9 @@ async function getSoundCloudOEmbedMetadata(url: URL): Promise<SoundCloudOEmbedRe
   oEmbedUrl.searchParams.set("url", url.toString())
   oEmbedUrl.searchParams.set("format", "json")
 
-  const response = await fetch(oEmbedUrl.toString(), {
+  return fetchJsonWithTimeout<SoundCloudOEmbedResponse>(oEmbedUrl.toString(), {
     headers: { Accept: "application/json" },
-    next: { revalidate: 0 },
   })
-
-  if (!response.ok) {
-    return null
-  }
-
-  return (await response.json()) as SoundCloudOEmbedResponse
 }
 
 function extractPublishedDateFromHtml(html: string): string | null {
@@ -79,19 +72,18 @@ function extractPublishedDateFromHtml(html: string): string | null {
 }
 
 async function getSoundCloudPageMetadata(url: URL) {
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: "text/html",
-      "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
-    },
-    next: { revalidate: 0 },
-  })
-
-  if (!response.ok) {
+  let html: string
+  try {
+    html = await fetchTextWithGuards(url.toString(), {
+      headers: {
+        Accept: "text/html",
+        "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
+      },
+    })
+  } catch {
     return null
   }
 
-  const html = await response.text()
   const title = getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html)
   const image = getMetaContent(html, ["og:image", "twitter:image"])
   const publishedDate = extractPublishedDateFromHtml(html)

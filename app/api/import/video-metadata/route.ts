@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { getMetaContent, getPageTitle } from "@/lib/release-metadata/html"
+import { fetchTextWithGuards } from "@/lib/release-metadata/fetch"
 
 type VideoImportPayload = {
   url?: string
@@ -39,17 +40,12 @@ function extractYouTubeVideoId(url: URL): string | null {
 
 async function fetchYouTubeTitle(canonicalUrl: URL): Promise<string | null> {
   try {
-    const response = await fetch(canonicalUrl.toString(), {
+    const html = await fetchTextWithGuards(canonicalUrl.toString(), {
       headers: {
         Accept: "text/html",
         "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
       },
-      next: { revalidate: 0 },
     })
-
-    if (!response.ok) return null
-
-    const html = await response.text()
     return getMetaContent(html, ["og:title", "twitter:title"]) ?? getPageTitle(html) ?? null
   } catch {
     return null

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git -C /Users/andresherrera/Hacking/djhq-saa-s-design show HEAD:app/dashboard/dashboard-client.tsx)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(python3 -)"
     ]
   }
 }

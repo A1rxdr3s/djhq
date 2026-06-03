@@ -2,7 +2,18 @@
 // curl -X POST https://<app>/api/custom-domains/<domain-id>/activate \
 //   -H "Authorization: Bearer $DJHQ_ADMIN_SECRET"
 import { NextResponse } from "next/server"
+import { timingSafeEqual } from "crypto"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
+
+/** Constant-time string comparison — prevents timing-based secret enumeration. */
+function safeCompareSecrets(a: string, b: string): boolean {
+  // Length check must not short-circuit before the timing-safe comparison.
+  // We pad the shorter buffer so timingSafeEqual always runs.
+  const aBuf = Buffer.from(a)
+  const bBuf = Buffer.from(b)
+  if (aBuf.length !== bBuf.length) return false
+  return timingSafeEqual(aBuf, bBuf)
+}
 
 type DomainRow = {
   id: string
@@ -26,7 +37,7 @@ export async function POST(
 
   const authHeader = request.headers.get("authorization") ?? ""
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : ""
-  if (token !== secret) {
+  if (!safeCompareSecrets(token, secret)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 })
   }
 

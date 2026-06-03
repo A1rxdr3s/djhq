@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { decodeHtml, getMetaContent, getPageTitle } from "@/lib/release-metadata/html"
 import { importSpotifyReleaseMetadata, isSpotifyHostname } from "@/lib/release-metadata/spotify"
 import type { ImportedReleaseMetadata, ReleaseProvider, ReleaseType } from "@/lib/release-metadata/types"
+import { fetchTextWithGuards } from "@/lib/release-metadata/fetch"
 
 type ReleaseImportPayload = {
   url?: string
@@ -171,21 +172,12 @@ function detectProvider(url: URL): ReleaseProvider | null {
 }
 
 async function importBeatportMetadata(url: URL): Promise<ImportedReleaseMetadata> {
-  const response = await fetch(url.toString(), {
+  const html = await fetchTextWithGuards(url.toString(), {
     headers: {
       Accept: "text/html",
       "User-Agent": "DJHQ metadata importer (+https://djhq.com)",
     },
-    next: {
-      revalidate: 0,
-    },
   })
-
-  if (!response.ok) {
-    throw new Error("Unable to fetch Beatport release metadata.")
-  }
-
-  const html = await response.text()
 
   if (isCloudflareChallengePage(html)) {
     return {

@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js"
 import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
+import { resolveSafeHref } from "@/lib/safe-url"
 import type { GalleryImage, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
 
@@ -70,9 +71,12 @@ async function getArtistPressKit(handle: string) {
     return mockArtist
   }
 
+  // Uses the anon key — relies on RLS select policies for published artists and
+  // their gallery images. Service role is not needed for public read-only access.
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
   )
 
   const { data: artistRow } = await supabase
@@ -231,7 +235,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
       url: pk.riderFolderUrl ?? "",
       icon: Wrench,
     },
-  ].filter((c) => Boolean(c.url))
+  ].filter((c) => Boolean(resolveSafeHref(c.url)))
 
   const hasIndividualFolders = folderCards.some((c) => c.id !== "drive")
   const profileHref = `/${artist.handle}`
@@ -324,7 +328,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {pk.pdfEsUrl && (
                 <a
-                  href={pk.pdfEsUrl}
+                  href={resolveSafeHref(pk.pdfEsUrl) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
@@ -358,7 +362,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
               {pk.pdfEnUrl && (
                 <a
-                  href={pk.pdfEnUrl}
+                  href={resolveSafeHref(pk.pdfEnUrl) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
@@ -408,7 +412,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
               {!hasPdfs && pk.rootUrl && (
                 <a
-                  href={pk.rootUrl}
+                  href={resolveSafeHref(pk.rootUrl) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03] sm:col-span-2"
@@ -447,7 +451,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 {folderCards.map((card) => (
                   <a
                     key={card.id}
-                    href={card.url}
+                    href={resolveSafeHref(card.url) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-3.5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
@@ -494,7 +498,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 </div>
                 {pk.mediaFolderUrl && (
                   <a
-                    href={pk.mediaFolderUrl}
+                    href={resolveSafeHref(pk.mediaFolderUrl) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-6 inline-flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-accent/55 transition-colors duration-150 hover:text-accent/85"
@@ -506,16 +510,17 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
               </div>
               <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
                 <div className="grid grid-cols-2 gap-2 p-2">
-                  {artist.galleryImages.slice(0, 4).map((image) => (
+                  {artist.galleryImages.slice(0, 4).map((image, idx) => (
                     <div
                       key={image.id}
-                      className="group relative aspect-square overflow-hidden rounded-xl bg-secondary"
+                      className={`group relative aspect-square overflow-hidden rounded-xl bg-secondary${idx === 3 ? " hidden sm:block" : ""}`}
                     >
                       <Image
                         src={image.imageUrl}
                         alt={image.altText}
                         fill
-                        sizes="50vw"
+                        loading="lazy"
+                        sizes="(max-width: 768px) 33vw, 180px"
                         className="object-cover transition-[transform,filter] duration-500 group-hover:scale-[1.04] group-hover:brightness-[1.08]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
                       />

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
-
-// TODO: add per-IP / per-artist rate limiting (requires KV store e.g. Upstash Redis)
+import { checkRateLimit, getClientIp } from "@/lib/request-security"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -76,12 +75,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "One or more fields exceed maximum length." }, { status: 400 })
   }
 
+  // Rate limiting — applied after input validation, before DB queries.
+  // Limits: 5 per IP per 10 min; 3 per email+artist per hour.
+  const ip = getClientIp(request)
+  const handle = artistHandle!.toLowerCase().trim()
+
+  if (!checkRateLimit(`booking:ip:${ip}`, 5, 10 * 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
+  }
+  if (!checkRateLimit(`booking:email:${email!.toLowerCase()}:${handle}`, 3, 60 * 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
+  }
+
   // Fetch artist
   const supabase = createSupabaseAdminClient()
   const { data: artistRow, error: artistError } = await supabase
     .from("artists")
     .select("id, artist_name, booking_email, handle, is_published")
-    .eq("handle", artistHandle!.toLowerCase().trim())
+    .eq("handle", handle)
     .single()
 
   if (artistError || !artistRow) {
@@ -101,7 +112,7 @@ export async function POST(request: Request) {
 
   const resendApiKey = process.env.RESEND_API_KEY
   if (!resendApiKey) {
-    console.error("RESEND_API_KEY is not configured")
+    console.error("[booking-inquiry] RESEND_API_KEY is not configured")
     return NextResponse.json(
       { error: "Email delivery is not configured." },
       { status: 503 },
@@ -152,7 +163,7 @@ export async function POST(request: Request) {
   })
 
   if (sendError) {
-    console.error("Resend error:", sendError)
+    console.error("[booking-inquiry] Resend error:", sendError)
     return NextResponse.json(
       { error: "Could not send inquiry. Please try again." },
       { status: 500 },

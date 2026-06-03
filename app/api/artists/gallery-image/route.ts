@@ -25,6 +25,11 @@ function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 })
 }
 
+// Only these source extensions are accepted from the client.
+const ALLOWED_INPUT_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"])
+// Enforces: artists/{uuid}/gallery/{13-digit-timestamp}-{sanitized-name}.webp
+const GALLERY_PATH_RE = /^artists\/[0-9a-f-]{36}\/gallery\/\d{13}-[a-z0-9._-]+\.webp$/i
+
 function sanitizeFileName(fileName: string) {
   const baseName = fileName.toLowerCase().replace(/[^a-z0-9._-]+/g, "-")
   return baseName.replace(/-+/g, "-").replace(/^-+|-+$/g, "")
@@ -76,6 +81,12 @@ export async function GET(request: Request) {
     return badRequest("fileName is required.")
   }
 
+  // Validate the input file extension before generating a signed upload URL.
+  const inputExt = fileName.split(".").pop()?.toLowerCase() ?? ""
+  if (!ALLOWED_INPUT_EXTENSIONS.has(inputExt)) {
+    return badRequest("Only jpg, jpeg, png, and webp files are accepted.")
+  }
+
   try {
     const supabase = createSupabaseAdminClient()
     const { data: artist, error: artistError } = await supabase
@@ -108,8 +119,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ signedUrl: signedData.signedUrl, token: signedData.token, filePath })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to generate upload URL."
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[gallery-image GET]", error)
+    return NextResponse.json({ error: "Unable to generate upload URL." }, { status: 500 })
   }
 }
 
@@ -170,9 +181,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
     }
 
-    // Ensure the filePath belongs to this artist (path prefix guard).
+    // Validate path format and ownership. Reject arbitrary storage paths.
     const expectedPrefix = `artists/${artist.id}/gallery/`
-    if (!filePath.startsWith(expectedPrefix)) {
+    if (!filePath.startsWith(expectedPrefix) || !GALLERY_PATH_RE.test(filePath)) {
       return badRequest("Invalid file path.")
     }
 
@@ -222,8 +233,8 @@ export async function POST(request: Request) {
       { status: 201 },
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to register gallery image."
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[gallery-image POST]", error)
+    return NextResponse.json({ error: "Unable to register gallery image." }, { status: 500 })
   }
 }
 
@@ -317,8 +328,8 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true, galleryImageId: galleryImage.id, storageDeleted }, { status: 200 })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to delete gallery image."
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[gallery-image DELETE]", error)
+    return NextResponse.json({ error: "Unable to delete gallery image." }, { status: 500 })
   }
 }
 
@@ -380,8 +391,8 @@ export async function PATCH(request: Request) {
 
       return NextResponse.json({ success: true, galleryImageId, focalX, focalY }, { status: 200 })
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to update focal point."
-      return NextResponse.json({ error: message }, { status: 500 })
+      console.error("[gallery-image PATCH focal]", error)
+      return NextResponse.json({ error: "Unable to update focal point." }, { status: 500 })
     }
   }
 
@@ -471,7 +482,7 @@ export async function PATCH(request: Request) {
       { status: 200 },
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to reorder gallery images."
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[gallery-image PATCH reorder]", error)
+    return NextResponse.json({ error: "Unable to reorder gallery images." }, { status: 500 })
   }
 }
