@@ -805,6 +805,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const initialVideos = getVideoFormState(artist)
   const [videos, setVideos] = useState(initialVideos)
   const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null)
+  const [linksVersion, setLinksVersion] = useState<"v1" | "v2">("v2")
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -3079,6 +3080,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderLinks() {
+    if (linksVersion === "v2") return renderLinksV2()
     const connected   = PLATFORM_CONFIG.filter(({ id }) => linkUrls[id]?.trim())
     const available   = PLATFORM_CONFIG.filter(({ id }) => !linkUrls[id]?.trim())
     const connectedN  = connected.length
@@ -3206,6 +3208,162 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={() => { setLinksVersion("v2"); setExpandedLinkId(null) }}
+          className="text-[10px] text-muted-foreground/30 transition-colors hover:text-muted-foreground/60"
+        >
+          Try visual layout →
+        </button>
+      </div>
+    )
+  }
+
+  function renderLinksV2() {
+    const connected = PLATFORM_CONFIG.filter(({ id }) => linkUrls[id]?.trim())
+    const available = PLATFORM_CONFIG.filter(({ id }) => !linkUrls[id]?.trim())
+    const connectedN = connected.length
+    const totalN     = PLATFORM_CONFIG.length
+
+    const expandedPlatform = expandedLinkId
+      ? PLATFORM_CONFIG.find((p) => p.id === expandedLinkId)
+      : null
+    const expandedUrl      = expandedLinkId ? (linkUrls[expandedLinkId] ?? "") : ""
+    const expandedActive   = expandedUrl.trim().length > 0
+
+    return (
+      <div className="space-y-5">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Links</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground/55">
+              {connectedN} of {totalN} platforms connected
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground/35">
+              Only connected platforms appear on your public profile.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setLinksVersion("v1"); setExpandedLinkId(null) }}
+            className="shrink-0 text-[10px] text-muted-foreground/28 transition-colors hover:text-muted-foreground/55"
+          >
+            List view
+          </button>
+        </div>
+
+        {/* Connected chips */}
+        {connected.length > 0 && (
+          <div>
+            <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
+              Connected
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {connected.map(({ id, label, Icon }) => {
+                const isOpen = expandedLinkId === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setExpandedLinkId(isOpen ? null : id)}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
+                      isOpen
+                        ? "border-accent/40 bg-accent/[0.12] text-foreground"
+                        : "border-accent/20 bg-accent/[0.06] text-foreground/78 hover:border-accent/35 hover:bg-accent/[0.10]"
+                    }`}
+                    style={{ minWidth: "140px" }}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-accent/55" />
+                    <span className="flex-1 text-left">{label}</span>
+                    <Check className="h-3 w-3 shrink-0 text-accent/65" />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Available chips */}
+        {available.length > 0 && (
+          <div>
+            <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
+              Available
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {available.map(({ id, label, Icon }) => {
+                const isOpen = expandedLinkId === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setExpandedLinkId(isOpen ? null : id)}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
+                      isOpen
+                        ? "border-white/[0.14] bg-white/[0.05] text-foreground/70"
+                        : "border-dashed border-white/[0.09] bg-white/[0.02] text-muted-foreground/42 hover:border-white/[0.18] hover:bg-white/[0.04] hover:text-foreground/60"
+                    }`}
+                    style={{ minWidth: "140px" }}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30" />
+                    <span className="flex-1 text-left">{label}</span>
+                    <Plus className="h-3 w-3 shrink-0 text-muted-foreground/35" />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Inline editor — appears below chips when any is selected */}
+        {expandedPlatform && (
+          <div className="rounded-xl border border-white/[0.08] bg-card/50 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <expandedPlatform.Icon className="h-4 w-4 text-accent/55" />
+              <p className="text-sm font-semibold text-foreground/80">{expandedPlatform.label}</p>
+              {expandedActive && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-accent/65">
+                  <Check className="h-2.5 w-2.5" />
+                  Connected
+                </span>
+              )}
+            </div>
+            <Input
+              autoFocus
+              value={expandedUrl}
+              onChange={(e) =>
+                setLinkUrls((prev) => ({ ...prev, [expandedLinkId!]: e.target.value }))
+              }
+              placeholder={expandedPlatform.placeholder}
+              className="h-9 border-white/[0.06] bg-white/[0.03] text-sm placeholder:text-muted-foreground/22 focus:border-accent/30"
+            />
+            <div className="mt-3 flex items-center gap-3">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setExpandedLinkId(null)}
+                className="h-7 bg-accent/90 px-3 text-[11px] text-accent-foreground hover:bg-accent"
+              >
+                Done
+              </Button>
+              {expandedActive && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLinkUrls((prev) => ({ ...prev, [expandedLinkId!]: "" }))
+                    setExpandedLinkId(null)
+                  }}
+                  className="text-[11px] text-muted-foreground/38 transition-colors hover:text-destructive/65"
+                >
+                  Disconnect
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     )
   }
