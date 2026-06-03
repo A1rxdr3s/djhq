@@ -313,9 +313,22 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
                     {pk.pdfEsSize ? `PDF · ${pk.pdfEsSize}` : "Spanish PDF"}
                   </p>
-                  <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-foreground">
-                    Press Kit ESP
-                  </p>
+                  {/* Flag + title row */}
+                  <div className="mt-1 flex items-center gap-2.5">
+                    {/* Spain flag — red/yellow/red horizontal stripes, circular */}
+                    <div
+                      aria-label="Spain flag — document language: Spanish"
+                      className="h-5 w-5 shrink-0 overflow-hidden rounded-full opacity-80 ring-1 ring-white/[0.10]"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="h-full w-full">
+                        <rect width="3" height="2" fill="#c60b1e" />
+                        <rect width="3" height="1" y="0.5" fill="#ffc400" />
+                      </svg>
+                    </div>
+                    <p className="text-2xl font-black tracking-[-0.02em] text-foreground">
+                      Press Kit ESP
+                    </p>
+                  </div>
                   <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
                     Download ESP ↗
                   </span>
@@ -334,9 +347,34 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
                     {pk.pdfEnSize ? `PDF · ${pk.pdfEnSize}` : "English PDF"}
                   </p>
-                  <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-foreground">
-                    Press Kit ENG
-                  </p>
+                  {/* Flag + title row */}
+                  <div className="mt-1 flex items-center gap-2.5">
+                    {/* United Kingdom flag — Union Jack, circular */}
+                    <div
+                      aria-label="United Kingdom flag — document language: English"
+                      className="h-5 w-5 shrink-0 overflow-hidden rounded-full opacity-80 ring-1 ring-white/[0.10]"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" className="h-full w-full">
+                        {/* Blue field */}
+                        <rect width="60" height="30" fill="#012169" />
+                        {/* White broad saltire — St Andrew's cross */}
+                        <line x1="0" y1="0" x2="60" y2="30" stroke="#fff" strokeWidth="7" />
+                        <line x1="60" y1="0" x2="0" y2="30" stroke="#fff" strokeWidth="7" />
+                        {/* Red narrow saltire — St Patrick's cross (simplified, not counterchanged at this size) */}
+                        <line x1="0" y1="0" x2="60" y2="30" stroke="#C8102E" strokeWidth="4" />
+                        <line x1="60" y1="0" x2="0" y2="30" stroke="#C8102E" strokeWidth="4" />
+                        {/* White fimbriation for St George's cross */}
+                        <line x1="30" y1="0" x2="30" y2="30" stroke="#fff" strokeWidth="10" />
+                        <line x1="0" y1="15" x2="60" y2="15" stroke="#fff" strokeWidth="10" />
+                        {/* Red St George's cross */}
+                        <line x1="30" y1="0" x2="30" y2="30" stroke="#C8102E" strokeWidth="6" />
+                        <line x1="0" y1="15" x2="60" y2="15" stroke="#C8102E" strokeWidth="6" />
+                      </svg>
+                    </div>
+                    <p className="text-2xl font-black tracking-[-0.02em] text-foreground">
+                      Press Kit ENG
+                    </p>
+                  </div>
                   <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
                     Download ENG ↗
                   </span>
