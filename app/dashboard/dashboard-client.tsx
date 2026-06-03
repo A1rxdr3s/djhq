@@ -1330,20 +1330,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setReleases((current) => current.filter((_, itemIndex) => itemIndex !== index))
   }
 
-  function handleMoveRelease(index: number, direction: "up" | "down") {
-    setReleases((current) => {
-      const nextIndex = direction === "up" ? index - 1 : index + 1
 
-      if (nextIndex < 0 || nextIndex >= current.length) {
-        return current
-      }
-
-      const next = [...current]
-      const [item] = next.splice(index, 1)
-      next.splice(nextIndex, 0, item)
-      return next
-    })
-  }
 
   function handleSetFeatured(index: number) {
     setReleases((current) =>
