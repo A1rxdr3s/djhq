@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { GigCard } from "@/components/dashboard/gig-card"
-import { AddShowModal } from "@/components/dashboard/add-show-modal"
+import { ShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -778,6 +778,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [setMenuOpenId, setSetMenuOpenId] = useState<string | null>(null)
   const [expandedGigId, setExpandedGigId] = useState<string | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingGig, setEditingGig] = useState<import("@/components/dashboard/gig-card").GigEntry | null>(null)
   const [expandedVideoId, setExpandedVideoId] = useState<string | null>(null)
   const [videoMenuOpenId, setVideoMenuOpenId] = useState<string | null>(null)
   const [linksVersion, setLinksVersion] = useState<"v1" | "v2">("v2")
@@ -1316,6 +1317,28 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       paymentStatus: gig.paymentStatus ?? null,
     }
     setUpcomingGigs((current) => sortGigsByDate([...current, formState]))
+  }
+
+  function handleEditGigFromModal(gig: import("@/components/dashboard/gig-card").GigEntry) {
+    const formState: GigFormState = {
+      id: gig.id,
+      venue: gig.venue,
+      clubVenue: gig.clubVenue,
+      date: gig.date,
+      city: gig.city,
+      country: gig.country,
+      eventStatus: gig.eventStatus,
+      ticketUrl: gig.ticketUrl,
+      flyerUrl: gig.flyerUrl,
+      instagramUrl: gig.instagramUrl,
+      feeAmount: gig.feeAmount ?? null,
+      feeCurrency: gig.feeCurrency ?? null,
+      paymentStatus: gig.paymentStatus ?? null,
+    }
+    // Update the existing gig in-place (no duplicate created).
+    setUpcomingGigs((current) =>
+      sortGigsByDate(current.map((g) => g.id === formState.id ? formState : g)),
+    )
   }
 
   function handleRemoveRelease(index: number) {
@@ -3767,10 +3790,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <>
-      <AddShowModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        onSave={handleAddGigFromModal}
+      <ShowModal
+        open={showAddModal || !!editingGig}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) { setShowAddModal(false); setEditingGig(null) }
+        }}
+        initialGig={editingGig ?? undefined}
+        onSave={editingGig ? handleEditGigFromModal : handleAddGigFromModal}
       />
       <div className="space-y-6">
 
@@ -3908,32 +3934,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <div className="flex shrink-0 items-center px-3">
                         <button
                           type="button"
-                          onClick={() => setExpandedGigId(isOpen ? null : gig.id)}
-                          className={cn(
-                            "flex h-7 items-center rounded-md px-2.5 text-[11px] font-medium transition-colors duration-150",
-                            isOpen ? "bg-accent/10 text-accent" : "text-muted-foreground/38 hover:text-foreground",
-                          )}
+                          onClick={() => setEditingGig(gig)}
+                          className="flex h-7 items-center rounded-md px-2.5 text-[11px] font-medium text-muted-foreground/38 transition-colors duration-150 hover:text-foreground"
                         >
-                          {isOpen ? "Close" : "Edit"}
+                          Edit
                         </button>
                       </div>
                     </div>
-
-                    {/* Inline edit form */}
-                    {isOpen && (
-                      <div className="mt-2 rounded-xl border border-accent/20 bg-card/35 p-0.5">
-                        <GigCard
-                          gig={gig}
-                          onChange={handleGigChange}
-                          onDelete={() => {
-                            handleDeleteGig(gig.id)
-                            setExpandedGigId(null)
-                          }}
-                          initialExpanded={true}
-                          isPast={false}
-                        />
-                      </div>
-                    )}
                   </div>
                 )
               })}
@@ -4041,34 +4048,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                     <div className="flex shrink-0 items-center px-2">
                                       <button
                                         type="button"
-                                        onClick={() => setExpandedGigId(isOpen ? null : gig.id)}
-                                        className={cn(
-                                          "flex h-7 items-center rounded-md px-2 text-[10px] font-medium transition-colors duration-150",
-                                          isOpen
-                                            ? "bg-white/[0.06] text-foreground/52"
-                                            : "text-muted-foreground/22 hover:text-foreground/42",
-                                        )}
+                                        onClick={() => setEditingGig(gig)}
+                                        className="flex h-7 items-center rounded-md px-2 text-[10px] font-medium text-muted-foreground/22 transition-colors duration-150 hover:text-foreground/42"
                                       >
-                                        {isOpen ? "Close" : "Edit"}
+                                        Edit
                                       </button>
                                     </div>
                                   </div>
-
-                                  {/* Inline edit form */}
-                                  {isOpen && (
-                                    <div className="mt-1 rounded-xl border border-white/[0.06] bg-card/25 p-0.5">
-                                      <GigCard
-                                        gig={gig}
-                                        onChange={handleGigChange}
-                                        onDelete={() => {
-                                          handleDeleteGig(gig.id)
-                                          setExpandedGigId(null)
-                                        }}
-                                        initialExpanded={true}
-                                        isPast={true}
-                                      />
-                                    </div>
-                                  )}
                                 </div>
                               )
                             })}

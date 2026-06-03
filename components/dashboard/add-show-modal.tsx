@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import {
   Dialog,
@@ -20,58 +20,63 @@ import type { GigEntry } from "@/components/dashboard/gig-card"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AddShowModalProps = {
+type ShowModalProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** When provided the modal opens in Edit mode with fields pre-filled. */
+  initialGig?: GigEntry
+  /** Receives the complete GigEntry. In edit mode the id matches the original. */
   onSave: (gig: GigEntry) => void
 }
 
+/** Only the fields the modal manages. Hidden fields (eventStatus, paymentStatus)
+ *  are passed through from initialGig or defaulted at save time. */
 type ShowForm = {
   venue: string
+  clubVenue: string
   date: string
   city: string
   country: string
-  clubVenue: string
-  eventStatus: "upcoming" | "sold_out" | "cancelled" | null
   ticketUrl: string
   flyerUrl: string
   instagramUrl: string
   feeAmount: number | null
-  feeCurrency: string | null
-  paymentStatus: "pending" | "partial" | "paid" | "cancelled" | null
+  feeCurrency: string
 }
 
-const EVENT_STATUSES = [
-  { value: "upcoming"  as const, label: "Upcoming",  activeClass: "bg-accent/[0.12] text-accent/75" },
-  { value: "sold_out"  as const, label: "Sold Out",  activeClass: "bg-amber-500/[0.12] text-amber-400/80" },
-  { value: "cancelled" as const, label: "Cancelled", activeClass: "bg-red-500/[0.12] text-red-400/70" },
-]
-
-const PAYMENT_STATUSES = [
-  { value: "pending"   as const, label: "Pending",   activeClass: "bg-amber-500/[0.12] text-amber-400/80" },
-  { value: "partial"   as const, label: "Partial",   activeClass: "bg-sky-500/[0.12] text-sky-400/80" },
-  { value: "paid"      as const, label: "Paid",      activeClass: "bg-emerald-500/[0.12] text-emerald-400/80" },
-  { value: "cancelled" as const, label: "Cancelled", activeClass: "bg-red-500/[0.12] text-red-400/70" },
-]
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function emptyForm(): ShowForm {
   return {
     venue: "",
+    clubVenue: "",
     date: "",
     city: "",
     country: "",
-    clubVenue: "",
-    eventStatus: "upcoming",
     ticketUrl: "",
     flyerUrl: "",
     instagramUrl: "",
     feeAmount: null,
-    feeCurrency: null,
-    paymentStatus: null,
+    feeCurrency: "USD",
   }
 }
 
-// ── Field style helpers ───────────────────────────────────────────────────────
+function fromGigEntry(gig: GigEntry): ShowForm {
+  return {
+    venue: gig.venue,
+    clubVenue: gig.clubVenue ?? "",
+    date: gig.date,
+    city: gig.city,
+    country: gig.country,
+    ticketUrl: gig.ticketUrl ?? "",
+    flyerUrl: gig.flyerUrl ?? "",
+    instagramUrl: gig.instagramUrl ?? "",
+    feeAmount: gig.feeAmount ?? null,
+    feeCurrency: gig.feeCurrency ?? "USD",
+  }
+}
+
+// ── Field style ───────────────────────────────────────────────────────────────
 
 const inputClass = cn(
   "h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025]",
@@ -91,19 +96,21 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) {
+export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalProps) {
+  const mode = initialGig ? "edit" : "add"
   const [form, setForm] = useState<ShowForm>(emptyForm)
   const [saving, setSaving] = useState(false)
-  const venueInputRef = useRef<HTMLInputElement>(null)
 
-  // Reset form each time the modal opens (deferred to avoid synchronous setState in effect)
+  // Populate or reset form whenever the modal opens.
+  // initialGig is intentionally omitted from deps — we only read it at open time.
   useEffect(() => {
     if (!open) return
     const t = setTimeout(() => {
-      setForm(emptyForm())
+      setForm(initialGig ? fromGigEntry(initialGig) : emptyForm())
       setSaving(false)
     }, 0)
     return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   function set<K extends keyof ShowForm>(key: K, value: ShowForm[K]) {
@@ -129,43 +136,44 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
     if (match) setForm((f) => ({ ...f, city: typedValue, country: match.countryCode }))
   }
 
-  const isValid = form.venue.trim() && form.date && form.city.trim() && form.country.trim()
+  const isValid = !!(form.venue.trim() && form.date && form.city.trim() && form.country.trim())
 
   async function handleSave() {
     if (!isValid) return
     setSaving(true)
 
-    // Best-effort: create the venue in global_venues so other users see it.
-    // Non-blocking — a failed upsert must not prevent the show from being saved.
-    const venuePayload = {
-      name: form.venue.trim(),
-      city: form.city.trim(),
-      country: form.country.trim(),
-      instagramUrl: form.instagramUrl.trim() || null,
-      source: "user_created",
-    }
+    // Best-effort: upsert venue to global_venues for autocomplete enrichment.
     fetch("/api/venues", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(venuePayload),
+      body: JSON.stringify({
+        name: form.venue.trim(),
+        city: form.city.trim(),
+        country: form.country.trim(),
+        instagramUrl: form.instagramUrl.trim() || null,
+        source: "user_created",
+      }),
     }).catch(() => {
-      // non-critical
+      // non-critical — venue upsert failure must not block show creation
     })
 
     const gig: GigEntry = {
-      id: crypto.randomUUID(),
+      // Preserve id in edit mode; generate new in add mode
+      id: initialGig?.id ?? crypto.randomUUID(),
       venue: form.venue.trim(),
       date: form.date,
       city: form.city.trim(),
       country: form.country.trim(),
       clubVenue: form.clubVenue.trim() || undefined,
-      eventStatus: form.eventStatus,
       ticketUrl: form.ticketUrl.trim() || undefined,
       flyerUrl: form.flyerUrl.trim() || undefined,
       instagramUrl: form.instagramUrl.trim() || undefined,
       feeAmount: form.feeAmount,
-      feeCurrency: form.feeCurrency,
-      paymentStatus: form.paymentStatus,
+      feeCurrency: form.feeCurrency.trim() || null,
+      // Preserve hidden fields from existing gig when editing;
+      // default to "upcoming" / null when creating.
+      eventStatus: initialGig?.eventStatus ?? "upcoming",
+      paymentStatus: initialGig?.paymentStatus ?? null,
     }
 
     onSave(gig)
@@ -177,28 +185,26 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "max-w-lg border-white/[0.08] bg-[#0e1117] p-0",
-          "sm:max-w-lg",
+          "max-w-lg border-white/[0.08] bg-[#0e1117] p-0 sm:max-w-lg",
           "[&>button]:text-white/30 [&>button:hover]:text-white/60",
         )}
       >
-        {/* Scrollable body — safe on short mobile screens */}
         <div className="flex max-h-[90dvh] flex-col">
 
           {/* Header */}
           <DialogHeader className="shrink-0 border-b border-white/[0.06] px-6 pb-4 pt-5">
             <DialogTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
-              Add Show
+              {mode === "edit" ? "Edit Show" : "Add Show"}
             </DialogTitle>
           </DialogHeader>
 
-          {/* Form body */}
+          {/* Scrollable form body */}
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <div className="space-y-6">
 
-              {/* ── Venue ──────────────────────────────────────────────────── */}
+              {/* ── Event Venue ─────────────────────────────────────────────── */}
               <div>
-                <SectionLabel>Venue</SectionLabel>
+                <SectionLabel>Event Venue</SectionLabel>
                 <div className="space-y-2">
                   <VenueAutocomplete
                     value={form.venue}
@@ -216,19 +222,16 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
                 </div>
               </div>
 
-              {/* ── Event ──────────────────────────────────────────────────── */}
+              {/* ── Event Details ────────────────────────────────────────────── */}
               <div>
-                <SectionLabel>Event</SectionLabel>
+                <SectionLabel>Event Details</SectionLabel>
                 <div className="space-y-2">
-                  {/* Date */}
                   <DatePicker
                     value={form.date}
                     onChange={(v) => set("date", v)}
                     triggerClassName={cn(inputClass, "justify-start")}
                     align="start"
                   />
-
-                  {/* City + Country */}
                   <div className="flex gap-2">
                     <CityAutocomplete
                       value={form.city}
@@ -247,34 +250,10 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
                 </div>
               </div>
 
-              {/* ── Status ─────────────────────────────────────────────────── */}
-              <div>
-                <SectionLabel>Status</SectionLabel>
-                <div className="inline-flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
-                  {EVENT_STATUSES.map(({ value: v, label, activeClass }) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => set("eventStatus", form.eventStatus === v ? null : v)}
-                      className={cn(
-                        "rounded-md px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide",
-                        "transition-colors duration-100",
-                        form.eventStatus === v
-                          ? activeClass
-                          : "text-muted-foreground/30 hover:text-muted-foreground/55",
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Links ──────────────────────────────────────────────────── */}
+              {/* ── Links ───────────────────────────────────────────────────── */}
               <div>
                 <SectionLabel>Links</SectionLabel>
                 <div className="space-y-2">
-                  {/* Ticket URL */}
                   <div className="relative">
                     <input
                       value={form.ticketUrl}
@@ -288,7 +267,6 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
                       </span>
                     )}
                   </div>
-
                   <input
                     value={form.flyerUrl}
                     onChange={(e) => set("flyerUrl", e.target.value)}
@@ -307,9 +285,9 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
               {/* ── Booking / Fee ───────────────────────────────────────────── */}
               <div>
                 <SectionLabel>Booking / Fee</SectionLabel>
-                <div className="space-y-2">
-                  {/* Fee + currency row */}
-                  <div className="flex gap-2">
+                {/* Fee amount + currency side by side */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
                     <input
                       type="number"
                       inputMode="decimal"
@@ -320,48 +298,30 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
                         const v = e.target.value
                         set("feeAmount", v === "" ? null : parseFloat(v) || null)
                       }}
-                      placeholder="Fee"
+                      placeholder="Fee amount (optional)"
                       className={cn(
                         inputClass,
-                        "flex-1 [appearance:textfield]",
+                        "[appearance:textfield]",
                         "[&::-webkit-inner-spin-button]:appearance-none",
                         "[&::-webkit-outer-spin-button]:appearance-none",
                       )}
                     />
+                  </div>
+                  <div className="w-24 shrink-0">
                     <input
-                      list="add-show-currencies"
-                      value={form.feeCurrency ?? ""}
-                      onChange={(e) => set("feeCurrency", e.target.value.toUpperCase() || null)}
+                      list="show-modal-currencies"
+                      value={form.feeCurrency}
+                      onChange={(e) => set("feeCurrency", e.target.value.toUpperCase())}
                       placeholder="USD"
                       maxLength={10}
-                      className={cn(inputClass, "w-20 shrink-0 uppercase")}
+                      className={cn(inputClass, "uppercase")}
                     />
-                    <datalist id="add-show-currencies">
+                    <datalist id="show-modal-currencies">
                       <option value="USD" />
                       <option value="EUR" />
                       <option value="GBP" />
                       <option value="CLP" />
                     </datalist>
-                  </div>
-
-                  {/* Payment status */}
-                  <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
-                    {PAYMENT_STATUSES.map(({ value: v, label, activeClass }) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => set("paymentStatus", form.paymentStatus === v ? null : v)}
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
-                          "transition-colors duration-100",
-                          form.paymentStatus === v
-                            ? activeClass
-                            : "text-muted-foreground/25 hover:text-muted-foreground/45",
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -369,7 +329,7 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
             </div>
           </div>
 
-          {/* Footer — required fields note + action buttons */}
+          {/* Footer */}
           <div className="shrink-0 border-t border-white/[0.05] px-6 py-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] text-muted-foreground/30">
@@ -392,16 +352,15 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
                   onClick={handleSave}
                   disabled={!isValid || saving}
                   className={cn(
-                    "h-9 rounded-lg bg-accent px-5",
+                    "flex h-9 items-center gap-2 rounded-lg bg-accent px-5",
                     "text-[13px] font-semibold text-accent-foreground",
                     "transition-all duration-150",
                     "hover:bg-accent/90 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_30%,transparent)]",
                     "disabled:cursor-not-allowed disabled:opacity-40",
-                    "flex items-center gap-2",
                   )}
                 >
                   {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  Save Show
+                  {mode === "edit" ? "Save Changes" : "Save Show"}
                 </button>
               </div>
             </div>
@@ -412,3 +371,7 @@ export function AddShowModal({ open, onOpenChange, onSave }: AddShowModalProps) 
     </Dialog>
   )
 }
+
+// Backward-compat alias — the old name is still imported in dashboard-client.tsx
+// and will be updated there; this keeps any other potential importers working.
+export { ShowModal as AddShowModal }
