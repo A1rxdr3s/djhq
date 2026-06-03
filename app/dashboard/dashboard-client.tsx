@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { Camera, Check, ChevronDown, ExternalLink, FileText, FolderOpen, Globe, Headphones, Instagram, Layers, LogOut, Mail, MapPin, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Wrench, Youtube } from "lucide-react"
+import { Camera, Check, ChevronDown, ExternalLink, FileText, FolderOpen, Globe, Headphones, Instagram, Layers, LogOut, Mail, MapPin, MoreVertical, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Wrench, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -781,6 +781,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [expandedGigId, setExpandedGigId] = useState<string | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingGig, setEditingGig] = useState<import("@/components/dashboard/gig-card").GigEntry | null>(null)
+  const [deletingGig, setDeletingGig] = useState<import("@/components/dashboard/gig-card").GigEntry | null>(null)
+  const [openGigActionsId, setOpenGigActionsId] = useState<string | null>(null)
   const [expandedVideoId, setExpandedVideoId] = useState<string | null>(null)
   const [videoMenuOpenId, setVideoMenuOpenId] = useState<string | null>(null)
   const [linksVersion, setLinksVersion] = useState<"v1" | "v2">("v2")
@@ -3743,6 +3745,55 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
 
+  // ── Gig three-dot actions dropdown ──────────────────────────────────────
+  function GigActionsDropdown({
+    onEdit,
+    onDelete,
+    onClose,
+    align = "right",
+  }: {
+    onEdit: () => void
+    onDelete: () => void
+    onClose: () => void
+    align?: "right" | "left"
+  }) {
+    const menuRef = useRef<HTMLDivElement>(null)
+    useLayoutEffect(() => {
+      function handlePointerDown(e: PointerEvent) {
+        if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose()
+      }
+      document.addEventListener("pointerdown", handlePointerDown)
+      return () => document.removeEventListener("pointerdown", handlePointerDown)
+    }, [onClose])
+    return (
+      <div
+        ref={menuRef}
+        className={cn(
+          "absolute top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-xl",
+          "border border-white/[0.09] bg-[#111520] shadow-2xl shadow-black/60",
+          align === "right" ? "right-0" : "left-0",
+        )}
+      >
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onEdit() }}
+          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-foreground/80 transition-colors duration-100 hover:bg-white/[0.06]"
+        >
+          Edit
+        </button>
+        <div className="mx-3 h-px bg-white/[0.05]" />
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete() }}
+          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-red-400/70 transition-colors duration-100 hover:bg-red-500/[0.08] hover:text-red-400"
+        >
+          <Trash2 className="h-3 w-3" />
+          Delete
+        </button>
+      </div>
+    )
+  }
+
   function renderGigs() {
     const today       = new Date().toISOString().slice(0, 10)
     const currentYear = new Date().getFullYear().toString()
@@ -3804,6 +3855,54 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         onSave={editingGig ? handleEditGigFromModal : handleAddGigFromModal}
         existingEventNames={[...new Set(upcomingGigs.map((g) => g.eventName).filter((n): n is string => !!n))]}
       />
+
+      {/* ── Delete confirmation dialog ───────────────────────────────── */}
+      {deletingGig && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setDeletingGig(null) }}
+        >
+          <div
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0e1117] shadow-2xl shadow-black/60"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 pt-6 pb-5">
+              <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+                Delete Show
+              </p>
+              <p className="mt-2 text-[13px] leading-[1.55] text-muted-foreground/65">
+                Are you sure you want to delete
+                {deletingGig.eventName ? (
+                  <> <span className="font-semibold text-foreground/80">{deletingGig.eventName}</span> at <span className="font-semibold text-foreground/80">{deletingGig.venue}</span></>
+                ) : (
+                  <> <span className="font-semibold text-foreground/80">{deletingGig.venue}</span></>
+                )}
+                ? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-white/[0.06] px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setDeletingGig(null)}
+                className="h-9 rounded-lg border border-white/[0.07] bg-transparent px-4 text-[13px] font-medium text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/70"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleDeleteGig(deletingGig.id)
+                  setDeletingGig(null)
+                }}
+                className="h-9 rounded-lg bg-red-500/[0.85] px-4 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-red-500"
+              >
+                Delete Show
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-6">
 
         {/* Header */}
@@ -3939,15 +4038,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         )}
                       </div>
 
-                      {/* Edit action */}
-                      <div className="flex shrink-0 items-center px-3">
+                      {/* Three-dot actions menu */}
+                      <div className="relative flex shrink-0 items-center pr-2">
                         <button
                           type="button"
-                          onClick={() => setEditingGig(gig)}
-                          className="flex h-7 items-center rounded-md px-2.5 text-[11px] font-medium text-muted-foreground/38 transition-colors duration-150 hover:text-foreground"
+                          onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/35 transition-colors duration-150 hover:bg-white/[0.06] hover:text-foreground/60"
+                          aria-label="Show actions"
                         >
-                          Edit
+                          <MoreVertical className="h-3.5 w-3.5" />
                         </button>
+                        {openGigActionsId === gig.id && (
+                          <GigActionsDropdown
+                            onEdit={() => { setEditingGig(gig); setOpenGigActionsId(null) }}
+                            onDelete={() => { setDeletingGig(gig); setOpenGigActionsId(null) }}
+                            onClose={() => setOpenGigActionsId(null)}
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -4040,8 +4147,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                     {/* Event content */}
                                     <div className="min-w-0 flex-1 px-3 py-2.5">
                                       <p className="truncate text-xs font-medium text-foreground/52">
-                                        {gig.venue || <span className="text-muted-foreground/20">—</span>}
+                                        {gig.eventName || gig.venue || <span className="text-muted-foreground/20">—</span>}
                                       </p>
+                                      {gig.eventName && gig.venue && (
+                                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/38">{gig.venue}</p>
+                                      )}
                                       {subline && (
                                         <p className="mt-0.5 truncate text-[10px] text-muted-foreground/26">{subline}</p>
                                       )}
@@ -4053,15 +4163,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                       )}
                                     </div>
 
-                                    {/* Edit action — very subdued */}
-                                    <div className="flex shrink-0 items-center px-2">
+                                    {/* Three-dot actions menu */}
+                                    <div className="relative flex shrink-0 items-center pr-1.5">
                                       <button
                                         type="button"
-                                        onClick={() => setEditingGig(gig)}
-                                        className="flex h-7 items-center rounded-md px-2 text-[10px] font-medium text-muted-foreground/22 transition-colors duration-150 hover:text-foreground/42"
+                                        onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
+                                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/20 transition-colors duration-150 hover:bg-white/[0.05] hover:text-foreground/45"
+                                        aria-label="Show actions"
                                       >
-                                        Edit
+                                        <MoreVertical className="h-3 w-3" />
                                       </button>
+                                      {openGigActionsId === gig.id && (
+                                        <GigActionsDropdown
+                                          onEdit={() => { setEditingGig(gig); setOpenGigActionsId(null) }}
+                                          onDelete={() => { setDeletingGig(gig); setOpenGigActionsId(null) }}
+                                          onClose={() => setOpenGigActionsId(null)}
+                                          align="right"
+                                        />
+                                      )}
                                     </div>
                                   </div>
                                 </div>
