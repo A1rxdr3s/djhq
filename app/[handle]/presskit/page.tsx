@@ -314,11 +314,11 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     {pk.pdfEsSize ? `PDF · ${pk.pdfEsSize}` : "Spanish PDF"}
                   </p>
                   {/* Flag + title row */}
-                  <div className="mt-1 flex items-center gap-2.5">
-                    {/* Spain flag — red/yellow/red horizontal stripes, circular */}
+                  <div className="mt-1 flex items-center gap-3">
+                    {/* Spain flag — red/yellow/red horizontal stripes */}
                     <div
                       aria-label="Spain flag — document language: Spanish"
-                      className="h-5 w-5 shrink-0 overflow-hidden rounded-full opacity-80 ring-1 ring-white/[0.10]"
+                      className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a] ring-1 ring-white/[0.10]"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="h-full w-full">
                         <rect width="3" height="2" fill="#c60b1e" />
@@ -348,27 +348,31 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     {pk.pdfEnSize ? `PDF · ${pk.pdfEnSize}` : "English PDF"}
                   </p>
                   {/* Flag + title row */}
-                  <div className="mt-1 flex items-center gap-2.5">
-                    {/* United Kingdom flag — Union Jack, circular */}
+                  <div className="mt-1 flex items-center gap-3">
+                    {/* United Kingdom flag — Union Jack */}
                     <div
                       aria-label="United Kingdom flag — document language: English"
-                      className="h-5 w-5 shrink-0 overflow-hidden rounded-full opacity-80 ring-1 ring-white/[0.10]"
+                      className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#012169] ring-1 ring-white/[0.10]"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" className="h-full w-full">
-                        {/* Blue field */}
-                        <rect width="60" height="30" fill="#012169" />
-                        {/* White broad saltire — St Andrew's cross */}
-                        <line x1="0" y1="0" x2="60" y2="30" stroke="#fff" strokeWidth="7" />
-                        <line x1="60" y1="0" x2="0" y2="30" stroke="#fff" strokeWidth="7" />
-                        {/* Red narrow saltire — St Patrick's cross (simplified, not counterchanged at this size) */}
-                        <line x1="0" y1="0" x2="60" y2="30" stroke="#C8102E" strokeWidth="4" />
-                        <line x1="60" y1="0" x2="0" y2="30" stroke="#C8102E" strokeWidth="4" />
-                        {/* White fimbriation for St George's cross */}
-                        <line x1="30" y1="0" x2="30" y2="30" stroke="#fff" strokeWidth="10" />
-                        <line x1="0" y1="15" x2="60" y2="15" stroke="#fff" strokeWidth="10" />
-                        {/* Red St George's cross */}
-                        <line x1="30" y1="0" x2="30" y2="30" stroke="#C8102E" strokeWidth="6" />
-                        <line x1="0" y1="15" x2="60" y2="15" stroke="#C8102E" strokeWidth="6" />
+                      {/*
+                        viewBox 60×36 keeps close to the 5:3 Union Jack ratio.
+                        Layers in paint order:
+                        1. Navy field
+                        2. White broad saltire (St Andrew's, Scotland)
+                        3. Red narrow saltire (St Patrick's, Ireland — simplified)
+                        4. White St George's fimbriation
+                        5. Red St George's cross (England)
+                      */}
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" className="h-full w-full">
+                        <rect width="60" height="36" fill="#012169" />
+                        <line x1="0" y1="0" x2="60" y2="36" stroke="#fff" strokeWidth="8" />
+                        <line x1="60" y1="0" x2="0" y2="36" stroke="#fff" strokeWidth="8" />
+                        <line x1="0" y1="0" x2="60" y2="36" stroke="#C8102E" strokeWidth="4.5" />
+                        <line x1="60" y1="0" x2="0" y2="36" stroke="#C8102E" strokeWidth="4.5" />
+                        <line x1="30" y1="0" x2="30" y2="36" stroke="#fff" strokeWidth="12" />
+                        <line x1="0" y1="18" x2="60" y2="18" stroke="#fff" strokeWidth="12" />
+                        <line x1="30" y1="0" x2="30" y2="36" stroke="#C8102E" strokeWidth="7" />
+                        <line x1="0" y1="18" x2="60" y2="18" stroke="#C8102E" strokeWidth="7" />
                       </svg>
                     </div>
                     <p className="text-2xl font-black tracking-[-0.02em] text-foreground">
