@@ -824,12 +824,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isUploadingGalleryImage, setIsUploadingGalleryImage] = useState(false)
   const [deletingGalleryImageId, setDeletingGalleryImageId] = useState<string | null>(null)
   const [isReorderingGallery, setIsReorderingGallery] = useState(false)
-  const [focalDirtyIds, setFocalDirtyIds] = useState<Set<string>>(new Set())
-  const [isSavingFocalPoints, setIsSavingFocalPoints] = useState(false)
   const [galleryDragIndex, setGalleryDragIndex] = useState<number | null>(null)
   const [galleryDragOverIndex, setGalleryDragOverIndex] = useState<number | null>(null)
   const galleryFileInputRef = useRef<HTMLInputElement>(null)
-  const isGalleryFocalDirty = focalDirtyIds.size > 0
   const [savedRecently, setSavedRecently] = useState(false)
   const [customDomains, setCustomDomains] = useState(initialArtist.customDomains)
   const [domainInput, setDomainInput] = useState("")
@@ -897,7 +894,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     pressKitPdfEnSize !== (artist.pressKit.pdfEnSize ?? "") ||
     pressKitPdfEsSize !== (artist.pressKit.pdfEsSize ?? "") ||
     pressKitUseGalleryPhotos !== (artist.pressKit.useGalleryPhotos ?? true)
-  const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isPressKitDirty || isGalleryFocalDirty
+  const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isPressKitDirty
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
