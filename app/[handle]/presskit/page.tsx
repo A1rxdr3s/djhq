@@ -275,7 +275,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 <img
                   src={artist.heroLogoUrl}
                   alt={artist.artistName}
-                  className="mb-1 max-h-[56px] max-w-[220px] object-contain opacity-85"
+                  className="mb-1 max-h-[68px] max-w-[190px] object-contain opacity-85 sm:max-h-[80px] sm:max-w-[250px]"
                 />
               ) : (
                 <h1 className="text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl">
