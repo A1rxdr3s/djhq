@@ -256,6 +256,92 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
     notFound()
   }
 
+  // ── Image diagnostics ───────────────────────────────────────────────────────
+  // Temporary instrumentation — logs every image rendered on this page.
+  // Remove when no longer needed for performance analysis.
+  {
+    type ImgDiag = {
+      type: string
+      url: string
+      priority: boolean
+      loading: string
+      sizes: string
+      widthPx: string
+      heightPx: string
+    }
+
+    const heroImgs: ImgDiag[] = []
+    const galleryImgs: ImgDiag[] = []
+
+    // 1. Hero photo — <Image fill priority sizes="(max-width: 768px) 100vw, 768px">
+    if (artist.heroImageUrl) {
+      heroImgs.push({
+        type: "hero-photo",
+        url: artist.heroImageUrl,
+        priority: true,
+        loading: "eager",
+        sizes: "(max-width: 768px) 100vw, 768px",
+        widthPx: "fill (container: 100vw mobile / 768px desktop)",
+        heightPx: "140–170px (fixed container)",
+      })
+    }
+
+    // 2. Hero logo — plain <img>, no Next Image, no explicit loading attr
+    if (
+      artist.heroLogoUrl &&
+      (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both")
+    ) {
+      heroImgs.push({
+        type: "hero-logo",
+        url: artist.heroLogoUrl,
+        priority: false,
+        loading: "eager",
+        sizes: "intrinsic (max-width: 280px, max-height: 100px)",
+        widthPx: "max 280px",
+        heightPx: "max 100px",
+      })
+    }
+
+    // 3. Gallery preview — up to 4 images, <Image fill lazy>
+    for (const image of artist.galleryImages.slice(0, 4)) {
+      galleryImgs.push({
+        type: "gallery",
+        url: image.imageUrl,
+        priority: false,
+        loading: "lazy",
+        sizes: "(max-width: 768px) 33vw, 180px",
+        widthPx: "fill (33vw mobile / 180px desktop)",
+        heightPx: "equal to width (aspect-square)",
+      })
+    }
+
+    const allImgs = [...heroImgs, ...galleryImgs]
+
+    for (const img of allImgs) {
+      console.info("[presskit-image]", JSON.stringify({
+        type: img.type,
+        host,
+        pathname,
+        url: img.url,
+        priority: img.priority,
+        loading: img.loading,
+        sizes: img.sizes,
+        widthPx: img.widthPx,
+        heightPx: img.heightPx,
+        // fileSize: not available server-side without fetching the image
+      }))
+    }
+
+    console.info("[presskit-summary]", JSON.stringify({
+      host,
+      pathname,
+      totalImages: allImgs.length,
+      heroImages: heroImgs.length,
+      galleryImages: galleryImgs.length,
+    }))
+  }
+  // ── End image diagnostics ────────────────────────────────────────────────────
+
   const pk = artist.pressKit
   const accentThemeConfig = getAccentTheme(artist.accentTheme ?? "matrix")
 
