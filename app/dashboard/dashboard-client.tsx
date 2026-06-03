@@ -807,6 +807,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null)
   const [expandedReleaseId, setExpandedReleaseId] = useState<string | null>(null)
   const [releasePlatformLinksOpen, setReleasePlatformLinksOpen] = useState(false)
+  const [releaseMenuOpenId, setReleaseMenuOpenId] = useState<string | null>(null)
   const [linksVersion, setLinksVersion] = useState<"v1" | "v2">("v2")
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -3391,11 +3392,34 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {releases.length > 0 && (
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {sortedForDisplay.map((release) => {
-              const index = releases.findIndex((r) => r.id === release.id)
+              const index     = releases.findIndex((r) => r.id === release.id)
               const isEditing = release.id === expandedReleaseId
-              const year = release.releaseDate ? release.releaseDate.slice(0, 4) : null
+              const isMenuOpen = releaseMenuOpenId === release.id
+
+              // "Sep 2025" formatted date — no timezone shift
+              const releaseDisplay = (() => {
+                if (!release.releaseDate) return null
+                const [y, m] = release.releaseDate.split("-")
+                if (!y) return null
+                const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                return m ? `${months[parseInt(m, 10) - 1] ?? m} ${y}` : y
+              })()
+
+              // Show collaborators only — hide solo-artist credits
+              const hasCollaborators = !!release.credits?.trim() &&
+                release.credits.trim().toLowerCase() !== artist.artistName.trim().toLowerCase()
+
+              // Platform distribution indicators (up to 3 shown)
+              const activePlatforms: string[] = []
+              if (release.spotifyUrl?.trim())      activePlatforms.push("Spotify")
+              if (release.beatportUrl?.trim())      activePlatforms.push("Beatport")
+              if (release.soundcloudUrl?.trim())    activePlatforms.push("SoundCloud")
+              if (release.appleMusicUrl?.trim())    activePlatforms.push("Apple Music")
+              if (release.traxsourceUrl?.trim())    activePlatforms.push("Traxsource")
+              if (release.bandcampUrl?.trim())      activePlatforms.push("Bandcamp")
+              if (release.otherUrl?.trim())         activePlatforms.push("Other")
+
               const typeLabel = RELEASE_TYPE_OPTIONS.find((o) => o.value === release.releaseType)?.label ?? null
-              const hasLink = !!release.platformUrl.trim()
 
               return (
                 <div
@@ -3405,7 +3429,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     isEditing
                       ? "border-accent/30 ring-1 ring-accent/15"
                       : release.isFeatured
-                        ? "border-accent/20"
+                        ? "border-accent/18"
                         : "border-white/[0.06] hover:border-white/[0.10]",
                   )}
                 >
@@ -3421,57 +3445,70 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <Music className="h-8 w-8 text-muted-foreground/18" />
+                        <Music className="h-7 w-7 text-muted-foreground/15" />
                       </div>
                     )}
+                    {/* Featured: small filled star only — no text badge */}
                     {release.isFeatured && (
-                      <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 backdrop-blur-sm">
-                        <Star className="h-2.5 w-2.5 fill-accent text-accent" />
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-accent">Featured</span>
+                      <div className="absolute left-1.5 top-1.5">
+                        <Star className="h-3.5 w-3.5 fill-accent text-accent [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.7))]" />
                       </div>
                     )}
+                    {/* Type badge */}
                     {typeLabel && (
-                      <div className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/70 backdrop-blur-sm">
+                      <div className="absolute right-1.5 top-1.5 rounded bg-black/55 px-1.5 py-px text-[8px] font-bold uppercase tracking-wider text-white/65 backdrop-blur-sm">
                         {typeLabel}
                       </div>
                     )}
                   </div>
 
-                  {/* Metadata */}
-                  <div className="px-3 pb-3 pt-2.5">
+                  {/* Metadata — tighter, DJ-prioritized */}
+                  <div className="px-3 pb-2 pt-2">
                     <p className="truncate text-sm font-semibold leading-tight text-foreground/88">
-                      {release.title || <span className="text-muted-foreground/30">Untitled</span>}
+                      {release.title || <span className="text-muted-foreground/28">Untitled</span>}
                     </p>
-                    {release.credits && (
-                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground/50">{release.credits}</p>
+                    {hasCollaborators && (
+                      <p className="mt-px truncate text-[11px] text-muted-foreground/45">
+                        {release.credits}
+                      </p>
                     )}
-                    <div className="mt-1 flex items-center gap-2">
-                      {release.label && (
-                        <span className="truncate text-[10px] text-muted-foreground/35">{release.label}</span>
+                    <div className="mt-1 space-y-0.5">
+                      {/* Date · Label */}
+                      {(releaseDisplay || release.label) && (
+                        <p className="flex items-center gap-1 truncate text-[10px] text-muted-foreground/38">
+                          {releaseDisplay && <span className="shrink-0">{releaseDisplay}</span>}
+                          {releaseDisplay && release.label && <span className="text-muted-foreground/20">·</span>}
+                          {release.label && <span className="truncate">{release.label}</span>}
+                        </p>
                       )}
-                      {year && (
-                        <span className="shrink-0 text-[10px] text-muted-foreground/28">{year}</span>
-                      )}
-                      {hasLink && (
-                        <span className="ml-auto shrink-0 text-[9px] font-medium text-accent/55">✓ Listen</span>
+                      {/* Platform indicators */}
+                      {activePlatforms.length > 0 && (
+                        <p className="truncate text-[9px] text-muted-foreground/25">
+                          {activePlatforms.slice(0, 3).join(" · ")}
+                          {activePlatforms.length > 3 && (
+                            <span className="text-muted-foreground/18"> +{activePlatforms.length - 3}</span>
+                          )}
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center border-t border-white/[0.04] px-2 py-1.5">
+                  <div className="flex items-center border-t border-white/[0.04] px-2 py-1">
+                    {/* Feature star */}
                     <button
                       type="button"
                       onClick={() => handleSetFeatured(index)}
                       disabled={busy}
                       title={release.isFeatured ? "Featured" : "Set as featured"}
                       className={cn(
-                        "flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150",
-                        release.isFeatured ? "text-accent" : "text-muted-foreground/35 hover:text-accent",
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150",
+                        release.isFeatured ? "text-accent" : "text-muted-foreground/30 hover:text-accent",
                       )}
                     >
                       <Star className={cn("h-3.5 w-3.5", release.isFeatured && "fill-current")} />
                     </button>
+                    {/* Edit */}
                     <button
                       type="button"
                       onClick={() => {
@@ -3481,27 +3518,67 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           setExpandedReleaseId(release.id)
                           setReleasePlatformLinksOpen(false)
                         }
+                        setReleaseMenuOpenId(null)
                       }}
                       className={cn(
-                        "ml-1 flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium transition-colors duration-150",
-                        isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/45 hover:text-foreground",
+                        "ml-0.5 flex h-7 items-center rounded-md px-2 text-[11px] font-medium transition-colors duration-150",
+                        isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/42 hover:text-foreground",
                       )}
                     >
                       {isEditing ? "Close" : "Edit"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleRemoveRelease(index)
-                        if (isEditing) setExpandedReleaseId(null)
-                      }}
-                      disabled={busy}
-                      title="Delete"
-                      className="ml-auto flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/30 transition-colors duration-150 hover:text-destructive/70 disabled:opacity-40"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {/* Listen — only when a platform URL is set */}
+                    {release.platformUrl?.trim() && (
+                      <a
+                        href={release.platformUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-0.5 flex h-7 items-center rounded-md px-2 text-[11px] font-medium text-muted-foreground/42 transition-colors duration-150 hover:text-foreground"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Listen
+                      </a>
+                    )}
+                    {/* ⋯ overflow menu */}
+                    <div className="relative ml-auto">
+                      <button
+                        type="button"
+                        onClick={() => setReleaseMenuOpenId(isMenuOpen ? null : release.id)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/28 transition-colors duration-150 hover:text-foreground/60"
+                        title="More options"
+                      >
+                        <span className="text-[15px] leading-none tracking-[-0.15em]">···</span>
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Inline destructive actions — shown when ⋯ is open */}
+                  {isMenuOpen && (
+                    <div className="flex items-center justify-between border-t border-white/[0.04] bg-destructive/[0.03] px-3 py-2">
+                      <span className="text-[11px] text-muted-foreground/45">Delete this release?</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setReleaseMenuOpenId(null)}
+                          className="rounded px-2 py-0.5 text-[11px] text-muted-foreground/40 hover:text-foreground/60"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            handleRemoveRelease(index)
+                            setReleaseMenuOpenId(null)
+                            if (isEditing) setExpandedReleaseId(null)
+                          }}
+                          className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/65 hover:text-destructive disabled:opacity-40"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
