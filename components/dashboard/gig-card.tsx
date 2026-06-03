@@ -14,6 +14,7 @@ import type { CityOption } from "@/lib/city-data"
 
 export type GigEntry = {
   id: string
+  eventName?: string
   venue: string
   date: string // YYYY-MM-DD
   city: string

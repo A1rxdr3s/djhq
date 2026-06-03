@@ -166,6 +166,7 @@ type VideoRow = {
 type GigRow = {
   id: string
   date: string
+  event_name: string | null
   venue: string
   city: string
   country: string
@@ -397,7 +398,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<ReleaseRow[]>(),
       supabase
         .from("gigs")
-        .select("id, date, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url")
+        .select("id, date, event_name, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url")
         .eq("artist_id", artistRow.id)
         .order("date", { ascending: true })
         .returns<GigRow[]>(),
@@ -470,6 +471,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       upcomingGigs: (gigsResult.data ?? []).map((gig) => ({
         id: gig.id,
         date: gig.date,
+        eventName: gig.event_name ?? undefined,
         venue: gig.venue,
         city: gig.city,
         country: gig.country,
@@ -966,9 +968,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                   <div className="flex min-w-0 flex-col justify-center">
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent/60">Next Show</p>
-                    <p className="mt-0.5 truncate text-sm font-bold tracking-[-0.01em] text-white">{gig.venue}</p>
-                    {gig.clubVenue && (
-                      <p className="mt-0.5 truncate text-[11px] text-white/40">{gig.clubVenue} · {gig.city}</p>
+                    <p className="mt-0.5 truncate text-sm font-bold tracking-[-0.01em] text-white">{gig.eventName || gig.venue}</p>
+                    {(gig.eventName || gig.clubVenue) && (
+                      <p className="mt-0.5 truncate text-[11px] text-white/40">
+                        {[gig.eventName ? gig.venue : null, gig.clubVenue, gig.city].filter(Boolean).join(" · ")}
+                      </p>
                     )}
                   </div>
                 </div>

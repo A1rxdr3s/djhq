@@ -91,6 +91,7 @@ type ReleaseRow = {
 type GigRow = {
   id: string
   date: string
+  event_name: string | null
   venue: string
   city: string
   country: string
@@ -269,7 +270,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<ReleaseRow[]>(),
     supabase
       .from("gigs")
-      .select("id, date, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url, fee_amount, fee_currency, payment_status")
+      .select("id, date, event_name, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url, fee_amount, fee_currency, payment_status")
       .eq("artist_id", artistRow.id)
       .order("date", { ascending: true })
       .returns<GigRow[]>(),
@@ -350,6 +351,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     upcomingGigs: (gigsResult.data ?? []).map((gig) => ({
       id: gig.id,
       date: gig.date,
+      eventName: gig.event_name ?? undefined,
       venue: gig.venue,
       city: gig.city,
       country: gig.country,

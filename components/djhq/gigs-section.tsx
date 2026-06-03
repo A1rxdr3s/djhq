@@ -104,7 +104,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         </span>
       </div>
 
-      {/* Content: event name → club venue → location */}
+      {/* Content: event name → venue → room → location */}
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
           <p
@@ -113,7 +113,8 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
               isPast ? "text-foreground/30" : "text-foreground/92",
             )}
           >
-            {gig.venue}
+            {/* If event name exists, show it as primary; otherwise fall back to venue */}
+            {gig.eventName || gig.venue}
           </p>
           {statusConfig && (
             <span
@@ -127,11 +128,23 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           )}
         </div>
 
+        {/* Venue shown as context line only when event name is displayed above it */}
+        {gig.eventName && gig.venue && (
+          <p
+            className={cn(
+              "mt-0.5 truncate text-xs font-medium leading-tight",
+              isPast ? "text-white/18" : "text-white/55",
+            )}
+          >
+            {gig.venue}
+          </p>
+        )}
+
         {gig.clubVenue && (
           <p
             className={cn(
               "mt-0.5 truncate text-xs leading-tight",
-              isPast ? "text-white/18" : "text-white/55",
+              isPast ? "text-white/14" : "text-white/40",
             )}
           >
             {gig.clubVenue}

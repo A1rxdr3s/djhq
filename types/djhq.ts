@@ -202,9 +202,11 @@ export interface Gig {
   id: string
   /** Event date. */
   date: ISODateString
-  /** Event or show name (primary display label). */
+  /** Event or show name/brand (e.g. "Afterlife", "Boiler Room"). When set, displayed as the primary title. */
+  eventName?: string
+  /** Venue or club name (e.g. "Hï Ibiza", "Fabric"). Always the physical location. */
   venue: string
-  /** Physical club or room name, shown below the event name. */
+  /** Room or stage name within the venue (e.g. "Main Room", "Room 2"). */
   clubVenue?: string
   /** City of the event. */
   city: string

@@ -61,6 +61,7 @@ type SaveReleasePayload = {
 }
 
 type SaveGigPayload = {
+  eventName?: string
   venue: string
   date: string
   city: string
@@ -532,6 +533,7 @@ export async function PATCH(request: Request) {
         payload.gigs.map((gig) => ({
           artist_id: artistId,
           date: gig.date,
+          event_name: gig.eventName?.trim() || null,
           venue: gig.venue.trim(),
           city: gig.city.trim(),
           country: gig.country.trim(),

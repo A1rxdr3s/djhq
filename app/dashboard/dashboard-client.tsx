@@ -176,6 +176,7 @@ type ReleaseFormState = {
 
 type GigFormState = {
   id: string
+  eventName?: string
   venue: string
   clubVenue?: string
   date: string
@@ -464,6 +465,7 @@ function getGigFormState(artist: Artist): GigFormState[] {
   return sortGigsByDate(
     artist.upcomingGigs.map((gig) => ({
       id: gig.id,
+      eventName: gig.eventName ?? undefined,
       venue: gig.venue,
       clubVenue: gig.clubVenue ?? undefined,
       date: toDateInputValue(gig.date),
@@ -1057,6 +1059,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       upcomingGigs: upcomingGigs.map((gig) => ({
         id: gig.id,
         date: gig.date,
+        eventName: gig.eventName?.trim() || undefined,
         venue: gig.venue.trim(),
         city: gig.city.trim(),
         country: gig.country.trim(),
@@ -1303,6 +1306,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function handleAddGigFromModal(gig: import("@/components/dashboard/gig-card").GigEntry) {
     const formState: GigFormState = {
       id: gig.id,
+      eventName: gig.eventName,
       venue: gig.venue,
       clubVenue: gig.clubVenue,
       date: gig.date,
@@ -1322,6 +1326,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function handleEditGigFromModal(gig: import("@/components/dashboard/gig-card").GigEntry) {
     const formState: GigFormState = {
       id: gig.id,
+      eventName: gig.eventName,
       venue: gig.venue,
       clubVenue: gig.clubVenue,
       date: gig.date,
@@ -3797,6 +3802,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         }}
         initialGig={editingGig ?? undefined}
         onSave={editingGig ? handleEditGigFromModal : handleAddGigFromModal}
+        existingEventNames={[...new Set(upcomingGigs.map((g) => g.eventName).filter((n): n is string => !!n))]}
       />
       <div className="space-y-6">
 
@@ -3914,8 +3920,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       {/* Event content */}
                       <div className="min-w-0 flex-1 px-4 py-3">
                         <p className="truncate text-sm font-semibold text-foreground/88">
-                          {gig.venue || <span className="text-muted-foreground/30">Untitled</span>}
+                          {gig.eventName || gig.venue || <span className="text-muted-foreground/30">Untitled</span>}
                         </p>
+                        {(gig.eventName ? gig.venue : null) && (
+                          <p className="mt-0.5 truncate text-xs font-medium text-foreground/50">{gig.venue}</p>
+                        )}
                         {subline && (
                           <p className="mt-0.5 truncate text-xs text-muted-foreground/42">{subline}</p>
                         )}

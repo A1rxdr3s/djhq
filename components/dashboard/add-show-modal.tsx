@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Loader2 } from "lucide-react"
 import {
   Dialog,
@@ -25,13 +25,16 @@ type ShowModalProps = {
   onOpenChange: (open: boolean) => void
   /** When provided the modal opens in Edit mode with fields pre-filled. */
   initialGig?: GigEntry
-  /** Receives the complete GigEntry. In edit mode the id matches the original. */
+  /** In add mode: receives a new GigEntry. In edit mode: same id as initialGig. */
   onSave: (gig: GigEntry) => void
+  /** Event names from the artist's existing shows — used for autocomplete suggestions. */
+  existingEventNames?: string[]
 }
 
-/** Only the fields the modal manages. Hidden fields (eventStatus, paymentStatus)
- *  are passed through from initialGig or defaulted at save time. */
+/** Only the visible form fields. Hidden fields (eventStatus, paymentStatus)
+ *  are passed through from initialGig or defaulted on save. */
 type ShowForm = {
+  eventName: string
   venue: string
   clubVenue: string
   date: string
@@ -48,6 +51,7 @@ type ShowForm = {
 
 function emptyForm(): ShowForm {
   return {
+    eventName: "",
     venue: "",
     clubVenue: "",
     date: "",
@@ -63,6 +67,7 @@ function emptyForm(): ShowForm {
 
 function fromGigEntry(gig: GigEntry): ShowForm {
   return {
+    eventName: gig.eventName ?? "",
     venue: gig.venue,
     clubVenue: gig.clubVenue ?? "",
     date: gig.date,
@@ -76,7 +81,7 @@ function fromGigEntry(gig: GigEntry): ShowForm {
   }
 }
 
-// ── Field style ───────────────────────────────────────────────────────────────
+// ── Styles ────────────────────────────────────────────────────────────────────
 
 const inputClass = cn(
   "h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025]",
@@ -94,15 +99,124 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Event name input with lightweight suggestion dropdown ─────────────────────
 
-export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalProps) {
+function EventNameInput({
+  value,
+  onChange,
+  suggestions,
+  autoFocus,
+}: {
+  value: string
+  onChange: (v: string) => void
+  suggestions: string[]
+  autoFocus?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const filtered = value.trim()
+    ? suggestions.filter((s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value)
+    : suggestions.slice(0, 6)
+  const showDropdown = open && filtered.length > 0
+
+  useEffect(() => {
+    function onPointerDown(e: PointerEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown)
+    return () => document.removeEventListener("pointerdown", onPointerDown)
+  }, [])
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showDropdown) {
+      if (e.key === "ArrowDown" && filtered.length > 0) {
+        setOpen(true); setActiveIndex(0); e.preventDefault()
+      }
+      return
+    }
+    switch (e.key) {
+      case "ArrowDown":
+        setActiveIndex((i) => Math.min(i + 1, filtered.length - 1))
+        e.preventDefault()
+        break
+      case "ArrowUp":
+        setActiveIndex((i) => (i <= 0 ? -1 : i - 1))
+        e.preventDefault()
+        break
+      case "Enter":
+        if (activeIndex >= 0) { onChange(filtered[activeIndex]); setOpen(false); e.preventDefault() }
+        break
+      case "Escape":
+        setOpen(false); e.preventDefault(); break
+    }
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setActiveIndex(-1); setOpen(true) }}
+        onFocus={() => { setOpen(true) }}
+        onKeyDown={handleKeyDown}
+        placeholder="Event or show name"
+        autoComplete="off"
+        spellCheck={false}
+        autoFocus={autoFocus}
+        className={inputClass}
+      />
+      {showDropdown && (
+        <div
+          role="listbox"
+          className={cn(
+            "absolute left-0 right-0 top-full z-50 mt-1",
+            "overflow-hidden rounded-xl border border-white/[0.09]",
+            "bg-[hsl(var(--card))] shadow-2xl shadow-black/50",
+          )}
+        >
+          {filtered.slice(0, 6).map((name, i) => (
+            <div
+              key={name}
+              role="option"
+              aria-selected={i === activeIndex}
+              onPointerDown={(e) => { e.preventDefault(); onChange(name); setOpen(false) }}
+              onPointerEnter={() => setActiveIndex(i)}
+              className={cn(
+                "cursor-default select-none px-3.5 py-2.5 text-[13px] font-semibold",
+                "border-b border-white/[0.04] last:border-0",
+                "transition-colors duration-75",
+                i === activeIndex
+                  ? "bg-white/[0.07] text-foreground"
+                  : "text-foreground/80 hover:bg-white/[0.04]",
+              )}
+            >
+              {name}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── ShowModal ─────────────────────────────────────────────────────────────────
+
+export function ShowModal({
+  open,
+  onOpenChange,
+  initialGig,
+  onSave,
+  existingEventNames = [],
+}: ShowModalProps) {
   const mode = initialGig ? "edit" : "add"
   const [form, setForm] = useState<ShowForm>(emptyForm)
   const [saving, setSaving] = useState(false)
 
-  // Populate or reset form whenever the modal opens.
-  // initialGig is intentionally omitted from deps — we only read it at open time.
+  // Populate or reset form on open. initialGig intentionally omitted from deps —
+  // we only read it once when the modal transitions to open.
   useEffect(() => {
     if (!open) return
     const t = setTimeout(() => {
@@ -136,13 +250,19 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
     if (match) setForm((f) => ({ ...f, city: typedValue, country: match.countryCode }))
   }
 
-  const isValid = !!(form.venue.trim() && form.date && form.city.trim() && form.country.trim())
+  const isValid = !!(
+    form.eventName.trim() &&
+    form.venue.trim() &&
+    form.date &&
+    form.city.trim() &&
+    form.country.trim()
+  )
 
   async function handleSave() {
     if (!isValid) return
     setSaving(true)
 
-    // Best-effort: upsert venue to global_venues for autocomplete enrichment.
+    // Best-effort: upsert venue to global_venues for other users' autocomplete.
     fetch("/api/venues", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -153,13 +273,11 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
         instagramUrl: form.instagramUrl.trim() || null,
         source: "user_created",
       }),
-    }).catch(() => {
-      // non-critical — venue upsert failure must not block show creation
-    })
+    }).catch(() => {})
 
     const gig: GigEntry = {
-      // Preserve id in edit mode; generate new in add mode
       id: initialGig?.id ?? crypto.randomUUID(),
+      eventName: form.eventName.trim() || undefined,
       venue: form.venue.trim(),
       date: form.date,
       city: form.city.trim(),
@@ -170,8 +288,7 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
       instagramUrl: form.instagramUrl.trim() || undefined,
       feeAmount: form.feeAmount,
       feeCurrency: form.feeCurrency.trim() || null,
-      // Preserve hidden fields from existing gig when editing;
-      // default to "upcoming" / null when creating.
+      // Preserve hidden fields from existing show; default on create.
       eventStatus: initialGig?.eventStatus ?? "upcoming",
       paymentStatus: initialGig?.paymentStatus ?? null,
     }
@@ -202,7 +319,20 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <div className="space-y-6">
 
-              {/* ── Event Venue ─────────────────────────────────────────────── */}
+              {/* ── EVENT ──────────────────────────────────────────────────────
+                  The brand/series name for the event (e.g. "Afterlife", "MISA").
+                  Separate from the physical venue. */}
+              <div>
+                <SectionLabel>Event</SectionLabel>
+                <EventNameInput
+                  value={form.eventName}
+                  onChange={(v) => set("eventName", v)}
+                  suggestions={existingEventNames}
+                  autoFocus
+                />
+              </div>
+
+              {/* ── EVENT VENUE ─────────────────────────────────────────────── */}
               <div>
                 <SectionLabel>Event Venue</SectionLabel>
                 <div className="space-y-2">
@@ -210,7 +340,6 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
                     value={form.venue}
                     onChange={(v) => set("venue", v)}
                     onSelect={handleVenueSelect}
-                    autoFocus
                   />
                   <input
                     value={form.clubVenue}
@@ -222,7 +351,7 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
                 </div>
               </div>
 
-              {/* ── Event Details ────────────────────────────────────────────── */}
+              {/* ── EVENT DETAILS ────────────────────────────────────────────── */}
               <div>
                 <SectionLabel>Event Details</SectionLabel>
                 <div className="space-y-2">
@@ -250,7 +379,7 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
                 </div>
               </div>
 
-              {/* ── Links ───────────────────────────────────────────────────── */}
+              {/* ── LINKS ───────────────────────────────────────────────────── */}
               <div>
                 <SectionLabel>Links</SectionLabel>
                 <div className="space-y-2">
@@ -282,31 +411,28 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
                 </div>
               </div>
 
-              {/* ── Booking / Fee ───────────────────────────────────────────── */}
+              {/* ── BOOKING / FEE ────────────────────────────────────────────── */}
               <div>
                 <SectionLabel>Booking / Fee</SectionLabel>
-                {/* Fee amount + currency side by side */}
                 <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      step="any"
-                      value={form.feeAmount ?? ""}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        set("feeAmount", v === "" ? null : parseFloat(v) || null)
-                      }}
-                      placeholder="Fee amount (optional)"
-                      className={cn(
-                        inputClass,
-                        "[appearance:textfield]",
-                        "[&::-webkit-inner-spin-button]:appearance-none",
-                        "[&::-webkit-outer-spin-button]:appearance-none",
-                      )}
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="any"
+                    value={form.feeAmount ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      set("feeAmount", v === "" ? null : parseFloat(v) || null)
+                    }}
+                    placeholder="Fee amount (optional)"
+                    className={cn(
+                      inputClass,
+                      "flex-1 [appearance:textfield]",
+                      "[&::-webkit-inner-spin-button]:appearance-none",
+                      "[&::-webkit-outer-spin-button]:appearance-none",
+                    )}
+                  />
                   <div className="w-24 shrink-0">
                     <input
                       list="show-modal-currencies"
@@ -333,7 +459,7 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
           <div className="shrink-0 border-t border-white/[0.05] px-6 py-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] text-muted-foreground/30">
-                Venue, date, city and country are required.
+                Event, venue, date, city and country are required.
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -372,6 +498,4 @@ export function ShowModal({ open, onOpenChange, initialGig, onSave }: ShowModalP
   )
 }
 
-// Backward-compat alias — the old name is still imported in dashboard-client.tsx
-// and will be updated there; this keeps any other potential importers working.
 export { ShowModal as AddShowModal }
