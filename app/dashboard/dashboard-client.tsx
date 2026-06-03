@@ -3313,381 +3313,348 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderReleases() {
+    const busy = isSaving || isPublishing || importingSelectedReleaseIndex !== null
+    const featuredCount = releases.filter((r) => r.isFeatured).length
+    const expandedIdx = expandedReleaseId
+      ? releases.findIndex((r) => r.id === expandedReleaseId)
+      : -1
+    const expandedRelease = expandedIdx >= 0 ? releases[expandedIdx] : null
+
+    function updateRelease(index: number, patch: Partial<ReleaseFormState>) {
+      setReleases((cur) => cur.map((r, i) => (i === index ? { ...r, ...patch } : r)))
+    }
+
+    const PLATFORM_LINK_FIELDS = [
+      { key: "spotifyUrl",      label: "Spotify" },
+      { key: "appleMusicUrl",   label: "Apple Music" },
+      { key: "soundcloudUrl",   label: "SoundCloud" },
+      { key: "youtubeMusicUrl", label: "YouTube Music" },
+      { key: "beatportUrl",     label: "Beatport" },
+      { key: "traxsourceUrl",   label: "Traxsource" },
+      { key: "bandcampUrl",     label: "Bandcamp" },
+      { key: "otherUrl",        label: "Other" },
+    ] as const
+
     return (
       <div className="space-y-6">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Releases</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">All releases shown on your profile. Star one to feature it at the top of your page.</p>
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Releases</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground/55">
+              Manage your singles, EPs, remixes and artist catalog.
+            </p>
+            {releases.length > 0 && (
+              <p className="mt-0.5 text-[11px] text-muted-foreground/32">
+                {releases.length} release{releases.length !== 1 ? "s" : ""}
+                {featuredCount > 0 ? ` · ${featuredCount} featured` : ""}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleAddRelease}
+            disabled={busy}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground disabled:opacity-40"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Release
+          </button>
         </div>
-        <div className="space-y-3">
-          {releases.map((release, index) => (
-            <div key={release.id} className={cn("rounded-xl border bg-card/40 p-4 transition-colors duration-150 sm:p-5", release.isFeatured ? "border-accent/25" : "border-white/[0.06] hover:border-white/[0.09]")}>
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  {release.artworkUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={release.artworkUrl} alt="" className="h-9 w-9 shrink-0 rounded bg-secondary/40 object-cover opacity-90" loading="lazy" />
-                  ) : (
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-white/[0.04] text-muted-foreground/30">
-                      <Music className="h-3.5 w-3.5" />
-                    </span>
+
+        {/* Empty state */}
+        {releases.length === 0 && (
+          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+            <Music className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+            <p className="text-sm font-medium text-foreground/55">No releases yet.</p>
+            <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
+              Add your singles, EPs, remixes and collaborations to build your artist catalog.
+            </p>
+            <button
+              type="button"
+              onClick={handleAddRelease}
+              disabled={busy}
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground disabled:opacity-40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Release
+            </button>
+          </div>
+        )}
+
+        {/* Release catalog grid */}
+        {releases.length > 0 && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {releases.map((release, index) => {
+              const isEditing = release.id === expandedReleaseId
+              const year = release.releaseDate ? release.releaseDate.slice(0, 4) : null
+              const typeLabel = RELEASE_TYPE_OPTIONS.find((o) => o.value === release.releaseType)?.label ?? null
+              const hasLink = !!release.platformUrl.trim()
+
+              return (
+                <div
+                  key={release.id}
+                  className={cn(
+                    "group overflow-hidden rounded-xl border bg-card/35 transition-all duration-150",
+                    isEditing
+                      ? "border-accent/30 ring-1 ring-accent/15"
+                      : release.isFeatured
+                        ? "border-accent/20"
+                        : "border-white/[0.06] hover:border-white/[0.10]",
                   )}
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-medium leading-none text-foreground">{release.title || <span className="text-muted-foreground/30">Untitled</span>}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Release {index + 1}</p>
+                >
+                  {/* Artwork */}
+                  <div className="relative aspect-square w-full overflow-hidden bg-secondary/40">
+                    {release.artworkUrl?.trim() ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={release.artworkUrl}
+                        alt={release.title || "Release artwork"}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Music className="h-8 w-8 text-muted-foreground/18" />
+                      </div>
+                    )}
+                    {release.isFeatured && (
+                      <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 backdrop-blur-sm">
+                        <Star className="h-2.5 w-2.5 fill-accent text-accent" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-accent">Featured</span>
+                      </div>
+                    )}
+                    {typeLabel && (
+                      <div className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/70 backdrop-blur-sm">
+                        {typeLabel}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Metadata */}
+                  <div className="px-3 pb-3 pt-2.5">
+                    <p className="truncate text-sm font-semibold leading-tight text-foreground/88">
+                      {release.title || <span className="text-muted-foreground/30">Untitled</span>}
+                    </p>
+                    {release.credits && (
+                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground/50">{release.credits}</p>
+                    )}
+                    <div className="mt-1 flex items-center gap-2">
+                      {release.label && (
+                        <span className="truncate text-[10px] text-muted-foreground/35">{release.label}</span>
+                      )}
+                      {year && (
+                        <span className="shrink-0 text-[10px] text-muted-foreground/28">{year}</span>
+                      )}
+                      {hasLink && (
+                        <span className="ml-auto shrink-0 text-[9px] font-medium text-accent/55">✓ Listen</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center border-t border-white/[0.04] px-2 py-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSetFeatured(index)}
+                      disabled={busy}
+                      title={release.isFeatured ? "Featured" : "Set as featured"}
+                      className={cn(
+                        "flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150",
+                        release.isFeatured ? "text-accent" : "text-muted-foreground/35 hover:text-accent",
+                      )}
+                    >
+                      <Star className={cn("h-3.5 w-3.5", release.isFeatured && "fill-current")} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isEditing) {
+                          setExpandedReleaseId(null)
+                        } else {
+                          setExpandedReleaseId(release.id)
+                          setReleasePlatformLinksOpen(false)
+                        }
+                      }}
+                      className={cn(
+                        "ml-1 flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium transition-colors duration-150",
+                        isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/45 hover:text-foreground",
+                      )}
+                    >
+                      {isEditing ? "Close" : "Edit"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleRemoveRelease(index)
+                        if (isEditing) setExpandedReleaseId(null)
+                      }}
+                      disabled={busy}
+                      title="Delete"
+                      className="ml-auto flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/30 transition-colors duration-150 hover:text-destructive/70 disabled:opacity-40"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-0.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSetFeatured(index)}
-                    disabled={isSaving || isPublishing}
-                    title={release.isFeatured ? "Featured release" : "Set as featured"}
-                    className={cn("h-7 w-7 p-0", release.isFeatured ? "text-accent" : "text-muted-foreground hover:text-accent")}
-                  >
-                    <Star className={cn("h-3.5 w-3.5", release.isFeatured && "fill-current")} />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleMoveRelease(index, "up")}
-                    disabled={index === 0 || isSaving || isPublishing || importingSelectedReleaseIndex !== null}
-                    title="Move up"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleMoveRelease(index, "down")}
-                    disabled={index === releases.length - 1 || isSaving || isPublishing || importingSelectedReleaseIndex !== null}
-                    title="Move down"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveRelease(index)}
-                    disabled={isSaving || isPublishing || importingSelectedReleaseIndex !== null}
-                    title="Remove"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid gap-4 border-t border-white/[0.04] pt-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`selected-release-title-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Title
-                  </label>
-                  <Input
-                    id={`selected-release-title-${index}`}
-                    value={release.title}
-                    onChange={(event) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, title: event.target.value } : item,
-                        ),
-                      )
-                    }
+              )
+            })}
+          </div>
+        )}
+
+        {/* Inline edit panel */}
+        {expandedRelease && expandedIdx >= 0 && (
+          <div className="rounded-xl border border-accent/25 bg-card/40 p-5">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {expandedRelease.artworkUrl?.trim() ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={expandedRelease.artworkUrl}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-white/[0.08]"
                   />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`selected-release-label-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Label
-                  </label>
-                  <Input
-                    id={`selected-release-label-${index}`}
-                    value={release.label}
-                    onChange={(event) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, label: event.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <label
-                    htmlFor={`selected-release-credits-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Artists
-                  </label>
-                  <Input
-                    id={`selected-release-credits-${index}`}
-                    value={release.credits}
-                    placeholder="e.g. Artist 1, Artist 2"
-                    onChange={(event) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, credits: event.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`selected-release-date-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Release Date
-                  </label>
-                  <DatePicker
-                    value={release.releaseDate}
-                    onChange={(v) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, releaseDate: v } : item,
-                        ),
-                      )
-                    }
-                    allowClear
-                    triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`selected-release-reltype-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Release Type
-                  </label>
-                  <select
-                    id={`selected-release-reltype-${index}`}
-                    value={release.releaseType}
-                    onChange={(event) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, releaseType: event.target.value } : item,
-                        ),
-                      )
-                    }
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="">— None —</option>
-                    {RELEASE_TYPE_OPTIONS.map(({ value, label }) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`selected-release-version-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Version / Mix Type
-                  </label>
-                  <select
-                    id={`selected-release-version-${index}`}
-                    value={release.versionType}
-                    onChange={(event) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, versionType: event.target.value, customVersionType: "" }
-                            : item,
-                        ),
-                      )
-                    }
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="">— None —</option>
-                    {VERSION_TYPE_OPTIONS.map(({ value, label }) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                  {release.versionType === "other" && (
-                    <Input
-                      placeholder="Custom version / mix type"
-                      value={release.customVersionType}
-                      onChange={(event) =>
-                        setReleases((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, customVersionType: event.target.value } : item,
-                          ),
-                        )
-                      }
-                    />
-                  )}
-                </div>
-                {release.versionType === "remix" && (
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label
-                      htmlFor={`selected-release-remixer-${index}`}
-                      className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                    >
-                      Remixer
-                    </label>
-                    <Input
-                      id={`selected-release-remixer-${index}`}
-                      placeholder="Artist name"
-                      value={release.remixer}
-                      onChange={(event) =>
-                        setReleases((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, remixer: event.target.value } : item,
-                          ),
-                        )
-                      }
-                    />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/60">
+                    <Music className="h-4 w-4 text-muted-foreground/30" />
                   </div>
                 )}
-                <div className="space-y-1.5 md:col-span-2">
-                  <label
-                    htmlFor={`selected-release-platform-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Primary URL / Legacy URL
-                  </label>
-                  <Input
-                    id={`selected-release-platform-${index}`}
-                    value={release.platformUrl}
-                    placeholder="https://..."
-                    onChange={(event) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, platformUrl: event.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                  <p className="text-[10px] text-muted-foreground/35">
-                    Fallback when no platform-specific links are configured below.
+                <div>
+                  <p className="text-sm font-semibold text-foreground/85">
+                    {expandedRelease.title || "Untitled Release"}
                   </p>
+                  <p className="text-[10px] text-muted-foreground/40">Editing release</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpandedReleaseId(null)}
+                className="text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60"
+              >
+                Close ✕
+              </button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Title</label>
+                <Input value={expandedRelease.title} onChange={(e) => updateRelease(expandedIdx, { title: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Label</label>
+                <Input value={expandedRelease.label} onChange={(e) => updateRelease(expandedIdx, { label: e.target.value })} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</label>
+                <Input value={expandedRelease.credits} placeholder="e.g. Artist 1, Artist 2" onChange={(e) => updateRelease(expandedIdx, { credits: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Release Date</label>
+                <DatePicker
+                  value={expandedRelease.releaseDate}
+                  onChange={(v) => updateRelease(expandedIdx, { releaseDate: v })}
+                  allowClear
+                  triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Release Type</label>
+                <select
+                  value={expandedRelease.releaseType}
+                  onChange={(e) => updateRelease(expandedIdx, { releaseType: e.target.value })}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">— None —</option>
+                  {RELEASE_TYPE_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Version / Mix Type</label>
+                <select
+                  value={expandedRelease.versionType}
+                  onChange={(e) => updateRelease(expandedIdx, { versionType: e.target.value, customVersionType: "" })}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">— None —</option>
+                  {VERSION_TYPE_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                {expandedRelease.versionType === "other" && (
+                  <Input placeholder="Custom version / mix type" value={expandedRelease.customVersionType} onChange={(e) => updateRelease(expandedIdx, { customVersionType: e.target.value })} />
+                )}
+              </div>
+              {expandedRelease.versionType === "remix" && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Remixer</label>
+                  <Input placeholder="Artist name" value={expandedRelease.remixer} onChange={(e) => updateRelease(expandedIdx, { remixer: e.target.value })} />
+                </div>
+              )}
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artwork URL</label>
+                <Input value={expandedRelease.artworkUrl} placeholder="https://..." onChange={(e) => updateRelease(expandedIdx, { artworkUrl: e.target.value })} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Primary URL</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={expandedRelease.platformUrl}
+                    placeholder="https://..."
+                    onChange={(e) => updateRelease(expandedIdx, { platformUrl: e.target.value })}
+                    className="flex-1"
+                  />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleImportReleaseMetadata(index)}
-                    disabled={
-                      importingSelectedReleaseIndex === index ||
-                      isSaving ||
-                      isPublishing
-                    }
-                    className="border-border bg-background/70"
+                    onClick={() => handleImportReleaseMetadata(expandedIdx)}
+                    disabled={importingSelectedReleaseIndex === expandedIdx || busy}
+                    className="shrink-0 border-border bg-background/70 text-xs"
                   >
-                    {importingSelectedReleaseIndex === index ? "Fetching..." : "Import metadata"}
+                    {importingSelectedReleaseIndex === expandedIdx ? "Fetching…" : "Import metadata"}
                   </Button>
                 </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <label
-                    htmlFor={`selected-release-artwork-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50"
-                  >
-                    Artwork URL
-                  </label>
-                  <Input
-                    id={`selected-release-artwork-${index}`}
-                    value={release.artworkUrl}
-                    onChange={(event) =>
-                      setReleases((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, artworkUrl: event.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                </div>
-
-                {/* Platform Links */}
-                <div className="space-y-3 border-t border-white/[0.04] pt-3 md:col-span-2">
-                  <div>
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                      Platform Links
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/35">
-                      Only configured platforms appear in the Listen Now panel.
-                    </p>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {(
-                      [
-                        { key: "spotifyUrl",      label: "Spotify" },
-                        { key: "appleMusicUrl",   label: "Apple Music" },
-                        { key: "soundcloudUrl",   label: "SoundCloud" },
-                        { key: "youtubeMusicUrl", label: "YouTube Music" },
-                        { key: "beatportUrl",     label: "Beatport" },
-                        { key: "traxsourceUrl",   label: "Traxsource" },
-                        { key: "bandcampUrl",     label: "Bandcamp" },
-                        { key: "otherUrl",        label: "Other" },
-                      ] as const
-                    ).map(({ key, label }) => (
+                <p className="text-[10px] text-muted-foreground/30">Fallback link when no platform-specific URLs are set.</p>
+              </div>
+              <div className="border-t border-white/[0.04] pt-3 md:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => setReleasePlatformLinksOpen((v) => !v)}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">Platform Links</span>
+                  <span className="flex items-center gap-1 text-[10px] text-muted-foreground/30">
+                    {releasePlatformLinksOpen ? "Hide" : "Show"}
+                    <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", releasePlatformLinksOpen && "rotate-180")} />
+                  </span>
+                </button>
+                {!releasePlatformLinksOpen && (
+                  <p className="mt-0.5 text-[10px] text-muted-foreground/28">Only configured platforms appear in the Listen panel.</p>
+                )}
+                {releasePlatformLinksOpen && (
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {PLATFORM_LINK_FIELDS.map(({ key, label }) => (
                       <div key={key} className="space-y-1">
-                        <label className="text-[9px] font-medium uppercase tracking-[0.10em] text-muted-foreground/40">
-                          {label}
-                        </label>
+                        <label className="text-[9px] font-medium uppercase tracking-[0.10em] text-muted-foreground/40">{label}</label>
                         <Input
-                          value={release[key]}
+                          value={expandedRelease[key]}
                           placeholder="https://..."
-                          onChange={(event) =>
-                            setReleases((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index ? { ...item, [key]: event.target.value } : item,
-                              ),
-                            )
-                          }
+                          onChange={(e) => updateRelease(expandedIdx, { [key]: e.target.value })}
                         />
                       </div>
                     ))}
                   </div>
-                </div>
+                )}
               </div>
             </div>
-          ))}
-          {releases.length === 0 && (
-            <div className="rounded-xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
-              <Music className="mx-auto mb-2.5 h-5 w-5 text-muted-foreground/20" />
-              <p className="text-sm font-medium text-muted-foreground/50">No releases yet</p>
-              <p className="mt-1 text-xs text-muted-foreground/30">Add releases to showcase your discography. Star one to feature it at the top of your profile.</p>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={handleAddRelease}
-            disabled={isSaving || isPublishing || importingSelectedReleaseIndex !== null}
-            className="flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70 disabled:pointer-events-none disabled:opacity-40"
-          >
-            <Plus className="h-4 w-4" />
-            Add release
-          </button>
-        </div>
+          </div>
+        )}
+
       </div>
     )
   }
-
-  function handleAddGig() {
-    const id = crypto.randomUUID()
-    const d = new Date()
-    d.setDate(d.getDate() + 28)
-    setNewGigId(id)
-    setUpcomingGigs((current) =>
-      sortGigsByDate([
-        ...current,
-        { id, venue: "", date: d.toISOString().slice(0, 10), city: "", country: "", ticketUrl: undefined, flyerUrl: undefined, instagramUrl: undefined, feeAmount: null, feeCurrency: null, paymentStatus: null },
-      ]),
-    )
-    setTimeout(() => {
-      document.getElementById(`gig-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-    }, 150)
-  }
-
   function handleDeleteGig(id: string) {
     setUpcomingGigs((current) => current.filter((g) => g.id !== id))
   }
