@@ -805,6 +805,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const initialVideos = getVideoFormState(artist)
   const [videos, setVideos] = useState(initialVideos)
   const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null)
+  const [expandedReleaseId, setExpandedReleaseId] = useState<string | null>(null)
+  const [releasePlatformLinksOpen, setReleasePlatformLinksOpen] = useState(false)
   const [linksVersion, setLinksVersion] = useState<"v1" | "v2">("v2")
   const [saveMessage, setSaveMessage] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -1309,7 +1311,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function handleAddRelease() {
-    setReleases((current) => [...current, createEmptyRelease()])
+    const newRelease = createEmptyRelease()
+    setReleases((current) => [...current, newRelease])
+    setExpandedReleaseId(newRelease.id)
+    setReleasePlatformLinksOpen(false)
   }
 
   function handleRemoveRelease(index: number) {
