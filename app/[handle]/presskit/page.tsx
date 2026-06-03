@@ -329,7 +329,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
     }
     // Only included when pressPhotosEnabled=true — query is skipped and array is [] otherwise
     for (const image of artist.galleryImages.slice(0, 4)) {
-      galleryImgs.push({ type: "gallery", url: image.imageUrl, priority: false, loading: "lazy", sizes: "(max-width: 768px) 33vw, 180px" })
+      galleryImgs.push({ type: "gallery", url: image.imageUrl, priority: false, loading: "lazy", sizes: "(max-width: 768px) 45vw, 180px" })
     }
 
     const allImgs = [...heroPhotos, ...logoImgs, ...galleryImgs]
@@ -638,17 +638,17 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
               </div>
               <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
                 <div className="grid grid-cols-2 gap-2 p-2">
-                  {artist.galleryImages.slice(0, 4).map((image, idx) => (
+                  {artist.galleryImages.slice(0, 4).map((image) => (
                     <div
                       key={image.id}
-                      className={`group relative aspect-square overflow-hidden rounded-xl bg-secondary${idx === 3 ? " hidden sm:block" : ""}`}
+                      className="group relative aspect-square overflow-hidden rounded-xl bg-secondary"
                     >
                       <Image
                         src={image.imageUrl}
                         alt={image.altText}
                         fill
                         loading="lazy"
-                        sizes="(max-width: 768px) 33vw, 180px"
+                        sizes="(max-width: 768px) 45vw, 180px"
                         className="pk-gallery-image object-cover sm:transition-[transform,filter] sm:duration-500 sm:group-hover:scale-[1.04] sm:group-hover:brightness-[1.08]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
                       />
