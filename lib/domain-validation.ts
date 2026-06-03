@@ -59,7 +59,7 @@ export function validateApexDomain(raw: string): DomainValidationResult {
   }
 
   // Check current app host
-  const appHost = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.vercel.app")
+  const appHost = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.app")
     .replace(/^https?:\/\//, "")
     .replace(/\/$/, "")
   if (domain === appHost) {

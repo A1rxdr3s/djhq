@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { GigCard } from "@/components/dashboard/gig-card"
+import { AddShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -26,7 +27,7 @@ const PREVIEW_NATURAL_W = 1440
 const PREVIEW_NATURAL_H = Math.round(PREVIEW_NATURAL_W * 7 / 16) // 630
 
 // Canonical app host used for display copy. Controlled by NEXT_PUBLIC_APP_URL in production.
-const APP_DISPLAY_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.vercel.app")
+const APP_DISPLAY_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.app")
   .replace(/^https?:\/\//, "")
   .replace(/\/$/, "")
 
@@ -180,6 +181,7 @@ type GigFormState = {
   date: string
   city: string
   country: string
+  eventStatus?: "upcoming" | "sold_out" | "cancelled" | null
   ticketUrl?: string
   flyerUrl?: string
   instagramUrl?: string
@@ -467,6 +469,7 @@ function getGigFormState(artist: Artist): GigFormState[] {
       date: toDateInputValue(gig.date),
       city: gig.city,
       country: gig.country,
+      eventStatus: (gig.eventStatus ?? null) as "upcoming" | "sold_out" | "cancelled" | null,
       ticketUrl: gig.ticketUrl,
       flyerUrl: gig.flyerUrl,
       instagramUrl: gig.instagramUrl,
@@ -774,6 +777,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [expandedSetId, setExpandedSetId] = useState<string | null>(null)
   const [setMenuOpenId, setSetMenuOpenId] = useState<string | null>(null)
   const [expandedGigId, setExpandedGigId] = useState<string | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
   const [expandedVideoId, setExpandedVideoId] = useState<string | null>(null)
   const [videoMenuOpenId, setVideoMenuOpenId] = useState<string | null>(null)
   const [linksVersion, setLinksVersion] = useState<"v1" | "v2">("v2")
@@ -1055,6 +1059,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         venue: gig.venue.trim(),
         city: gig.city.trim(),
         country: gig.country.trim(),
+        clubVenue: gig.clubVenue?.trim() || undefined,
+        eventStatus: gig.eventStatus ?? undefined,
         ticketUrl: gig.ticketUrl?.trim() || undefined,
         flyerUrl: gig.flyerUrl?.trim() || undefined,
         instagramUrl: gig.instagramUrl?.trim() || undefined,
@@ -1290,12 +1296,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function handleAddGig() {
-    const newId = crypto.randomUUID()
-    const emptyGig: GigFormState = {
-      id: newId, venue: "", date: "", city: "", country: "",
+    setShowAddModal(true)
+  }
+
+  function handleAddGigFromModal(gig: import("@/components/dashboard/gig-card").GigEntry) {
+    const formState: GigFormState = {
+      id: gig.id,
+      venue: gig.venue,
+      clubVenue: gig.clubVenue,
+      date: gig.date,
+      city: gig.city,
+      country: gig.country,
+      eventStatus: gig.eventStatus,
+      ticketUrl: gig.ticketUrl,
+      flyerUrl: gig.flyerUrl,
+      instagramUrl: gig.instagramUrl,
+      feeAmount: gig.feeAmount ?? null,
+      feeCurrency: gig.feeCurrency ?? null,
+      paymentStatus: gig.paymentStatus ?? null,
     }
-    setUpcomingGigs((current) => sortGigsByDate([...current, emptyGig]))
-    setExpandedGigId(newId)
+    setUpcomingGigs((current) => sortGigsByDate([...current, formState]))
   }
 
   function handleRemoveRelease(index: number) {
@@ -3746,6 +3766,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
 
     return (
+      <>
+      <AddShowModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onSave={handleAddGigFromModal}
+      />
       <div className="space-y-6">
 
         {/* Header */}
@@ -4058,6 +4084,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         )}
 
       </div>
+      </>
     )
   }
   function renderDjSets() {

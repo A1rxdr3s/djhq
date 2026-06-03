@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 
 // Redirect target for unresolvable custom domains.
 // NEXT_PUBLIC_APP_URL must be set to the canonical production URL (e.g. "https://djhq.app").
-const FALLBACK_APP_URL = "https://djhq.vercel.app"
+const FALLBACK_APP_URL = "https://djhq.app"
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? FALLBACK_APP_URL
 
 // Derive the canonical hostname from APP_URL so it is always treated as
@@ -11,7 +11,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? FALLBACK_APP_URL
 // This prevents a redirect loop when NEXT_PUBLIC_APP_URL points to a custom
 // domain (e.g. djhq.app): middleware would otherwise see that host as an
 // unknown custom domain and redirect back to itself indefinitely.
-let APP_HOST = "djhq.vercel.app"
+let APP_HOST = "djhq.app"
 try {
   APP_HOST = new URL(APP_URL).hostname
 } catch {
