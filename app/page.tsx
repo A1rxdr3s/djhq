@@ -167,7 +167,7 @@ function Hero() {
             className="flex flex-wrap items-center gap-5"
             style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.42s both" }}
           >
-            {["No credit card", "Free to start", "Setup in under an hour"].map((t) => (
+            {["Free to start", "Setup in under an hour", "One professional URL"].map((t) => (
               <div key={t} className="flex items-center gap-1.5">
                 <Check className="h-3.5 w-3.5 text-[#6D5DFC]" />
                 <span className="text-[12px] text-[#52525B]">{t}</span>
@@ -200,7 +200,7 @@ function Hero() {
                 className="flex-1 rounded-md px-3 py-1 text-center font-mono text-[11px]"
                 style={{ background: "rgba(255,255,255,0.04)", color: "#52525B" }}
               >
-                andresherrera.djhq.co
+                noavel.djhq.co
               </div>
             </div>
 
@@ -536,8 +536,8 @@ function PressKitSection() {
                 <p className="font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
                   Electronic Press Kit
                 </p>
-                <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-[#F5F5F3]">ANDRES:HERRERA</p>
-                <p className="font-mono text-[11px]" style={{ color: "#52525B" }}>House · Tech House · Buenos Aires</p>
+                <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-[#F5F5F3]">NOA VEL</p>
+                <p className="font-mono text-[11px]" style={{ color: "#52525B" }}>House · Tech House · Madrid</p>
               </div>
 
               {/* Downloads */}
@@ -688,7 +688,7 @@ function ClosingCTA() {
               See andresherrera.djhq.co →
             </Link>
             <p className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
-              No credit card  ·  Free plan  ·  Setup in 60 minutes
+              Free to start · Setup in under an hour · One professional URL
             </p>
           </div>
         </Reveal>
