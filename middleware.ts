@@ -2,12 +2,31 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
 // Redirect target for unresolvable custom domains.
-// NEXT_PUBLIC_APP_URL must be set in production (e.g. "https://djhq.vercel.app").
+// NEXT_PUBLIC_APP_URL must be set to the canonical production URL (e.g. "https://djhq.app").
 const FALLBACK_APP_URL = "https://djhq.vercel.app"
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? FALLBACK_APP_URL
 
+// Derive the canonical hostname from APP_URL so it is always treated as
+// an owned host regardless of which domain is set as canonical.
+// This prevents a redirect loop when NEXT_PUBLIC_APP_URL points to a custom
+// domain (e.g. djhq.app): middleware would otherwise see that host as an
+// unknown custom domain and redirect back to itself indefinitely.
+let APP_HOST = "djhq.vercel.app"
+try {
+  APP_HOST = new URL(APP_URL).hostname
+} catch {
+  // malformed NEXT_PUBLIC_APP_URL — keep the fallback hostname
+}
+
 // Hostnames that belong to DJHQ's own infrastructure — always pass through.
-const DJHQ_OWNED_HOSTNAMES = new Set(["djhq.com", "www.djhq.com", "localhost", "127.0.0.1"])
+const DJHQ_OWNED_HOSTNAMES = new Set([
+  APP_HOST,           // canonical host derived from NEXT_PUBLIC_APP_URL (e.g. djhq.app)
+  `www.${APP_HOST}`,  // www variant — Vercel handles the 308, but safe to allow here too
+  "djhq.com",
+  "www.djhq.com",
+  "localhost",
+  "127.0.0.1",
+])
 
 function isDjhqOwnedHost(hostname: string): boolean {
   if (DJHQ_OWNED_HOSTNAMES.has(hostname)) return true
