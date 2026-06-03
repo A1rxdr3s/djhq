@@ -136,6 +136,10 @@ async function getArtistPressKit(
   const galleryMs = Math.round(performance.now() - tGallery0)
 
   if (perf) {
+    perfLog("pressPhotos", ctx, {
+      pressPhotosEnabled: artistRow.press_kit_use_gallery_photos,
+      galleryQuerySkipped: !artistRow.press_kit_use_gallery_photos,
+    })
     perfLog("gallery", ctx, {
       durationMs: galleryMs,
       count: (galleryResult.data ?? []).length,
@@ -256,92 +260,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
     notFound()
   }
 
-  // ── Image diagnostics ───────────────────────────────────────────────────────
-  // Temporary instrumentation — logs every image rendered on this page.
-  // Remove when no longer needed for performance analysis.
-  {
-    type ImgDiag = {
-      type: string
-      url: string
-      priority: boolean
-      loading: string
-      sizes: string
-      widthPx: string
-      heightPx: string
-    }
-
-    const heroImgs: ImgDiag[] = []
-    const galleryImgs: ImgDiag[] = []
-
-    // 1. Hero photo — <Image fill priority sizes="(max-width: 768px) 100vw, 768px">
-    if (artist.heroImageUrl) {
-      heroImgs.push({
-        type: "hero-photo",
-        url: artist.heroImageUrl,
-        priority: true,
-        loading: "eager",
-        sizes: "(max-width: 768px) 100vw, 768px",
-        widthPx: "fill (container: 100vw mobile / 768px desktop)",
-        heightPx: "140–170px (fixed container)",
-      })
-    }
-
-    // 2. Hero logo — plain <img>, no Next Image, no explicit loading attr
-    if (
-      artist.heroLogoUrl &&
-      (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both")
-    ) {
-      heroImgs.push({
-        type: "hero-logo",
-        url: artist.heroLogoUrl,
-        priority: false,
-        loading: "eager",
-        sizes: "intrinsic (max-width: 280px, max-height: 100px)",
-        widthPx: "max 280px",
-        heightPx: "max 100px",
-      })
-    }
-
-    // 3. Gallery preview — up to 4 images, <Image fill lazy>
-    for (const image of artist.galleryImages.slice(0, 4)) {
-      galleryImgs.push({
-        type: "gallery",
-        url: image.imageUrl,
-        priority: false,
-        loading: "lazy",
-        sizes: "(max-width: 768px) 33vw, 180px",
-        widthPx: "fill (33vw mobile / 180px desktop)",
-        heightPx: "equal to width (aspect-square)",
-      })
-    }
-
-    const allImgs = [...heroImgs, ...galleryImgs]
-
-    for (const img of allImgs) {
-      console.info("[presskit-image]", JSON.stringify({
-        type: img.type,
-        host,
-        pathname,
-        url: img.url,
-        priority: img.priority,
-        loading: img.loading,
-        sizes: img.sizes,
-        widthPx: img.widthPx,
-        heightPx: img.heightPx,
-        // fileSize: not available server-side without fetching the image
-      }))
-    }
-
-    console.info("[presskit-summary]", JSON.stringify({
-      host,
-      pathname,
-      totalImages: allImgs.length,
-      heroImages: heroImgs.length,
-      galleryImages: galleryImgs.length,
-    }))
-  }
-  // ── End image diagnostics ────────────────────────────────────────────────────
-
   const pk = artist.pressKit
   const accentThemeConfig = getAccentTheme(artist.accentTheme ?? "matrix")
 
@@ -390,6 +308,59 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
     },
   ].filter((c) => Boolean(resolveSafeHref(c.url)))
 
+  // ── Image + link diagnostics ─────────────────────────────────────────────────
+  // Temporary instrumentation. Remove after performance analysis is complete.
+  {
+    type ImgDiag = { type: string; url: string; priority: boolean; loading: string; sizes: string }
+    // hero-photo: the <Image fill priority> banner (1 per page, the LCP image)
+    // logo: the plain <img> artist logo/wordmark (separate element, not a duplicate)
+    // gallery: press photo thumbnails (lazy, only when pressPhotosEnabled)
+    const heroPhotos: ImgDiag[] = []
+    const logoImgs: ImgDiag[] = []
+    const galleryImgs: ImgDiag[] = []
+
+    if (artist.heroImageUrl) {
+      heroPhotos.push({ type: "hero-photo", url: artist.heroImageUrl, priority: true, loading: "eager", sizes: "(max-width: 768px) 100vw, 768px" })
+    }
+    if (artist.heroLogoUrl && (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both")) {
+      // plain <img loading="lazy"> — not LCP, not a duplicate of the hero photo
+      logoImgs.push({ type: "hero-logo", url: artist.heroLogoUrl, priority: false, loading: "lazy", sizes: "max 280px intrinsic" })
+    }
+    // Only included when pressPhotosEnabled=true — query is skipped and array is [] otherwise
+    for (const image of artist.galleryImages.slice(0, 4)) {
+      galleryImgs.push({ type: "gallery", url: image.imageUrl, priority: false, loading: "lazy", sizes: "(max-width: 768px) 33vw, 180px" })
+    }
+
+    const allImgs = [...heroPhotos, ...logoImgs, ...galleryImgs]
+    for (const img of allImgs) {
+      console.info("[presskit-image]", JSON.stringify({ host, pathname, ...img }))
+    }
+
+    // Drive/external link count: PDF downloads + full kit link + folder cards + media folder link
+    const driveLinksRendered =
+      (pk.pdfEsUrl ? 1 : 0) +
+      (pk.pdfEnUrl ? 1 : 0) +
+      (!hasPdfs && pk.rootUrl ? 1 : 0) +
+      folderCards.length +
+      (pk.useGalleryPhotos && pk.mediaFolderUrl ? 1 : 0)
+
+    console.info("[presskit-summary]", JSON.stringify({
+      host,
+      pathname,
+      totalImages: allImgs.length,
+      // heroImages=1 is correct: one <Image fill priority> background photo
+      // logoImages counts the artist logo (<img loading=lazy>) — a separate element, not a duplicate
+      heroImages: heroPhotos.length,
+      logoImages: logoImgs.length,
+      galleryImages: galleryImgs.length,
+      pressPhotosEnabled: pk.useGalleryPhotos,
+      galleryQuerySkipped: !pk.useGalleryPhotos,
+      driveLinksRendered,
+      imageComponentsRendered: allImgs.length,
+    }))
+  }
+  // ── End diagnostics ──────────────────────────────────────────────────────────
+
   const hasIndividualFolders = folderCards.some((c) => c.id !== "drive")
   const profileHref = `/${artist.handle}`
 
@@ -425,6 +396,8 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   alt={artist.artistName}
                   fill
                   priority
+                  quality={65}
+                  placeholder="empty"
                   className="object-cover object-[50%_20%]"
                   sizes="(max-width: 768px) 100vw, 768px"
                 />
@@ -444,6 +417,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 <img
                   src={artist.heroLogoUrl}
                   alt={artist.artistName}
+                  loading="lazy"
                   className="max-h-[80px] max-w-[200px] object-contain opacity-85 sm:max-h-[90px] sm:max-w-[240px] lg:max-h-[100px] lg:max-w-[280px]"
                 />
               ) : (
