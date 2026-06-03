@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Mail, Wrench, type LucideIcon } from "lucide-react"
+import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
 import type { GalleryImage, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
@@ -180,6 +180,14 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
   const folderCards: AssetCard[] = [
     {
+      id: "drive",
+      label: "Full Drive Package",
+      description: "Complete press kit folder with all available assets.",
+      cta: "Open Drive",
+      url: pk.rootUrl ?? "",
+      icon: FolderOpen,
+    },
+    {
       id: "bio",
       label: "Bio & Text",
       description: "Artist biography and profile information.",
@@ -210,14 +218,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
       cta: "Open Rider",
       url: pk.riderFolderUrl ?? "",
       icon: Wrench,
-    },
-    {
-      id: "drive",
-      label: "Full Drive Package",
-      description: "Complete press kit folder with all available assets.",
-      cta: "Open Drive",
-      url: pk.rootUrl ?? "",
-      icon: FolderOpen,
     },
   ].filter((c) => Boolean(c.url))
 
@@ -284,7 +284,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
               {/* Helper text */}
               <p className="mt-3 text-[13px] leading-relaxed text-white/28">
-                Download artist assets, press photos, technical rider and media materials.
+                Download press materials, artist assets and booking information.
               </p>
             </div>
           </div>
@@ -422,8 +422,8 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 </p>
               </div>
               <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
-                <div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3">
-                  {artist.galleryImages.map((image) => (
+                <div className="grid grid-cols-3 gap-2 p-2">
+                  {artist.galleryImages.slice(0, 3).map((image) => (
                     <div
                       key={image.id}
                       className="group relative aspect-square overflow-hidden rounded-xl bg-secondary"
@@ -432,50 +432,41 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         src={image.imageUrl}
                         alt={image.altText}
                         fill
-                        sizes="(max-width: 640px) 50vw, 33vw"
+                        sizes="33vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
                       />
                     </div>
                   ))}
                 </div>
-                {pk.mediaFolderUrl && (
-                  <div className="flex items-center justify-between border-t border-white/[0.04] px-5 py-3.5">
-                    <p className="text-[11px] text-white/22">
-                      High-resolution versions available in the Press Photos folder.
-                    </p>
-                    <a
-                      href={pk.mediaFolderUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-4 flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/55 transition-colors duration-150 hover:text-accent/85"
-                    >
-                      Open Press Photos Folder
-                      <ExternalLink className="h-2.5 w-2.5" />
-                    </a>
-                  </div>
-                )}
               </div>
+              {pk.mediaFolderUrl && (
+                <div className="mt-3 text-center">
+                  <a
+                    href={pk.mediaFolderUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-accent/60 transition-colors duration-150 hover:text-accent/90"
+                  >
+                    Open Press Photos Folder
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                </div>
+              )}
             </div>
           )}
 
           {/* ── Compact Booking Contact ────────────────────────────────── */}
           {artist.bookingInfo.email.trim() && (
-            <div className="mt-8 flex flex-col gap-3 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
-                  Booking Contact
-                </p>
-                <p className="mt-0.5 font-mono text-sm text-white/50">
-                  {artist.bookingInfo.email}
-                </p>
-              </div>
+            <div className="mt-8 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4">
+              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
+                Booking Contact
+              </p>
               <a
                 href={`mailto:${artist.bookingInfo.email}`}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/[0.10] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/45 transition-all duration-150 hover:border-white/[0.20] hover:text-white/70"
+                className="mt-1 block font-mono text-sm text-white/50 transition-colors duration-150 hover:text-accent/70"
               >
-                <Mail className="h-3 w-3" />
-                Contact Booking
+                {artist.bookingInfo.email}
               </a>
             </div>
           )}
