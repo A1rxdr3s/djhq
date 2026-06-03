@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import {
   Calendar,
@@ -78,6 +79,7 @@ type ArtistRow = {
   press_kit_enabled: boolean
   press_kit_download_url: string | null
   press_kit_assets: string[] | null
+  press_kit_public_url: string | null
   plan: string
   show_header_branding: boolean
   browser_title: string | null
@@ -525,6 +527,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         downloadUrl: artistRow.press_kit_download_url ?? "",
         assetsIncluded: artistRow.press_kit_assets ?? [],
         useGalleryPhotos: true,
+        publicUrl: artistRow.press_kit_public_url ?? undefined,
       },
       plan: normalizePlan(artistRow.plan),
       customDomains: [],
@@ -683,7 +686,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     : `translate(calc(-50% + ${logoOffsetX}px), calc(-50% + ${logoOffsetY}px))`
   const heroTextStyle = isPro ? (artist.heroTextStyle ?? "default") : "default"
   const hasPressKit = artist.pressKit.enabled
-  const pressKitHref = `/${artist.handle}/presskit`
+
+  // Resolve the Press Kit button URL:
+  //   1. Artist-configured custom URL (e.g. /press or https://drive.google.com/...)
+  //   2. /presskit — correct default for custom domains (artist-domain.com/presskit)
+  //   3. /[handle]/presskit — fallback for DJHQ-hosted profiles on djhq.co
+  const _reqHeaders = await headers()
+  const _reqHost = _reqHeaders.get("host") ?? ""
+  const _appHost = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.com").host
+  const _isCustomDomain = Boolean(_reqHost) && _reqHost !== _appHost && !_reqHost.startsWith("localhost")
+  const pressKitHref = artist.pressKit.publicUrl?.trim()
+    || (_isCustomDomain ? "/presskit" : `/${artist.handle}/presskit`)
   const accentThemeConfig = getAccentTheme(isPro ? artist.accentTheme : "matrix")
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
   const prioritizedLinks = artist.socialLinks.filter((link) => link.url.trim().length > 0).sort((a, b) => {

@@ -107,6 +107,7 @@ type SaveBookingPayload = {
   bookingUrl?: string | null
   pressKitEnabled: boolean
   pressKitUrl?: string | null
+  pressKitPublicUrl?: string | null
   pressKitAssets: string[]
   pressKitRootUrl?: string | null
   pressKitBioFolderUrl?: string | null
@@ -431,6 +432,7 @@ export async function PATCH(request: Request) {
         booking_url: payload.booking.bookingUrl?.trim() || null,
         press_kit_enabled: payload.booking.pressKitEnabled,
         press_kit_download_url: payload.booking.pressKitUrl?.trim() || null,
+        press_kit_public_url: payload.booking.pressKitPublicUrl?.trim() || null,
         press_kit_assets: payload.booking.pressKitAssets,
         press_kit_root_url: payload.booking.pressKitRootUrl?.trim() || null,
         press_kit_bio_folder_url: payload.booking.pressKitBioFolderUrl?.trim() || null,

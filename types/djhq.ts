@@ -372,6 +372,9 @@ export interface PressKit {
   pdfEsSize?: string
   /** Whether to pull the press photo grid from the artist's gallery images. */
   useGalleryPhotos: boolean
+  /** Artist-customizable URL for the Press Kit button on the public profile.
+   *  When empty: /presskit on custom domains, /[handle]/presskit on djhq.co. */
+  publicUrl?: string
 }
 
 /**

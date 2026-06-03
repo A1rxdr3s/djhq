@@ -739,6 +739,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [bookingUrl, setBookingUrl] = useState(initialArtist.bookingInfo.bookingUrl ?? "")
   const [pressKitEnabled, setPressKitEnabled] = useState(initialArtist.pressKit.enabled)
   const [pressKitUrl, setPressKitUrl] = useState(initialArtist.pressKit.downloadUrl)
+  const [pressKitPublicUrl, setPressKitPublicUrl] = useState(initialArtist.pressKit.publicUrl ?? "")
   const [pressKitAssets, setPressKitAssets] = useState<string[]>(initialArtist.pressKit.assetsIncluded)
   const [pressKitRootUrl, setPressKitRootUrl] = useState(initialArtist.pressKit.rootUrl ?? "")
   const [pressKitBioFolderUrl, setPressKitBioFolderUrl] = useState(initialArtist.pressKit.bioFolderUrl ?? "")
@@ -861,7 +862,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     pressKitPdfEsUrl !== (artist.pressKit.pdfEsUrl ?? "") ||
     pressKitPdfEnSize !== (artist.pressKit.pdfEnSize ?? "") ||
     pressKitPdfEsSize !== (artist.pressKit.pdfEsSize ?? "") ||
-    pressKitUseGalleryPhotos !== (artist.pressKit.useGalleryPhotos ?? true)
+    pressKitUseGalleryPhotos !== (artist.pressKit.useGalleryPhotos ?? true) ||
+    pressKitPublicUrl !== (artist.pressKit.publicUrl ?? "")
   const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isPressKitDirty
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
@@ -966,6 +968,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           bookingUrl: bookingUrl || null,
           pressKitEnabled,
           pressKitUrl: pressKitUrl || null,
+          pressKitPublicUrl: pressKitPublicUrl.trim() || null,
           pressKitAssets,
           pressKitRootUrl: pressKitRootUrl || null,
           pressKitBioFolderUrl: pressKitBioFolderUrl || null,
@@ -1158,6 +1161,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setBookingUrl(savedArtist.bookingInfo.bookingUrl ?? "")
     setPressKitEnabled(savedArtist.pressKit.enabled)
     setPressKitUrl(savedArtist.pressKit.downloadUrl)
+    setPressKitPublicUrl(savedArtist.pressKit.publicUrl ?? "")
     setPressKitAssets(savedArtist.pressKit.assetsIncluded)
     setPressKitRootUrl(savedArtist.pressKit.rootUrl ?? "")
     setPressKitBioFolderUrl(savedArtist.pressKit.bioFolderUrl ?? "")
@@ -5272,9 +5276,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
 
     const activeDomain = customDomains.find((d) => d.status === "active")
-    const pressKitPublicUrl = activeDomain
+    const pressKitDefaultUrl = activeDomain
       ? `https://${activeDomain.domain}/presskit`
       : `${APP_DISPLAY_HOST}/${artist.handle}/presskit`
+    const pressKitResolvedUrl = pressKitPublicUrl.trim() || pressKitDefaultUrl
 
     const optionalLinks = [
       { label: "Bio & Text",      ok: Boolean(pressKitBioFolderUrl.trim()) },
@@ -5291,8 +5296,35 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">
             Your EPK page is live at{" "}
-            <span className="font-mono text-foreground/50">{pressKitPublicUrl}</span>.
+            <a href={pressKitResolvedUrl} target="_blank" rel="noopener noreferrer" className="font-mono text-foreground/50 underline underline-offset-2 hover:text-foreground/75">
+              {pressKitResolvedUrl}
+            </a>.
           </p>
+        </div>
+
+        {/* Press Kit Button URL */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-foreground">Press Kit Button URL</p>
+            <p className="mt-0.5 text-xs text-muted-foreground/45">
+              Where the Press Kit button on your public profile links to. Leave blank to use the default.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="pressKitPublicUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+              Custom URL
+            </label>
+            <Input
+              id="pressKitPublicUrl"
+              value={pressKitPublicUrl}
+              onChange={(e) => setPressKitPublicUrl(e.target.value)}
+              placeholder={pressKitDefaultUrl}
+            />
+            <p className="text-[10px] text-muted-foreground/35">
+              Can be a path (e.g. <span className="font-mono">/presskit</span>) or an external URL (e.g. a Google Drive folder).
+              Default: <span className="font-mono">{pressKitDefaultUrl}</span>
+            </p>
+          </div>
         </div>
 
         {/* Status toggle */}
