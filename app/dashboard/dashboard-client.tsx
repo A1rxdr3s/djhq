@@ -3316,6 +3316,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       : -1
     const expandedRelease = expandedIdx >= 0 ? releases[expandedIdx] : null
 
+    // Display order: newest first by release date; does not affect state array indices
+    const sortedForDisplay = [...releases].sort((a, b) => {
+      if (!a.releaseDate && !b.releaseDate) return 0
+      if (!a.releaseDate) return 1
+      if (!b.releaseDate) return -1
+      return b.releaseDate.localeCompare(a.releaseDate)
+    })
+
     function updateRelease(index: number, patch: Partial<ReleaseFormState>) {
       setReleases((cur) => cur.map((r, i) => (i === index ? { ...r, ...patch } : r)))
     }
@@ -3381,8 +3389,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Release catalog grid */}
         {releases.length > 0 && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {releases.map((release, index) => {
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {sortedForDisplay.map((release) => {
+              const index = releases.findIndex((r) => r.id === release.id)
               const isEditing = release.id === expandedReleaseId
               const year = release.releaseDate ? release.releaseDate.slice(0, 4) : null
               const typeLabel = RELEASE_TYPE_OPTIONS.find((o) => o.value === release.releaseType)?.label ?? null
