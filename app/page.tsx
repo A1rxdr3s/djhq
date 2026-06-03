@@ -215,69 +215,113 @@ function Hero() {
 
 function ProfileMockup() {
   return (
-    <div style={{ background: "#0B0F14" }}>
-      {/* Hero area */}
-      <div className="relative overflow-hidden" style={{ height: 200 }}>
+    <div style={{ background: "#080B0F" }}>
+      {/* Hero — simulated dark stage photo */}
+      <div className="relative overflow-hidden" style={{ height: 260 }}>
+        {/* Background — deep stage dark */}
         <div
           className="absolute inset-0"
-          style={{
-            background: "linear-gradient(135deg, #0D1A14 0%, #0A0E14 60%, #0B0F14 100%)",
-          }}
+          style={{ background: "linear-gradient(155deg, #0C1220 0%, #060810 42%, #0B0A14 80%, #08090F 100%)" }}
         />
+        {/* Stage light from upper-right */}
         <div
           className="pointer-events-none absolute"
           style={{
-            left: "10%", top: "10%",
-            width: 380, height: 280,
-            background: "radial-gradient(ellipse at center, rgba(109,93,252,0.10) 0%, transparent 70%)",
+            right: "0%", top: "-15%",
+            width: "60%", height: "70%",
+            background: "radial-gradient(ellipse at 70% 15%, rgba(90,70,160,0.22) 0%, transparent 58%)",
           }}
         />
+        {/* Warm accent low-left */}
+        <div
+          className="pointer-events-none absolute"
+          style={{
+            left: "-10%", bottom: "5%",
+            width: "50%", height: "60%",
+            background: "radial-gradient(ellipse at 25% 85%, rgba(50,35,90,0.14) 0%, transparent 55%)",
+          }}
+        />
+        {/* Bottom vignette — blend into content area */}
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(to top, #0B0F14 0%, rgba(11,15,20,0.2) 55%, transparent 100%)" }}
+          style={{ background: "linear-gradient(to top, #080B0F 0%, rgba(8,11,15,0.68) 40%, transparent 72%)" }}
         />
-        <div className="absolute bottom-5 left-6">
-          <div className="mb-2.5 flex gap-1.5">
-            {["House", "Tech House", "Producer"].map((g) => (
+
+        {/* Mini nav strip */}
+        <div className="absolute left-0 right-0 top-0 flex items-center justify-between px-5 py-3.5">
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "rgba(245,245,243,0.28)" }}>
+            NOA VEL
+          </span>
+          <div className="flex items-center gap-3.5">
+            {["Shows", "Music", "Contact"].map((item) => (
+              <span key={item} className="font-mono text-[8px] uppercase tracking-[0.14em]" style={{ color: "rgba(245,245,243,0.20)" }}>
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Artist info at bottom */}
+        <div className="absolute bottom-4 left-5 right-5">
+          <div className="mb-2 flex gap-1.5">
+            {["House", "Tech House"].map((g) => (
               <span
                 key={g}
-                className="rounded-full px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.08em]"
-                style={{ border: "1px solid rgba(109,93,252,0.30)", background: "rgba(0,0,0,0.40)", color: "rgba(245,245,243,0.70)" }}
+                className="rounded-full px-2.5 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-[0.08em]"
+                style={{
+                  border: "1px solid rgba(109,93,252,0.30)",
+                  background: "rgba(0,0,0,0.50)",
+                  color: "rgba(245,245,243,0.60)",
+                }}
               >
                 {g}
               </span>
             ))}
           </div>
-          <p className="text-[22px] font-bold uppercase leading-none tracking-[-0.02em] text-[#F5F5F3]">
-            ANDRES:HERRERA
-          </p>
-          <p className="mt-1 font-mono text-[11px]" style={{ color: "#52525B" }}>Buenos Aires, Argentina</p>
+          <p className="text-[26px] font-bold uppercase leading-none tracking-[-0.02em] text-[#F5F5F3]">NOA VEL</p>
+          <p className="mt-1 font-mono text-[10px]" style={{ color: "rgba(245,245,243,0.30)" }}>Madrid · Spain</p>
+          <div className="mt-3 flex items-center gap-2">
+            <span
+              className="rounded px-3 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-white"
+              style={{ background: "#6D5DFC" }}
+            >
+              Bookings
+            </span>
+            <span
+              className="rounded px-3 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.08em]"
+              style={{
+                border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(245,245,243,0.40)",
+                background: "rgba(255,255,255,0.03)",
+              }}
+            >
+              Press Kit
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Content grid */}
+      {/* 3-col content */}
       <div
-        className="grid"
+        className="grid grid-cols-3"
         style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
       >
         {/* Shows */}
-        <div className="p-5" style={{ borderRight: "1px solid rgba(255,255,255,0.05)" }}>
-          <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
-            Upcoming Shows
-          </p>
-          <div className="space-y-3">
+        <div className="p-4" style={{ borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+          <p className="mb-3 font-mono text-[8px] uppercase tracking-[0.20em]" style={{ color: "#6D5DFC" }}>Shows</p>
+          <div className="space-y-2.5">
             {[
-              { day: "28", mon: "JUN", venue: "ICE Festival", city: "Buenos Aires" },
-              { day: "23", mon: "JUL", venue: "Club Room", city: "Barcelona" },
+              { day: "14", mon: "JUN", venue: "Fabrik", city: "Madrid" },
+              { day: "22", mon: "JUL", venue: "Tresor", city: "Berlin" },
             ].map((s) => (
-              <div key={s.venue} className="flex items-center gap-3">
-                <div className="w-8 shrink-0 text-center">
-                  <p className="font-mono text-[8px] font-bold uppercase tracking-widest" style={{ color: "rgba(109,93,252,0.60)" }}>{s.mon}</p>
-                  <p className="text-[18px] font-bold leading-none text-[#F5F5F3]">{s.day}</p>
+              <div key={s.venue} className="flex items-center gap-2.5">
+                <div className="w-7 shrink-0 text-center">
+                  <p className="font-mono text-[7px] font-bold uppercase tracking-widest" style={{ color: "rgba(109,93,252,0.55)" }}>{s.mon}</p>
+                  <p className="text-[17px] font-bold leading-none text-[#F5F5F3]">{s.day}</p>
                 </div>
                 <div>
-                  <p className="text-[12px] font-semibold text-[#F5F5F3]">{s.venue}</p>
-                  <p className="font-mono text-[10px]" style={{ color: "#52525B" }}>{s.city}</p>
+                  <p className="text-[11px] font-semibold text-[#F5F5F3]">{s.venue}</p>
+                  <p className="font-mono text-[9px]" style={{ color: "#52525B" }}>{s.city}</p>
                 </div>
               </div>
             ))}
@@ -285,24 +329,22 @@ function ProfileMockup() {
         </div>
 
         {/* Releases */}
-        <div className="p-5" style={{ borderRight: "1px solid rgba(255,255,255,0.05)" }}>
-          <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
-            Latest Releases
-          </p>
-          <div className="space-y-2.5">
+        <div className="p-4" style={{ borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+          <p className="mb-3 font-mono text-[8px] uppercase tracking-[0.20em]" style={{ color: "#6D5DFC" }}>Releases</p>
+          <div className="space-y-2">
             {[
-              { title: "Thank You", year: "2025", hue: 280 },
-              { title: "Sky Sunset", year: "2024", hue: 240 },
-              { title: "Arrival", year: "2024", hue: 200 },
+              { title: "Meridian", year: "2025", hue: 280 },
+              { title: "Drift", year: "2024", hue: 240 },
+              { title: "Olvido", year: "2024", hue: 200 },
             ].map((r) => (
-              <div key={r.title} className="flex items-center gap-2.5">
+              <div key={r.title} className="flex items-center gap-2">
                 <div
-                  className="h-8 w-8 shrink-0 rounded-md"
-                  style={{ background: `linear-gradient(135deg, oklch(0.30 0.12 ${r.hue}), oklch(0.10 0 0))` }}
+                  className="h-7 w-7 shrink-0 rounded"
+                  style={{ background: `linear-gradient(135deg, oklch(0.28 0.12 ${r.hue}), oklch(0.08 0 0))` }}
                 />
                 <div>
-                  <p className="text-[11px] font-semibold text-[#F5F5F3]">{r.title}</p>
-                  <p className="font-mono text-[9px]" style={{ color: "#52525B" }}>{r.year}</p>
+                  <p className="text-[10px] font-semibold text-[#F5F5F3]">{r.title}</p>
+                  <p className="font-mono text-[8px]" style={{ color: "#52525B" }}>{r.year}</p>
                 </div>
               </div>
             ))}
@@ -310,23 +352,21 @@ function ProfileMockup() {
         </div>
 
         {/* Booking */}
-        <div className="p-5">
-          <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
-            Booking
-          </p>
+        <div className="p-4">
+          <p className="mb-3 font-mono text-[8px] uppercase tracking-[0.20em]" style={{ color: "#6D5DFC" }}>Booking</p>
           <div
-            className="rounded-lg p-3"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+            className="rounded-lg p-2.5"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
           >
-            <p className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: "#52525B" }}>Email</p>
-            <p className="mt-1 font-mono text-[10px]" style={{ color: "rgba(109,93,252,0.75)" }}>booking@andresherrera.music</p>
+            <p className="font-mono text-[7px] uppercase tracking-[0.10em]" style={{ color: "#52525B" }}>Email</p>
+            <p className="mt-1 break-all font-mono text-[9px]" style={{ color: "rgba(109,93,252,0.75)" }}>booking@noavel.com</p>
           </div>
           <div
-            className="mt-2 rounded-lg p-3"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+            className="mt-1.5 rounded-lg p-2.5"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
           >
-            <p className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: "#52525B" }}>Press Kit</p>
-            <p className="mt-1 font-mono text-[10px]" style={{ color: "#52525B" }}>andresherrera.djhq.co/presskit</p>
+            <p className="font-mono text-[7px] uppercase tracking-[0.10em]" style={{ color: "#52525B" }}>Press Kit</p>
+            <p className="mt-1 font-mono text-[9px]" style={{ color: "#52525B" }}>noavel.djhq.co/presskit</p>
           </div>
         </div>
       </div>
