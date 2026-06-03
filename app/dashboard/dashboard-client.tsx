@@ -1204,44 +1204,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setSaveMessage(successMessage)
   }
 
-  async function saveFocalPoints(): Promise<void> {
-    if (focalDirtyIds.size === 0) return
-
-    setIsSavingFocalPoints(true)
-    const dirtyIds = [...focalDirtyIds]
-
-    const updates = dirtyIds.map((id) => {
-      const image = galleryImages.find((img) => img.id === id)
-      if (!image) return Promise.resolve()
-      return fetch("/api/artists/gallery-image", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          artistId: artist.id,
-          galleryImageId: id,
-          focalX: image.focalX,
-          focalY: image.focalY,
-        }),
-      }).then((r) => {
-        if (!r.ok) throw new Error("Failed to save focal point.")
-      })
-    })
-
-    await Promise.all(updates)
-    setFocalDirtyIds(new Set())
-    setIsSavingFocalPoints(false)
-  }
-
   async function handleSaveChanges() {
     setIsSaving(true)
     setSavedRecently(false)
     setSaveMessage("")
 
     try {
-      await Promise.all([
-        persistArtistChanges(artist.isPublished, "Changes saved."),
-        saveFocalPoints(),
-      ])
+      await persistArtistChanges(artist.isPublished, "Changes saved.")
       setSavedRecently(true)
       setTimeout(() => setSavedRecently(false), 2500)
     } catch (error) {
@@ -1813,41 +1782,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
-  function handleSetFocalPoint(imageId: string, event: React.MouseEvent<HTMLDivElement>) {
-    const rect = event.currentTarget.getBoundingClientRect()
-    const focalX = Math.min(100, Math.max(0, Math.round(((event.clientX - rect.left) / rect.width) * 100)))
-    const focalY = Math.min(100, Math.max(0, Math.round(((event.clientY - rect.top) / rect.height) * 100)))
-    setGalleryImages((current) =>
-      current.map((img) => (img.id === imageId ? { ...img, focalX, focalY } : img)),
-    )
-    setFocalDirtyIds((current) => new Set([...current, imageId]))
-  }
-
-
-  async function handleSetFeaturedGalleryImage(fromIndex: number) {
-    if (fromIndex === 0 || isReorderingGallery) return
-    const reordered = [...galleryImages]
-    const [img] = reordered.splice(fromIndex, 1)
-    reordered.unshift(img)
-    setIsReorderingGallery(true)
-    setSaveMessage("")
-    try {
-      const response = await fetch("/api/artists/gallery-image", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ artistId: artist.id, orderedImageIds: reordered.map((i) => i.id) }),
-      })
-      const result = (await response.json()) as { error?: string; galleryImages?: GalleryImage[] }
-      if (!response.ok || !result.galleryImages) throw new Error(result.error ?? "Failed to update")
-      setGalleryImages(result.galleryImages)
-      setArtist((cur) => ({ ...cur, galleryImages: result.galleryImages ?? cur.galleryImages, updatedAt: new Date().toISOString() }))
-      setSaveMessage("Featured photo updated.")
-    } catch (e) {
-      setSaveMessage(e instanceof Error ? e.message : "Unable to update featured photo.")
-    } finally {
-      setIsReorderingGallery(false)
-    }
-  }
 
   async function handleGalleryDrop(fromIndex: number, toIndex: number) {
     if (fromIndex === toIndex || isReorderingGallery) return
@@ -4630,8 +4564,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderGallery() {
-    const busy      = isReorderingGallery || !!deletingGalleryImageId || isUploadingGalleryImage || isSaving || isPublishing || isSavingFocalPoints
-    const featured = galleryImages[0] ?? null
+    const busy = isReorderingGallery || !!deletingGalleryImageId || isUploadingGalleryImage || isSaving || isPublishing
 
     function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
       const file = event.target.files?.[0] ?? null
@@ -4650,9 +4583,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         const img = new globalThis.Image()
         img.onload = () => {
           URL.revokeObjectURL(objectUrl)
-          if (img.naturalWidth < 2400) {
-            setGalleryImageSmallWarning("Image may appear soft. Recommended width: 2400px+")
-          }
+          if (img.naturalWidth < 2400) setGalleryImageSmallWarning("Image may appear soft. Recommended: 2400px+ wide.")
         }
         img.onerror = () => URL.revokeObjectURL(objectUrl)
         img.src = objectUrl
@@ -4660,16 +4591,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-foreground">Gallery</h2>
             <p className="mt-0.5 text-sm text-muted-foreground/55">
-              {galleryImages.length === 0
-                ? "No photos yet. Upload your first press photo."
-                : `${galleryImages.length} photo${galleryImages.length === 1 ? "" : "s"} · drag to reorder`}
+              Images used across your public profile and press materials.
             </p>
           </div>
           <button
@@ -4683,184 +4612,86 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </button>
         </div>
 
-        {/* ── Featured Image ── */}
-        {featured && (
-          <div>
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
-              Featured Photo
-            </p>
-            <div className="group relative overflow-hidden rounded-xl border border-accent/20 bg-secondary/30">
-              <div
-                className="relative aspect-video w-full cursor-crosshair select-none overflow-hidden"
-                role="button"
-                tabIndex={0}
-                aria-label="Click to set focal point"
-                onClick={(e) => !busy && handleSetFocalPoint(featured.id, e)}
-                onKeyDown={(e) => {
-                  if ((e.key === "Enter" || e.key === " ") && !busy) {
-                    const rect = e.currentTarget.getBoundingClientRect()
-                    handleSetFocalPoint(featured.id, { currentTarget: e.currentTarget, clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 } as React.MouseEvent<HTMLDivElement>)
-                  }
-                }}
-              >
-                <Image
-                  src={featured.imageUrl}
-                  alt={featured.altText}
-                  fill
-                  sizes="(min-width: 1024px) 600px, 100vw"
-                  className="pointer-events-none object-cover"
-                  style={{ objectPosition: `${featured.focalX ?? 50}% ${featured.focalY ?? 50}%` }}
-                />
-                {/* Focal crosshair */}
-                <div
-                  className="pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: `${featured.focalX ?? 50}%`, top: `${featured.focalY ?? 50}%` }}
-                >
-                  <div className="absolute inset-0 rounded-full border border-white/80 shadow-[0_0_0_1px_rgba(0,0,0,0.5)]" />
-                  <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/60" />
-                  <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-white/60" />
-                </div>
-                {/* Focal hint */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent pb-3 pt-8 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                  <p className="text-center text-[9px] font-medium uppercase tracking-[0.14em] text-white/70">Click to set focal point</p>
-                </div>
-              </div>
-              {/* Meta row */}
-              <div className="flex items-center justify-between gap-3 border-t border-white/[0.04] px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-accent/70">
-                    <Star className="h-2.5 w-2.5 fill-current" />
-                    Featured
-                  </span>
-                  {focalDirtyIds.has(featured.id) && (
-                    <span className="text-[9px] uppercase tracking-[0.10em] text-accent/50">· focal unsaved</span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  disabled={busy || galleryImages.length < 2}
-                  onClick={() => handleDeleteGalleryImage(featured.id)}
-                  className="text-[10px] text-muted-foreground/35 transition-colors hover:text-destructive/65 disabled:opacity-30"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-            <p className="mt-1.5 text-[10px] text-muted-foreground/30">
-              Used as avatar fallback, press kit cover and social preview.
-            </p>
-          </div>
-        )}
-
-        {/* ── Media Grid ── */}
+        {/* Summary */}
         {galleryImages.length > 0 && (
-          <div>
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
-              {featured ? "All Photos" : "Photos"}
-            </p>
-            <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-              {galleryImages.map((image, index) => {
-                const isDraggingThis = galleryDragIndex === index
-                const isDragTarget  = galleryDragOverIndex === index && galleryDragIndex !== index
-                const isFocDirty    = focalDirtyIds.has(image.id)
-                const isFirst       = index === 0
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/35">
+            Photos &nbsp;·&nbsp; {galleryImages.length}
+          </p>
+        )}
 
-                return (
-                  <div
-                    key={image.id}
-                    draggable={!busy}
-                    onDragStart={() => { setGalleryDragIndex(index); setGalleryDragOverIndex(null) }}
-                    onDragOver={(e) => { e.preventDefault(); setGalleryDragOverIndex(index) }}
-                    onDragLeave={() => setGalleryDragOverIndex(null)}
-                    onDrop={(e) => { e.preventDefault(); if (galleryDragIndex !== null) handleGalleryDrop(galleryDragIndex, index) }}
-                    onDragEnd={() => { setGalleryDragIndex(null); setGalleryDragOverIndex(null) }}
-                    className={`group relative aspect-square cursor-grab overflow-hidden rounded-lg border select-none transition-all duration-150 active:cursor-grabbing ${
-                      isDraggingThis ? "scale-95 opacity-50 border-accent/30" :
-                      isDragTarget   ? "scale-[1.04] border-accent/50 ring-1 ring-accent/30" :
-                      isFirst        ? "border-accent/25" : "border-white/[0.06]"
-                    }`}
-                  >
-                    <Image
-                      src={image.imageUrl}
-                      alt={image.altText}
-                      fill
-                      sizes="120px"
-                      className="pointer-events-none object-cover"
-                      style={{ objectPosition: `${image.focalX ?? 50}% ${image.focalY ?? 50}%` }}
-                    />
+        {/* Photo grid — flat, equal, all images the same */}
+        {galleryImages.length > 0 && (
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {galleryImages.map((image, index) => {
+              const isDraggingThis = galleryDragIndex === index
+              const isDragTarget   = galleryDragOverIndex === index && galleryDragIndex !== index
 
-                    {/* Featured badge */}
-                    {isFirst && (
-                      <div className="absolute left-1 top-1 rounded-full bg-black/60 px-1.5 py-px text-[8px] font-bold uppercase tracking-wide text-accent/90 backdrop-blur-sm">
-                        ★
-                      </div>
-                    )}
+              return (
+                <div
+                  key={image.id}
+                  draggable={!busy}
+                  onDragStart={() => { setGalleryDragIndex(index); setGalleryDragOverIndex(null) }}
+                  onDragOver={(e) => { e.preventDefault(); setGalleryDragOverIndex(index) }}
+                  onDragLeave={() => setGalleryDragOverIndex(null)}
+                  onDrop={(e) => { e.preventDefault(); if (galleryDragIndex !== null) handleGalleryDrop(galleryDragIndex, index) }}
+                  onDragEnd={() => { setGalleryDragIndex(null); setGalleryDragOverIndex(null) }}
+                  className={`group relative aspect-square cursor-grab overflow-hidden rounded-lg border select-none transition-all duration-150 active:cursor-grabbing ${
+                    isDraggingThis ? "scale-95 opacity-40 border-white/[0.06]" :
+                    isDragTarget   ? "scale-[1.03] border-accent/40 ring-1 ring-accent/25" :
+                                     "border-white/[0.06]"
+                  }`}
+                >
+                  <Image
+                    src={image.imageUrl}
+                    alt={image.altText}
+                    fill
+                    sizes="(min-width: 1024px) 140px, (min-width: 768px) 180px, (min-width: 640px) 240px, 50vw"
+                    className="pointer-events-none object-cover"
+                  />
 
-                    {/* Unsaved focal dot */}
-                    {isFocDirty && (
-                      <div className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent/90 ring-1 ring-black/40" />
-                    )}
-
-                    {/* Hover actions */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/65 opacity-0 backdrop-blur-[2px] transition-opacity duration-150 group-hover:opacity-100">
-                      {!isFirst && (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={(e) => { e.stopPropagation(); handleSetFeaturedGalleryImage(index) }}
-                          className="inline-flex h-6 items-center gap-1 rounded-md bg-white/10 px-2 text-[10px] font-medium text-white/80 hover:bg-accent/20 hover:text-accent disabled:opacity-40"
-                        >
-                          <Star className="h-2.5 w-2.5" />
-                          Feature
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        disabled={deletingGalleryImageId === image.id || busy}
-                        onClick={(e) => { e.stopPropagation(); handleDeleteGalleryImage(image.id) }}
-                        className="inline-flex h-6 items-center gap-1 rounded-md bg-white/10 px-2 text-[10px] font-medium text-white/70 hover:bg-destructive/30 hover:text-destructive disabled:opacity-40"
-                      >
-                        <Trash2 className="h-2.5 w-2.5" />
-                        Delete
-                      </button>
-                    </div>
+                  {/* Hover: delete only */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 backdrop-blur-[2px] transition-opacity duration-150 group-hover:opacity-100">
+                    <button
+                      type="button"
+                      disabled={deletingGalleryImageId === image.id || busy}
+                      onClick={(e) => { e.stopPropagation(); handleDeleteGalleryImage(image.id) }}
+                      className="inline-flex h-7 items-center gap-1 rounded-md bg-white/10 px-2.5 text-[11px] font-medium text-white/80 hover:bg-destructive/35 hover:text-destructive disabled:opacity-40"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Delete
+                    </button>
                   </div>
-                )
-              })}
-            </div>
-            {isGalleryFocalDirty && (
-              <p className="mt-2 text-[10px] text-accent/55 tracking-[0.06em]">
-                Focal point changes will be saved when you click Save.
-              </p>
-            )}
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {/* ── Upload zone ── */}
-        {galleryImageFile ? (
+        {/* Upload confirmation (shown when file selected) */}
+        {galleryImageFile && (
           <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium text-foreground/80">{galleryImageFile.name}</p>
+              <p className="truncate text-sm font-medium text-foreground/80">{galleryImageFile.name}</p>
               <button
                 type="button"
                 onClick={() => { setGalleryImageFile(null); setGalleryImageAltText(""); setGalleryImageSmallWarning(""); setGalleryFileError("") }}
-                className="text-[11px] text-muted-foreground/40 hover:text-foreground/60"
+                className="ml-3 shrink-0 text-[11px] text-muted-foreground/40 hover:text-foreground/60"
               >
                 Cancel
               </button>
             </div>
             {galleryImageSmallWarning && (
-              <p className="mb-2 text-xs text-amber-400/80">{galleryImageSmallWarning}</p>
+              <p className="mb-2 text-xs text-amber-400/75">{galleryImageSmallWarning}</p>
             )}
             <div className="mb-3 space-y-1.5">
-              <label htmlFor="galleryImageAltText" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                Alt Text
+              <label htmlFor="galleryImageAltText" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                Alt Text <span className="normal-case text-muted-foreground/30">(optional)</span>
               </label>
               <Input
                 id="galleryImageAltText"
                 value={galleryImageAltText}
                 onChange={(e) => setGalleryImageAltText(e.target.value)}
-                placeholder="Live set, press portrait, or stage moment"
+                placeholder="e.g. Live set at Club Room, press portrait"
                 className="h-8 text-sm"
               />
             </div>
@@ -4873,15 +4704,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {isUploadingGalleryImage ? "Uploading…" : "Upload"}
             </Button>
           </div>
-        ) : (
+        )}
+
+        {/* Drop zone — shown when no file selected and no photos yet */}
+        {!galleryImageFile && galleryImages.length === 0 && (
           <button
             type="button"
             disabled={busy}
             onClick={() => galleryFileInputRef.current?.click()}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.08] bg-white/[0.015] py-8 text-sm font-medium text-muted-foreground/40 transition-all duration-150 hover:border-white/[0.16] hover:bg-white/[0.03] hover:text-muted-foreground/70 disabled:opacity-30"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.08] bg-white/[0.015] py-10 text-sm font-medium text-muted-foreground/38 transition-all duration-150 hover:border-white/[0.16] hover:bg-white/[0.025] hover:text-muted-foreground/65 disabled:opacity-30"
           >
             <Plus className="h-4 w-4" />
-            Upload Photos
+            Upload your first photo
           </button>
         )}
 
@@ -4898,8 +4732,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           onChange={handleFileChange}
         />
 
-        <p className="text-[10px] text-muted-foreground/28">
-          JPG, PNG, WEBP · up to 20 MB · compressed to max 3000 × 3000 px
+        <p className="text-[10px] text-muted-foreground/25">
+          JPG, PNG, WEBP · up to 20 MB · compressed to max 3000 × 3000 px · drag to reorder
         </p>
 
       </div>
