@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { Camera, Check, ChevronDown, ExternalLink, Globe, Headphones, Instagram, LogOut, Mail, MapPin, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Youtube } from "lucide-react"
+import { Camera, Check, ChevronDown, ExternalLink, FileText, FolderOpen, Globe, Headphones, Instagram, Layers, LogOut, Mail, MapPin, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Wrench, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -752,6 +752,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [pressKitPdfEsSize, setPressKitPdfEsSize] = useState(initialArtist.pressKit.pdfEsSize ?? "")
   const [pressKitUseGalleryPhotos, setPressKitUseGalleryPhotos] = useState(initialArtist.pressKit.useGalleryPhotos ?? true)
   const [pressKitAdvancedOpen, setPressKitAdvancedOpen] = useState(false)
+  const [pkExpandedIds, setPkExpandedIds] = useState<Set<string>>(new Set())
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -5274,318 +5275,303 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderPressKit() {
     const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
-
     const activeDomain = customDomains.find((d) => d.status === "active")
     const pressKitDefaultUrl = activeDomain
       ? `https://${activeDomain.domain}/presskit`
       : `${APP_DISPLAY_HOST}/${artist.handle}/presskit`
     const pressKitResolvedUrl = pressKitPublicUrl.trim() || pressKitDefaultUrl
 
-    // ── Readiness checklist ─────────────────────────────────────────────
+    const toggleCard = (id: string) =>
+      setPkExpandedIds((prev) => { const n = new Set(prev); if (n.has(id)) { n.delete(id) } else { n.add(id) } return n })
+    const isOpen = (id: string) => pkExpandedIds.has(id)
+
+    const folderIconMap: Record<string, React.ReactNode> = {
+      drive:  <FolderOpen className="h-5 w-5 text-accent/65" />,
+      bio:    <FileText   className="h-5 w-5 text-accent/65" />,
+      logos:  <Layers     className="h-5 w-5 text-accent/65" />,
+      photos: <Camera     className="h-5 w-5 text-accent/65" />,
+      rider:  <Wrench     className="h-5 w-5 text-accent/65" />,
+    }
+
+    // Readiness summary
     const readinessItems = [
-      { label: "Press Kit enabled",    ok: pressKitEnabled },
-      { label: "English PDF",          ok: Boolean(pressKitPdfEnUrl.trim()) },
-      { label: "Spanish PDF",          ok: Boolean(pressKitPdfEsUrl.trim()) },
-      { label: "Full Drive Package",   ok: Boolean(pressKitRootUrl.trim()) },
-      { label: "Press Photos Folder",  ok: Boolean(pressKitMediaFolderUrl.trim()) },
-      { label: "Logos & Artwork",      ok: Boolean(pressKitLogosFolderUrl.trim()) },
-      { label: "Technical Rider",      ok: Boolean(pressKitRiderFolderUrl.trim()) },
+      { label: "Press Kit enabled",   ok: pressKitEnabled },
+      { label: "English PDF",         ok: Boolean(pressKitPdfEnUrl.trim()) },
+      { label: "Spanish PDF",         ok: Boolean(pressKitPdfEsUrl.trim()) },
+      { label: "Full Drive Package",  ok: Boolean(pressKitRootUrl.trim()) },
+      { label: "Press Photos Folder", ok: Boolean(pressKitMediaFolderUrl.trim()) },
+      { label: "Logos & Artwork",     ok: Boolean(pressKitLogosFolderUrl.trim()) },
+      { label: "Technical Rider",     ok: Boolean(pressKitRiderFolderUrl.trim()) },
     ]
     const configuredCount = readinessItems.filter((i) => i.ok).length
-    const totalCount = readinessItems.length
 
     return (
       <div className="space-y-5">
 
-        {/* ── Page header ────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Manage your public EPK, downloads and press assets.
-            </p>
-          </div>
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground/55">
+            Manage your public EPK, downloads and press assets.
+          </p>
         </div>
 
         {/* ── 1. Public EPK ──────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Public EPK</p>
-              <p className="mt-0.5 text-xs text-muted-foreground/45">
-                Your Electronic Press Kit is {pressKitEnabled ? "live and publicly accessible" : "hidden from the public"}.
-              </p>
-            </div>
-            {/* On / Off segmented control */}
-            <div
-              role="group"
-              aria-label="Press kit status"
-              className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5"
-            >
-              <button
-                type="button"
-                onClick={() => setPressKitEnabled(true)}
-                aria-pressed={pressKitEnabled}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                  pressKitEnabled ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45",
-                )}
-              >
-                Live
-              </button>
-              <button
-                type="button"
-                onClick={() => setPressKitEnabled(false)}
-                aria-pressed={!pressKitEnabled}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                  !pressKitEnabled ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45",
-                )}
-              >
-                Hidden
-              </button>
-            </div>
-          </div>
-
-          {/* URL row */}
-          <div className="rounded-lg border border-white/[0.04] bg-white/[0.015] px-3.5 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="min-w-0 truncate font-mono text-[11px] text-muted-foreground/55">
-                {pressKitResolvedUrl}
-              </p>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => void navigator.clipboard.writeText(pressKitResolvedUrl)}
-                  className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground/35 transition-colors hover:text-foreground/60"
-                  title="Copy URL"
-                >
-                  Copy
-                </button>
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2.5">
+                <span className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                  pressKitEnabled
+                    ? "bg-accent/10 text-accent/80"
+                    : "bg-white/[0.04] text-muted-foreground/40",
+                )}>
+                  <span className={cn("h-1.5 w-1.5 rounded-full", pressKitEnabled ? "bg-accent" : "bg-muted-foreground/30")} />
+                  {pressKitEnabled ? "Live" : "Hidden"}
+                </span>
                 <a
                   href={pressKitResolvedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded px-2 py-1 text-[10px] font-medium text-accent/55 transition-colors hover:text-accent/85"
+                  className="truncate font-mono text-[11px] text-muted-foreground/42 hover:text-accent/70"
                 >
-                  View →
+                  {pressKitResolvedUrl}
                 </a>
               </div>
             </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void navigator.clipboard.writeText(pressKitResolvedUrl)}
+                className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground/35 transition-colors hover:text-foreground/60"
+              >
+                Copy
+              </button>
+              <a href={pressKitResolvedUrl} target="_blank" rel="noopener noreferrer"
+                className="rounded px-2 py-1 text-[10px] font-medium text-accent/55 transition-colors hover:text-accent/85">
+                View →
+              </a>
+              <button type="button" onClick={() => toggleCard("epk-settings")}
+                className={cn("rounded px-2 py-1 text-[10px] font-medium transition-colors", isOpen("epk-settings") ? "bg-accent/10 text-accent/80" : "text-muted-foreground/35 hover:text-foreground/60")}>
+                {isOpen("epk-settings") ? "Close" : "Edit"}
+              </button>
+            </div>
           </div>
 
-          {/* Press Kit Button URL */}
-          <div className="mt-4 space-y-1.5">
-            <label htmlFor="pressKitPublicUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-              Press Kit Button URL
-            </label>
-            <Input
-              id="pressKitPublicUrl"
-              value={pressKitPublicUrl}
-              onChange={(e) => setPressKitPublicUrl(e.target.value)}
-              placeholder={pressKitDefaultUrl}
-            />
-            <p className="text-[10px] text-muted-foreground/30">
-              Leave blank to use the default EPK URL. Override with a custom path or external link.
-            </p>
-          </div>
+          {/* EPK settings (collapsed by default) */}
+          {isOpen("epk-settings") && (
+            <div className="mt-4 space-y-4 border-t border-white/[0.04] pt-4">
+              {/* Status toggle */}
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-[11px] text-muted-foreground/50">Visibility</p>
+                <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+                  <button type="button" onClick={() => setPressKitEnabled(true)} aria-pressed={pressKitEnabled}
+                    className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      pressKitEnabled ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
+                    Live
+                  </button>
+                  <button type="button" onClick={() => setPressKitEnabled(false)} aria-pressed={!pressKitEnabled}
+                    className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                      !pressKitEnabled ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
+                    Hidden
+                  </button>
+                </div>
+              </div>
+              {/* Button URL override */}
+              <div className="space-y-1.5">
+                <label htmlFor="pressKitPublicUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
+                  Press Kit Button URL
+                </label>
+                <Input id="pressKitPublicUrl" value={pressKitPublicUrl} onChange={(e) => setPressKitPublicUrl(e.target.value)} placeholder={pressKitDefaultUrl} />
+                <p className="text-[10px] text-muted-foreground/28">Leave blank to use the default EPK URL.</p>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ── Readiness summary ──────────────────────────────────────────── */}
-        <div className="rounded-xl border border-white/[0.05] bg-white/[0.01] px-4 py-3.5">
+        {/* Readiness */}
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.01] px-4 py-3">
           <div className="flex items-center justify-between gap-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/40">
-              Press Kit Readiness
-            </p>
-            <span className="text-[11px] tabular-nums text-muted-foreground/40">
-              {configuredCount} / {totalCount}
-            </span>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/38">Press Kit Readiness</p>
+            <span className="text-[11px] tabular-nums text-muted-foreground/38">{configuredCount} / {readinessItems.length}</span>
           </div>
           <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.05]">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all duration-700",
-                configuredCount === totalCount ? "bg-accent/60" : "bg-accent/35",
-              )}
-              style={{ width: `${Math.round((configuredCount / totalCount) * 100)}%` }}
-            />
+            <div className={cn("h-full rounded-full transition-all duration-700", configuredCount === readinessItems.length ? "bg-accent/60" : "bg-accent/35")}
+              style={{ width: `${Math.round((configuredCount / readinessItems.length) * 100)}%` }} />
           </div>
           <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
             {readinessItems.map(({ label, ok }) => (
               <div key={label} className="flex items-center gap-1.5">
-                {ok ? (
-                  <Check className="h-3 w-3 shrink-0 text-accent/55" />
-                ) : (
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/[0.08]" />
-                )}
-                <span className={cn("text-[10px]", ok ? "text-foreground/50" : "text-muted-foreground/30")}>
-                  {label}
-                </span>
+                {ok ? <Check className="h-3 w-3 shrink-0 text-accent/55" /> : <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/[0.08]" />}
+                <span className={cn("text-[10px]", ok ? "text-foreground/50" : "text-muted-foreground/28")}>{label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Dim everything below when disabled ─────────────────────────── */}
+        {/* Dim when disabled */}
         <div className={cn("space-y-5 transition-opacity duration-200", !pressKitEnabled && "pointer-events-none opacity-35")}>
 
           {/* ── 2. Downloads ───────────────────────────────────────────── */}
           <div>
-            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">
-              Downloads
-            </p>
+            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Downloads</p>
             <div className="grid gap-3 sm:grid-cols-2">
-
-              {/* English PDF */}
-              <div className="rounded-xl border border-white/[0.06] bg-card/35 p-4">
-                <div className="mb-3 flex items-center gap-2.5">
+              {/* ENG card */}
+              <div className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
+                pressKitPdfEnUrl.trim() ? "border-white/[0.06] bg-white/[0.02]" : "border-dashed border-white/[0.06] bg-white/[0.01]")}>
+                <div className="flex items-center gap-3 p-4">
                   {/* UK flag */}
-                  <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[#012169] ring-1 ring-white/[0.08]">
+                  <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#012169] ring-1 ring-white/[0.10]">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" className="h-full w-full">
-                      <rect width="60" height="36" fill="#012169"/>
-                      <line x1="0" y1="0" x2="60" y2="36" stroke="#fff" strokeWidth="8"/>
-                      <line x1="60" y1="0" x2="0" y2="36" stroke="#fff" strokeWidth="8"/>
-                      <line x1="0" y1="0" x2="60" y2="36" stroke="#C8102E" strokeWidth="4.5"/>
-                      <line x1="60" y1="0" x2="0" y2="36" stroke="#C8102E" strokeWidth="4.5"/>
-                      <line x1="30" y1="0" x2="30" y2="36" stroke="#fff" strokeWidth="12"/>
-                      <line x1="0" y1="18" x2="60" y2="18" stroke="#fff" strokeWidth="12"/>
-                      <line x1="30" y1="0" x2="30" y2="36" stroke="#C8102E" strokeWidth="7"/>
-                      <line x1="0" y1="18" x2="60" y2="18" stroke="#C8102E" strokeWidth="7"/>
+                      <rect width="60" height="36" fill="#012169"/><line x1="0" y1="0" x2="60" y2="36" stroke="#fff" strokeWidth="8"/><line x1="60" y1="0" x2="0" y2="36" stroke="#fff" strokeWidth="8"/>
+                      <line x1="0" y1="0" x2="60" y2="36" stroke="#C8102E" strokeWidth="4.5"/><line x1="60" y1="0" x2="0" y2="36" stroke="#C8102E" strokeWidth="4.5"/>
+                      <line x1="30" y1="0" x2="30" y2="36" stroke="#fff" strokeWidth="12"/><line x1="0" y1="18" x2="60" y2="18" stroke="#fff" strokeWidth="12"/>
+                      <line x1="30" y1="0" x2="30" y2="36" stroke="#C8102E" strokeWidth="7"/><line x1="0" y1="18" x2="60" y2="18" stroke="#C8102E" strokeWidth="7"/>
                     </svg>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground/80">Press Kit ENG</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-foreground/88">Press Kit ENG</p>
                     <p className={cn("text-[10px]", pressKitPdfEnUrl.trim() ? "text-accent/65" : "text-muted-foreground/30")}>
-                      {pressKitPdfEnUrl.trim() ? "Configured" : "Not set"}
+                      {pressKitPdfEnUrl.trim() ? `PDF${pressKitPdfEnSize.trim() ? ` · ${pressKitPdfEnSize}` : ""}` : "Not configured"}
                     </p>
                   </div>
-                  {pressKitPdfEnUrl.trim() && (
-                    <a href={pressKitPdfEnUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-[10px] text-muted-foreground/35 hover:text-accent/65">
-                      Open ↗
-                    </a>
-                  )}
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {pressKitPdfEnUrl.trim() && (
+                      <a href={pressKitPdfEnUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.06] text-accent/70 hover:bg-accent/[0.12]"
+                        title="Open">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                    <button type="button" onClick={() => toggleCard("en")}
+                      className={cn("rounded px-2 py-1 text-[10px] font-medium transition-colors", isOpen("en") ? "bg-accent/10 text-accent/80" : "text-muted-foreground/35 hover:text-foreground/60")}>
+                      {isOpen("en") ? "Done" : "Edit"}
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Input value={pressKitPdfEnUrl} onChange={(e) => setPressKitPdfEnUrl(e.target.value)} placeholder="https://…/epk-en.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
-                  <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder="File size, e.g. 4.2 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
-                </div>
+                {isOpen("en") && (
+                  <div className="space-y-2 border-t border-white/[0.04] px-4 pb-4 pt-3">
+                    <Input value={pressKitPdfEnUrl} onChange={(e) => setPressKitPdfEnUrl(e.target.value)} placeholder="https://…/epk-en.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                    <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder="File size, e.g. 4.2 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                  </div>
+                )}
               </div>
 
-              {/* Spanish PDF */}
-              <div className="rounded-xl border border-white/[0.06] bg-card/35 p-4">
-                <div className="mb-3 flex items-center gap-2.5">
+              {/* ESP card */}
+              <div className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
+                pressKitPdfEsUrl.trim() ? "border-white/[0.06] bg-white/[0.02]" : "border-dashed border-white/[0.06] bg-white/[0.01]")}>
+                <div className="flex items-center gap-3 p-4">
                   {/* Spain flag */}
-                  <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a] ring-1 ring-white/[0.08]">
+                  <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a] ring-1 ring-white/[0.10]">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="h-full w-full">
-                      <rect width="3" height="2" fill="#c60b1e"/>
-                      <rect width="3" height="1" y="0.5" fill="#ffc400"/>
+                      <rect width="3" height="2" fill="#c60b1e"/><rect width="3" height="1" y="0.5" fill="#ffc400"/>
                     </svg>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground/80">Press Kit ESP</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-foreground/88">Press Kit ESP</p>
                     <p className={cn("text-[10px]", pressKitPdfEsUrl.trim() ? "text-accent/65" : "text-muted-foreground/30")}>
-                      {pressKitPdfEsUrl.trim() ? "Configured" : "Not set"}
+                      {pressKitPdfEsUrl.trim() ? `PDF${pressKitPdfEsSize.trim() ? ` · ${pressKitPdfEsSize}` : ""}` : "Not configured"}
                     </p>
                   </div>
-                  {pressKitPdfEsUrl.trim() && (
-                    <a href={pressKitPdfEsUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-[10px] text-muted-foreground/35 hover:text-accent/65">
-                      Open ↗
-                    </a>
-                  )}
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {pressKitPdfEsUrl.trim() && (
+                      <a href={pressKitPdfEsUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.06] text-accent/70 hover:bg-accent/[0.12]"
+                        title="Open">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                    <button type="button" onClick={() => toggleCard("es")}
+                      className={cn("rounded px-2 py-1 text-[10px] font-medium transition-colors", isOpen("es") ? "bg-accent/10 text-accent/80" : "text-muted-foreground/35 hover:text-foreground/60")}>
+                      {isOpen("es") ? "Done" : "Edit"}
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Input value={pressKitPdfEsUrl} onChange={(e) => setPressKitPdfEsUrl(e.target.value)} placeholder="https://…/epk-es.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
-                  <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder="File size, e.g. 3.8 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
-                </div>
+                {isOpen("es") && (
+                  <div className="space-y-2 border-t border-white/[0.04] px-4 pb-4 pt-3">
+                    <Input value={pressKitPdfEsUrl} onChange={(e) => setPressKitPdfEsUrl(e.target.value)} placeholder="https://…/epk-es.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                    <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder="File size, e.g. 3.8 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* ── 3. Asset Folders ───────────────────────────────────────── */}
           <div>
-            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">
-              Asset Folders
-            </p>
-            <div className="space-y-2">
-              {(
-                [
-                  { id: "drive",  label: "Full Drive Package", value: pressKitRootUrl,         setter: setPressKitRootUrl,         badge: "Complete" },
-                  { id: "bio",    label: "Bio & Text",         value: pressKitBioFolderUrl,    setter: setPressKitBioFolderUrl,    badge: null },
-                  { id: "logos",  label: "Logos & Artwork",    value: pressKitLogosFolderUrl,  setter: setPressKitLogosFolderUrl,  badge: null },
-                  { id: "photos", label: "Press Photos",       value: pressKitMediaFolderUrl,  setter: setPressKitMediaFolderUrl,  badge: null },
-                  { id: "rider",  label: "Technical Rider",    value: pressKitRiderFolderUrl,  setter: setPressKitRiderFolderUrl,  badge: null },
-                ] as const
-              ).map(({ id, label, value, setter, badge }) => (
-                <div key={id} className="rounded-xl border border-white/[0.06] bg-card/35 px-4 py-3">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold text-foreground/80">{label}</p>
+            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Asset Folders</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[
+                { id: "drive",  label: "Full Drive Package", desc: "Complete press kit",      value: pressKitRootUrl,        setter: setPressKitRootUrl,        badge: "Complete" },
+                { id: "bio",    label: "Bio & Text",          desc: "Artist biography",       value: pressKitBioFolderUrl,   setter: setPressKitBioFolderUrl,   badge: null },
+                { id: "logos",  label: "Logos & Artwork",     desc: "Brand assets",           value: pressKitLogosFolderUrl, setter: setPressKitLogosFolderUrl, badge: null },
+                { id: "photos", label: "Press Photos",        desc: "High-res press images",  value: pressKitMediaFolderUrl, setter: setPressKitMediaFolderUrl, badge: null },
+                { id: "rider",  label: "Technical Rider",     desc: "Stage requirements",     value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl, badge: null },
+              ].map(({ id, label, desc, value, setter, badge }) => (
+                <div key={id} className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
+                  value.trim() ? "border-white/[0.06] bg-white/[0.02]" : "border-dashed border-white/[0.05] bg-white/[0.01]")}>
+                  <div className="p-4">
+                    {/* Icon row */}
+                    <div className="flex items-start justify-between">
+                      {folderIconMap[id]}
                       {badge && (
-                        <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-px text-[8px] font-semibold uppercase tracking-[0.14em] text-white/28">
+                        <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.14em] text-white/25">
                           {badge}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn("text-[10px]", value.trim() ? "text-accent/65" : "text-muted-foreground/28")}>
-                        {value.trim() ? "Configured" : "Not set"}
+                    {/* Label + desc */}
+                    <p className="mt-3 text-sm font-bold text-foreground/85">{label}</p>
+                    <p className="mt-0.5 text-xs text-white/30">{desc}</p>
+                    {/* Status + actions */}
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className={cn("text-[10px] font-medium", value.trim() ? "text-accent/60" : "text-muted-foreground/28")}>
+                        {value.trim() ? "Configured" : "Missing"}
                       </span>
                       {value.trim() && (
-                        <a href={value} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground/30 hover:text-accent/60">
-                          Open ↗
+                        <a href={value} target="_blank" rel="noopener noreferrer"
+                          className="ml-auto flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/55 hover:text-accent/85">
+                          Open <ExternalLink className="h-2.5 w-2.5" />
                         </a>
                       )}
                     </div>
+                    {/* Edit toggle */}
+                    <button type="button" onClick={() => toggleCard(id)}
+                      className={cn("mt-2 text-[10px] font-medium transition-colors", isOpen(id) ? "text-accent/70" : "text-muted-foreground/28 hover:text-foreground/50")}>
+                      {isOpen(id) ? "Close ↑" : "Edit URL ↓"}
+                    </button>
                   </div>
-                  <Input
-                    value={value}
-                    onChange={(e) => setter(e.target.value)}
-                    placeholder="https://drive.google.com/drive/folders/…"
-                    className="h-8 text-xs"
-                    disabled={!pressKitEnabled}
-                  />
+                  {isOpen(id) && (
+                    <div className="border-t border-white/[0.04] px-4 pb-4 pt-3">
+                      <Input value={value} onChange={(e) => setter(e.target.value)}
+                        placeholder="https://drive.google.com/drive/folders/…"
+                        className="h-8 text-xs" disabled={!pressKitEnabled} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
 
           {/* ── 4. Press Photos Preview ────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-foreground">Press Photos Preview</p>
-                <p className="mt-0.5 text-xs text-muted-foreground/45">
-                  Controls the preview grid on your public EPK.{" "}
-                  High-resolution photos remain accessible from the Press Photos folder.
+                <p className="mt-0.5 text-xs text-muted-foreground/40">
+                  Controls the preview grid on your public EPK. High-resolution photos remain available from the Press Photos folder.
                 </p>
               </div>
-              <div
-                role="group"
-                aria-label="Press photos preview"
-                className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5"
-              >
-                <button
-                  type="button"
-                  onClick={() => setPressKitUseGalleryPhotos(true)}
-                  aria-pressed={pressKitUseGalleryPhotos}
-                  disabled={!pressKitEnabled}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                    pressKitUseGalleryPhotos ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45",
-                  )}
-                >
+              <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+                <button type="button" onClick={() => setPressKitUseGalleryPhotos(true)} aria-pressed={pressKitUseGalleryPhotos} disabled={!pressKitEnabled}
+                  className={cn("rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                    pressKitUseGalleryPhotos ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
                   Show
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPressKitUseGalleryPhotos(false)}
-                  aria-pressed={!pressKitUseGalleryPhotos}
-                  disabled={!pressKitEnabled}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                    !pressKitUseGalleryPhotos ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45",
-                  )}
-                >
+                <button type="button" onClick={() => setPressKitUseGalleryPhotos(false)} aria-pressed={!pressKitUseGalleryPhotos} disabled={!pressKitEnabled}
+                  className={cn("rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                    !pressKitUseGalleryPhotos ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
                   Hide
                 </button>
               </div>
@@ -5594,89 +5580,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           {/* ── 5. Advanced Settings ───────────────────────────────────── */}
           <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/40 transition-colors duration-150 hover:border-white/[0.09]">
-            <button
-              type="button"
-              onClick={() => setPressKitAdvancedOpen((v) => !v)}
-              className="flex w-full items-center justify-between px-5 py-4"
-            >
+            <button type="button" onClick={() => setPressKitAdvancedOpen((v) => !v)}
+              className="flex w-full items-center justify-between px-5 py-4">
               <div>
                 <span className="text-sm font-semibold text-foreground/65">Advanced Settings</span>
-                <span className="ml-2 text-[10px] text-muted-foreground/30">Legacy URL · Assets list</span>
+                <span className="ml-2 text-[10px] text-muted-foreground/28">Legacy URL · Assets list</span>
               </div>
               <ChevronDown className={cn("h-4 w-4 text-muted-foreground/35 transition-transform duration-200", pressKitAdvancedOpen && "rotate-180")} />
             </button>
-
             {pressKitAdvancedOpen && (
               <div className="space-y-5 border-t border-white/[0.05] px-5 pb-5 pt-4">
-
-                {/* Legacy download URL */}
+                {/* Legacy URL */}
                 <div className="space-y-1.5">
-                  <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                    Legacy Download URL
-                  </label>
-                  <Input
-                    id="pressKitUrl"
-                    value={pressKitUrl}
-                    onChange={(e) => setPressKitUrl(e.target.value)}
-                    placeholder="https://artist.com/epk"
-                    disabled={!pressKitEnabled}
-                  />
-                  {pressKitUrlInvalid && (
-                    <p className="text-[10px] text-amber-400/60">Should start with https://</p>
-                  )}
-                  <p className="text-[10px] text-muted-foreground/28">
-                    Older direct-download link. Not required when PDF URLs above are configured.
-                  </p>
+                  <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Legacy Download URL</label>
+                  <Input id="pressKitUrl" value={pressKitUrl} onChange={(e) => setPressKitUrl(e.target.value)} placeholder="https://artist.com/epk" disabled={!pressKitEnabled} />
+                  {pressKitUrlInvalid && <p className="text-[10px] text-amber-400/60">Should start with https://</p>}
+                  <p className="text-[10px] text-muted-foreground/28">Older direct-download link. Not required when PDF URLs above are configured.</p>
                 </div>
-
-                {/* Assets included tags */}
+                {/* Assets tags */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/45">
-                    Assets Included
-                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/45">Assets Included</p>
                   {pressKitAssets.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {pressKitAssets.map((asset, i) => (
-                        <span
-                          key={i}
-                          className="flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-foreground/60"
-                        >
+                        <span key={i} className="flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-foreground/60">
                           {asset}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveAsset(i)}
-                            aria-label={`Remove ${asset}`}
-                            className="leading-none text-muted-foreground/30 transition-colors duration-100 hover:text-foreground/60"
-                          >
-                            ×
-                          </button>
+                          <button type="button" onClick={() => handleRemoveAsset(i)} aria-label={`Remove ${asset}`}
+                            className="leading-none text-muted-foreground/30 hover:text-foreground/60">×</button>
                         </span>
                       ))}
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newAssetInput}
-                      onChange={(e) => setNewAssetInput(e.target.value)}
+                    <input type="text" value={newAssetInput} onChange={(e) => setNewAssetInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddAsset() } }}
-                      placeholder="Add asset… e.g. Press photos"
-                      disabled={!pressKitEnabled}
-                      aria-label="New asset name"
-                      className={cn(
-                        "h-9 min-w-0 flex-1 rounded-lg border border-white/[0.07] bg-white/[0.025]",
-                        "px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground/30",
-                        "outline-none transition-colors duration-150 focus:border-white/[0.14] focus:bg-white/[0.04]",
-                        "disabled:cursor-not-allowed",
-                      )}
+                      placeholder="Add asset… e.g. Press photos" disabled={!pressKitEnabled} aria-label="New asset name"
+                      className={cn("h-9 min-w-0 flex-1 rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground/30 outline-none transition-colors duration-150 focus:border-white/[0.14] focus:bg-white/[0.04] disabled:cursor-not-allowed")}
                     />
-                    <button
-                      type="button"
-                      onClick={handleAddAsset}
-                      disabled={!pressKitEnabled || !newAssetInput.trim()}
-                      aria-label="Add asset"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.025] text-muted-foreground/40 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25"
-                    >
+                    <button type="button" onClick={handleAddAsset} disabled={!pressKitEnabled || !newAssetInput.trim()} aria-label="Add asset"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.025] text-muted-foreground/40 hover:border-white/[0.12] hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25">
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
