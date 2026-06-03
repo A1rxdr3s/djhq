@@ -30,8 +30,10 @@ function groupByYear(gigs: Gig[]): { year: number; gigs: Gig[] }[] {
     .map(([year, gigs]) => ({ year, gigs }))
 }
 
-const STATUS_CONFIG: Record<GigEventStatus, { label: string; className: string }> = {
-  upcoming:  { label: "Upcoming",  className: "border-accent/30 bg-accent/10 text-accent/75" },
+// "upcoming" is intentionally omitted: it is the default state for any future show
+// and is already communicated by the section heading and the isNext accent highlight.
+// Only non-default, actionable states get a visible badge.
+const STATUS_CONFIG: Partial<Record<GigEventStatus, { label: string; className: string }>> = {
   sold_out:  { label: "Sold Out",  className: "border-amber-500/30 bg-amber-500/10 text-amber-400/80" },
   cancelled: { label: "Cancelled", className: "border-red-500/30 bg-red-500/10 text-red-400/70" },
   past:      { label: "Past",      className: "border-white/[0.12] bg-white/[0.04] text-white/35" },
