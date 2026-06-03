@@ -1,36 +1,19 @@
 import Link from "next/link"
-import Image from "next/image"
 import {
   ArrowRight,
   CalendarDays,
   Check,
-  ChevronRight,
   Download,
   ExternalLink,
   FileText,
   FolderOpen,
   Globe,
-  Music2,
-  Play,
   Radio,
   Star,
 } from "lucide-react"
 
 // ─── Micro UI pieces used inside product screenshots ──────────────────────────
 
-function Pill({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.10em] ${
-        accent
-          ? "border-accent/30 bg-accent/10 text-accent"
-          : "border-white/[0.08] bg-white/[0.03] text-white/45"
-      }`}
-    >
-      {children}
-    </span>
-  )
-}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
