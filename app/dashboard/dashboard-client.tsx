@@ -1317,6 +1317,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setReleasePlatformLinksOpen(false)
   }
 
+  function handleAddGig() {
+    const newId = crypto.randomUUID()
+    const emptyGig: GigFormState = {
+      id: newId, venue: "", date: "", city: "", country: "",
+    }
+    setUpcomingGigs((current) => sortGigsByDate([...current, emptyGig]))
+    setNewGigId(newId)
+  }
+
   function handleRemoveRelease(index: number) {
     setReleases((current) => current.filter((_, itemIndex) => itemIndex !== index))
   }
