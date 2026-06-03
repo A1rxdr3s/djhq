@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
+import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import type { GalleryImage, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
 
@@ -40,6 +41,7 @@ type ArtistRow = {
   press_kit_pdf_en_size: string | null
   press_kit_pdf_es_size: string | null
   press_kit_use_gallery_photos: boolean
+  favicon_url: string | null
   plan: string
   show_header_branding: boolean
   hero_logo_url: string | null
@@ -76,7 +78,7 @@ async function getArtistPressKit(handle: string) {
   const { data: artistRow } = await supabase
     .from("artists")
     .select(
-      "id, handle, artist_name, real_name, tagline, genres, location, short_bio, hero_image_url, avatar_url, booking_email, booking_url, press_kit_enabled, press_kit_download_url, press_kit_assets, press_kit_root_url, press_kit_bio_folder_url, press_kit_logos_folder_url, press_kit_media_folder_url, press_kit_rider_folder_url, press_kit_pdf_en_url, press_kit_pdf_es_url, press_kit_pdf_en_size, press_kit_pdf_es_size, press_kit_use_gallery_photos, plan, show_header_branding, hero_logo_url, hero_identity_mode, artist_accent_theme, is_published",
+      "id, handle, artist_name, real_name, tagline, genres, location, short_bio, hero_image_url, avatar_url, favicon_url, booking_email, booking_url, press_kit_enabled, press_kit_download_url, press_kit_assets, press_kit_root_url, press_kit_bio_folder_url, press_kit_logos_folder_url, press_kit_media_folder_url, press_kit_rider_folder_url, press_kit_pdf_en_url, press_kit_pdf_es_url, press_kit_pdf_en_size, press_kit_pdf_es_size, press_kit_use_gallery_photos, plan, show_header_branding, hero_logo_url, hero_identity_mode, artist_accent_theme, is_published",
     )
     .eq("handle", handle)
     .eq("is_published", true)
@@ -117,6 +119,7 @@ async function getArtistPressKit(handle: string) {
     shortBio: artistRow.short_bio,
     heroImageUrl: artistRow.hero_image_url,
     avatarUrl: artistRow.avatar_url ?? undefined,
+    faviconUrl: artistRow.favicon_url ?? undefined,
     heroLogoUrl: artistRow.hero_logo_url ?? null,
     heroIdentityMode: (artistRow.hero_identity_mode || "text") as "text" | "logo" | "both",
     bookingInfo: {
@@ -149,10 +152,19 @@ export async function generateMetadata({ params }: PressKitPageProps): Promise<M
   const { handle } = await params
   const artist = await getArtistPressKit(handle)
   if (!artist) return {}
+
+  const isPro = artist.plan === "pro"
+  const faviconHref = resolveArtistFavicon({
+    isPro,
+    faviconUrl: artist.faviconUrl,
+    artistName: artist.artistName,
+  })
+
   return {
     title: `${artist.artistName} — Press Kit`,
     description: `Official press kit for ${artist.artistName}. Download bio, photos, logos, and rider.`,
     robots: { index: false },
+    icons: { icon: faviconHref },
   }
 }
 

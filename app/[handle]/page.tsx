@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
+import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
@@ -557,12 +558,6 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
   }
 }
 
-function getArtistInitials(artistName: string): string {
-  const parts = artistName.trim().split(/[\s:_-]+/).filter(Boolean)
-  if (!parts.length) return "DJ"
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
 
 export function generateStaticParams() {
   return [{ handle: mockArtist.handle }]
@@ -583,10 +578,11 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     ? (artist.browserTitle?.trim() || artist.artistName)
     : `${artist.artistName} — DJHQ`
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.com"
-  const faviconHref = isPro
-    ? (artist.faviconUrl?.trim() || `${appUrl}/api/favicon/${encodeURIComponent(getArtistInitials(artist.artistName))}`)
-    : "/favicon.ico"
+  const faviconHref = resolveArtistFavicon({
+    isPro,
+    faviconUrl: artist.faviconUrl,
+    artistName: artist.artistName,
+  })
 
   return {
     metadataBase: new URL("https://djhq.com"),
