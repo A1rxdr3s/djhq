@@ -265,17 +265,26 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
             <div className="px-6 pb-6 pt-5 sm:px-8 sm:pb-7 sm:pt-6">
               {/* Eyebrow */}
-              <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.32em] text-accent/55">
+              <p className="mb-3 text-[8px] font-bold uppercase tracking-[0.32em] text-accent/55">
                 Electronic Press Kit
               </p>
 
-              {/* Artist name */}
-              <h1 className="text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl">
-                {artist.artistName}
-              </h1>
+              {/* Logo (when available) or artist name text */}
+              {artist.heroLogoUrl && (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={artist.heroLogoUrl}
+                  alt={artist.artistName}
+                  className="mb-1 max-h-[56px] max-w-[220px] object-contain opacity-85"
+                />
+              ) : (
+                <h1 className="text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl">
+                  {artist.artistName}
+                </h1>
+              )}
 
               {/* Genres + location on one muted line */}
-              <p className="mt-1.5 text-[12px] text-white/38">
+              <p className="mt-2 text-[12px] text-white/38">
                 {[
                   artist.genres.join(" · "),
                   artist.location,
@@ -290,12 +299,12 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           </div>
 
           {/* ── Press Kit Downloads ────────────────────────────────────── */}
-          <div className="mt-6">
-            <div className="mb-4">
-              <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
+          <div className="mt-8">
+            <div className="mb-5">
+              <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
                 Press Kit Downloads
               </p>
-              <h2 className="mt-1.5 text-xl font-black tracking-[-0.01em] text-foreground">
+              <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
                 Choose your language
               </h2>
             </div>
@@ -413,12 +422,12 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── Asset Folders ──────────────────────────────────────────── */}
           {hasIndividualFolders && (
-            <div className="mt-8">
-              <div className="mb-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
+            <div className="mt-10">
+              <div className="mb-5">
+                <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
                   Press Kit Assets
                 </p>
-                <h2 className="mt-1.5 text-xl font-black tracking-[-0.01em] text-foreground">
+                <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
                   Download Folders
                 </h2>
               </div>
@@ -432,7 +441,14 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     className="group relative overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
                   >
                     <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_5%,transparent),transparent_70%)]" />
-                    <card.icon className="h-5 w-5 text-accent/70" />
+                    <div className="flex items-center justify-between">
+                      <card.icon className="h-5 w-5 text-accent/70" />
+                      {card.id === "drive" && (
+                        <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-white/28">
+                          Complete
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-4 text-sm font-bold text-foreground/85 transition-colors duration-150 group-hover:text-foreground">
                       {card.label}
                     </p>
@@ -451,15 +467,15 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── Press Photos Preview ───────────────────────────────────── */}
           {pk.useGalleryPhotos && artist.galleryImages.length > 0 && (
-            <div className="mt-8">
-              <div className="mb-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
+            <div className="mt-10">
+              <div className="mb-5">
+                <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
                   Press Photos
                 </p>
-                <h2 className="mt-1.5 text-xl font-black tracking-[-0.01em] text-foreground">
+                <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
                   Press Photos Preview
                 </h2>
-                <p className="mt-1 text-[12px] text-white/28">
+                <p className="mt-1 text-[11px] text-white/25">
                   Preview only · Download high-resolution images from the Press Photos folder.
                 </p>
               </div>
@@ -475,7 +491,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         alt={image.altText}
                         fill
                         sizes="33vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                        className="object-cover transition-[transform,filter] duration-500 group-hover:scale-[1.04] group-hover:brightness-[1.08]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
                       />
                     </div>
@@ -500,13 +516,13 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── Compact Booking Contact ────────────────────────────────── */}
           {artist.bookingInfo.email.trim() && (
-            <div className="mt-8 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
+            <div className="mt-10 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4">
+              <p className="text-[8px] font-bold uppercase tracking-[0.28em] text-white/25">
                 Booking Contact
               </p>
               <a
                 href={`mailto:${artist.bookingInfo.email}`}
-                className="mt-1 block font-mono text-sm text-white/50 transition-colors duration-150 hover:text-accent/70"
+                className="mt-1.5 block font-mono text-sm text-white/55 underline decoration-white/[0.12] underline-offset-2 transition-all duration-150 hover:text-accent/80 hover:decoration-accent/30"
               >
                 {artist.bookingInfo.email}
               </a>
