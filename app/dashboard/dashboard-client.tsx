@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowDown, ArrowUp, Camera, Check, ChevronDown, ExternalLink, Globe, Headphones, LogOut, Mail, MapPin, Music, Play, Plus, Save, Star, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Camera, Check, ChevronDown, ExternalLink, Globe, Headphones, Instagram, LogOut, Mail, MapPin, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -246,12 +246,40 @@ const socialPlatforms: SocialPlatform[] = [
   "youtube",
   "instagram",
   "tiktok",
+  "resident-advisor",
+  "bandsintown",
   "website",
   "other",
 ]
 
-function normalizeSocialPlatform(platform: string): SocialPlatform {
-  return socialPlatforms.includes(platform as SocialPlatform) ? (platform as SocialPlatform) : "other"
+// Fixed platform list — users manage URLs only; labels and icons are system-defined
+const PLATFORM_CONFIG: {
+  id: SocialPlatform
+  label: string
+  Icon: React.ComponentType<{ className?: string }>
+  placeholder: string
+}[] = [
+  { id: "spotify",           label: "Spotify",          Icon: Radio,      placeholder: "https://open.spotify.com/artist/..." },
+  { id: "beatport",          label: "Beatport",         Icon: Music2,     placeholder: "https://www.beatport.com/artist/..." },
+  { id: "soundcloud",        label: "SoundCloud",       Icon: Play,       placeholder: "https://soundcloud.com/..." },
+  { id: "instagram",         label: "Instagram",        Icon: Instagram,  placeholder: "https://instagram.com/..." },
+  { id: "youtube",           label: "YouTube",          Icon: Youtube,    placeholder: "https://youtube.com/@..." },
+  { id: "tiktok",            label: "TikTok",           Icon: Music,      placeholder: "https://tiktok.com/@..." },
+  { id: "resident-advisor",  label: "Resident Advisor", Icon: Globe,      placeholder: "https://ra.co/dj/..." },
+  { id: "bandsintown",       label: "Bandsintown",      Icon: MapPin,     placeholder: "https://www.bandsintown.com/a/..." },
+  { id: "website",           label: "Website",          Icon: Globe,      placeholder: "https://..." },
+]
+
+// Build a platform → URL map from saved artist links; migrates "other" → "website"
+function getLinkUrlsFromArtist(artist: Artist): Record<string, string> {
+  const urls: Record<string, string> = {}
+  artist.socialLinks.forEach((link) => {
+    const url = link.url?.trim()
+    if (!url) return
+    const id = link.platform === "other" ? "website" : link.platform
+    if (!urls[id]) urls[id] = url
+  })
+  return urls
 }
 
 function normalizeReleaseType(type: string): ReleaseType {
@@ -731,7 +759,7 @@ type DashboardClientProps = {
 
 export default function DashboardClient({ initialArtist, statusMessage }: DashboardClientProps) {
   const [artist, setArtist] = useState<Artist>(initialArtist)
-  const initialSocialLinks = getSocialLinkFormState(artist)
+  const initialLinkUrls = getLinkUrlsFromArtist(artist)
   const initialReleases = getReleaseFormState(artist)
   const initialUpcomingGigs = getGigFormState(artist)
   const [activeSection, setActiveSection] = useState("home")
@@ -769,7 +797,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [previewScale, setPreviewScale] = useState(0.4)
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
   const [isUploadingHeroLogo, setIsUploadingHeroLogo] = useState(false)
-  const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
+  const [linkUrls, setLinkUrls] = useState<Record<string, string>>(initialLinkUrls)
   const [releases, setReleases] = useState(initialReleases)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
   const [newGigId, setNewGigId] = useState<string | null>(null)
@@ -868,7 +896,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroLogoPlacement !== (artist.heroLogoPlacement ?? "editorial") ||
     heroContentWidth !== (artist.heroContentWidth ?? "standard") ||
     accentTheme !== (artist.accentTheme ?? "matrix")
-  const isLinksDirty = JSON.stringify(socialLinks) !== JSON.stringify(initialSocialLinks)
+  const isLinksDirty = JSON.stringify(linkUrls) !== JSON.stringify(initialLinkUrls)
   const isReleasesDirty = JSON.stringify(releases) !== JSON.stringify(initialReleases)
   const isGigsDirty = JSON.stringify(upcomingGigs) !== JSON.stringify(initialUpcomingGigs)
   const isDjSetsDirty = JSON.stringify(djSets) !== JSON.stringify(initialDjSets)
@@ -932,7 +960,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroContentWidth,
           accentTheme,
         },
-        socialLinks,
+        socialLinks: PLATFORM_CONFIG
+          .filter(({ id }) => linkUrls[id]?.trim())
+          .map(({ id, label }) => ({
+            platform: id,
+            label,
+            url: linkUrls[id].trim(),
+          })),
         releases: releases.map((r) => ({
           isFeatured: r.isFeatured,
           title: r.title,
@@ -1035,11 +1069,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroContentWidth,
       accentTheme,
       isPublished: nextPublished,
-      socialLinks: socialLinks.map((link) => ({
-        platform: normalizeSocialPlatform(link.platform),
-        label: link.label.trim(),
-        url: link.url.trim(),
-      })),
+      socialLinks: PLATFORM_CONFIG
+        .filter(({ id }) => linkUrls[id]?.trim())
+        .map(({ id, label }) => ({
+          platform: id,
+          label,
+          url: linkUrls[id].trim(),
+        })),
       releases: releases.map((release) => ({
         id: release.id,
         isFeatured: release.isFeatured,
@@ -1169,7 +1205,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroLogoPlacement(savedArtist.heroLogoPlacement ?? "editorial")
     setHeroContentWidth(savedArtist.heroContentWidth ?? "standard")
     setAccentTheme(savedArtist.accentTheme ?? "matrix")
-    setSocialLinks(getSocialLinkFormState(savedArtist))
+    setLinkUrls(getLinkUrlsFromArtist(savedArtist))
     setReleases(getReleaseFormState(savedArtist))
     setUpcomingGigs(getGigFormState(savedArtist))
     setDjSets(getDjSetFormState(savedArtist))
@@ -3069,75 +3105,61 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderLinks() {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div>
           <h2 className="text-base font-semibold text-foreground">Links</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Social platforms and external links shown on your profile.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">
+            Only connected platforms will be displayed on your public profile.
+          </p>
         </div>
-        <div className="space-y-3">
-          {socialLinks.map((link, index) => (
-            <div key={`${link.platform}-${index}`} className="rounded-xl border border-white/[0.06] bg-card/40 p-4 transition-colors duration-150 hover:border-white/[0.09] sm:p-5">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`link-platform-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Platform
-                  </label>
+
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 divide-y divide-white/[0.04]">
+          {PLATFORM_CONFIG.map(({ id, label, Icon, placeholder }) => {
+            const url    = linkUrls[id] ?? ""
+            const active = url.trim().length > 0
+            return (
+              <div
+                key={id}
+                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
+              >
+                {/* Platform identity — fixed, not editable */}
+                <div className="flex shrink-0 items-center gap-2.5 sm:w-40">
+                  <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-accent/60" : "text-muted-foreground/30"}`} />
+                  <span className={`text-sm font-medium ${active ? "text-foreground/80" : "text-muted-foreground/50"}`}>
+                    {label}
+                  </span>
+                </div>
+
+                {/* URL input */}
+                <div className="flex-1">
                   <Input
-                    id={`link-platform-${index}`}
-                    value={link.platform}
-                    onChange={(event) =>
-                      setSocialLinks((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, platform: event.target.value } : item,
-                        ),
-                      )
+                    id={`link-url-${id}`}
+                    value={url}
+                    onChange={(e) =>
+                      setLinkUrls((prev) => ({ ...prev, [id]: e.target.value }))
                     }
+                    placeholder={placeholder}
+                    className="h-8 border-white/[0.06] bg-white/[0.025] text-xs placeholder:text-muted-foreground/25 focus:border-accent/30"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`link-label-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    Label
-                  </label>
-                  <Input
-                    id={`link-label-${index}`}
-                    value={link.label}
-                    onChange={(event) =>
-                      setSocialLinks((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, label: event.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor={`link-url-${index}`}
-                    className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70"
-                  >
-                    URL
-                  </label>
-                  <Input
-                    id={`link-url-${index}`}
-                    value={link.url}
-                    onChange={(event) =>
-                      setSocialLinks((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, url: event.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
+
+                {/* Connection status */}
+                <div className="shrink-0 sm:w-28">
+                  {active ? (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-accent/75">
+                      <Check className="h-3 w-3" />
+                      Connected
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/28">
+                      <span className="h-1.5 w-1.5 rounded-full border border-white/[0.12]" />
+                      Not connected
+                    </span>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     )

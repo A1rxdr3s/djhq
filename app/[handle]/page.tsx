@@ -4,6 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import {
+  Calendar,
   Download,
   ExternalLink,
   Globe,
@@ -46,14 +47,16 @@ type PublicProfilePageProps = {
 export const dynamic = "force-dynamic"
 
 const socialIcons: Record<SocialPlatform, LucideIcon> = {
-  instagram: Instagram,
-  beatport: Music2,
-  spotify: Radio,
-  soundcloud: Play,
-  youtube: Youtube,
-  tiktok: Music,
-  website: Globe,
-  other: Link2,
+  instagram:        Instagram,
+  beatport:         Music2,
+  spotify:          Radio,
+  soundcloud:       Play,
+  youtube:          Youtube,
+  tiktok:           Music,
+  "resident-advisor": Globe,
+  bandsintown:      Calendar,
+  website:          Globe,
+  other:            Link2,
 }
 
 type ArtistRow = {
@@ -185,6 +188,8 @@ const socialPlatforms: SocialPlatform[] = [
   "youtube",
   "instagram",
   "tiktok",
+  "resident-advisor",
+  "bandsintown",
   "website",
   "other",
 ]

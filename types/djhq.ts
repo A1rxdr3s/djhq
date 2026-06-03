@@ -70,6 +70,8 @@ export type SocialPlatform =
   | "youtube"
   | "instagram"
   | "tiktok"
+  | "resident-advisor"
+  | "bandsintown"
   | "website"
   | "other"
 
