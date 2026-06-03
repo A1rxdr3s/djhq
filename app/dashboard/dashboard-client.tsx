@@ -684,48 +684,6 @@ function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetada
   }
 }
 
-// GigAnimatedRow wraps each card in a motion.div for enter/exit animations.
-// It manages overflow state so autocomplete dropdowns can escape the card bounds
-// when the card is at rest, while still clipping correctly during height animations.
-type GigAnimatedRowProps = {
-  gig: GigFormState
-  isNew: boolean
-  newGigId: string | null
-  isPast: boolean
-  onChange: (updated: GigFormState) => void
-  onDelete: () => void
-}
-
-function GigAnimatedRow({ gig, isNew, newGigId, isPast, onChange, onDelete }: GigAnimatedRowProps) {
-  const [animating, setAnimating] = useState(isNew)
-
-  function handleDelete() {
-    // Clip overflow before AnimatePresence starts the exit height animation.
-    setAnimating(true)
-    onDelete()
-  }
-
-  return (
-    <motion.div
-      id={`gig-${gig.id}`}
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      style={{ overflow: animating ? "hidden" : "visible" }}
-      onAnimationComplete={() => setAnimating(false)}
-    >
-      <GigCard
-        gig={gig}
-        onChange={onChange}
-        onDelete={handleDelete}
-        initialExpanded={gig.id === newGigId}
-        isPast={isPast}
-      />
-    </motion.div>
-  )
-}
-
 type DashboardClientProps = {
   initialArtist: Artist
   statusMessage?: string
@@ -774,7 +732,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [linkUrls, setLinkUrls] = useState<Record<string, string>>(initialLinkUrls)
   const [releases, setReleases] = useState(initialReleases)
   const [upcomingGigs, setUpcomingGigs] = useState(initialUpcomingGigs)
-  const [newGigId, setNewGigId] = useState<string | null>(null)
+
   const [bookingEmail, setBookingEmail] = useState(initialArtist.bookingInfo.email)
   const [bookingUrl, setBookingUrl] = useState(initialArtist.bookingInfo.bookingUrl ?? "")
   const [pressKitEnabled, setPressKitEnabled] = useState(initialArtist.pressKit.enabled)
@@ -810,6 +768,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [releaseMenuOpenId, setReleaseMenuOpenId] = useState<string | null>(null)
   const [expandedSetId, setExpandedSetId] = useState<string | null>(null)
   const [setMenuOpenId, setSetMenuOpenId] = useState<string | null>(null)
+  const [expandedGigId, setExpandedGigId] = useState<string | null>(null)
   const [expandedVideoId, setExpandedVideoId] = useState<string | null>(null)
   const [videoMenuOpenId, setVideoMenuOpenId] = useState<string | null>(null)
   const [linksVersion, setLinksVersion] = useState<"v1" | "v2">("v2")
@@ -1328,7 +1287,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       id: newId, venue: "", date: "", city: "", country: "",
     }
     setUpcomingGigs((current) => sortGigsByDate([...current, emptyGig]))
-    setNewGigId(newId)
+    setExpandedGigId(newId)
   }
 
   function handleRemoveRelease(index: number) {
@@ -3729,9 +3688,53 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
 
   function renderGigs() {
-    const today = new Date().toISOString().slice(0, 10)
-    const upcoming = upcomingGigs.filter((g) => g.date && g.date >= today)
-    const past = upcomingGigs.filter((g) => !g.date || g.date < today)
+    const today       = new Date().toISOString().slice(0, 10)
+    const currentYear = new Date().getFullYear().toString()
+    const upcoming    = upcomingGigs.filter((g) => g.date && g.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    const past        = upcomingGigs.filter((g) => !g.date || g.date < today)
+      .sort((a, b) => b.date.localeCompare(a.date))
+
+    // ── Career stats ──────────────────────────────────────────────────────────
+    const totalShows     = upcomingGigs.length
+    const thisYearShows  = upcomingGigs.filter((g) => g.date?.startsWith(currentYear)).length
+    const uniqueCities   = new Set(upcomingGigs.map((g) => g.city).filter(Boolean)).size
+    const uniqueCountries= new Set(upcomingGigs.map((g) => g.country).filter(Boolean)).size
+
+    // ── Past shows grouped by year ────────────────────────────────────────────
+    const pastByYear = new Map<string, typeof past>()
+    for (const g of past) {
+      const y = g.date ? g.date.slice(0, 4) : "—"
+      if (!pastByYear.has(y)) pastByYear.set(y, [])
+      pastByYear.get(y)!.push(g)
+    }
+    const pastYears = [...pastByYear.keys()].sort((a, b) => b.localeCompare(a))
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function formatDateShort(date: string): { day: string; mon: string; year: string } | null {
+      if (!date) return null
+      const d = new Date(`${date}T00:00:00Z`)
+      if (isNaN(d.getTime())) return null
+      return {
+        day : String(d.getUTCDate()),
+        mon : d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase(),
+        year: String(d.getUTCFullYear()),
+      }
+    }
+    function formatDateLine(date: string): string {
+      if (!date) return ""
+      const d = new Date(`${date}T00:00:00Z`)
+      if (isNaN(d.getTime())) return ""
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
+    }
+
+    // Payment status badge colours (restrained capsule tones)
+    const PAY_CLASS: Record<string, string> = {
+      pending:   "bg-amber-500/[0.10] text-amber-400/65",
+      partial:   "bg-sky-500/[0.10] text-sky-400/65",
+      paid:      "bg-emerald-500/[0.10] text-emerald-400/70",
+      cancelled: "bg-red-500/[0.10] text-red-400/55",
+    }
 
     function handleGigChange(updated: GigFormState) {
       setUpcomingGigs((current) =>
@@ -3741,94 +3744,190 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-6">
+
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-foreground">Gigs</h2>
+            <h2 className="text-base font-semibold text-foreground">Shows</h2>
             <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Up to 3 upcoming shows appear on your public profile.
+              Manage your artist schedule and career history.
             </p>
           </div>
           <button
             type="button"
             onClick={handleAddGig}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-foreground/70 transition-colors duration-150 hover:border-white/[0.12] hover:bg-white/[0.06] hover:text-foreground"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add show
+            Add Show
           </button>
         </div>
 
-        {/* Upcoming section */}
-        <div className="space-y-2">
-          {/* Editorial header: label + extending hairline */}
-          <div className="flex items-center gap-3">
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/45">
-              Upcoming
-            </span>
-            <span className="h-px flex-1 bg-white/[0.06]" />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <AnimatePresence initial={false}>
-              {upcoming.map((gig) => (
-                <GigAnimatedRow
-                  key={gig.id}
-                  gig={gig}
-                  isNew={gig.id === newGigId}
-                  newGigId={newGigId}
-                  isPast={false}
-                  onChange={handleGigChange}
-                  onDelete={() => handleDeleteGig(gig.id)}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {upcoming.length === 0 && (
-            <div className="flex flex-col items-center rounded-2xl border border-dashed border-white/[0.06] px-6 py-8 text-center">
-              <div className="mb-3 flex h-10 w-8 shrink-0 flex-col items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03]">
-                <span className="text-sm font-black leading-none text-foreground/18">—</span>
-                <span className="mt-0.5 text-[7px] font-bold uppercase tracking-widest text-accent/20">
-                  JUN
-                </span>
-              </div>
-              <p className="text-sm font-semibold text-foreground/45">No upcoming shows</p>
-              <p className="mt-1 text-xs text-muted-foreground/30">
-                Add a show to display it on your public profile.
-              </p>
-              <button
-                type="button"
-                onClick={handleAddGig}
-                className="mt-4 rounded-lg border border-white/[0.07] bg-white/[0.03] px-4 py-2 text-xs font-semibold text-foreground/60 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/80"
-              >
-                Add your first show
-              </button>
+        {/* ── Career stats ────────────────────────────────────────────────── */}
+        {totalShows > 0 && (
+          <div className="flex flex-wrap items-center gap-5 border-b border-white/[0.04] pb-5">
+            <div className="text-center">
+              <p className="text-xl font-bold tabular-nums text-foreground/80">{totalShows}</p>
+              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Shows</p>
             </div>
-          )}
-        </div>
+            {thisYearShows > 0 && (
+              <div className="text-center">
+                <p className="text-xl font-bold tabular-nums text-foreground/80">{thisYearShows}</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">This Year</p>
+              </div>
+            )}
+            {uniqueCities > 0 && (
+              <div className="text-center">
+                <p className="text-xl font-bold tabular-nums text-foreground/80">{uniqueCities}</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Cities</p>
+              </div>
+            )}
+            {uniqueCountries > 0 && (
+              <div className="text-center">
+                <p className="text-xl font-bold tabular-nums text-foreground/80">{uniqueCountries}</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Countries</p>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Past section — collapsible, editorial header with hairline */}
+        {/* ── Empty state ──────────────────────────────────────────────────── */}
+        {upcomingGigs.length === 0 && (
+          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+            <p className="text-sm font-medium text-foreground/55">No shows yet.</p>
+            <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
+              Start building your artist history by adding your first show.
+            </p>
+            <button
+              type="button"
+              onClick={handleAddGig}
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Show
+            </button>
+          </div>
+        )}
+
+        {/* ── UPCOMING SHOWS — boarding-pass cards ────────────────────────── */}
+        {upcoming.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                Upcoming
+              </span>
+              <span className="h-px flex-1 bg-white/[0.06]" />
+              <span className="text-[10px] tabular-nums text-muted-foreground/28">{upcoming.length}</span>
+            </div>
+
+            <div className="space-y-2">
+              {upcoming.map((gig) => {
+                const dp       = formatDateShort(gig.date)
+                const location = [gig.city, gig.country].filter(Boolean).join(", ")
+                const isOpen   = expandedGigId === gig.id
+
+                return (
+                  <div key={gig.id}>
+                    {/* Premium horizontal card — boarding pass style */}
+                    <div className={cn(
+                      "group flex overflow-hidden rounded-xl border transition-all duration-150",
+                      isOpen
+                        ? "border-accent/28 ring-1 ring-accent/12"
+                        : "border-white/[0.06] hover:border-white/[0.11]",
+                    )}>
+                      {/* Date block */}
+                      {dp ? (
+                        <div className="flex w-[68px] shrink-0 flex-col items-center justify-center bg-white/[0.025] px-3 py-4 text-center">
+                          <span className="text-[1.7rem] font-black leading-none tabular-nums text-foreground/80">
+                            {dp.day}
+                          </span>
+                          <span className="mt-0.5 text-[9px] font-bold uppercase tracking-widest text-accent/55">
+                            {dp.mon}
+                          </span>
+                          <span className="mt-0.5 text-[8px] text-muted-foreground/28">{dp.year}</span>
+                        </div>
+                      ) : (
+                        <div className="flex w-[68px] shrink-0 items-center justify-center bg-white/[0.02] text-muted-foreground/20">
+                          <span className="text-sm font-bold">—</span>
+                        </div>
+                      )}
+
+                      {/* Thin separator */}
+                      <div className="w-px shrink-0 bg-white/[0.04]" />
+
+                      {/* Event content */}
+                      <div className="min-w-0 flex-1 px-4 py-3">
+                        <p className="truncate text-sm font-semibold text-foreground/88">
+                          {gig.venue || <span className="text-muted-foreground/30">Untitled</span>}
+                        </p>
+                        {location && (
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground/42">{location}</p>
+                        )}
+                        {/* Payment status */}
+                        {gig.paymentStatus && (
+                          <span className={cn(
+                            "mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                            PAY_CLASS[gig.paymentStatus] ?? "bg-white/[0.06] text-muted-foreground/40",
+                          )}>
+                            {gig.paymentStatus}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Edit action */}
+                      <div className="flex shrink-0 items-center px-3">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedGigId(isOpen ? null : gig.id)}
+                          className={cn(
+                            "flex h-7 items-center rounded-md px-2.5 text-[11px] font-medium transition-colors duration-150",
+                            isOpen ? "bg-accent/10 text-accent" : "text-muted-foreground/38 hover:text-foreground",
+                          )}
+                        >
+                          {isOpen ? "Close" : "Edit"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Inline edit form */}
+                    {isOpen && (
+                      <div className="mt-2 rounded-xl border border-accent/20 bg-card/35 p-0.5">
+                        <GigCard
+                          gig={gig}
+                          onChange={handleGigChange}
+                          onDelete={() => {
+                            handleDeleteGig(gig.id)
+                            setExpandedGigId(null)
+                          }}
+                          initialExpanded={true}
+                          isPast={false}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── PAST SHOWS — year-grouped career timeline ────────────────────── */}
         {past.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-5">
             <button
               type="button"
               onClick={() => setPastGigsExpanded((v) => !v)}
               className="flex w-full items-center gap-3 text-left"
             >
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/30">
-                Past
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/32">
+                History
               </span>
-              <span className="tabular-nums text-[10px] font-medium text-foreground/20">
-                {past.length}
-              </span>
+              <span className="tabular-nums text-[10px] text-muted-foreground/22">{past.length}</span>
               <span className="h-px flex-1 bg-white/[0.04]" />
-              <ChevronDown
-                className={cn(
-                  "h-3 w-3 text-muted-foreground/25 transition-transform duration-200",
-                  pastGigsExpanded && "rotate-180",
-                )}
-              />
+              <ChevronDown className={cn(
+                "h-3 w-3 text-muted-foreground/22 transition-transform duration-200",
+                pastGigsExpanded && "rotate-180",
+              )} />
             </button>
 
             <AnimatePresence initial={false}>
@@ -3837,33 +3936,83 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                   style={{ overflow: "hidden" }}
                 >
-                  <div className="flex flex-col gap-1.5">
-                    <AnimatePresence initial={false}>
-                      {past.map((gig) => (
-                        <GigAnimatedRow
-                          key={gig.id}
-                          gig={gig}
-                          isNew={gig.id === newGigId}
-                          newGigId={newGigId}
-                          isPast={true}
-                          onChange={handleGigChange}
-                          onDelete={() => handleDeleteGig(gig.id)}
-                        />
-                      ))}
-                    </AnimatePresence>
+                  <div className="space-y-5">
+                    {pastYears.map((year) => {
+                      const yearGigs = pastByYear.get(year)!
+                      return (
+                        <div key={year}>
+                          {/* Year header */}
+                          <div className="mb-2 flex items-center gap-3">
+                            <span className="shrink-0 text-xs font-bold text-muted-foreground/38">{year}</span>
+                            <span className="h-px flex-1 bg-white/[0.04]" />
+                            <span className="text-[10px] text-muted-foreground/22">{yearGigs.length}</span>
+                          </div>
+
+                          {/* Shows in this year — compact timeline rows */}
+                          <div className="border-l border-white/[0.05] pl-4">
+                            {yearGigs.map((gig) => {
+                              const isOpen = expandedGigId === gig.id
+                              const location = [gig.city, gig.country].filter(Boolean).join(", ")
+                              return (
+                                <div key={gig.id} className="mb-1 last:mb-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedGigId(isOpen ? null : gig.id)}
+                                    className={cn(
+                                      "group flex w-full items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition-colors duration-150 hover:bg-white/[0.03]",
+                                      isOpen && "bg-white/[0.03]",
+                                    )}
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <span className="text-xs font-medium text-foreground/65 transition-colors group-hover:text-foreground/82">
+                                        {gig.venue || "—"}
+                                      </span>
+                                      {location && (
+                                        <span className="ml-2 text-[10px] text-muted-foreground/30">
+                                          {location}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/25">
+                                      {formatDateLine(gig.date)}
+                                    </span>
+                                  </button>
+
+                                  {/* Inline edit */}
+                                  {isOpen && (
+                                    <div className="mt-1 ml-0 rounded-xl border border-white/[0.07] bg-card/35 p-0.5">
+                                      <GigCard
+                                        gig={gig}
+                                        onChange={handleGigChange}
+                                        onDelete={() => {
+                                          handleDeleteGig(gig.id)
+                                          setExpandedGigId(null)
+                                        }}
+                                        initialExpanded={true}
+                                        isPast={true}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         )}
+
       </div>
     )
   }
-
   function renderDjSets() {
     const busy = isSaving || isPublishing || importingDjSetIndex !== null
 
