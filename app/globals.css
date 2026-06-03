@@ -4,62 +4,65 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* DJHQ — dark professional infrastructure */
-  --background: #0B0F14;
-  --foreground: #F5F5F3;
-  --card: #111520;
+  /* ── Structural backgrounds: neutral near-black (no hue cast) ───────────────
+     The landing page uses its own inline styles and hardcoded Tailwind colors.
+     These CSS variables drive artist profiles, press kit, and dashboard.
+     Keeping them hue-neutral restores the deep black appearance on profiles. */
+  --background: oklch(0.08 0 0);      /* ≈ #111 — deep neutral black          */
+  --foreground: #F5F5F3;              /* warm off-white — unchanged            */
+  --card: oklch(0.12 0 0);           /* ≈ #1c1c1c — card surfaces             */
   --card-foreground: #F5F5F3;
-  --popover: #0F1319;
+  --popover: oklch(0.10 0 0);        /* ≈ #151515 — popover surface           */
   --popover-foreground: #F5F5F3;
   --primary: #6D5DFC;
   --primary-foreground: #ffffff;
-  --secondary: #161B24;
+  --secondary: oklch(0.18 0 0);      /* ≈ #2b2b2b — secondary surfaces        */
   --secondary-foreground: #F5F5F3;
-  --muted: #161B24;
-  --muted-foreground: #71717A;
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.60 0 0); /* ≈ #898989 — neutral medium gray     */
   --accent: #6D5DFC;
   --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #F5F5F3;
   --border: rgba(255,255,255,0.06);
-  --input: #161B24;
+  --input: oklch(0.15 0 0);          /* ≈ #212121 — input background          */
   --ring: #6D5DFC;
   --radius: 0.5rem;
-  --sidebar: #0D1018;
+  --sidebar: oklch(0.10 0 0);
   --sidebar-foreground: #F5F5F3;
   --sidebar-primary: #6D5DFC;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #161B24;
+  --sidebar-accent: oklch(0.18 0 0);
   --sidebar-accent-foreground: #F5F5F3;
   --sidebar-border: rgba(255,255,255,0.06);
   --sidebar-ring: #6D5DFC;
 }
 
 .dark {
-  --background: #0B0F14;
+  --background: oklch(0.08 0 0);
   --foreground: #F5F5F3;
-  --card: #111520;
+  --card: oklch(0.12 0 0);
   --card-foreground: #F5F5F3;
-  --popover: #0F1319;
+  --popover: oklch(0.10 0 0);
   --popover-foreground: #F5F5F3;
   --primary: #6D5DFC;
   --primary-foreground: #ffffff;
-  --secondary: #161B24;
+  --secondary: oklch(0.18 0 0);
   --secondary-foreground: #F5F5F3;
-  --muted: #161B24;
-  --muted-foreground: #71717A;
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.60 0 0);
   --accent: #6D5DFC;
   --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #F5F5F3;
   --border: rgba(255,255,255,0.06);
-  --input: #161B24;
+  --input: oklch(0.15 0 0);
   --ring: #6D5DFC;
-  --sidebar: #0D1018;
+  --sidebar: oklch(0.10 0 0);
   --sidebar-foreground: #F5F5F3;
   --sidebar-primary: #6D5DFC;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #161B24;
+  --sidebar-accent: oklch(0.18 0 0);
   --sidebar-accent-foreground: #F5F5F3;
   --sidebar-border: rgba(255,255,255,0.06);
   --sidebar-ring: #6D5DFC;
@@ -116,9 +119,9 @@
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0B0F14; }
-::-webkit-scrollbar-thumb { background: #1E2430; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2A3245; }
+::-webkit-scrollbar-track { background: oklch(0.08 0 0); }
+::-webkit-scrollbar-thumb { background: oklch(0.22 0 0); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: oklch(0.28 0 0); }
 
 /* Homepage keyframes */
 @keyframes hp-fade-up {
