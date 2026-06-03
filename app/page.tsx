@@ -346,67 +346,121 @@ function ProfileMockup() {
 
 // ─── Problem section ──────────────────────────────────────────────────────────
 
-function ProblemSection() {
-  const tiles = [
-    { name: "Instagram", note: "Not professional" },
-    { name: "Linktree", note: "Just links" },
-    { name: "Dropbox", note: "Links expire" },
-    { name: "Google Drive", note: "Impossible to navigate" },
-    { name: "PDF press kit", note: "Goes outdated" },
-    { name: "WhatsApp", note: "Embarrassing" },
-    { name: "Spotify link", note: "No booking info" },
-    { name: "Beatport", note: "Incomplete profile" },
-    { name: "SoundCloud", note: "2019 called" },
-  ]
+const scenarios = [
+  {
+    n: "01",
+    title: "A festival asks for your press kit.",
+    body: "You start searching through Dropbox folders, PDFs, press photos and old email attachments.",
+    result: "You look disorganized.",
+  },
+  {
+    n: "02",
+    title: "A label wants to know who you are.",
+    body: "They find outdated profiles, old photos and scattered information across platforms.",
+    result: "You look inactive.",
+  },
+  {
+    n: "03",
+    title: "A promoter Googles your name.",
+    body: "They want to see who you are, what you've released and where you've played.",
+    result: "They move on to the next artist.",
+  },
+]
 
+function ProblemSection() {
   return (
     <section style={{ background: "#090C11", padding: "96px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="mx-auto max-w-4xl px-6">
+
+        {/* Eyebrow + headline */}
         <Reveal>
-          <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#52525B" }}>
-            The current reality
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
+            Reality check
           </p>
         </Reveal>
         <Reveal delay={60}>
-          <h2 className="mb-14 text-[clamp(28px,4vw,48px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
-            What a booker finds when they Google you.
+          <h2 className="mb-4 text-[clamp(30px,4.5vw,54px)] font-bold leading-[1.08] tracking-[-0.03em] text-[#F5F5F3]">
+            A booking opportunity arrives.
+            <br />
+            <span style={{ color: "#71717A" }}>Are you ready for it?</span>
           </h2>
         </Reveal>
+        <Reveal delay={120}>
+          <p className="mb-16 max-w-xl text-[16px] leading-[1.75]" style={{ color: "#52525B" }}>
+            Every year, promoters, labels and festivals evaluate hundreds of artists.
+            Most decisions happen in seconds.
+          </p>
+        </Reveal>
 
-        <div className="mb-12 grid grid-cols-3 gap-3 sm:grid-cols-3 lg:grid-cols-9">
-          {tiles.map((t, i) => (
-            <Reveal key={t.name} delay={i * 35} className="lg:col-span-1">
+        {/* Three scenario cards */}
+        <div className="space-y-4">
+          {scenarios.map((s, i) => (
+            <Reveal key={s.n} delay={180 + i * 80}>
               <div
-                className="rounded-xl p-4 transition-colors duration-200"
+                className="group relative overflow-hidden rounded-2xl px-7 py-6 transition-colors duration-300"
                 style={{
-                  border: "1px solid rgba(255,255,255,0.04)",
-                  background: "rgba(255,255,255,0.015)",
+                  background: "rgba(255,255,255,0.018)",
+                  border: "1px solid rgba(255,255,255,0.05)",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)" }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)" }}
               >
-                <p className="text-[12px] font-medium" style={{ color: "rgba(245,245,243,0.30)" }}>{t.name}</p>
-                <p className="mt-1 font-mono text-[9px]" style={{ color: "#52525B" }}>{t.note}</p>
+                {/* Subtle left accent line */}
+                <div
+                  className="pointer-events-none absolute inset-y-0 left-0 w-px"
+                  style={{ background: "linear-gradient(180deg, transparent, rgba(109,93,252,0.35), transparent)" }}
+                />
+
+                <div className="flex items-start gap-6 sm:gap-10">
+                  {/* Card number */}
+                  <span
+                    className="shrink-0 font-mono text-[11px] font-bold uppercase tracking-[0.18em] pt-0.5"
+                    style={{ color: "rgba(109,93,252,0.40)" }}
+                  >
+                    {s.n}
+                  </span>
+
+                  <div className="flex-1 sm:flex sm:items-start sm:gap-10">
+                    {/* Scenario */}
+                    <div className="flex-1">
+                      <p className="text-[17px] font-semibold leading-[1.35] tracking-[-0.01em] text-[#F5F5F3] sm:text-[19px]">
+                        {s.title}
+                      </p>
+                      <p className="mt-2 text-[14px] leading-[1.7]" style={{ color: "#71717A" }}>
+                        {s.body}
+                      </p>
+                    </div>
+
+                    {/* Result */}
+                    <div
+                      className="mt-4 shrink-0 rounded-xl px-4 py-3 sm:mt-0 sm:w-52"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+                    >
+                      <p className="font-mono text-[9px] uppercase tracking-[0.18em]" style={{ color: "#3F3F46" }}>
+                        Result
+                      </p>
+                      <p className="mt-1.5 text-[14px] font-semibold" style={{ color: "rgba(245,245,243,0.55)" }}>
+                        {s.result}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Reveal>
           ))}
         </div>
 
-        {/* Pivot */}
-        <Reveal delay={360}>
-          <div className="flex items-center gap-5 py-8">
-            <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.06)" }} />
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#52525B" }}>
-              DJHQ replaces all of it
-            </span>
-            <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.06)" }} />
-          </div>
-        </Reveal>
-
-        <Reveal delay={420}>
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-[16px] leading-[1.8]" style={{ color: "#71717A" }}>
-              A festival booker receives 200 artist inquiries a year. They can tell in four seconds
-              whether an artist is professional. Expired Dropbox links, outdated PDFs and missing
-              photos tell them everything — about you.
+        {/* Resolution statement */}
+        <Reveal delay={540}>
+          <div className="mt-16 text-center">
+            <p
+              className="mb-3 text-[clamp(22px,3.5vw,38px)] font-bold tracking-[-0.02em] text-[#F5F5F3]"
+            >
+              DJHQ makes sure that never happens.
+            </p>
+            <p className="mx-auto max-w-lg text-[15px] leading-[1.75]" style={{ color: "#71717A" }}>
+              One professional destination for your bio, shows, releases,
+              press kit and booking information.
             </p>
           </div>
         </Reveal>
