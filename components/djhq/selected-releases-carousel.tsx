@@ -6,6 +6,7 @@ import { Music2, Play } from "lucide-react"
 import type { Release } from "@/types/djhq"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
 import { ReleaseListenPanel } from "@/components/release-listen-panel"
+import { resolveSafeHref } from "@/lib/safe-url"
 
 // Only these three format types earn a badge; others add noise
 const PRIMARY_RELEASE_TYPE_BADGES: Record<string, string> = {
@@ -159,7 +160,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                 {/* Hover overlay → primary platform URL */}
                 <a
-                  href={release.platformUrl}
+                  href={resolveSafeHref(release.platformUrl) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Listen to ${release.title}`}

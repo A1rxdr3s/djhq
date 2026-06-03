@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { Music2 } from "lucide-react"
 import type { Playlist } from "@/types/djhq"
+import { resolveSafeHref } from "@/lib/safe-url"
 
 const SOURCE_LABELS: Record<string, string> = {
   spotify: "Spotify Playlist",
@@ -15,7 +16,7 @@ export function SelectedTracksSection({ playlist }: Props) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02]">
       <a
-        href={playlist.url}
+        href={resolveSafeHref(playlist.url) ?? "#"}
         target="_blank"
         rel="noopener noreferrer"
         className="group flex items-center gap-5 p-5 transition-colors duration-150 hover:bg-white/[0.015] sm:gap-6 sm:p-6"

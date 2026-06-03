@@ -698,6 +698,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const _isCustomDomain = Boolean(_reqHost) && _reqHost !== _appHost && !_reqHost.startsWith("localhost")
   const pressKitHref = artist.pressKit.publicUrl?.trim()
     || (_isCustomDomain ? "/presskit" : `/${artist.handle}/presskit`)
+  const safePressKitHref = resolveSafeHref(pressKitHref)
   const accentThemeConfig = getAccentTheme(isPro ? artist.accentTheme : "matrix")
   const linkPriority: SocialPlatform[] = ["beatport", "spotify", "soundcloud", "youtube", "instagram"]
   const prioritizedLinks = artist.socialLinks.filter((link) => link.url.trim().length > 0).sort((a, b) => {
@@ -862,13 +863,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           <BookingInquiryModal
                             artistHandle={artist.handle}
                             artistName={artist.artistName}
-                            pressKitUrl={hasPressKit ? pressKitHref : undefined}
+                            pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
                           />
                         </div>
                       ) : null}
-                      {hasPressKit ? (
+                      {hasPressKit && safePressKitHref ? (
                         <a
-                          href={pressKitHref}
+                          href={safePressKitHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex h-10 w-fit items-center gap-2.5 rounded-full border border-accent/50 bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/80 hover:bg-accent/10 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_18%,transparent)] sm:h-11"
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -906,7 +909,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Compact Featured Release */}
             {featuredRelease && (
               <a
-                href={featuredRelease.platformUrl}
+                href={resolveSafeHref(featuredRelease.platformUrl) ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5 transition-colors duration-200 active:bg-white/[0.04]"
@@ -972,7 +975,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Compact Featured Set */}
             {featuredSet && (
               <a
-                href={featuredSet.platformUrl}
+                href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5 transition-colors duration-200 active:bg-white/[0.04]"
@@ -1084,7 +1087,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   asChild
                   className="mt-4 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-4 sm:w-auto lg:mt-3.5"
                 >
-                  <a href={featuredRelease.platformUrl}>
+                  <a href={resolveSafeHref(featuredRelease.platformUrl) ?? "#"} target="_blank" rel="noopener noreferrer">
                     Listen / Buy
                     <ExternalLink className="h-4 w-4" />
                   </a>
@@ -1161,7 +1164,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               {featuredVideo ? (
                 <div className="flex flex-col">
                   <a
-                    href={featuredVideo.platformUrl}
+                    href={resolveSafeHref(featuredVideo.platformUrl) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group block p-2 sm:p-2.5"
@@ -1220,6 +1223,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <p className="pb-1 pt-1 text-[8px] font-semibold uppercase tracking-[0.28em] text-foreground/18">Archive</p>
                       <div className="space-y-px">
                         {secondaryVideos.map((video, index) => {
+                          const videoHref = resolveSafeHref(video.platformUrl)
+                          if (!videoHref) return null
                           const { displayTitle } = getVideoDisplayInfo(video, artist.artistName)
                           const metaParts = [
                             video.venue?.trim() || null,
@@ -1228,7 +1233,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           return (
                             <a
                               key={video.id}
-                              href={video.platformUrl}
+                              href={videoHref}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="group flex items-center gap-1.5 rounded-md px-1.5 py-[5px] transition-colors duration-150 hover:bg-white/[0.04]"
@@ -1281,7 +1286,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   )}
                 >
                   <a
-                    href={featuredSet.platformUrl}
+                    href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group block p-2 sm:p-2.5"
@@ -1342,12 +1347,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         </p>
                         <div className="space-y-px">
                           {recentSets.map((set, index) => {
+                            const setHref = resolveSafeHref(set.platformUrl)
+                            if (!setHref) return null
                             const showTitle = set.event?.trim() || set.venue?.trim() || cleanDjSetTitle(set.title, artist.artistName)
                             const showMeta = formatPerformanceMetadata(set.event, set.venue, formatReleaseDate(set.setDate ?? "")?.replace(",", "") ?? null)
                             return (
                               <a
                                 key={set.id}
-                                href={set.platformUrl}
+                                href={setHref}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="group flex items-center gap-1.5 rounded-md px-1 py-[3px] transition-colors duration-150 hover:bg-white/[0.04]"

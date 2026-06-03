@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { resolveSafeHref } from "@/lib/safe-url"
 
 type Props = {
   artistName: string
@@ -122,7 +123,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
           </p>
           {hasBooking && (
             <a
-              href={`mailto:${bookingEmail}`}
+              href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
               className="mt-2.5 block text-[11px] text-white/35 transition-colors duration-150 hover:text-accent"
             >
               {bookingEmail}
@@ -150,7 +151,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
                   Booking
                 </p>
                 <a
-                  href={`mailto:${bookingEmail}`}
+                  href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
                   className="mt-1 block text-[11px] text-white/38 transition-colors duration-150 hover:text-accent"
                 >
                   {bookingEmail}

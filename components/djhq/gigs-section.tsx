@@ -5,6 +5,7 @@ import { SectionHeader } from "@/components/djhq/section-header"
 import { motion, AnimatePresence } from "framer-motion"
 import { Instagram, Ticket } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { resolveSafeHref } from "@/lib/safe-url"
 import type { Gig, GigEventStatus } from "@/types/djhq"
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -150,9 +151,9 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
       {/* Icon action buttons */}
       {(showTicket || !!gig.instagramUrl) && (
         <div className="flex shrink-0 items-center gap-2.5">
-          {showTicket && gig.ticketUrl && (
+          {showTicket && gig.ticketUrl && resolveSafeHref(gig.ticketUrl) && (
             <a
-              href={gig.ticketUrl}
+              href={resolveSafeHref(gig.ticketUrl)!}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Tickets"
@@ -161,9 +162,9 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
               <Ticket className="h-5 w-5" />
             </a>
           )}
-          {gig.instagramUrl && (
+          {gig.instagramUrl && resolveSafeHref(gig.instagramUrl) && (
             <a
-              href={gig.instagramUrl}
+              href={resolveSafeHref(gig.instagramUrl)!}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
