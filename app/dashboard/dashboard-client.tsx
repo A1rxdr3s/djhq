@@ -1641,7 +1641,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setGalleryImageFile(null)
       setGalleryImageAltText("")
       setGalleryImageSmallWarning("")
-      setSaveMessage("Gallery image uploaded.")
+      setSaveMessage("✓ Photo uploaded.")
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to upload gallery image."
       setSaveMessage(message)
@@ -4590,16 +4590,30 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       }
     }
 
+    const photoCount = galleryImages.length
+
     return (
       <div className="space-y-5">
 
-        {/* Header */}
+        {/* Header row */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-foreground">Gallery</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Images used across your public profile and press materials.
+            <h2 className="text-base font-semibold text-foreground">
+              Gallery
+              {photoCount > 0 && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground/40">
+                  · {photoCount} {photoCount === 1 ? "photo" : "photos"}
+                </span>
+              )}
+            </h2>
+            <p className="mt-0.5 text-sm text-muted-foreground/52">
+              Manage photos used across your DJHQ profile, press kit and artist pages.
             </p>
+            {photoCount > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground/30">
+                Drag photos to reorder. The first photos appear first on your public profile.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -4612,16 +4626,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </button>
         </div>
 
-        {/* Summary */}
-        {galleryImages.length > 0 && (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/35">
-            Photos &nbsp;·&nbsp; {galleryImages.length}
-          </p>
-        )}
-
-        {/* Photo grid — flat, equal, all images the same */}
-        {galleryImages.length > 0 && (
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        {/* Photo grid */}
+        {photoCount > 0 && (
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
             {galleryImages.map((image, index) => {
               const isDraggingThis = galleryDragIndex === index
               const isDragTarget   = galleryDragOverIndex === index && galleryDragIndex !== index
@@ -4636,8 +4643,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   onDrop={(e) => { e.preventDefault(); if (galleryDragIndex !== null) handleGalleryDrop(galleryDragIndex, index) }}
                   onDragEnd={() => { setGalleryDragIndex(null); setGalleryDragOverIndex(null) }}
                   className={`group relative aspect-square cursor-grab overflow-hidden rounded-lg border select-none transition-all duration-150 active:cursor-grabbing ${
-                    isDraggingThis ? "scale-95 opacity-40 border-white/[0.06]" :
-                    isDragTarget   ? "scale-[1.03] border-accent/40 ring-1 ring-accent/25" :
+                    isDraggingThis ? "scale-95 opacity-40 border-white/[0.04]" :
+                    isDragTarget   ? "scale-[1.04] border-accent/40 ring-1 ring-accent/25" :
                                      "border-white/[0.06]"
                   }`}
                 >
@@ -4645,19 +4652,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     src={image.imageUrl}
                     alt={image.altText}
                     fill
-                    sizes="(min-width: 1024px) 140px, (min-width: 768px) 180px, (min-width: 640px) 240px, 50vw"
+                    sizes="(min-width: 1024px) 112px, (min-width: 768px) 140px, (min-width: 640px) 170px, 33vw"
                     className="pointer-events-none object-cover"
                   />
 
-                  {/* Hover: delete only */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 backdrop-blur-[2px] transition-opacity duration-150 group-hover:opacity-100">
+                  {/* Hover overlay: Preview + Delete */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/55 opacity-0 backdrop-blur-[2px] transition-opacity duration-150 group-hover:opacity-100">
+                    <a
+                      href={image.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex h-6 items-center gap-1 rounded-md bg-white/12 px-2.5 text-[10px] font-medium text-white/85 hover:bg-white/22 hover:text-white"
+                    >
+                      <ExternalLink className="h-2.5 w-2.5" />
+                      View
+                    </a>
                     <button
                       type="button"
                       disabled={deletingGalleryImageId === image.id || busy}
                       onClick={(e) => { e.stopPropagation(); handleDeleteGalleryImage(image.id) }}
-                      className="inline-flex h-7 items-center gap-1 rounded-md bg-white/10 px-2.5 text-[11px] font-medium text-white/80 hover:bg-destructive/35 hover:text-destructive disabled:opacity-40"
+                      className="inline-flex h-6 items-center gap-1 rounded-md bg-white/10 px-2.5 text-[10px] font-medium text-white/70 hover:bg-destructive/35 hover:text-destructive disabled:opacity-40"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-2.5 w-2.5" />
                       Delete
                     </button>
                   </div>
@@ -4667,7 +4684,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         )}
 
-        {/* Upload confirmation (shown when file selected) */}
+        {/* Empty state */}
+        {photoCount === 0 && !galleryImageFile && (
+          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+            <p className="text-sm font-medium text-foreground/55">No photos uploaded yet.</p>
+            <p className="mt-1.5 max-w-xs mx-auto text-[12px] leading-[1.6] text-muted-foreground/35">
+              Add artist photos, live shots and press images for your profile and press kit.
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => galleryFileInputRef.current?.click()}
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground disabled:opacity-40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Upload Photos
+            </button>
+            <p className="mt-4 text-[10px] text-muted-foreground/25">
+              Recommended: 6–12 high-quality photos.
+            </p>
+          </div>
+        )}
+
+        {/* Upload confirmation */}
         {galleryImageFile && (
           <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
             <div className="mb-3 flex items-center justify-between">
@@ -4681,7 +4720,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </button>
             </div>
             {galleryImageSmallWarning && (
-              <p className="mb-2 text-xs text-amber-400/75">{galleryImageSmallWarning}</p>
+              <p className="mb-2 text-[11px] text-amber-400/75">{galleryImageSmallWarning}</p>
             )}
             <div className="mb-3 space-y-1.5">
               <label htmlFor="galleryImageAltText" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
@@ -4706,19 +4745,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         )}
 
-        {/* Drop zone — shown when no file selected and no photos yet */}
-        {!galleryImageFile && galleryImages.length === 0 && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => galleryFileInputRef.current?.click()}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.08] bg-white/[0.015] py-10 text-sm font-medium text-muted-foreground/38 transition-all duration-150 hover:border-white/[0.16] hover:bg-white/[0.025] hover:text-muted-foreground/65 disabled:opacity-30"
-          >
-            <Plus className="h-4 w-4" />
-            Upload your first photo
-          </button>
-        )}
-
         {galleryFileError && (
           <p className="text-xs text-destructive/80">{galleryFileError}</p>
         )}
@@ -4732,9 +4758,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           onChange={handleFileChange}
         />
 
-        <p className="text-[10px] text-muted-foreground/25">
-          JPG, PNG, WEBP · up to 20 MB · compressed to max 3000 × 3000 px · drag to reorder
-        </p>
+        {photoCount > 0 && (
+          <p className="text-[10px] text-muted-foreground/22">
+            JPG, PNG, WEBP · up to 20 MB · Recommended: 6–12 high-quality photos.
+          </p>
+        )}
 
       </div>
     )
