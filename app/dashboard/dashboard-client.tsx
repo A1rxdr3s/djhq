@@ -5401,12 +5401,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveSection("home")}
+            className="flex shrink-0 items-center gap-2"
+          >
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent">
               <span className="text-xs font-bold text-accent-foreground">DJ</span>
             </div>
             <span className="text-sm font-bold tracking-tight text-foreground">DJHQ</span>
-          </Link>
+          </button>
           <span className="select-none text-border">/</span>
           <p className="min-w-0 truncate text-sm text-muted-foreground">{artist.artistName}</p>
           <div className="flex-1" />
