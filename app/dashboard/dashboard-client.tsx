@@ -175,6 +175,7 @@ type ReleaseFormState = {
 type GigFormState = {
   id: string
   venue: string
+  clubVenue?: string
   date: string
   city: string
   country: string
@@ -461,6 +462,7 @@ function getGigFormState(artist: Artist): GigFormState[] {
     artist.upcomingGigs.map((gig) => ({
       id: gig.id,
       venue: gig.venue,
+      clubVenue: gig.clubVenue ?? undefined,
       date: toDateInputValue(gig.date),
       city: gig.city,
       country: gig.country,
@@ -3819,16 +3821,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {upcoming.map((gig) => {
                 const dp       = formatDateShort(gig.date)
                 const location = [gig.city, gig.country].filter(Boolean).join(", ")
+                const subline  = [gig.clubVenue, location].filter(Boolean).join(" · ")
                 const isOpen   = expandedGigId === gig.id
 
                 return (
                   <div key={gig.id}>
                     {/* Premium horizontal card — boarding pass style */}
                     <div className={cn(
-                      "group flex overflow-hidden rounded-xl border transition-all duration-150",
+                      "group flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
                       isOpen
                         ? "border-accent/28 ring-1 ring-accent/12"
-                        : "border-white/[0.06] hover:border-white/[0.11]",
+                        : "border-white/[0.06] hover:-translate-y-px hover:border-white/[0.14] hover:[box-shadow:0_4px_16px_rgba(0,0,0,0.30)]",
                     )}>
                       {/* Date block */}
                       {dp ? (
@@ -3855,8 +3858,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <p className="truncate text-sm font-semibold text-foreground/88">
                           {gig.venue || <span className="text-muted-foreground/30">Untitled</span>}
                         </p>
-                        {location && (
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground/42">{location}</p>
+                        {subline && (
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground/42">{subline}</p>
                         )}
                         {/* Payment status */}
                         {gig.paymentStatus && (
@@ -3915,7 +3918,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="flex w-full items-center gap-3 text-left"
             >
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/32">
-                History
+                Past Shows
               </span>
               <span className="tabular-nums text-[10px] text-muted-foreground/22">{past.length}</span>
               <span className="h-px flex-1 bg-white/[0.04]" />
@@ -3939,35 +3942,41 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       const yearGigs = pastByYear.get(year)!
                       return (
                         <div key={year}>
-                          {/* Year header */}
-                          <div className="mb-2 flex items-center gap-3">
-                            <span className="shrink-0 text-xs font-bold text-muted-foreground/38">{year}</span>
-                            <span className="h-px flex-1 bg-white/[0.04]" />
-                            <span className="text-[10px] text-muted-foreground/22">{yearGigs.length}</span>
+                          {/* Year header — intentional, readable */}
+                          <div className="mb-2.5 flex items-center gap-2.5">
+                            <span className="h-px w-3 shrink-0 bg-white/[0.06]" />
+                            <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/42">
+                              {year}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/22">
+                              · {yearGigs.length} show{yearGigs.length !== 1 ? "s" : ""}
+                            </span>
+                            <span className="h-px flex-1 bg-white/[0.06]" />
                           </div>
 
                           {/* Past show archived cards — same structure as Upcoming, reduced emphasis */}
                           <div className="space-y-1.5">
                             {yearGigs.map((gig) => {
-                              const isOpen    = expandedGigId === gig.id
-                              const location  = [gig.city, gig.country].filter(Boolean).join(", ")
-                              const dp        = formatDateShort(gig.date)
+                              const isOpen   = expandedGigId === gig.id
+                              const location = [gig.city, gig.country].filter(Boolean).join(", ")
+                              const subline  = [gig.clubVenue, location].filter(Boolean).join(" · ")
+                              const dp       = formatDateShort(gig.date)
 
                               return (
                                 <div key={gig.id}>
                                   <div className={cn(
-                                    "flex overflow-hidden rounded-xl border transition-all duration-150",
+                                    "flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
                                     isOpen
                                       ? "border-white/[0.10]"
-                                      : "border-white/[0.04] hover:border-white/[0.08]",
+                                      : "border-white/[0.04] hover:-translate-y-px hover:border-white/[0.09] hover:[box-shadow:0_2px_12px_rgba(0,0,0,0.22)]",
                                   )}>
                                     {/* Date block — muted, no tint */}
                                     {dp ? (
                                       <div className="flex w-[60px] shrink-0 flex-col items-center justify-center px-2 py-3 text-center">
-                                        <span className="text-[1.25rem] font-black leading-none tabular-nums text-foreground/40">
+                                        <span className="text-[1.25rem] font-black leading-none tabular-nums text-foreground/38">
                                           {dp.day}
                                         </span>
-                                        <span className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/28">
+                                        <span className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/25">
                                           {dp.mon}
                                         </span>
                                       </div>
@@ -3982,17 +3991,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                                     {/* Event content */}
                                     <div className="min-w-0 flex-1 px-3 py-2.5">
-                                      <p className="truncate text-xs font-medium text-foreground/55">
-                                        {gig.venue || <span className="text-muted-foreground/22">—</span>}
+                                      <p className="truncate text-xs font-medium text-foreground/52">
+                                        {gig.venue || <span className="text-muted-foreground/20">—</span>}
                                       </p>
-                                      {location && (
-                                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/28">{location}</p>
+                                      {subline && (
+                                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/26">{subline}</p>
                                       )}
+                                      {/* Status — very muted for past shows */}
                                       {gig.paymentStatus && (
-                                        <span className={cn(
-                                          "mt-1 inline-flex rounded-full px-1.5 py-px text-[8px] font-bold uppercase tracking-wider",
-                                          PAY_CLASS[gig.paymentStatus] ?? "bg-white/[0.04] text-muted-foreground/30",
-                                        )}>
+                                        <span className="mt-1 inline-flex rounded-full bg-white/[0.04] px-1.5 py-px text-[8px] font-medium uppercase tracking-wider text-muted-foreground/30">
                                           {gig.paymentStatus}
                                         </span>
                                       )}
@@ -4006,8 +4013,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                         className={cn(
                                           "flex h-7 items-center rounded-md px-2 text-[10px] font-medium transition-colors duration-150",
                                           isOpen
-                                            ? "bg-white/[0.06] text-foreground/55"
-                                            : "text-muted-foreground/25 hover:text-foreground/45",
+                                            ? "bg-white/[0.06] text-foreground/52"
+                                            : "text-muted-foreground/22 hover:text-foreground/42",
                                         )}
                                       >
                                         {isOpen ? "Close" : "Edit"}
