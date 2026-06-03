@@ -312,7 +312,7 @@ function ProfileMockup() {
               className="flex h-10 cursor-default items-center rounded-full px-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-white"
               style={{ background: "#6D5DFC" }}
             >
-              Bookings
+              Booking
             </span>
             <span
               className="flex h-10 cursor-default items-center gap-2 rounded-full px-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-white"

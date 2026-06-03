@@ -34,17 +34,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  // Required field validation
+  // Required field validation — phone, preferredContact, country are now optional
   const missing =
     !artistHandle?.trim() ||
     !name?.trim() ||
     !email?.trim() ||
-    !phone?.trim() ||
-    !preferredContact?.trim() ||
     !eventDate?.trim() ||
     !city?.trim() ||
-    !country?.trim() ||
-    !company?.trim()
+    !company?.trim() ||
+    !message?.trim()
 
   if (missing) {
     return NextResponse.json({ error: "All required fields must be filled." }, { status: 400 })
@@ -58,19 +56,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid event date." }, { status: 400 })
   }
 
-  if (!["WhatsApp", "Email"].includes(preferredContact!)) {
-    return NextResponse.json({ error: "Invalid preferred contact option." }, { status: 400 })
-  }
-
   // Length guards
   if (
     name!.length > 100 ||
     email!.length > 200 ||
-    phone!.length > 30 ||
+    (phone?.trim() && phone.length > 30) ||
     city!.length > 100 ||
-    country!.length > 100 ||
     company!.length > 200 ||
-    (message && message.length > 2000)
+    message!.length > 2000
   ) {
     return NextResponse.json({ error: "One or more fields exceed maximum length." }, { status: 400 })
   }
@@ -130,24 +123,23 @@ export async function POST(request: Request) {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.app").replace(/\/$/, "")
   const artistProfileUrl = `${appUrl}/${artistRow.handle}`
 
-  const subject = `Booking inquiry for ${artistRow.artist_name} — ${formattedDate} — ${city}, ${country}`
+  const subject = `Booking inquiry — ${artistRow.artist_name} — ${formattedDate} — ${city}`
 
+  const phoneDisplay = phone?.trim() || "Not provided"
   const emailBody = [
     `Artist: ${artistRow.artist_name}`,
     ``,
     `Full name: ${name}`,
     `Email: ${email}`,
-    `Phone: ${phone}`,
-    `Preferred contact: ${preferredContact}`,
+    `Phone: ${phoneDisplay}`,
     ``,
     `Event date: ${formattedDate}`,
-    `City / Country: ${city}, ${country}`,
+    `City: ${city}`,
     ``,
-    `Club / Promoter / Production Company: ${company}`,
-    `Expected Attendance: ${attendance?.trim() || "Not specified"}`,
+    `Venue / Festival / Promoter: ${company}`,
     ``,
-    `Message:`,
-    message?.trim() || "No message provided.",
+    `Event details:`,
+    message!.trim(),
     ``,
     `---`,
     `Source: ${artistProfileUrl}`,

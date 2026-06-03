@@ -856,7 +856,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     {artist.shortBio}
                   </p>
 
-                  {/* CTA row — BOOKINGS and/or PRESS KIT; hidden if neither is configured */}
+                  {/* CTA row — BOOKING and/or PRESS KIT; hidden if neither is configured */}
                   {(artist.bookingInfo.email.trim() || hasPressKit) ? (
                     <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-5">
                       {artist.bookingInfo.email.trim() ? (

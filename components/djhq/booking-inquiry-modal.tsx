@@ -363,47 +363,28 @@ type BookingInquiryModalProps = {
   pressKitUrl?: string
 }
 
-type PreferredContact = "WhatsApp" | "Email"
-
 type FormState = {
   name: string
   email: string
   countryIso: string // ISO 2-letter code — drives CountrySelect
   phone: string
-  preferredContact: PreferredContact
   eventDate: string
   city: string
-  country: string
   company: string
-  attendance: string
   message: string
   website: string // honeypot
 }
 
 type ModalState = "idle" | "submitting" | "success" | "error"
 
-const ATTENDANCE_OPTIONS = [
-  { value: "", label: "Select a range" },
-  { value: "Under 100", label: "Under 100" },
-  { value: "100–300", label: "100–300" },
-  { value: "300–500", label: "300–500" },
-  { value: "500–1,000", label: "500–1,000" },
-  { value: "1,000–3,000", label: "1,000–3,000" },
-  { value: "3,000–5,000", label: "3,000–5,000" },
-  { value: "5,000+", label: "5,000+" },
-]
-
 const INITIAL_FORM: FormState = {
   name: "",
   email: "",
   countryIso: "CL", // default: Chile
   phone: "",
-  preferredContact: "WhatsApp",
   eventDate: "",
   city: "",
-  country: "",
   company: "",
-  attendance: "",
   message: "",
   website: "",
 }
@@ -425,6 +406,11 @@ export function BookingInquiryModal({
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   const [modalState, setModalState] = useState<ModalState>("idle")
   const [errorMessage, setErrorMessage] = useState("")
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) setTimeout(() => nameInputRef.current?.focus(), 80)
+  }, [open])
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -458,12 +444,12 @@ export function BookingInquiryModal({
           name: form.name,
           email: form.email,
           phone: fullPhone,
-          preferredContact: form.preferredContact,
+          preferredContact: "Email",
           eventDate: form.eventDate,
           city: form.city,
-          country: form.country,
+          country: "",
           company: form.company,
-          attendance: form.attendance,
+          attendance: "",
           message: form.message,
           website: form.website,
         }),
@@ -494,7 +480,7 @@ export function BookingInquiryModal({
         className="flex h-11 w-fit items-center gap-2.5 rounded-full bg-accent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-accent-foreground shadow-md shadow-accent/15 transition-colors hover:bg-accent/90 sm:h-12"
       >
         <Send className="h-3.5 w-3.5" />
-        Bookings
+        Booking
       </button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -516,13 +502,10 @@ export function BookingInquiryModal({
               <>
                 <DialogHeader className="mb-7 text-left">
                   <DialogTitle className="text-base font-semibold uppercase tracking-[0.10em] text-foreground/85">
-                    Booking Inquiry
+                    Booking Contact
                   </DialogTitle>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/55">
-                    Bring {artistName} to your venue, club, festival or private event.
-                  </p>
-                  <p className="mt-2 text-[11px] text-muted-foreground/35">
-                    Typical response time: 24–48 hours
+                    Bring {artistName} to your club, festival or event.
                   </p>
                 </DialogHeader>
 
@@ -539,10 +522,11 @@ export function BookingInquiryModal({
                     />
                   </div>
 
-                  {/* Row 1: Name + Email */}
+                  {/* Row 1: Full Name | Email */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Field label="Full Name" required>
                       <Input
+                        ref={nameInputRef}
                         value={form.name}
                         onChange={(e) => update("name", e.target.value)}
                         placeholder="Your full name"
@@ -566,9 +550,9 @@ export function BookingInquiryModal({
                     </Field>
                   </div>
 
-                  {/* Row 2: Phone + Preferred Contact */}
+                  {/* Row 2: Phone | Event Date */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="Phone Number" required>
+                    <Field label="Phone">
                       <div className="flex gap-2">
                         <CountrySelect
                           value={form.countryIso}
@@ -580,37 +564,12 @@ export function BookingInquiryModal({
                           value={form.phone}
                           onChange={(e) => update("phone", e.target.value)}
                           placeholder="9 1234 5678"
-                          required
                           maxLength={20}
                           disabled={isSubmitting}
                           className={cn(inputClass, "flex-1 min-w-0")}
                         />
                       </div>
                     </Field>
-                    <Field label="Preferred Contact" required>
-                      <div className="flex h-11 items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] p-1">
-                        {(["WhatsApp", "Email"] as const).map((opt) => (
-                          <button
-                            key={opt}
-                            type="button"
-                            onClick={() => update("preferredContact", opt)}
-                            disabled={isSubmitting}
-                            className={cn(
-                              "flex-1 h-full rounded-md py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                              form.preferredContact === opt
-                                ? "bg-white/[0.08] text-foreground/80"
-                                : "text-muted-foreground/40 hover:text-muted-foreground/60",
-                            )}
-                          >
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    </Field>
-                  </div>
-
-                  {/* Row 3: Date + City + Country */}
-                  <div className="grid grid-cols-3 gap-3">
                     <Field label="Event Date" required>
                       <DatePicker
                         value={form.eventDate}
@@ -620,72 +579,42 @@ export function BookingInquiryModal({
                         align="start"
                       />
                     </Field>
+                  </div>
+
+                  {/* Row 3: City | Venue / Festival / Promoter */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Field label="City" required>
                       <Input
                         value={form.city}
                         onChange={(e) => update("city", e.target.value)}
-                        placeholder="Santiago"
+                        placeholder="Berlin"
                         required
                         maxLength={100}
                         disabled={isSubmitting}
                         className={inputClass}
                       />
                     </Field>
-                    <Field label="Country" required>
+                    <Field label="Venue / Festival / Promoter" required>
                       <Input
-                        value={form.country}
-                        onChange={(e) => update("country", e.target.value)}
-                        placeholder="Chile"
+                        value={form.company}
+                        onChange={(e) => update("company", e.target.value)}
+                        placeholder="Venue, festival or promoter name"
                         required
-                        maxLength={100}
+                        maxLength={200}
                         disabled={isSubmitting}
                         className={inputClass}
                       />
                     </Field>
                   </div>
 
-                  {/* Row 4: Company */}
-                  <Field label="Club / Promoter / Production Company" required>
-                    <Input
-                      value={form.company}
-                      onChange={(e) => update("company", e.target.value)}
-                      placeholder="Company or event name"
-                      required
-                      maxLength={200}
-                      disabled={isSubmitting}
-                      className={inputClass}
-                    />
-                  </Field>
-
-                  {/* Row 5: Attendance */}
-                  <Field label="Expected Attendance">
-                    <div className="relative">
-                      <select
-                        value={form.attendance}
-                        onChange={(e) => update("attendance", e.target.value)}
-                        disabled={isSubmitting}
-                        className={cn(
-                          "h-11 w-full appearance-none rounded-md border border-white/[0.08] bg-white/[0.03] px-3 pr-9 text-[13px] transition-colors duration-150 focus:border-accent/40 focus:outline-none",
-                          form.attendance ? "text-foreground" : "text-muted-foreground/40",
-                        )}
-                      >
-                        {ATTENDANCE_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value} className="bg-[#0c0c0c] text-foreground">
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/40" />
-                    </div>
-                  </Field>
-
-                  {/* Row 6: Message */}
-                  <Field label="Message / Comments">
+                  {/* Row 4: Event Details (full width) */}
+                  <Field label="Event Details" required>
                     <Textarea
                       value={form.message}
                       onChange={(e) => update("message", e.target.value)}
-                      placeholder="Lineup, technical requirements, or any other relevant details."
-                      rows={3}
+                      placeholder="Tell us about your event, venue, lineup and any other relevant details."
+                      rows={4}
+                      required
                       maxLength={2000}
                       disabled={isSubmitting}
                       className="resize-none border-white/[0.08] bg-white/[0.03] placeholder:text-muted-foreground/30 focus-visible:border-accent/40 focus-visible:ring-0 transition-colors duration-150"
@@ -698,7 +627,7 @@ export function BookingInquiryModal({
 
                   {/* Trust line */}
                   <p className="text-[10px] leading-relaxed text-muted-foreground/28">
-                    This information helps us evaluate availability, routing, venue requirements and the best way to contact you regarding your event.
+                    This information helps us evaluate availability and event requirements.
                   </p>
 
                   <div>
@@ -710,16 +639,19 @@ export function BookingInquiryModal({
                       {isSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Sending Inquiry...
+                          Sending...
                         </>
                       ) : (
                         <>
                           <Send className="h-3.5 w-3.5" />
-                          Send Inquiry
+                          Send
                         </>
                       )}
                     </button>
                   </div>
+                  <p className="text-center text-[10px] text-muted-foreground/25">
+                    Typical response time: 24–48 hours
+                  </p>
                 </form>
               </>
             )}
@@ -750,10 +682,10 @@ function SuccessScreen({
       </div>
       <div className="space-y-1.5">
         <p className="text-base font-semibold uppercase tracking-[0.08em] text-foreground/85">
-          Inquiry Sent Successfully
+          Request Sent
         </p>
         <p className="max-w-[300px] text-[13px] leading-relaxed text-muted-foreground/60">
-          Thank you for reaching out. The {artistName} team has received your request and will review the details shortly.
+          We&apos;ll be in touch soon.
         </p>
         <p className="text-[11px] text-muted-foreground/35">
           Typical response time is 24–48 hours.
