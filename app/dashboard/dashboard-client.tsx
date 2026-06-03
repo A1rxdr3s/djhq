@@ -1881,11 +1881,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const completionPct  = Math.round((completionDone / completionChecks.length) * 100)
     const isComplete     = completionPct === 100
 
-    // ── Avatar ─────────────────────────────────────────────────────────
-    const heroThumb = artist.avatarUrl?.trim() || artist.heroImageUrl?.trim()
+    // ── Avatar: avatarUrl → heroImageUrl → generated initials ──────────
+    const heroThumb = artist.avatarUrl?.trim() || artist.heroImageUrl?.trim() || null
     const initials  = artist.artistName
       .split(/[\s:_-]+/).filter(Boolean).slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? "").join("")
+      .map((w) => w[0]?.toUpperCase() ?? "").join("") || "?"
 
     // ── Dates ──────────────────────────────────────────────────────────
     const lastUpdated = new Date(artist.updatedAt).toLocaleDateString("en-US", {
@@ -1912,13 +1912,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="rounded-xl border border-white/[0.06] bg-card/40 px-4 py-3.5">
           <div className="flex items-center gap-3.5">
 
-            {/* Avatar — avatarUrl → heroImageUrl → initials */}
+            {/* Avatar: avatarUrl → heroImageUrl → generated initials */}
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-secondary ring-1 ring-white/[0.08]">
               {heroThumb ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={heroThumb} alt={artist.artistName} className="h-full w-full object-cover object-top brightness-90" />
+                <img
+                  src={heroThumb}
+                  alt={artist.artistName}
+                  className="h-full w-full object-cover object-[center_15%] brightness-90"
+                />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground/55">
+                <div className="flex h-full w-full items-center justify-center bg-accent/[0.10] text-sm font-bold tracking-tight text-accent/75">
                   {initials}
                 </div>
               )}
