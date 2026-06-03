@@ -4495,14 +4495,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     !video.isPublished && "opacity-60",
                   )}
                 >
-                  {/* 16:9 thumbnail */}
+                  {/* 16:9 thumbnail with play overlay */}
                   <div className="relative aspect-video w-full overflow-hidden bg-secondary/40">
                     {thumbSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={thumbSrc}
                         alt={primaryLabel}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                         loading="lazy"
                       />
                     ) : (
@@ -4510,11 +4510,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <Play className="h-6 w-6 text-muted-foreground/15" />
                       </div>
                     )}
+                    {/* Hover play overlay — YouTube/Vimeo style */}
+                    {video.platformUrl?.trim() && (
+                      <a
+                        href={video.platformUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Watch ${primaryLabel}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/28 group-hover:opacity-100"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.18] backdrop-blur-[2px] transition-transform duration-150 group-hover:scale-105">
+                          <Play className="h-4 w-4 translate-x-px fill-white text-white" />
+                        </div>
+                      </a>
+                    )}
                     {/* Featured pill */}
                     {isFeatured && (
-                      <div className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 backdrop-blur-sm">
+                      <div className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 ring-1 ring-accent/25 backdrop-blur-sm">
                         <Star className="h-2.5 w-2.5 fill-accent text-accent" />
-                        <span className="text-[8px] font-bold uppercase tracking-wider text-accent">Featured</span>
+                        <span className="text-[8px] font-bold uppercase tracking-wider text-accent/90">Featured</span>
                       </div>
                     )}
                     {/* Hidden badge */}
@@ -4525,32 +4540,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     )}
                   </div>
 
-                  {/* Metadata */}
+                  {/* Metadata — Event → Venue+City → Date → Artists */}
                   <div className="px-3 pb-2 pt-2">
-                    {/* Primary: event name */}
-                    <p className="truncate text-sm font-semibold leading-tight text-foreground/88">
+                    {/* 1. Event (primary) */}
+                    <p className="truncate text-sm font-medium leading-tight text-foreground/90">
                       {primaryLabel}
                     </p>
-                    {/* Artists */}
-                    {artistsLine && (
-                      <p className="mt-px truncate text-[11px] text-muted-foreground/45">{artistsLine}</p>
+                    {/* 2. Venue · City */}
+                    {(video.venue || video.videoCity) && (
+                      <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground/42">
+                        {video.venue && <span className="truncate">{video.venue}</span>}
+                        {video.venue && video.videoCity && <span className="shrink-0 text-muted-foreground/20">·</span>}
+                        {video.videoCity && <span className="shrink-0">{video.videoCity}</span>}
+                      </p>
                     )}
-                    {/* Venue · City and date */}
-                    <div className="mt-1 space-y-0.5">
-                      {(video.venue || video.videoCity) && (
-                        <p className="flex items-center gap-1 truncate text-[10px] text-muted-foreground/38">
-                          {video.venue && <span className="truncate">{video.venue}</span>}
-                          {video.venue && video.videoCity && <span className="shrink-0 text-muted-foreground/20">·</span>}
-                          {video.videoCity && <span className="shrink-0">{video.videoCity}</span>}
-                        </p>
-                      )}
-                      {dateDisplay && (
-                        <p className="text-[10px] text-muted-foreground/28">{dateDisplay}</p>
-                      )}
-                    </div>
+                    {/* 3. Date */}
+                    {dateDisplay && (
+                      <p className="mt-0.5 text-xs text-muted-foreground/30">{dateDisplay}</p>
+                    )}
+                    {/* 4. Artists */}
+                    {artistsLine && (
+                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground/28">{artistsLine}</p>
+                    )}
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions — Watch first, Edit second */}
                   <div className="flex items-center border-t border-white/[0.04] px-2 py-1">
                     {/* Feature star */}
                     <button
@@ -4565,6 +4579,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     >
                       <Star className={cn("h-3.5 w-3.5", isFeatured && "fill-current")} />
                     </button>
+                    {/* Watch — primary content action */}
+                    {video.platformUrl?.trim() && (
+                      <a
+                        href={video.platformUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-0.5 flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium text-foreground/60 transition-colors duration-150 hover:text-foreground"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Play className="h-3 w-3 fill-current" />
+                        Watch
+                      </a>
+                    )}
                     {/* Edit */}
                     <button
                       type="button"
@@ -4574,23 +4601,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       }}
                       className={cn(
                         "ml-0.5 flex h-7 items-center rounded-md px-2 text-[11px] font-medium transition-colors duration-150",
-                        isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/42 hover:text-foreground",
+                        isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/38 hover:text-foreground",
                       )}
                     >
                       {isEditing ? "Close" : "Edit"}
                     </button>
-                    {/* View */}
-                    {video.platformUrl?.trim() && (
-                      <a
-                        href={video.platformUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-0.5 flex h-7 items-center rounded-md px-2 text-[11px] font-medium text-muted-foreground/42 transition-colors duration-150 hover:text-foreground"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View
-                      </a>
-                    )}
                     {/* ⋯ overflow */}
                     <div className="relative ml-auto">
                       <button
