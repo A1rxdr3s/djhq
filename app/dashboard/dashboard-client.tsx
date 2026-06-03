@@ -5281,64 +5281,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       : `${APP_DISPLAY_HOST}/${artist.handle}/presskit`
     const pressKitResolvedUrl = pressKitPublicUrl.trim() || pressKitDefaultUrl
 
-    const optionalLinks = [
-      { label: "Bio & Text",      ok: Boolean(pressKitBioFolderUrl.trim()) },
-      { label: "Logos & Artwork", ok: Boolean(pressKitLogosFolderUrl.trim()) },
-      { label: "Press Photos",    ok: Boolean(pressKitMediaFolderUrl.trim()) },
-      { label: "Technical Rider", ok: Boolean(pressKitRiderFolderUrl.trim()) },
-      { label: "English PDF",     ok: Boolean(pressKitPdfEnUrl.trim()) },
-      { label: "Spanish PDF",     ok: Boolean(pressKitPdfEsUrl.trim()) },
+    // ── Readiness checklist ─────────────────────────────────────────────
+    const readinessItems = [
+      { label: "Press Kit enabled",    ok: pressKitEnabled },
+      { label: "English PDF",          ok: Boolean(pressKitPdfEnUrl.trim()) },
+      { label: "Spanish PDF",          ok: Boolean(pressKitPdfEsUrl.trim()) },
+      { label: "Full Drive Package",   ok: Boolean(pressKitRootUrl.trim()) },
+      { label: "Press Photos Folder",  ok: Boolean(pressKitMediaFolderUrl.trim()) },
+      { label: "Logos & Artwork",      ok: Boolean(pressKitLogosFolderUrl.trim()) },
+      { label: "Technical Rider",      ok: Boolean(pressKitRiderFolderUrl.trim()) },
     ]
+    const configuredCount = readinessItems.filter((i) => i.ok).length
+    const totalCount = readinessItems.length
 
     return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">
-            Your EPK page is live at{" "}
-            <a href={pressKitResolvedUrl} target="_blank" rel="noopener noreferrer" className="font-mono text-foreground/50 underline underline-offset-2 hover:text-foreground/75">
-              {pressKitResolvedUrl}
-            </a>.
-          </p>
-        </div>
+      <div className="space-y-5">
 
-        {/* Press Kit Button URL */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-          <div className="mb-4">
-            <p className="text-sm font-semibold text-foreground">Press Kit Button URL</p>
-            <p className="mt-0.5 text-xs text-muted-foreground/45">
-              Where the Press Kit button on your public profile links to. Leave blank to use the default.
-            </p>
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="pressKitPublicUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-              Custom URL
-            </label>
-            <Input
-              id="pressKitPublicUrl"
-              value={pressKitPublicUrl}
-              onChange={(e) => setPressKitPublicUrl(e.target.value)}
-              placeholder={pressKitDefaultUrl}
-            />
-            <p className="text-[10px] text-muted-foreground/35">
-              Can be a path (e.g. <span className="font-mono">/presskit</span>) or an external URL (e.g. a Google Drive folder).
-              Default: <span className="font-mono">{pressKitDefaultUrl}</span>
+        {/* ── Page header ────────────────────────────────────────────────── */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground/55">
+              Manage your public EPK, downloads and press assets.
             </p>
           </div>
         </div>
 
-        {/* Status toggle */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-          <div className="flex items-center justify-between gap-4">
+        {/* ── 1. Public EPK ──────────────────────────────────────────────── */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
+          <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-foreground">Status</p>
+              <p className="text-sm font-semibold text-foreground">Public EPK</p>
               <p className="mt-0.5 text-xs text-muted-foreground/45">
-                Enable to make your EPK page publicly accessible.
+                Your Electronic Press Kit is {pressKitEnabled ? "live and publicly accessible" : "hidden from the public"}.
               </p>
             </div>
+            {/* On / Off segmented control */}
             <div
               role="group"
-              aria-label="Press kit enabled"
+              aria-label="Press kit status"
               className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5"
             >
               <button
@@ -5347,12 +5328,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 aria-pressed={pressKitEnabled}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                  pressKitEnabled
-                    ? "bg-accent/[0.15] text-accent/80"
-                    : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                  pressKitEnabled ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45",
                 )}
               >
-                On
+                Live
               </button>
               <button
                 type="button"
@@ -5360,96 +5339,229 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 aria-pressed={!pressKitEnabled}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                  !pressKitEnabled
-                    ? "bg-white/[0.06] text-foreground/60"
-                    : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                  !pressKitEnabled ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45",
                 )}
               >
-                Off
+                Hidden
               </button>
             </div>
           </div>
-        </div>
 
-        {/* All fields — dimmed when off */}
-        <div className={cn("space-y-4 transition-opacity duration-200", !pressKitEnabled && "pointer-events-none opacity-35")}>
-
-          {/* ── Press Kit Source ──────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Root Folder</p>
-                <p className="mt-0.5 text-xs text-muted-foreground/45">
-                  Link your Google Drive press kit folder. Organize it like:
-                </p>
-                <pre className="mt-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2.5 font-mono text-[10px] leading-relaxed text-muted-foreground/40">
-{`PRESSKIT-ARTIST/
-├── BIO/
-├── LOGOS/
-├── MEDIA/
-├── RIDER & HOSPITALITY/
-├── ENG_ARTIST_PRESSKIT.pdf
-└── ESP_ARTIST_PRESSKIT.pdf`}
-                </pre>
+          {/* URL row */}
+          <div className="rounded-lg border border-white/[0.04] bg-white/[0.015] px-3.5 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="min-w-0 truncate font-mono text-[11px] text-muted-foreground/55">
+                {pressKitResolvedUrl}
+              </p>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => void navigator.clipboard.writeText(pressKitResolvedUrl)}
+                  className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground/35 transition-colors hover:text-foreground/60"
+                  title="Copy URL"
+                >
+                  Copy
+                </button>
+                <a
+                  href={pressKitResolvedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded px-2 py-1 text-[10px] font-medium text-accent/55 transition-colors hover:text-accent/85"
+                >
+                  View →
+                </a>
               </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="pressKitRootUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                  Google Drive Root Folder URL
-                </label>
-                <Input
-                  id="pressKitRootUrl"
-                  value={pressKitRootUrl}
-                  onChange={(e) => setPressKitRootUrl(e.target.value)}
-                  placeholder="https://drive.google.com/drive/folders/…"
-                  disabled={!pressKitEnabled}
-                />
-              </div>
-
-              {/* ── Asset status ────────────────────────────────── */}
-              {pressKitRootUrl.trim() ? (
-                <div className="space-y-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 shrink-0 text-accent/70" />
-                    <span className="text-sm text-foreground/65">Root folder configured</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground/40">
-                    Optional asset links can be added in Advanced Settings below for individual download buttons on your press kit page.
-                  </p>
-                  {optionalLinks.some((l) => l.ok) && (
-                    <div className="mt-2 space-y-1 border-t border-white/[0.05] pt-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/35">
-                        Optional links configured
-                      </p>
-                      {optionalLinks.filter((l) => l.ok).map(({ label }) => (
-                        <div key={label} className="flex items-center gap-2">
-                          <Check className="h-3 w-3 shrink-0 text-accent/50" />
-                          <span className="text-xs text-foreground/55">{label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-[11px] text-muted-foreground/35">
-                  No root folder set. Visitors will see your bio, photos, and any individual links you configure below.
-                </p>
-              )}
             </div>
           </div>
 
-          {/* ── Press Photos ─────────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+          {/* Press Kit Button URL */}
+          <div className="mt-4 space-y-1.5">
+            <label htmlFor="pressKitPublicUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
+              Press Kit Button URL
+            </label>
+            <Input
+              id="pressKitPublicUrl"
+              value={pressKitPublicUrl}
+              onChange={(e) => setPressKitPublicUrl(e.target.value)}
+              placeholder={pressKitDefaultUrl}
+            />
+            <p className="text-[10px] text-muted-foreground/30">
+              Leave blank to use the default EPK URL. Override with a custom path or external link.
+            </p>
+          </div>
+        </div>
+
+        {/* ── Readiness summary ──────────────────────────────────────────── */}
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.01] px-4 py-3.5">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/40">
+              Press Kit Readiness
+            </p>
+            <span className="text-[11px] tabular-nums text-muted-foreground/40">
+              {configuredCount} / {totalCount}
+            </span>
+          </div>
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.05]">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all duration-700",
+                configuredCount === totalCount ? "bg-accent/60" : "bg-accent/35",
+              )}
+              style={{ width: `${Math.round((configuredCount / totalCount) * 100)}%` }}
+            />
+          </div>
+          <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
+            {readinessItems.map(({ label, ok }) => (
+              <div key={label} className="flex items-center gap-1.5">
+                {ok ? (
+                  <Check className="h-3 w-3 shrink-0 text-accent/55" />
+                ) : (
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/[0.08]" />
+                )}
+                <span className={cn("text-[10px]", ok ? "text-foreground/50" : "text-muted-foreground/30")}>
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Dim everything below when disabled ─────────────────────────── */}
+        <div className={cn("space-y-5 transition-opacity duration-200", !pressKitEnabled && "pointer-events-none opacity-35")}>
+
+          {/* ── 2. Downloads ───────────────────────────────────────────── */}
+          <div>
+            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">
+              Downloads
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+
+              {/* English PDF */}
+              <div className="rounded-xl border border-white/[0.06] bg-card/35 p-4">
+                <div className="mb-3 flex items-center gap-2.5">
+                  {/* UK flag */}
+                  <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[#012169] ring-1 ring-white/[0.08]">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" className="h-full w-full">
+                      <rect width="60" height="36" fill="#012169"/>
+                      <line x1="0" y1="0" x2="60" y2="36" stroke="#fff" strokeWidth="8"/>
+                      <line x1="60" y1="0" x2="0" y2="36" stroke="#fff" strokeWidth="8"/>
+                      <line x1="0" y1="0" x2="60" y2="36" stroke="#C8102E" strokeWidth="4.5"/>
+                      <line x1="60" y1="0" x2="0" y2="36" stroke="#C8102E" strokeWidth="4.5"/>
+                      <line x1="30" y1="0" x2="30" y2="36" stroke="#fff" strokeWidth="12"/>
+                      <line x1="0" y1="18" x2="60" y2="18" stroke="#fff" strokeWidth="12"/>
+                      <line x1="30" y1="0" x2="30" y2="36" stroke="#C8102E" strokeWidth="7"/>
+                      <line x1="0" y1="18" x2="60" y2="18" stroke="#C8102E" strokeWidth="7"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground/80">Press Kit ENG</p>
+                    <p className={cn("text-[10px]", pressKitPdfEnUrl.trim() ? "text-accent/65" : "text-muted-foreground/30")}>
+                      {pressKitPdfEnUrl.trim() ? "Configured" : "Not set"}
+                    </p>
+                  </div>
+                  {pressKitPdfEnUrl.trim() && (
+                    <a href={pressKitPdfEnUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-[10px] text-muted-foreground/35 hover:text-accent/65">
+                      Open ↗
+                    </a>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Input value={pressKitPdfEnUrl} onChange={(e) => setPressKitPdfEnUrl(e.target.value)} placeholder="https://…/epk-en.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                  <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder="File size, e.g. 4.2 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                </div>
+              </div>
+
+              {/* Spanish PDF */}
+              <div className="rounded-xl border border-white/[0.06] bg-card/35 p-4">
+                <div className="mb-3 flex items-center gap-2.5">
+                  {/* Spain flag */}
+                  <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a] ring-1 ring-white/[0.08]">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="h-full w-full">
+                      <rect width="3" height="2" fill="#c60b1e"/>
+                      <rect width="3" height="1" y="0.5" fill="#ffc400"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground/80">Press Kit ESP</p>
+                    <p className={cn("text-[10px]", pressKitPdfEsUrl.trim() ? "text-accent/65" : "text-muted-foreground/30")}>
+                      {pressKitPdfEsUrl.trim() ? "Configured" : "Not set"}
+                    </p>
+                  </div>
+                  {pressKitPdfEsUrl.trim() && (
+                    <a href={pressKitPdfEsUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-[10px] text-muted-foreground/35 hover:text-accent/65">
+                      Open ↗
+                    </a>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Input value={pressKitPdfEsUrl} onChange={(e) => setPressKitPdfEsUrl(e.target.value)} placeholder="https://…/epk-es.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                  <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder="File size, e.g. 3.8 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── 3. Asset Folders ───────────────────────────────────────── */}
+          <div>
+            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">
+              Asset Folders
+            </p>
+            <div className="space-y-2">
+              {(
+                [
+                  { id: "drive",  label: "Full Drive Package", value: pressKitRootUrl,         setter: setPressKitRootUrl,         badge: "Complete" },
+                  { id: "bio",    label: "Bio & Text",         value: pressKitBioFolderUrl,    setter: setPressKitBioFolderUrl,    badge: null },
+                  { id: "logos",  label: "Logos & Artwork",    value: pressKitLogosFolderUrl,  setter: setPressKitLogosFolderUrl,  badge: null },
+                  { id: "photos", label: "Press Photos",       value: pressKitMediaFolderUrl,  setter: setPressKitMediaFolderUrl,  badge: null },
+                  { id: "rider",  label: "Technical Rider",    value: pressKitRiderFolderUrl,  setter: setPressKitRiderFolderUrl,  badge: null },
+                ] as const
+              ).map(({ id, label, value, setter, badge }) => (
+                <div key={id} className="rounded-xl border border-white/[0.06] bg-card/35 px-4 py-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold text-foreground/80">{label}</p>
+                      {badge && (
+                        <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-px text-[8px] font-semibold uppercase tracking-[0.14em] text-white/28">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn("text-[10px]", value.trim() ? "text-accent/65" : "text-muted-foreground/28")}>
+                        {value.trim() ? "Configured" : "Not set"}
+                      </span>
+                      {value.trim() && (
+                        <a href={value} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground/30 hover:text-accent/60">
+                          Open ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <Input
+                    value={value}
+                    onChange={(e) => setter(e.target.value)}
+                    placeholder="https://drive.google.com/drive/folders/…"
+                    className="h-8 text-xs"
+                    disabled={!pressKitEnabled}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── 4. Press Photos Preview ────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-foreground">Press Photos</p>
+                <p className="text-sm font-semibold text-foreground">Press Photos Preview</p>
                 <p className="mt-0.5 text-xs text-muted-foreground/45">
-                  Show gallery images in the press kit photo grid.
+                  Controls the preview grid on your public EPK.{" "}
+                  High-resolution photos remain accessible from the Press Photos folder.
                 </p>
               </div>
               <div
                 role="group"
-                aria-label="Use gallery photos"
+                aria-label="Press photos preview"
                 className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5"
               >
                 <button
@@ -5459,12 +5571,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   disabled={!pressKitEnabled}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                    pressKitUseGalleryPhotos
-                      ? "bg-accent/[0.15] text-accent/80"
-                      : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                    pressKitUseGalleryPhotos ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45",
                   )}
                 >
-                  Gallery
+                  Show
                 </button>
                 <button
                   type="button"
@@ -5473,93 +5583,35 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   disabled={!pressKitEnabled}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                    !pressKitUseGalleryPhotos
-                      ? "bg-white/[0.06] text-foreground/60"
-                      : "text-muted-foreground/25 hover:text-muted-foreground/45",
+                    !pressKitUseGalleryPhotos ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45",
                   )}
                 >
-                  Hidden
+                  Hide
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ── Advanced Settings ─────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 overflow-hidden transition-colors duration-150 hover:border-white/[0.09]">
+          {/* ── 5. Advanced Settings ───────────────────────────────────── */}
+          <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/40 transition-colors duration-150 hover:border-white/[0.09]">
             <button
               type="button"
               onClick={() => setPressKitAdvancedOpen((v) => !v)}
-              className="flex w-full items-center justify-between px-5 py-4 sm:px-6"
+              className="flex w-full items-center justify-between px-5 py-4"
             >
-              <span className="text-sm font-semibold text-foreground/70">Advanced Settings</span>
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 text-muted-foreground/40 transition-transform duration-200",
-                  pressKitAdvancedOpen && "rotate-180",
-                )}
-              />
+              <div>
+                <span className="text-sm font-semibold text-foreground/65">Advanced Settings</span>
+                <span className="ml-2 text-[10px] text-muted-foreground/30">Legacy URL · Assets list</span>
+              </div>
+              <ChevronDown className={cn("h-4 w-4 text-muted-foreground/35 transition-transform duration-200", pressKitAdvancedOpen && "rotate-180")} />
             </button>
 
             {pressKitAdvancedOpen && (
-              <div className="space-y-5 border-t border-white/[0.05] px-5 pb-5 pt-4 sm:px-6">
-
-                {/* Asset folder URLs */}
-                <div className="space-y-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
-                    Asset Folders
-                  </p>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {(
-                      [
-                        { label: "Bio & Text", value: pressKitBioFolderUrl, setter: setPressKitBioFolderUrl },
-                        { label: "Logos & Artwork", value: pressKitLogosFolderUrl, setter: setPressKitLogosFolderUrl },
-                        { label: "Press Photos", value: pressKitMediaFolderUrl, setter: setPressKitMediaFolderUrl },
-                        { label: "Technical Rider", value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl },
-                      ] as const
-                    ).map(({ label, value, setter }) => (
-                      <div key={label} className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
-                          {label}
-                        </label>
-                        <Input
-                          value={value}
-                          onChange={(e) => setter(e.target.value)}
-                          placeholder="https://drive.google.com/drive/folders/…"
-                          disabled={!pressKitEnabled}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* PDF URLs */}
-                <div className="space-y-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
-                    PDF Downloads
-                  </p>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">English PDF URL</label>
-                      <Input value={pressKitPdfEnUrl} onChange={(e) => setPressKitPdfEnUrl(e.target.value)} placeholder="https://…/epk-en.pdf" disabled={!pressKitEnabled} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">English PDF Size</label>
-                      <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder="e.g. 4.2 MB" disabled={!pressKitEnabled} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Spanish PDF URL</label>
-                      <Input value={pressKitPdfEsUrl} onChange={(e) => setPressKitPdfEsUrl(e.target.value)} placeholder="https://…/epk-es.pdf" disabled={!pressKitEnabled} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Spanish PDF Size</label>
-                      <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder="e.g. 3.8 MB" disabled={!pressKitEnabled} />
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-5 border-t border-white/[0.05] px-5 pb-5 pt-4">
 
                 {/* Legacy download URL */}
                 <div className="space-y-1.5">
-                  <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+                  <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
                     Legacy Download URL
                   </label>
                   <Input
@@ -5572,11 +5624,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {pressKitUrlInvalid && (
                     <p className="text-[10px] text-amber-400/60">Should start with https://</p>
                   )}
+                  <p className="text-[10px] text-muted-foreground/28">
+                    Older direct-download link. Not required when PDF URLs above are configured.
+                  </p>
                 </div>
 
-                {/* Assets chips */}
+                {/* Assets included tags */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/45">
                     Assets Included
                   </p>
                   {pressKitAssets.length > 0 && (
@@ -5604,21 +5659,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       type="text"
                       value={newAssetInput}
                       onChange={(e) => setNewAssetInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault()
-                          handleAddAsset()
-                        }
-                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddAsset() } }}
                       placeholder="Add asset… e.g. Press photos"
                       disabled={!pressKitEnabled}
                       aria-label="New asset name"
                       className={cn(
                         "h-9 min-w-0 flex-1 rounded-lg border border-white/[0.07] bg-white/[0.025]",
-                        "px-3 text-sm font-medium text-foreground",
-                        "placeholder:text-muted-foreground/30",
-                        "outline-none transition-colors duration-150",
-                        "focus:border-white/[0.14] focus:bg-white/[0.04]",
+                        "px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground/30",
+                        "outline-none transition-colors duration-150 focus:border-white/[0.14] focus:bg-white/[0.04]",
                         "disabled:cursor-not-allowed",
                       )}
                     />
@@ -5641,7 +5689,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       </div>
     )
   }
-
   function renderPublish() {
     return (
       <div className="space-y-6">
