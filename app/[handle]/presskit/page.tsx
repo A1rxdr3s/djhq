@@ -438,24 +438,24 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     href={card.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
+                    className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-3.5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
                   >
                     <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_5%,transparent),transparent_70%)]" />
                     <div className="flex items-center justify-between">
-                      <card.icon className="h-5 w-5 text-accent/70" />
+                      <card.icon className="h-4 w-4 text-accent/70" />
                       {card.id === "drive" && (
                         <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-white/28">
                           Complete
                         </span>
                       )}
                     </div>
-                    <p className="mt-4 text-sm font-bold text-foreground/85 transition-colors duration-150 group-hover:text-foreground">
+                    <p className="mt-2.5 text-sm font-bold text-foreground/85 transition-colors duration-150 group-hover:text-foreground">
                       {card.label}
                     </p>
-                    <p className="mt-1 text-xs leading-relaxed text-white/30">
+                    <p className="mt-0.5 text-xs leading-relaxed text-white/30">
                       {card.description}
                     </p>
-                    <div className="mt-4 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/60 transition-colors duration-150 group-hover:text-accent/90">
+                    <div className="mt-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/60 transition-colors duration-150 group-hover:text-accent/90">
                       {card.cta}
                       <ExternalLink className="h-2.5 w-2.5" />
                     </div>
@@ -468,20 +468,33 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           {/* ── Press Photos Preview ───────────────────────────────────── */}
           {pk.useGalleryPhotos && artist.galleryImages.length > 0 && (
             <div className="mt-10">
-              <div className="mb-5">
-                <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
-                  Press Photos
-                </p>
-                <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
-                  Press Photos Preview
-                </h2>
-                <p className="mt-1 text-[11px] text-white/25">
-                  Preview only · Download high-resolution images from the Press Photos folder.
-                </p>
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
+                    Press Photos
+                  </p>
+                  <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
+                    Press Photos Preview
+                  </h2>
+                  <p className="mt-1 text-[11px] text-white/25">
+                    Preview only · Download high-resolution images from the Press Photos folder.
+                  </p>
+                </div>
+                {pk.mediaFolderUrl && (
+                  <a
+                    href={pk.mediaFolderUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 inline-flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-accent/55 transition-colors duration-150 hover:text-accent/85"
+                  >
+                    Open Folder
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                )}
               </div>
               <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
-                <div className="grid grid-cols-3 gap-2 p-2">
-                  {artist.galleryImages.slice(0, 3).map((image) => (
+                <div className="grid grid-cols-2 gap-2 p-2">
+                  {artist.galleryImages.slice(0, 4).map((image) => (
                     <div
                       key={image.id}
                       className="group relative aspect-square overflow-hidden rounded-xl bg-secondary"
@@ -490,7 +503,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         src={image.imageUrl}
                         alt={image.altText}
                         fill
-                        sizes="33vw"
+                        sizes="50vw"
                         className="object-cover transition-[transform,filter] duration-500 group-hover:scale-[1.04] group-hover:brightness-[1.08]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
                       />
@@ -498,19 +511,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   ))}
                 </div>
               </div>
-              {pk.mediaFolderUrl && (
-                <div className="mt-3 text-center">
-                  <a
-                    href={pk.mediaFolderUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-accent/60 transition-colors duration-150 hover:text-accent/90"
-                  >
-                    Open Press Photos Folder
-                    <ExternalLink className="h-2.5 w-2.5" />
-                  </a>
-                </div>
-              )}
             </div>
           )}
 
