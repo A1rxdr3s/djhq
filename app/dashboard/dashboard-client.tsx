@@ -33,34 +33,33 @@ type NavGroup = { label: string; items: { id: string; label: string }[] }
 
 const navGroups: NavGroup[] = [
   {
-    label: "Profile",
+    label: "Artist",
     items: [
-      { id: "overview", label: "Overview" },
       { id: "profile", label: "Profile" },
       { id: "links", label: "Links" },
       { id: "gallery", label: "Gallery" },
     ],
   },
   {
-    label: "Music",
+    label: "Content",
     items: [
       { id: "releases", label: "Releases" },
+      { id: "shows", label: "Shows" },
+      { id: "sets", label: "Sets" },
+      { id: "media", label: "Media" },
     ],
   },
   {
-    label: "Live",
-    items: [
-      { id: "gigs", label: "Gigs" },
-      { id: "dj-sets", label: "DJ Sets" },
-      { id: "videos", label: "Videos" },
-    ],
-  },
-  {
-    label: "Publishing",
+    label: "Brand",
     items: [
       { id: "booking", label: "Booking" },
       { id: "press-kit", label: "Press Kit" },
-      { id: "custom-domain", label: "Custom Domain" },
+      { id: "domain", label: "Domain" },
+    ],
+  },
+  {
+    label: "Publish",
+    items: [
       { id: "publish", label: "Publish" },
     ],
   },
@@ -735,7 +734,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const initialSocialLinks = getSocialLinkFormState(artist)
   const initialReleases = getReleaseFormState(artist)
   const initialUpcomingGigs = getGigFormState(artist)
-  const [activeSection, setActiveSection] = useState("overview")
+  const [activeSection, setActiveSection] = useState("home")
   const [artistName, setArtistName] = useState(initialArtist.artistName)
   const [handle, setHandle] = useState(initialArtist.handle)
   const [genres, setGenres] = useState(initialArtist.genres.join(", "))
@@ -1865,136 +1864,201 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     window.location.href = "/sign-in"
   }
 
-  function renderOverview() {
-    const releaseCount = artist.releases.length
+  function renderHome() {
     const completionChecks = [
       { label: "Name & handle", done: !!artist.artistName && !!artist.handle },
       { label: "Bio & location", done: !!artist.shortBio && !!artist.location },
       { label: "Social links", done: artist.socialLinks.length > 0 },
       { label: "Featured release", done: artist.releases.some((r) => r.isFeatured) },
       { label: "Releases", done: artist.releases.length > 0 },
-      { label: "DJ sets", done: artist.djSets.length > 0 },
-      { label: "Videos", done: artist.videos.length > 0 },
-      { label: "Gallery images", done: artist.galleryImages.length > 0 },
+      { label: "Sets", done: artist.djSets.length > 0 },
+      { label: "Media", done: artist.videos.length > 0 },
+      { label: "Gallery", done: artist.galleryImages.length > 0 },
       { label: "Hero image", done: !!artist.heroImageUrl && !artist.heroImageUrl.includes("dj-hero") && !artist.heroImageUrl.includes("placeholder") },
     ]
     const completionDone = completionChecks.filter((c) => c.done).length
     const completionPct = Math.round((completionDone / completionChecks.length) * 100)
 
+    const recentReleases = [...artist.releases]
+      .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
+      .slice(0, 3)
+    const recentShows = [...artist.upcomingGigs]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 3)
+    const recentSets = artist.djSets.slice(0, 3)
+
     return (
       <div className="space-y-4">
+
+        {/* Artist identity + status */}
         <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5">
-          <div className="flex items-start gap-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Artist Profile</p>
-              <h2 className="mt-2 text-xl font-bold text-foreground">{artist.artistName}</h2>
-              <p className="mt-0.5 font-mono text-sm text-muted-foreground">@{artist.handle}</p>
-              <div className="mt-3 flex items-center gap-3">
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                    artist.isPublished
-                      ? "border-accent/20 bg-accent/10 text-accent"
-                      : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
-                  }`}
-                >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
-                  />
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">{artist.artistName}</h2>
+              <p className="mt-0.5 font-mono text-xs text-muted-foreground/60">@{artist.handle}</p>
+              <div className="mt-3 flex items-center gap-2.5">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                  artist.isPublished
+                    ? "border-accent/20 bg-accent/10 text-accent"
+                    : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
+                }`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`} />
                   {artist.isPublished ? "Published" : "Draft"}
                 </span>
-                <span className="rounded-full border border-white/[0.06] bg-secondary/30 px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                  {artist.plan}
-                </span>
+                <a
+                  href={publicProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground/50 transition-colors duration-150 hover:text-accent/70"
+                >
+                  View profile
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </div>
-              <a
-                href={publicProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs text-accent/70 transition-colors duration-150 hover:text-accent"
-              >
-                {APP_DISPLAY_HOST}{publicProfileUrl}
-                <ExternalLink className="h-3 w-3" />
-              </a>
             </div>
-            {(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0])?.artworkUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0]).artworkUrl}
-                alt={(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0]).title}
-                className="h-[72px] w-[72px] shrink-0 rounded-lg object-cover opacity-80 ring-1 ring-white/[0.08]"
-                loading="lazy"
+          </div>
+
+          {/* Profile completion */}
+          <div className="mt-4 border-t border-white/[0.04] pt-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
+                Profile Completion
+              </p>
+              <p className="text-[11px] font-bold tabular-nums text-foreground/70">{completionPct}%</p>
+            </div>
+            <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  completionPct === 100 ? "bg-accent/70" : "bg-accent/45"
+                }`}
+                style={{ width: `${completionPct}%` }}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/40">
+            Quick Actions
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { label: "Edit Profile", section: "profile" },
+              { label: "Add Release", section: "releases" },
+              { label: "Add Show", section: "shows" },
+              { label: "Add Set", section: "sets" },
+            ].map(({ label, section }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setActiveSection(section)}
+                className="rounded-lg border border-white/[0.06] bg-secondary/20 px-3 py-2.5 text-xs font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.10] hover:bg-secondary/40 hover:text-foreground"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent content */}
+        <div className="grid gap-3 sm:grid-cols-3">
+
+          {/* Recent Releases */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
+                Recent Releases
+              </p>
+              <button type="button" onClick={() => setActiveSection("releases")} className="text-[10px] text-accent/60 hover:text-accent">
+                Manage →
+              </button>
+            </div>
+            {recentReleases.length > 0 ? (
+              <div className="space-y-2">
+                {recentReleases.map((r) => (
+                  <div key={r.id} className="flex items-center gap-2 min-w-0">
+                    {r.artworkUrl?.trim() ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.artworkUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover opacity-70 ring-1 ring-white/[0.06]" />
+                    ) : (
+                      <div className="h-8 w-8 shrink-0 rounded bg-secondary/60" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium text-foreground/80">{r.title}</p>
+                      <p className="text-[10px] text-muted-foreground/40">{r.releaseDate?.slice(0, 4)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground/30">No releases yet</p>
             )}
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: "Releases", value: releaseCount },
-            { label: "Gigs", value: artist.upcomingGigs.length },
-            { label: "DJ Sets", value: artist.djSets.length },
-            { label: "Videos", value: artist.videos.length },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-card/30 p-3 text-center transition-colors duration-150 hover:border-white/[0.09]">
-              <p className="text-xl font-bold tabular-nums text-foreground">{stat.value}</p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/50">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
-            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Last updated</p>
-            <p className="mt-0.5 text-xs text-foreground/70">
-              {new Date(artist.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
-            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Visibility</p>
-            <p className="mt-0.5 text-xs text-foreground/70">
-              {artist.isPublished ? "Public · visible to anyone" : "Draft · not publicly visible"}
-            </p>
-          </div>
-          {artist.releases[0] && (
-            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Featured release</p>
-              <p className="mt-0.5 truncate text-xs text-foreground/70">
-                {(artist.releases.find((r) => r.isFeatured) ?? artist.releases[0]).title}
+          {/* Recent Shows */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
+                Recent Shows
               </p>
+              <button type="button" onClick={() => setActiveSection("shows")} className="text-[10px] text-accent/60 hover:text-accent">
+                Manage →
+              </button>
             </div>
-          )}
-          {artist.videos[0] && (
-            <div className="rounded-xl border border-white/[0.06] bg-card/30 p-3 transition-colors duration-150 hover:border-white/[0.09]">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Latest video</p>
-              <p className="mt-0.5 truncate text-xs text-foreground/70">{artist.videos[0].title}</p>
+            {recentShows.length > 0 ? (
+              <div className="space-y-2">
+                {recentShows.map((g) => (
+                  <div key={g.id} className="min-w-0">
+                    <p className="truncate text-xs font-medium text-foreground/80">{g.venue}</p>
+                    <p className="text-[10px] text-muted-foreground/40">
+                      {new Date(g.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {g.city ? ` · ${g.city}` : ""}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground/30">No shows yet</p>
+            )}
+          </div>
+
+          {/* Recent Sets */}
+          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
+                Recent Sets
+              </p>
+              <button type="button" onClick={() => setActiveSection("sets")} className="text-[10px] text-accent/60 hover:text-accent">
+                Manage →
+              </button>
             </div>
-          )}
+            {recentSets.length > 0 ? (
+              <div className="space-y-2">
+                {recentSets.map((s) => (
+                  <div key={s.id} className="min-w-0">
+                    <p className="truncate text-xs font-medium text-foreground/80">
+                      {s.event?.trim() || s.venue?.trim() || s.title}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/40">
+                      {s.setDate ? new Date(s.setDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground/30">No sets yet</p>
+            )}
+          </div>
+
         </div>
 
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Profile completeness</p>
-              {completionPct === 100 && (
-                <span className="flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent/70">
-                  <Check className="h-2.5 w-2.5" />
-                  Complete
-                </span>
-              )}
-            </div>
-            <p className="text-sm font-bold tabular-nums text-foreground">{completionPct}%</p>
-          </div>
-          <div className="mt-3 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${
-                completionPct === 100
-                  ? "bg-accent/70 shadow-[0_0_8px_1px_hsl(var(--accent)/0.25)]"
-                  : "bg-accent/50"
-              }`}
-              style={{ width: `${completionPct}%` }}
-            />
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
+        {/* Profile Status */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
+            Profile Status
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
             {completionChecks.map((check) => (
               <div key={check.label} className="flex items-center gap-1.5">
                 {check.done ? (
@@ -2009,6 +2073,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             ))}
           </div>
         </div>
+
       </div>
     )
   }
@@ -5298,19 +5363,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderActiveSection() {
     switch (activeSection) {
-      case "overview":
-        return renderOverview()
+      case "home":
+        return renderHome()
       case "profile":
         return renderProfile()
       case "links":
         return renderLinks()
       case "releases":
         return renderReleases()
-      case "gigs":
+      case "shows":         // renamed from "gigs"
         return renderGigs()
-      case "dj-sets":
+      case "sets":          // renamed from "dj-sets"
         return renderDjSets()
-      case "videos":
+      case "media":         // renamed from "videos"
         return renderVideos()
       case "gallery":
         return renderGallery()
@@ -5318,12 +5383,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderBooking()
       case "press-kit":
         return renderPressKit()
-      case "custom-domain":
+      case "domain":        // renamed from "custom-domain"
         return renderCustomDomain()
       case "publish":
         return renderPublish()
       default:
-        return renderOverview()
+        return renderHome()
     }
   }
 
