@@ -158,7 +158,31 @@
     .pk-gallery-image {
       transition: none !important;
     }
+
+    /* Background atmosphere container: fixed-position elements force a
+       compositing layer on Safari iOS. With blurs already disabled on mobile,
+       the blobs are invisible — hide the container entirely to skip layer. */
+    .pk-bg-atmosphere {
+      display: none;
+    }
+
+    /* Download button glow box-shadows: prevent Safari from computing
+       color-mix() and box-shadow during initial layer construction. */
+    .pk-download-btn {
+      transition: border-color 150ms ease, background-color 150ms ease !important;
+    }
   }
+}
+
+/* ── CSS Containment — below-fold sections ──────────────────────────────────
+   content-visibility: auto lets the browser skip rendering off-screen
+   sections until they scroll into view. Most impactful on long pages.
+   contain-intrinsic-size provides a placeholder height during layout.
+   Safe for all browsers; ignored where unsupported.
+   ─────────────────────────────────────────────────────────────────────────── */
+.pk-section-lazy {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 420px;
 }
 
 /* ── Devices without true hover (touch screens) ─────────────────────────────
@@ -171,5 +195,8 @@
   }
   .pk-gallery-image {
     transition: none !important;
+  }
+  .pk-bg-atmosphere {
+    display: none;
   }
 }

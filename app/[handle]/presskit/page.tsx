@@ -2,13 +2,11 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { headers as nextHeaders } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { resolveSafeHref } from "@/lib/safe-url"
-import { PerfDiagnostics } from "@/components/debug/perf-diagnostics"
 import type { GalleryImage, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
 
@@ -68,36 +66,12 @@ function normalizePlan(plan: string): SubscriptionPlan {
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true"
 
-// ─── Perf timing ─────────────────────────────────────────────────────────────
-
-type PerfContext = { host: string; pathname: string }
-type QueryTiming = { artistMs: number; galleryMs: number; totalMs: number }
-
-function perfLog(
-  query: string,
-  ctx: PerfContext,
-  extra: Record<string, unknown>,
-): void {
-  console.info("[presskit-perf]", JSON.stringify({ query, host: ctx.host, pathname: ctx.pathname, ...extra }))
-}
-
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
-type GetArtistPressKitOpts = {
-  perf?: boolean
-  perfCtx?: PerfContext
-}
-
-async function getArtistPressKit(
-  handle: string,
-  { perf = false, perfCtx }: GetArtistPressKitOpts = {},
-): Promise<(ReturnType<typeof buildArtistResult> & { _timing?: QueryTiming }) | null> {
+async function getArtistPressKit(handle: string): Promise<ReturnType<typeof buildArtistResult> | null> {
   if (USE_MOCK && handle === mockArtist.handle) {
     return mockArtist as unknown as ReturnType<typeof buildArtistResult>
   }
-
-  const ctx = perfCtx ?? { host: "unknown", pathname: `/${handle}/presskit` }
-  const t0 = performance.now()
 
   // Uses the anon key — relies on RLS select policies for published artists and
   // their gallery images. Service role is not needed for public read-only access.
@@ -107,7 +81,6 @@ async function getArtistPressKit(
     { auth: { autoRefreshToken: false, persistSession: false } },
   )
 
-  const tArtist0 = performance.now()
   const { data: artistRow } = await supabase
     .from("artists")
     .select(
@@ -116,15 +89,8 @@ async function getArtistPressKit(
     .eq("handle", handle)
     .eq("is_published", true)
     .maybeSingle<ArtistRow>()
-  const artistMs = Math.round(performance.now() - tArtist0)
-
-  if (perf) {
-    perfLog("artist", ctx, { durationMs: artistMs, found: artistRow !== null })
-  }
-
   if (!artistRow) return null
 
-  const tGallery0 = performance.now()
   const galleryResult = artistRow.press_kit_use_gallery_photos
     ? await supabase
         .from("gallery_images")
@@ -134,20 +100,6 @@ async function getArtistPressKit(
         .limit(6)
         .returns<GalleryImageRow[]>()
     : { data: [] }
-  const galleryMs = Math.round(performance.now() - tGallery0)
-
-  if (perf) {
-    perfLog("pressPhotos", ctx, {
-      pressPhotosEnabled: artistRow.press_kit_use_gallery_photos,
-      galleryQuerySkipped: !artistRow.press_kit_use_gallery_photos,
-    })
-    perfLog("gallery", ctx, {
-      durationMs: galleryMs,
-      count: (galleryResult.data ?? []).length,
-      skipped: !artistRow.press_kit_use_gallery_photos,
-    })
-  }
-
   const galleryImages: GalleryImage[] = (galleryResult.data ?? []).map((row) => ({
     id: row.id,
     imageUrl: row.image_url,
@@ -159,14 +111,8 @@ async function getArtistPressKit(
 
   const plan = normalizePlan(artistRow.plan)
   const isPro = plan === "pro"
-  const totalMs = Math.round(performance.now() - t0)
 
-  if (perf) {
-    perfLog("total", ctx, { durationMs: totalMs, artistMs, galleryMs })
-  }
-
-  const result = buildArtistResult(artistRow, galleryImages, plan, isPro)
-  return perf ? { ...result, _timing: { artistMs, galleryMs, totalMs } } : result
+  return buildArtistResult(artistRow, galleryImages, plan, isPro)
 }
 
 function buildArtistResult(
@@ -212,7 +158,6 @@ function buildArtistResult(
     accentTheme: isPro ? (artistRow.artist_accent_theme as "matrix" | "electric_blue" | "signal_red" | undefined) : "matrix",
     plan,
     showHeaderBranding: artistRow.show_header_branding,
-    _timing: undefined as QueryTiming | undefined,
   }
 }
 
@@ -248,14 +193,7 @@ type AssetCard = {
 export default async function PressKitPage({ params }: PressKitPageProps) {
   const { handle } = await params
 
-  const reqHeaders = await nextHeaders()
-  const host = reqHeaders.get("host") ?? "unknown"
-  const pathname = `/${handle}/presskit`
-  const perfCtx: PerfContext = { host, pathname }
-
-  // Timing is captured inside getArtistPressKit and emitted via [presskit-perf] logs.
-  // Server-Timing response headers cannot be set from RSC pages; read console logs instead.
-  const artist = await getArtistPressKit(handle, { perf: true, perfCtx })
+  const artist = await getArtistPressKit(handle)
 
   if (!artist || !artist.pressKit.enabled) {
     notFound()
@@ -309,58 +247,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
     },
   ].filter((c) => Boolean(resolveSafeHref(c.url)))
 
-  // ── Image + link diagnostics ─────────────────────────────────────────────────
-  // Temporary instrumentation. Remove after performance analysis is complete.
-  {
-    type ImgDiag = { type: string; url: string; priority: boolean; loading: string; sizes: string }
-    // hero-photo: the <Image fill priority> banner (1 per page, the LCP image)
-    // logo: the plain <img> artist logo/wordmark (separate element, not a duplicate)
-    // gallery: press photo thumbnails (lazy, only when pressPhotosEnabled)
-    const heroPhotos: ImgDiag[] = []
-    const logoImgs: ImgDiag[] = []
-    const galleryImgs: ImgDiag[] = []
-
-    if (artist.heroImageUrl) {
-      heroPhotos.push({ type: "hero-photo", url: artist.heroImageUrl, priority: true, loading: "eager", sizes: "(max-width: 768px) 100vw, 768px" })
-    }
-    if (artist.heroLogoUrl && (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both")) {
-      // plain <img loading="lazy"> — not LCP, not a duplicate of the hero photo
-      logoImgs.push({ type: "hero-logo", url: artist.heroLogoUrl, priority: false, loading: "lazy", sizes: "max 280px intrinsic" })
-    }
-    // Only included when pressPhotosEnabled=true — query is skipped and array is [] otherwise
-    for (const image of artist.galleryImages.slice(0, 4)) {
-      galleryImgs.push({ type: "gallery", url: image.imageUrl, priority: false, loading: "lazy", sizes: "(max-width: 768px) 45vw, 180px" })
-    }
-
-    const allImgs = [...heroPhotos, ...logoImgs, ...galleryImgs]
-    for (const img of allImgs) {
-      console.info("[presskit-image]", JSON.stringify({ host, pathname, ...img }))
-    }
-
-    // Drive/external link count: PDF downloads + full kit link + folder cards + media folder link
-    const driveLinksRendered =
-      (pk.pdfEsUrl ? 1 : 0) +
-      (pk.pdfEnUrl ? 1 : 0) +
-      (!hasPdfs && pk.rootUrl ? 1 : 0) +
-      folderCards.length +
-      (pk.useGalleryPhotos && pk.mediaFolderUrl ? 1 : 0)
-
-    console.info("[presskit-summary]", JSON.stringify({
-      host,
-      pathname,
-      totalImages: allImgs.length,
-      // heroImages=1 is correct: one <Image fill priority> background photo
-      // logoImages counts the artist logo (<img loading=lazy>) — a separate element, not a duplicate
-      heroImages: heroPhotos.length,
-      logoImages: logoImgs.length,
-      galleryImages: galleryImgs.length,
-      pressPhotosEnabled: pk.useGalleryPhotos,
-      galleryQuerySkipped: !pk.useGalleryPhotos,
-      driveLinksRendered,
-      imageComponentsRendered: allImgs.length,
-    }))
-  }
-  // ── End diagnostics ──────────────────────────────────────────────────────────
 
   const hasIndividualFolders = folderCards.some((c) => c.id !== "drive")
   const profileHref = `/${artist.handle}`
@@ -371,7 +257,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
       <div className="min-h-screen bg-background text-foreground">
         {/* Background atmosphere */}
-        <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="pk-bg-atmosphere pointer-events-none fixed inset-0 -z-10">
           <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-accent/[0.05] sm:blur-[140px]" />
           <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.03] sm:blur-[120px]" />
         </div>
@@ -459,7 +345,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   href={resolveSafeHref(pk.pdfEsUrl) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
+                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-colors duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
                 >
                   <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
                   <Download className="h-6 w-6 text-accent/70" />
@@ -482,7 +368,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                       Press Kit ESP
                     </p>
                   </div>
-                  <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
+                  <span className="pk-download-btn mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
                     Download ESP ↗
                   </span>
                 </a>
@@ -493,7 +379,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   href={resolveSafeHref(pk.pdfEnUrl) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
+                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-colors duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
                 >
                   <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
                   <Download className="h-6 w-6 text-accent/70" />
@@ -532,7 +418,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                       Press Kit ENG
                     </p>
                   </div>
-                  <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
+                  <span className="pk-download-btn mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
                     Download ENG ↗
                   </span>
                 </a>
@@ -543,7 +429,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   href={resolveSafeHref(pk.rootUrl) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03] sm:col-span-2"
+                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-colors duration-200 hover:border-accent/40 hover:bg-white/[0.03] sm:col-span-2"
                 >
                   <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
                   <FolderOpen className="h-6 w-6 text-accent/70" />
@@ -556,7 +442,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   <p className="mt-1.5 text-sm text-white/35">
                     Open all assets in Google Drive
                   </p>
-                  <span className="mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
+                  <span className="pk-download-btn mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
                     Open Drive ↗
                   </span>
                 </a>
@@ -566,7 +452,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── Asset Folders ──────────────────────────────────────────── */}
           {hasIndividualFolders && (
-            <div className="mt-10">
+            <div className="pk-section-lazy mt-10">
               <div className="mb-5">
                 <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
                   Press Kit Assets
@@ -582,7 +468,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     href={resolveSafeHref(card.url) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-3.5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
+                    className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-3.5 transition-colors duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
                   >
                     <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_5%,transparent),transparent_70%)]" />
                     <div className="flex items-center justify-between">
@@ -611,7 +497,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── Press Photos Preview ───────────────────────────────────── */}
           {pk.useGalleryPhotos && artist.galleryImages.length > 0 && (
-            <div className="mt-10">
+            <div className="pk-section-lazy mt-10">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
@@ -661,13 +547,13 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── Compact Booking Contact ────────────────────────────────── */}
           {artist.bookingInfo.email.trim() && (
-            <div className="mt-10 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4">
+            <div className="pk-section-lazy mt-10 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4">
               <p className="text-[8px] font-bold uppercase tracking-[0.28em] text-white/25">
                 Booking Contact
               </p>
               <a
                 href={`mailto:${artist.bookingInfo.email}`}
-                className="mt-1.5 block font-mono text-sm text-white/55 underline decoration-white/[0.12] underline-offset-2 transition-all duration-150 hover:text-accent/80 hover:decoration-accent/30"
+                className="mt-1.5 block font-mono text-sm text-white/55 underline decoration-white/[0.12] underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-accent/80 hover:decoration-accent/30"
               >
                 {artist.bookingInfo.email}
               </a>
@@ -685,7 +571,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           )}
         </div>
       </div>
-      <PerfDiagnostics page="presskit" />
     </>
   )
 }
