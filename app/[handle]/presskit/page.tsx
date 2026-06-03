@@ -7,7 +7,6 @@ import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers
 import { mockArtist } from "@/data/mock-artist"
 import type { GalleryImage, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
-import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 
 type PressKitPageProps = {
   params: Promise<{ handle: string }>
@@ -179,8 +178,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
   const hasPdfs = Boolean(pk.pdfEnUrl || pk.pdfEsUrl)
 
-  // Individual folder cards — drive root is excluded from this count.
-  // The asset grid is only shown when at least one specific folder is configured.
   const folderCards: AssetCard[] = [
     {
       id: "bio",
@@ -224,11 +221,8 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
     },
   ].filter((c) => Boolean(c.url))
 
-  // Only show the asset grid if at least one individual folder (not just root) is configured.
   const hasIndividualFolders = folderCards.some((c) => c.id !== "drive")
-
   const profileHref = `/${artist.handle}`
-  const pressKitHref = `/${artist.handle}/presskit`
 
   return (
     <>
@@ -246,60 +240,51 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           {/* Back link */}
           <Link
             href={profileHref}
-            className="mb-10 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/25 transition-colors duration-150 hover:text-white/50"
+            className="mb-8 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/25 transition-colors duration-150 hover:text-white/50"
           >
             <ArrowLeft className="h-3 w-3" />
             {artist.artistName}
           </Link>
 
-          {/* ── Hero card ─────────────────────────────────────────────── */}
-          <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02]">
+          {/* ── Compact EPK header — informational, not promotional ──────── */}
+          <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
+            {/* Cover image — reduced height, banner style */}
             {artist.heroImageUrl && (
-              <div className="relative h-[200px] w-full sm:h-[260px]">
+              <div className="relative h-[140px] w-full sm:h-[170px]">
                 <Image
                   src={artist.heroImageUrl}
                   alt={artist.artistName}
                   fill
                   priority
-                  className="object-cover object-[50%_25%]"
+                  className="object-cover object-[50%_20%]"
                   sizes="(max-width: 768px) 100vw, 768px"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
               </div>
             )}
 
-            <div className="px-7 pb-8 pt-6 sm:px-10 sm:pb-10 sm:pt-8">
-              {/* EPK eyebrow */}
-              <p className="mb-4 text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
+            <div className="px-6 pb-6 pt-5 sm:px-8 sm:pb-7 sm:pt-6">
+              {/* Eyebrow */}
+              <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.32em] text-accent/55">
                 Electronic Press Kit
               </p>
 
-              {/* Genres */}
-              {artist.genres.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {artist.genres.map((genre) => (
-                    <span
-                      key={genre}
-                      className="rounded-full border border-accent/20 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent/60"
-                    >
-                      {genre}
-                    </span>
-                  ))}
-                </div>
-              )}
-
               {/* Artist name */}
-              <h1 className="text-3xl font-black tracking-[-0.02em] text-foreground sm:text-4xl">
+              <h1 className="text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl">
                 {artist.artistName}
               </h1>
 
-              {artist.location && (
-                <p className="mt-1.5 text-sm text-white/35">{artist.location}</p>
-              )}
+              {/* Genres + location on one muted line */}
+              <p className="mt-1.5 text-[12px] text-white/38">
+                {[
+                  artist.genres.join(" · "),
+                  artist.location,
+                ].filter(Boolean).join("  ·  ")}
+              </p>
 
-              {/* Bio */}
-              <p className="mt-5 text-sm leading-relaxed text-white/50 sm:text-[15px]">
-                {artist.shortBio}
+              {/* Helper text */}
+              <p className="mt-3 text-[13px] leading-relaxed text-white/28">
+                Download artist assets, press photos, technical rider and media materials.
               </p>
             </div>
           </div>
@@ -316,8 +301,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-              {/* ESP */}
               {pk.pdfEsUrl && (
                 <a
                   href={pk.pdfEsUrl}
@@ -339,7 +322,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 </a>
               )}
 
-              {/* ENG */}
               {pk.pdfEnUrl && (
                 <a
                   href={pk.pdfEnUrl}
@@ -361,7 +343,6 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 </a>
               )}
 
-              {/* Fallback: no PDFs — root folder only */}
               {!hasPdfs && pk.rootUrl && (
                 <a
                   href={pk.rootUrl}
@@ -388,7 +369,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           </div>
 
-          {/* ── Asset Folders — only when individual folders are configured ── */}
+          {/* ── Asset Folders ──────────────────────────────────────────── */}
           {hasIndividualFolders && (
             <div className="mt-8">
               <div className="mb-4">
@@ -426,7 +407,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           )}
 
-          {/* ── Press Photos ───────────────────────────────────────────── */}
+          {/* ── Press Photos Preview ───────────────────────────────────── */}
           {pk.useGalleryPhotos && artist.galleryImages.length > 0 && (
             <div className="mt-8">
               <div className="mb-4">
@@ -434,15 +415,18 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   Press Photos
                 </p>
                 <h2 className="mt-1.5 text-xl font-black tracking-[-0.01em] text-foreground">
-                  Media Gallery
+                  Press Photos Preview
                 </h2>
+                <p className="mt-1 text-[12px] text-white/28">
+                  Preview only · Download high-resolution images from the Press Photos folder.
+                </p>
               </div>
-              <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02]">
+              <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
                 <div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3">
                   {artist.galleryImages.map((image) => (
                     <div
                       key={image.id}
-                      className="group relative aspect-square overflow-hidden rounded-2xl bg-secondary"
+                      className="group relative aspect-square overflow-hidden rounded-xl bg-secondary"
                     >
                       <Image
                         src={image.imageUrl}
@@ -450,25 +434,23 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         fill
                         sizes="(max-width: 640px) 50vw, 33vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                        style={{
-                          objectPosition: `${image.focalX}% ${image.focalY}%`,
-                        }}
+                        style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
                       />
                     </div>
                   ))}
                 </div>
                 {pk.mediaFolderUrl && (
-                  <div className="flex items-center justify-between px-5 py-4">
-                    <p className="text-[11px] text-white/25">
+                  <div className="flex items-center justify-between border-t border-white/[0.04] px-5 py-3.5">
+                    <p className="text-[11px] text-white/22">
                       High-resolution versions available in the Press Photos folder.
                     </p>
                     <a
                       href={pk.mediaFolderUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/50 transition-colors duration-150 hover:text-accent/80"
+                      className="ml-4 flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/55 transition-colors duration-150 hover:text-accent/85"
                     >
-                      Open folder
+                      Open Press Photos Folder
                       <ExternalLink className="h-2.5 w-2.5" />
                     </a>
                   </div>
@@ -477,32 +459,24 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           )}
 
-          {/* ── Booking CTA ────────────────────────────────────────────── */}
+          {/* ── Compact Booking Contact ────────────────────────────────── */}
           {artist.bookingInfo.email.trim() && (
-            <div className="mt-8 overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-7 sm:p-10">
-              <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/60">
-                Booking
-              </p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.01em] text-foreground sm:text-3xl">
-                Book {artist.artistName}
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-white/40">
-                Need booking details, press material or availability?
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <BookingInquiryModal
-                  artistHandle={artist.handle}
-                  artistName={artist.artistName}
-                  pressKitUrl={pressKitHref}
-                />
-                <a
-                  href={`mailto:${artist.bookingInfo.email}`}
-                  className="flex h-11 items-center gap-2.5 rounded-full border border-white/[0.12] bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.1em] text-white/50 transition-all duration-150 hover:-translate-y-0.5 hover:border-white/25 hover:text-white/80"
-                >
-                  <Mail className="h-3.5 w-3.5" />
-                  Email
-                </a>
+            <div className="mt-8 flex flex-col gap-3 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
+                  Booking Contact
+                </p>
+                <p className="mt-0.5 font-mono text-sm text-white/50">
+                  {artist.bookingInfo.email}
+                </p>
               </div>
+              <a
+                href={`mailto:${artist.bookingInfo.email}`}
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/[0.10] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/45 transition-all duration-150 hover:border-white/[0.20] hover:text-white/70"
+              >
+                <Mail className="h-3 w-3" />
+                Contact Booking
+              </a>
             </div>
           )}
 
