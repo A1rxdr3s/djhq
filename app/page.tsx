@@ -70,15 +70,21 @@ function Nav() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <span className="text-[13px] font-bold tracking-[0.04em] text-[#F5F5F3]">{brand.name}</span>
         <div className="flex items-center gap-6">
-          <Link href="/andresherrera" className="hidden text-[13px] text-[#71717A] transition-colors hover:text-[#F5F5F3] sm:block">
+          <a href="#features" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
+            Features
+          </a>
+          <a href="#press-kit" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
+            Press Kit
+          </a>
+          <Link href="/andresherrera" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
             Demo
           </Link>
-          <Link href="/sign-in" className="hidden text-[13px] text-[#71717A] transition-colors hover:text-[#F5F5F3] sm:block">
+          <Link href="/sign-in" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
             Sign in
           </Link>
           <a
             href="mailto:access@djhq.co"
-            className="rounded-md bg-[#6D5DFC] px-4 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:bg-[#7E70FD] hover:shadow-[0_0_20px_rgba(109,93,252,0.35)]"
+            className="rounded-md bg-[#00E6A7] px-4 py-2 text-[13px] font-semibold text-[#0A1410] transition-all duration-200 hover:bg-[#00D49A] hover:shadow-[0_0_20px_rgba(0,230,167,0.30)]"
           >
             Get started
           </a>
@@ -100,7 +106,7 @@ function Hero() {
       <div
         className="pointer-events-none absolute right-0 top-0 h-[700px] w-[700px]"
         style={{
-          background: "radial-gradient(ellipse at 70% 30%, rgba(109,93,252,0.09) 0%, transparent 65%)",
+          background: "radial-gradient(ellipse at 70% 30%, rgba(0,230,167,0.05) 0%, transparent 65%)",
           animation: "hp-indigo-pulse 12s ease-in-out infinite",
         }}
       />
@@ -114,8 +120,8 @@ function Hero() {
             className="mb-6 inline-flex items-center gap-2"
             style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both" }}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-[#6D5DFC]" />
-            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[#6D5DFC]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00E6A7]" />
+            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[#00E6A7]">
               {brand.copy.heroLabel}
             </span>
           </div>
@@ -148,7 +154,7 @@ function Hero() {
           >
             <a
               href="mailto:access@djhq.co"
-              className="flex h-12 items-center gap-2.5 rounded-md bg-[#6D5DFC] px-7 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-[#5D4EE8] hover:shadow-[0_0_36px_rgba(109,93,252,0.55)]"
+              className="flex h-12 items-center gap-2.5 rounded-md bg-[#00E6A7] px-7 text-[15px] font-semibold text-[#0A1410] transition-all duration-200 hover:bg-[#00D49A] hover:shadow-[0_0_36px_rgba(0,230,167,0.40)]"
             >
               Create Your {brand.name}
               <ArrowRight className="h-4 w-4" />
@@ -169,7 +175,7 @@ function Hero() {
           >
             {["Professional artist profile", "Setup in under an hour", "One professional URL"].map((t) => (
               <div key={t} className="flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-[#6D5DFC]" />
+                <Check className="h-3.5 w-3.5 text-[#00E6A7]" />
                 <span className="text-[12px] text-[#52525B]">{t}</span>
               </div>
             ))}
@@ -183,7 +189,7 @@ function Hero() {
             style={{
               borderRadius: "20px",
               border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 0 0 1px rgba(109,93,252,0.08), 0 32px 80px rgba(0,0,0,0.70)",
+              boxShadow: "0 0 0 1px rgba(0,230,167,0.07), 0 32px 80px rgba(0,0,0,0.70)",
             }}
           >
             {/* Minimal browser strip — traffic lights + URL only */}
@@ -228,7 +234,7 @@ function ProfileMockup() {
       <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(11,15,20,0.32) 0%, rgba(11,15,20,0.04) 28%, rgba(11,15,20,0.55) 66%, rgba(11,15,20,0.99) 100%)" }} />
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 10%, transparent 18%, rgba(11,15,20,0.24) 55%, rgba(11,15,20,0.72) 100%)" }} />
       <div className="absolute inset-y-0 left-0 w-3/4" style={{ background: "linear-gradient(92deg, rgba(11,15,20,0.52), transparent 72%)" }} />
-      <div className="absolute inset-x-0 bottom-0 h-3/5" style={{ background: "radial-gradient(ellipse at 20% 90%, rgba(109,93,252,0.10), transparent 38%)" }} />
+      <div className="absolute inset-x-0 bottom-0 h-3/5" style={{ background: "radial-gradient(ellipse at 20% 90%, rgba(0,230,167,0.07), transparent 38%)" }} />
       <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 45%, rgba(11,15,20,0.30) 100%)" }} />
       <div className="absolute inset-0" style={{ background: "linear-gradient(92deg, rgba(0,0,0,0.20) 0%, transparent 50%), linear-gradient(0deg, rgba(0,0,0,0.18) 0%, transparent 32%)" }} />
 
@@ -265,10 +271,10 @@ function ProfileMockup() {
                 key={g}
                 className="rounded-full px-3.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.09em]"
                 style={{
-                  border: "1px solid rgba(109,93,252,0.70)",
+                  border: "1px solid rgba(0,230,167,0.65)",
                   background: "rgba(0,0,0,0.35)",
                   color: "rgba(255,255,255,0.90)",
-                  boxShadow: "0 0 16px rgba(109,93,252,0.12)",
+                  boxShadow: "0 0 16px rgba(0,230,167,0.10)",
                 }}
               >
                 {g}
@@ -287,7 +293,7 @@ function ProfileMockup() {
           {/* Tagline */}
           <p
             className="mt-2 text-[13px] font-medium uppercase tracking-[0.07em]"
-            style={{ color: "rgba(109,93,252,0.90)", textShadow: "0 0 12px rgba(0,0,0,0.45)" }}
+            style={{ color: "rgba(0,230,167,0.90)", textShadow: "0 0 12px rgba(0,0,0,0.45)" }}
           >
             Groove-driven electronic music
           </p>
@@ -309,14 +315,14 @@ function ProfileMockup() {
           {/* CTA buttons */}
           <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <span
-              className="flex h-10 cursor-default items-center rounded-full px-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-white"
-              style={{ background: "#6D5DFC" }}
+              className="flex h-10 cursor-default items-center rounded-full px-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#0A1410]"
+              style={{ background: "#00E6A7" }}
             >
               Booking
             </span>
             <span
               className="flex h-10 cursor-default items-center gap-2 rounded-full px-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-white"
-              style={{ border: "1px solid rgba(109,93,252,0.50)", background: "transparent" }}
+              style={{ border: "1px solid rgba(0,230,167,0.45)", background: "transparent" }}
             >
               Press Kit
             </span>
@@ -331,7 +337,7 @@ function ProfileMockup() {
                 style={{
                   border: "1px solid rgba(255,255,255,0.12)",
                   background: "rgba(255,255,255,0.05)",
-                  color: "#6D5DFC",
+                  color: "#00E6A7",
                 }}
               >
                 <Icon className="h-4 w-4" />
@@ -369,7 +375,7 @@ const scenarios = [
 
 function ProblemSection() {
   return (
-    <section style={{ background: "#090C11", padding: "96px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+    <section style={{ background: "#090C11", padding: "72px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
       <div className="mx-auto max-w-4xl px-6">
 
         {/* Eyebrow + headline */}
@@ -386,7 +392,7 @@ function ProblemSection() {
           </h2>
         </Reveal>
         <Reveal delay={120}>
-          <p className="mb-16 max-w-xl text-[16px] leading-[1.75]" style={{ color: "#52525B" }}>
+          <p className="mb-10 max-w-xl text-[16px] leading-[1.75]" style={{ color: "#52525B" }}>
             Every year, promoters, labels and festivals evaluate hundreds of artists.
             Most decisions happen in seconds.
           </p>
@@ -397,7 +403,7 @@ function ProblemSection() {
           {scenarios.map((s, i) => (
             <Reveal key={s.n} delay={180 + i * 80}>
               <div
-                className="group relative overflow-hidden rounded-2xl px-7 py-6 transition-colors duration-300"
+                className="group relative overflow-hidden rounded-2xl px-7 py-6 transition-all duration-200"
                 style={{
                   background: "rgba(255,255,255,0.018)",
                   border: "1px solid rgba(255,255,255,0.05)",
@@ -408,14 +414,14 @@ function ProblemSection() {
                 {/* Subtle left accent line */}
                 <div
                   className="pointer-events-none absolute inset-y-0 left-0 w-px"
-                  style={{ background: "linear-gradient(180deg, transparent, rgba(109,93,252,0.35), transparent)" }}
+                  style={{ background: "linear-gradient(180deg, transparent, rgba(0,230,167,0.28), transparent)" }}
                 />
 
                 <div className="flex items-start gap-6 sm:gap-10">
                   {/* Card number */}
                   <span
                     className="shrink-0 font-mono text-[11px] font-bold uppercase tracking-[0.18em] pt-0.5"
-                    style={{ color: "rgba(109,93,252,0.40)" }}
+                    style={{ color: "rgba(0,230,167,0.40)" }}
                   >
                     {s.n}
                   </span>
@@ -452,7 +458,7 @@ function ProblemSection() {
 
         {/* Resolution statement */}
         <Reveal delay={540}>
-          <div className="mt-16 text-center">
+          <div className="mt-10 text-center">
             <p
               className="mb-3 text-[clamp(22px,3.5vw,38px)] font-bold tracking-[-0.02em] text-[#F5F5F3]"
             >
@@ -473,7 +479,7 @@ function ProblemSection() {
 
 function ProductSection() {
   return (
-    <section style={{ background: "#0B0F14", padding: "96px 0" }}>
+    <section id="features" style={{ background: "#0B0F14", padding: "72px 0" }}>
       <div className="mx-auto max-w-7xl px-6">
         <Reveal>
           <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#52525B" }}>
@@ -481,7 +487,7 @@ function ProductSection() {
           </p>
         </Reveal>
         <Reveal delay={60}>
-          <h2 className="mb-14 text-[clamp(28px,4vw,48px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+          <h2 className="mb-10 text-[clamp(28px,4vw,48px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
             Everything they need to know.
             <br />
             <span style={{ color: "#71717A" }}>Nothing missing.</span>
@@ -492,12 +498,12 @@ function ProductSection() {
           {/* Artist destination */}
           <Reveal delay={0}>
             <div
-              className="rounded-2xl p-6 transition-colors duration-300"
+              className="rounded-2xl p-6 transition-all duration-200"
               style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(109,93,252,0.25)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
             >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#6D5DFC" }}>
+              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
                 Artist Destination
               </p>
               <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
@@ -509,10 +515,10 @@ function ProductSection() {
               {/* Mini artist card */}
               <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.06)", background: "#0B0F14" }}>
                 <div className="relative h-14" style={{ background: "linear-gradient(135deg, #0C1220, #0B0A14)" }}>
-                  <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(109,93,252,0.15), transparent 55%)" }} />
+                  <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(0,230,167,0.10), transparent 55%)" }} />
                   <div className="absolute bottom-2 left-3 flex gap-1.5">
                     {["House", "Tech House"].map((g) => (
-                      <span key={g} className="rounded-full px-2 py-0.5 font-mono text-[8px] font-semibold uppercase" style={{ border: "1px solid rgba(109,93,252,0.50)", background: "rgba(0,0,0,0.40)", color: "rgba(255,255,255,0.75)" }}>
+                      <span key={g} className="rounded-full px-2 py-0.5 font-mono text-[8px] font-semibold uppercase" style={{ border: "1px solid rgba(0,230,167,0.45)", background: "rgba(0,0,0,0.40)", color: "rgba(255,255,255,0.75)" }}>
                         {g}
                       </span>
                     ))}
@@ -523,7 +529,7 @@ function ProductSection() {
                   <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>Madrid · Spain</p>
                   <div className="mt-2 flex items-center gap-1.5">
                     {[Music2, Radio, Play, Youtube, Instagram].map((Icon, i) => (
-                      <div key={i} className="flex h-6 w-6 items-center justify-center rounded-full" style={{ border: "1px solid rgba(255,255,255,0.10)", color: "#6D5DFC" }}>
+                      <div key={i} className="flex h-6 w-6 items-center justify-center rounded-full" style={{ border: "1px solid rgba(255,255,255,0.10)", color: "#00E6A7" }}>
                         <Icon className="h-3 w-3" />
                       </div>
                     ))}
@@ -536,12 +542,12 @@ function ProductSection() {
           {/* Shows */}
           <Reveal delay={80}>
             <div
-              className="rounded-2xl p-6 transition-colors duration-300"
+              className="rounded-2xl p-6 transition-all duration-200"
               style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(109,93,252,0.25)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
             >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#6D5DFC" }}>
+              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
                 Shows & History
               </p>
               <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
@@ -562,8 +568,8 @@ function ProductSection() {
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
                     style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
                   >
-                    <div className="w-9 shrink-0 rounded-lg py-1 text-center" style={{ background: "rgba(109,93,252,0.07)" }}>
-                      <p className="font-mono text-[7px] font-bold uppercase tracking-widest" style={{ color: "rgba(109,93,252,0.60)" }}>{s.mon}</p>
+                    <div className="w-9 shrink-0 rounded-lg py-1 text-center" style={{ background: "rgba(0,230,167,0.07)" }}>
+                      <p className="font-mono text-[7px] font-bold uppercase tracking-widest" style={{ color: "rgba(0,230,167,0.60)" }}>{s.mon}</p>
                       <p className="text-[15px] font-bold leading-none text-white">{s.day}</p>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -571,7 +577,7 @@ function ProductSection() {
                       <p className="font-mono text-[10px]" style={{ color: "#52525B" }}>{s.city}</p>
                     </div>
                     {s.upcoming && (
-                      <span className="shrink-0 rounded px-2 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-wider" style={{ background: "rgba(109,93,252,0.12)", color: "#6D5DFC" }}>
+                      <span className="shrink-0 rounded px-2 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-wider" style={{ background: "rgba(0,230,167,0.10)", color: "#00E6A7" }}>
                         Soon
                       </span>
                     )}
@@ -584,12 +590,12 @@ function ProductSection() {
           {/* Press Kit */}
           <Reveal delay={160}>
             <div
-              className="rounded-2xl p-6 transition-colors duration-300"
+              className="rounded-2xl p-6 transition-all duration-200"
               style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(109,93,252,0.25)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
             >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#6D5DFC" }}>
+              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
                 Electronic Press Kit
               </p>
               <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
@@ -612,7 +618,7 @@ function ProductSection() {
                     <span className="text-[18px]">{d.flag}</span>
                     <p className="mt-2 text-[11px] font-semibold text-white">{d.lang}</p>
                     <p className="font-mono text-[9px]" style={{ color: "#52525B" }}>PDF · {d.size}</p>
-                    <p className="mt-2 font-mono text-[9px] font-medium" style={{ color: "#6D5DFC" }}>Download ↗</p>
+                    <p className="mt-2 font-mono text-[9px] font-medium" style={{ color: "#00E6A7" }}>Download ↗</p>
                   </div>
                 ))}
               </div>
@@ -623,7 +629,7 @@ function ProductSection() {
                   style={{ border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.015)" }}
                 >
                   <span className="text-[11px]" style={{ color: "#A1A1AA" }}>{f}</span>
-                  <span className="font-mono text-[9px]" style={{ color: "#6D5DFC" }}>Open ↗</span>
+                  <span className="font-mono text-[9px]" style={{ color: "#00E6A7" }}>Open ↗</span>
                 </div>
               ))}
             </div>
@@ -632,12 +638,12 @@ function ProductSection() {
           {/* Releases */}
           <Reveal delay={240}>
             <div
-              className="rounded-2xl p-6 transition-colors duration-300"
+              className="rounded-2xl p-6 transition-all duration-200"
               style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(109,93,252,0.25)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
             >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#6D5DFC" }}>
+              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
                 Release Catalog
               </p>
               <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
@@ -657,13 +663,13 @@ function ProductSection() {
                 />
                 <div className="flex min-w-0 flex-col justify-between py-0.5">
                   <div>
-                    <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.18em]" style={{ color: "rgba(109,93,252,0.70)" }}>SINGLE</p>
+                    <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.18em]" style={{ color: "rgba(0,230,167,0.70)" }}>SINGLE</p>
                     <p className="text-[14px] font-black tracking-[-0.01em] text-white">Meridian</p>
                     <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>Drumcode · 2025</p>
                   </div>
                   <span
                     className="mt-1 inline-flex h-5 w-fit items-center rounded-full px-2.5 font-mono text-[8px] font-bold uppercase tracking-[0.10em]"
-                    style={{ border: "1px solid rgba(109,93,252,0.25)", color: "#6D5DFC" }}
+                    style={{ border: "1px solid rgba(0,230,167,0.22)", color: "#00E6A7" }}
                   >
                     Listen ↗
                   </span>
@@ -703,9 +709,9 @@ function ProductSection() {
 
 function PressKitSection() {
   return (
-    <section style={{ background: "#090C11", padding: "96px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+    <section id="press-kit" style={{ background: "#090C11", padding: "72px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
       <div className="mx-auto max-w-7xl px-6">
-        <div className="grid items-center gap-14 lg:grid-cols-2">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
           {/* Copy */}
           <div>
             <Reveal>
@@ -735,7 +741,7 @@ function PressKitSection() {
                   "Your domain, not a generic link",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
-                    <Check className="h-4 w-4 shrink-0" style={{ color: "#6D5DFC" }} />
+                    <Check className="h-4 w-4 shrink-0" style={{ color: "#00E6A7" }} />
                     <span className="text-[14px]" style={{ color: "#A1A1AA" }}>{item}</span>
                   </li>
                 ))}
@@ -750,7 +756,7 @@ function PressKitSection() {
               style={{ border: "1px solid rgba(255,255,255,0.08)", background: "#111520" }}
             >
               <div className="border-b p-6" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                <p className="font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#6D5DFC" }}>
+                <p className="font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#00E6A7" }}>
                   Electronic Press Kit
                 </p>
                 <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-[#F5F5F3]">NOA VEL</p>
@@ -765,13 +771,13 @@ function PressKitSection() {
                 ].map((d) => (
                   <div
                     key={d.lang}
-                    className="cursor-pointer rounded-xl p-5 transition-all duration-200 hover:border-[rgba(109,93,252,0.30)]"
+                    className="cursor-pointer rounded-xl p-5 transition-all duration-200 hover:border-[rgba(0,230,167,0.28)]"
                     style={{ border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
                   >
                     <span className="text-[18px]">{d.flag}</span>
                     <p className="mt-3 text-[12px] font-semibold text-[#F5F5F3]">{d.lang}</p>
                     <p className="font-mono text-[10px]" style={{ color: "#52525B" }}>PDF · {d.size}</p>
-                    <p className="mt-3 font-mono text-[10px] font-medium" style={{ color: "#6D5DFC" }}>Download ↗</p>
+                    <p className="mt-3 font-mono text-[10px] font-medium" style={{ color: "#00E6A7" }}>Download ↗</p>
                   </div>
                 ))}
               </div>
@@ -785,7 +791,7 @@ function PressKitSection() {
                     style={{ border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.015)" }}
                   >
                     <span className="text-[12px]" style={{ color: "#A1A1AA" }}>{f}</span>
-                    <span className="font-mono text-[10px]" style={{ color: "#6D5DFC" }}>Open ↗</span>
+                    <span className="font-mono text-[10px]" style={{ color: "#00E6A7" }}>Open ↗</span>
                   </div>
                 ))}
               </div>
@@ -801,10 +807,10 @@ function PressKitSection() {
 
 function ForSection() {
   return (
-    <section style={{ background: "#0B0F14", padding: "96px 0" }}>
+    <section style={{ background: "#0B0F14", padding: "72px 0" }}>
       <div className="mx-auto max-w-7xl px-6">
         <Reveal>
-          <h2 className="mb-12 text-[clamp(24px,3.5vw,40px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+          <h2 className="mb-8 text-[clamp(24px,3.5vw,40px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
             Built for electronic music artists
             <br />
             <span style={{ color: "#71717A" }}>who take their career seriously.</span>
@@ -813,7 +819,7 @@ function ForSection() {
 
         <div className="grid gap-12 lg:grid-cols-2">
           <Reveal delay={80}>
-            <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#6D5DFC" }}>
+            <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
               DJHQ is for you if
             </p>
             <ul className="space-y-4">
@@ -825,7 +831,7 @@ function ForSection() {
                 "You're tired of assembling information every time someone asks",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3.5">
-                  <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#6D5DFC" }} />
+                  <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#00E6A7" }} />
                   <span className="text-[15px] leading-[1.6]" style={{ color: "#A1A1AA" }}>{item}</span>
                 </li>
               ))}
@@ -862,7 +868,7 @@ function ClosingCTA() {
   return (
     <section
       className="relative overflow-hidden"
-      style={{ background: "#090C11", padding: "120px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+      style={{ background: "#090C11", padding: "88px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}
     >
       {/* Indigo glow behind CTA */}
       <div
@@ -870,7 +876,7 @@ function ClosingCTA() {
         style={{
           width: 700,
           height: 500,
-          background: "radial-gradient(ellipse at center, rgba(109,93,252,0.10) 0%, transparent 60%)",
+          background: "radial-gradient(ellipse at center, rgba(0,230,167,0.06) 0%, transparent 60%)",
           animation: "hp-indigo-pulse 16s ease-in-out infinite",
         }}
       />
@@ -891,7 +897,7 @@ function ClosingCTA() {
           <div className="flex flex-col items-center gap-4">
             <a
               href="mailto:access@djhq.co"
-              className="flex h-13 items-center gap-2.5 rounded-md bg-[#6D5DFC] px-9 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-[#5D4EE8] hover:shadow-[0_0_48px_rgba(109,93,252,0.60)]"
+              className="flex h-12 items-center gap-2.5 rounded-md bg-[#00E6A7] px-7 text-[15px] font-semibold text-[#0A1410] transition-all duration-200 hover:bg-[#00D49A] hover:shadow-[0_0_48px_rgba(0,230,167,0.45)]"
             >
               Create Your {brand.name}
               <ArrowRight className="h-4 w-4" />
