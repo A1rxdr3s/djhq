@@ -29,6 +29,7 @@ import { CollapsibleMobileReleases } from "@/components/djhq/collapsible-mobile-
 import { formatPerformanceMetadata } from "@/lib/dj-set-title"
 import { computeVideoTitle } from "@/lib/performance-title"
 import { getAccentTheme } from "@/lib/accent-themes"
+import { PerfDiagnostics } from "@/components/debug/perf-diagnostics"
 import { Button } from "@/components/ui/button"
 import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
@@ -357,6 +358,13 @@ function getMockArtistFallback(handle: string) {
   return handle === mockArtist.handle ? mockArtist : null
 }
 
+/** Thin timing wrapper — safe to call performance.now() here (async function, not React render). */
+async function getArtistProfileTimed(handle: string): Promise<{ artist: Artist | null; totalMs: number }> {
+  const t0 = performance.now()
+  const artist = await getArtistProfile(handle)
+  return { artist, totalMs: Math.round(performance.now() - t0) }
+}
+
 async function getArtistProfile(handle: string): Promise<Artist | null> {
   const normalizedHandle = handle.toLowerCase()
   const supabase = createSupabaseReadClient()
@@ -626,7 +634,7 @@ function MainLink({ link }: { link: SocialLink }) {
 
 export default async function PublicArtistProfilePage({ params }: PublicProfilePageProps) {
   const { handle } = await params
-  const artist = await getArtistProfile(handle)
+  const { artist, totalMs: profileTotalMs } = await getArtistProfileTimed(handle)
 
   if (!artist) {
     notFound()
@@ -709,6 +717,39 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
     return safePriorityA - safePriorityB
   })
+
+  // ── Server-side diagnostics ─────────────────────────────────────────────────
+  // Temporary instrumentation. Remove when no longer needed.
+  //
+  // NOTE: heroImages=2 is expected and correct:
+  //   1. Fixed blurred background (sizes="100vw", priority, quality=default 75)
+  //   2. Hero card foreground (sizes="(min-width:1024px) 1120px, ...", priority, quality=default 75)
+  // Both request the same heroImageUrl. The second is usually a browser memory-cache hit.
+  // Compare: presskit loads heroImageUrl ONCE at quality=65. That gives it fewer bytes but
+  // loses the cache-warming effect from the background image.
+  console.info("[artist-home-summary]", JSON.stringify({
+    host: _reqHost || "unknown",
+    pathname: `/${handle}`,
+    totalMs: profileTotalMs,
+    heroImages: 2,
+    logoImages: artist.heroLogoUrl ? 1 : 0,
+    galleryImages: galleryImages.length,
+    priorityImages: 2,
+    featuredReleaseImages: hasFeaturedArtwork ? 1 : 0,
+    totalImages: 2 + (artist.heroLogoUrl ? 1 : 0) + galleryImages.length + (hasFeaturedArtwork ? 1 : 0),
+    heroImageSizes: [
+      "100vw",
+      "(min-width: 1024px) 1120px, (min-width: 768px) 640px, 100vw",
+    ],
+    heroImageQuality: "default (75 — no quality prop set)",
+    heroImageFill: true,
+    galleryImageSizes: "33vw",
+    galleryQueryAlwaysRuns: true,
+    releases: artist.releases.length,
+    djSets: artist.djSets.length,
+    videos: artist.videos.length,
+  }))
+  // ── End diagnostics ──────────────────────────────────────────────────────────
 
   return (
     <>
@@ -1427,6 +1468,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </MobileTabManager>
       </div>
     </main>
+      <PerfDiagnostics page="artist-home" />
     </>
   )
 }

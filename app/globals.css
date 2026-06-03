@@ -137,3 +137,39 @@
   0%, 100% { transform: scale(1.02); }
   50%       { transform: scale(1.04); }
 }
+
+/* ── Safari iOS performance hardening ───────────────────────────────────────
+   Heavy GPU-composited effects that cause jank on Safari iOS.
+   The @supports (-webkit-touch-callout: none) block targets Safari (iOS and
+   macOS), combined with max-width: 768px it targets phones only.
+   Desktop Safari and all Chrome/Firefox are unaffected.
+   ─────────────────────────────────────────────────────────────────────────── */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    /* Hover-triggered overlay divs: opacity-0 absolute elements with
+       transition-opacity still create GPU compositing layers on Safari iOS
+       even when invisible. Suppress entirely — hover doesn't exist on touch. */
+    .pk-hover-overlay {
+      display: none;
+    }
+
+    /* Gallery thumbnail hover effects: transform+filter transitions create
+       compositing layers for each gallery image. Not reachable via touch. */
+    .pk-gallery-image {
+      transition: none !important;
+    }
+  }
+}
+
+/* ── Devices without true hover (touch screens) ─────────────────────────────
+   Broader safety net: on any device without pointer hover capability,
+   these transition layers are wasted. Chrome on Android also benefits.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media (hover: none) {
+  .pk-hover-overlay {
+    display: none;
+  }
+  .pk-gallery-image {
+    transition: none !important;
+  }
+}

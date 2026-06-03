@@ -8,6 +8,7 @@ import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { resolveSafeHref } from "@/lib/safe-url"
+import { PerfDiagnostics } from "@/components/debug/perf-diagnostics"
 import type { GalleryImage, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
 
@@ -371,8 +372,8 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
       <div className="min-h-screen bg-background text-foreground">
         {/* Background atmosphere */}
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-accent/[0.05] blur-[140px]" />
-          <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.03] blur-[120px]" />
+          <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-accent/[0.05] sm:blur-[140px]" />
+          <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.03] sm:blur-[120px]" />
         </div>
 
         <div className="mx-auto max-w-3xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
@@ -460,7 +461,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   rel="noopener noreferrer"
                   className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
                 >
-                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
+                  <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
                   <Download className="h-6 w-6 text-accent/70" />
                   <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
                     {pk.pdfEsSize ? `PDF · ${pk.pdfEsSize}` : "Spanish PDF"}
@@ -494,7 +495,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   rel="noopener noreferrer"
                   className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
                 >
-                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
+                  <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
                   <Download className="h-6 w-6 text-accent/70" />
                   <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
                     {pk.pdfEnSize ? `PDF · ${pk.pdfEnSize}` : "English PDF"}
@@ -544,7 +545,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   rel="noopener noreferrer"
                   className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.03] sm:col-span-2"
                 >
-                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
+                  <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
                   <FolderOpen className="h-6 w-6 text-accent/70" />
                   <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
                     Google Drive
@@ -583,7 +584,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     rel="noopener noreferrer"
                     className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-3.5 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
                   >
-                    <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_5%,transparent),transparent_70%)]" />
+                    <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_5%,transparent),transparent_70%)]" />
                     <div className="flex items-center justify-between">
                       <card.icon className="h-4 w-4 text-accent/70" />
                       {card.id === "drive" && (
@@ -648,7 +649,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         fill
                         loading="lazy"
                         sizes="(max-width: 768px) 33vw, 180px"
-                        className="object-cover transition-[transform,filter] duration-500 group-hover:scale-[1.04] group-hover:brightness-[1.08]"
+                        className="pk-gallery-image object-cover sm:transition-[transform,filter] sm:duration-500 sm:group-hover:scale-[1.04] sm:group-hover:brightness-[1.08]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
                       />
                     </div>
@@ -684,6 +685,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           )}
         </div>
       </div>
+      <PerfDiagnostics page="presskit" />
     </>
   )
 }
