@@ -1,21 +1,49 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { resolveSafeHref } from "@/lib/safe-url"
 import { brand } from "@/lib/brand"
+import type { SocialLink } from "@/types/djhq"
+
+const PLATFORM_LABELS: Record<string, string> = {
+  beatport:         "Beatport",
+  spotify:          "Spotify",
+  soundcloud:       "SoundCloud",
+  youtube:          "YouTube",
+  instagram:        "Instagram",
+  tiktok:           "TikTok",
+  "resident-advisor": "Resident Advisor",
+  bandsintown:      "Bandsintown",
+  website:          "Website",
+  other:            "Website",
+}
 
 type Props = {
   artistName: string
   location: string
   bookingEmail: string
   isPro: boolean
+  genres?: string[]
+  socialLinks?: SocialLink[]
+  hasPressKit?: boolean
+  pressKitHref?: string | null
+  artistHandle?: string
 }
 
-export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Props) {
-  const [email, setEmail] = useState("")
+export function ProfileClosing({
+  artistName,
+  location,
+  bookingEmail,
+  isPro,
+  genres = [],
+  socialLinks = [],
+  hasPressKit = false,
+  pressKitHref = null,
+  artistHandle = "",
+}: Props) {
+  const [email, setEmail]   = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -26,160 +54,200 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
       return
     }
     setStatus("loading")
-    // MVP placeholder — wire to a real email service in a future iteration
     setTimeout(() => setStatus("success"), 750)
   }
 
-  const year = new Date().getFullYear()
+  const year       = new Date().getFullYear()
   const hasBooking = !!bookingEmail.trim()
-  const locationStr = location.replace(/\s*\/\s*/g, " • ")
+  const locationStr = location.replace(/\s*\/\s*/g, " · ")
+
+  const exploreLinks = [
+    { label: "Releases", href: "#music" },
+    { label: "Shows",    href: "#shows" },
+    { label: "Sets",     href: "#performance" },
+    ...(hasPressKit && pressKitHref ? [{ label: "Press Kit", href: pressKitHref, external: true }] : []),
+    ...(hasBooking ? [{ label: "Contact", href: `#contact` }] : []),
+  ]
+
+  const connectLinks = socialLinks
+    .filter((l) => l.url.trim().length > 0)
+    .slice(0, 6)
+    .map((l) => ({
+      label: PLATFORM_LABELS[l.platform] ?? l.label,
+      href:  resolveSafeHref(l.url),
+    }))
+    .filter((l) => l.href !== null) as { label: string; href: string }[]
 
   return (
-    <div className="border-t border-white/[0.06]">
-      <div>
+    <footer className="mt-16 border-t border-white/[0.06] sm:mt-20 lg:mt-24">
 
-        {/* ── Layer 1 + 2: Newsletter ── */}
-        <div className="py-10 text-center sm:py-14">
-          {status === "success" ? (
-            <div>
-              <p className="text-[1.5rem] font-black tracking-[-0.02em] text-foreground">
-                You&apos;re on the list.
-              </p>
-              <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-white/28">
-                We&apos;ll be in touch.
-              </p>
-            </div>
-          ) : (
-            <>
-              <h2 className="text-[1.4rem] font-black leading-none tracking-[-0.02em] text-foreground sm:text-[2.5rem]">
-                GET ON THE LIST
-              </h2>
+      {/* ── Main columns ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-x-8 gap-y-10 px-0 py-12 sm:grid-cols-2 sm:py-16 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-x-12 lg:py-20">
 
-              {/* 2×2 benefits grid — visual anchor of the section */}
-              <div className="mx-auto mt-3 grid max-w-[320px] grid-cols-2 gap-x-6 gap-y-0 sm:mt-5 sm:max-w-[400px]">
-                {["Guest Lists", "Early Access", "Free Downloads", "New Music"].map((benefit) => (
-                  <div
-                    key={benefit}
-                    className="border-t border-white/[0.07] py-1.5 text-left sm:py-3"
-                  >
-                    <p className="text-[0.82rem] font-black uppercase leading-none tracking-[-0.01em] text-foreground/78 sm:text-[1rem]">
-                      {benefit}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Email form — secondary to the grid */}
-              <form
-                onSubmit={handleSubmit}
-                noValidate
-                className="mx-auto mt-2 flex max-w-[320px] items-center gap-2.5 sm:mt-3 sm:max-w-[400px]"
-              >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (status === "error") setStatus("idle")
-                  }}
-                  placeholder="your@email.com"
-                  aria-label="Email address"
-                  className={cn(
-                    "h-9 min-w-0 flex-1 border-b bg-transparent px-0 text-[13px] text-foreground outline-none transition-colors duration-150 placeholder:text-white/20",
-                    status === "error"
-                      ? "border-red-500/40 focus:border-red-500/60"
-                      : "border-white/[0.14] focus:border-accent/40",
-                  )}
-                />
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-accent px-5 text-[11px] font-bold uppercase tracking-[0.12em] text-accent-foreground transition-all duration-150 hover:bg-accent/90 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_28%,transparent)] disabled:opacity-50"
-                >
-                  {status === "loading" ? "···" : (
-                    <>Join <ArrowRight className="h-3 w-3" /></>
-                  )}
-                </button>
-              </form>
-
-              {status === "error" ? (
-                <p className="mt-2.5 text-[10px] text-red-400/70">
-                  Please enter a valid email address.
-                </p>
-              ) : (
-                <p className="mt-1.5 text-[10px] text-white/18 sm:mt-2.5">
-                  Occasional updates only.
-                </p>
-              )}
-            </>
+        {/* Col 1 — Artist identity */}
+        <div className="sm:col-span-2 lg:col-span-1">
+          <p
+            className="text-[1.75rem] font-black leading-none tracking-[-0.025em] text-foreground sm:text-[2.1rem]"
+            style={{ textWrap: "balance" } as React.CSSProperties}
+          >
+            {artistName}
+          </p>
+          {genres.length > 0 && (
+            <p className="mt-3 text-[12px] text-white/32">
+              {genres.join(" · ")}
+            </p>
+          )}
+          {locationStr && (
+            <p className="mt-1 text-[12px] text-white/28">{locationStr}</p>
           )}
         </div>
 
-        {/* ── Layer 3: Artist signature — mobile: centered minimal / desktop: two-column ── */}
-
-        {/* Mobile: centered, no location */}
-        <div className="border-t border-white/[0.04] py-5 text-center lg:hidden">
-          <p className="text-[0.9rem] font-black uppercase leading-none tracking-[-0.02em] text-foreground/82">
-            {artistName}
+        {/* Col 2 — Explore */}
+        <div>
+          <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/22">
+            Explore
           </p>
-          {hasBooking && (
+          <ul className="space-y-2.5">
+            {exploreLinks.map(({ label, href, external }) => (
+              <li key={label}>
+                {external ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[13px] text-white/48 transition-colors duration-200 hover:text-white/88"
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  <a
+                    href={href}
+                    className="text-[13px] text-white/48 transition-colors duration-200 hover:text-white/88"
+                  >
+                    {label}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Col 3 — Connect */}
+        {connectLinks.length > 0 && (
+          <div>
+            <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/22">
+              Connect
+            </p>
+            <ul className="space-y-2.5">
+              {connectLinks.map(({ label, href }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[13px] text-white/48 transition-colors duration-200 hover:text-white/88"
+                  >
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Col 4 — Booking */}
+        {hasBooking && (
+          <div>
+            <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/22">
+              Booking
+            </p>
             <a
               href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
-              className="mt-2.5 block text-[11px] text-white/35 transition-colors duration-150 hover:text-accent"
+              className="text-[13px] leading-relaxed text-white/48 transition-colors duration-200 hover:text-accent/80"
             >
               {bookingEmail}
             </a>
-          )}
-          <p className="mt-2.5 text-[10px] text-white/16">
-            © {year} {artistName}
-          </p>
-        </div>
-
-        {/* Desktop: two-column layout, with location */}
-        <div className="hidden border-t border-white/[0.04] pt-6 sm:pt-8 lg:block">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[0.95rem] font-black uppercase leading-none tracking-[-0.02em] text-foreground/85">
-                {artistName}
-              </p>
-              {locationStr && (
-                <p className="mt-1.5 text-[11px] text-white/28">{locationStr}</p>
-              )}
-            </div>
-            {hasBooking && (
-              <div className="text-right">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.20em] text-white/22">
-                  Booking
-                </p>
-                <a
-                  href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
-                  className="mt-1 block text-[11px] text-white/38 transition-colors duration-150 hover:text-accent"
-                >
-                  {bookingEmail}
-                </a>
-              </div>
-            )}
           </div>
-          <p className="mt-4 pb-8 text-[10px] text-white/16 sm:pb-10">
-            © {year} {artistName}
-          </p>
-        </div>
-
+        )}
       </div>
 
-      {/* Free plan attribution — absent on pro */}
-      {!isPro && (
-        <div className="border-t border-white/[0.03] py-3.5">
-          <div>
-            <Link
-              href="/"
-              className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/14 transition-colors duration-150 hover:text-white/32"
-            >
-              {brand.copy.poweredBy}
-            </Link>
+      {/* ── Newsletter ──────────────────────────────────────────────────────── */}
+      <div className="border-t border-white/[0.04] py-10 sm:py-12">
+        {status === "success" ? (
+          <div className="text-center">
+            <p className="text-[1.1rem] font-black tracking-[-0.01em] text-foreground">
+              You&apos;re on the list.
+            </p>
+            <p className="mt-1.5 text-[11px] uppercase tracking-[0.18em] text-white/25">
+              We&apos;ll be in touch.
+            </p>
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="mx-auto max-w-md text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/22">
+              Join the List
+            </p>
+            <p className="mt-2 text-[12px] text-white/28">
+              Guest Lists · Early Access · New Music
+            </p>
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="mt-4 flex items-center gap-2"
+            >
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (status === "error") setStatus("idle")
+                }}
+                placeholder="your@email.com"
+                aria-label="Email address"
+                className={cn(
+                  "h-9 min-w-0 flex-1 border-b bg-transparent px-0 text-[13px] text-foreground outline-none transition-colors duration-150 placeholder:text-white/18",
+                  status === "error"
+                    ? "border-red-500/40 focus:border-red-500/60"
+                    : "border-white/[0.12] focus:border-accent/40",
+                )}
+              />
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="flex h-9 shrink-0 items-center rounded-full bg-accent px-5 text-[11px] font-bold uppercase tracking-[0.12em] text-accent-foreground transition-all duration-150 hover:bg-accent/90 disabled:opacity-50"
+              >
+                {status === "loading" ? "···" : "Join"}
+              </button>
+            </form>
+            {status === "error" && (
+              <p className="mt-2 text-[10px] text-red-400/70">
+                Please enter a valid email address.
+              </p>
+            )}
+            {status !== "error" && (
+              <p className="mt-2 text-[10px] text-white/16">
+                Occasional updates only.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Bottom bar ──────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between border-t border-white/[0.04] py-4">
+        <p className="text-[10px] text-white/18">
+          © {year} {artistName}
+        </p>
+        {!isPro && (
+          <Link
+            href="/"
+            className="text-[10px] text-white/14 transition-colors duration-150 hover:text-white/32"
+          >
+            {brand.copy.poweredBy}
+          </Link>
+        )}
+      </div>
+
+    </footer>
   )
 }

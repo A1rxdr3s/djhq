@@ -736,9 +736,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       {/* ── Full-bleed cinematic hero — edge-to-edge, no card container ── */}
       <section className="relative overflow-hidden" style={{ minHeight: "100dvh" }}>
         {/* Artist-website navigation — integrated into hero */}
-        <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
+        <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-7 lg:px-12">
           {/* Left: section navigation */}
-          <nav className="flex items-center gap-5 sm:gap-7">
+          <nav className="flex items-center gap-6 sm:gap-9">
             {[
               { label: "Releases", href: "#music" },
               { label: "Shows",    href: "#shows" },
@@ -748,14 +748,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               <a
                 key={label}
                 href={navHref}
-                className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45 transition-colors duration-200 hover:text-white/85 sm:text-[12px]"
+                className="text-[12px] font-semibold uppercase tracking-[0.18em] text-white/58 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/95 sm:text-[13px]"
               >
                 {label}
               </a>
             ))}
           </nav>
           {/* Right: social platform links */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 sm:gap-5">
             {prioritizedLinks.slice(0, 5).map((link) => {
               const linkHref = resolveSafeHref(link.url)
               if (!linkHref) return null
@@ -768,15 +768,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   title={link.label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/35 transition-colors duration-200 hover:text-white/80"
+                  className="text-white/48 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/95"
                 >
-                  <SocialIcon className="h-[15px] w-[15px] sm:h-4 sm:w-4" />
+                  <SocialIcon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
                 </a>
               )
             })}
             {/* DJHQ attribution — subtle, non-pro only */}
             {(artist.plan !== "pro" || artist.showHeaderBranding) && (
-              <Link href="/" className="ml-2 flex items-center gap-1.5 text-white/18 transition-colors duration-200 hover:text-white/40">
+              <Link href="/" className="ml-1 flex items-center gap-1.5 text-white/18 transition-colors duration-300 hover:text-white/42">
                 <span className="inline-block h-1 w-1 rounded-full bg-accent/35" />
                 <span className="text-[9px] font-semibold uppercase tracking-[0.24em]">DJHQ</span>
               </Link>
@@ -1437,6 +1437,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               location={artist.location}
               bookingEmail={artist.bookingInfo.email}
               isPro={isPro}
+              genres={artist.genres}
+              socialLinks={prioritizedLinks}
+              hasPressKit={hasPressKit}
+              pressKitHref={safePressKitHref}
+              artistHandle={artist.handle}
             />
           </div>
         </div>
