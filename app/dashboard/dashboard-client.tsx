@@ -1837,7 +1837,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     // ── Readiness checklist ───────────────────────────────────────────
     const readinessChecks = [
       { label: "Profile published",  done: artist.isPublished,                                                              section: "publish"   },
-      { label: "Hero image set",     done: !!artist.heroImageUrl && !artist.heroImageUrl.includes("placeholder"),           section: "profile"   },
+      { label: "Custom domain",       done: hasActiveDomain,                                                                  section: "domain"    },
       { label: "Booking contact",    done: hasBooking,                                                                      section: "booking"   },
       { label: "Press kit enabled",  done: hasPressKit,                                                                     section: "press-kit" },
       { label: "Release in catalog", done: artist.releases.length > 0,                                                     section: "releases"  },
@@ -1874,7 +1874,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground">Overview</h1>
             <p className="mt-1 text-[13px] text-muted-foreground/42">
-              Artist profile, shows, releases and publishing status.
+              Your artist presence, bookability and content status at a glance.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2 pt-0.5">
@@ -1908,17 +1908,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <button
             type="button"
             onClick={() => setActiveSection("publish")}
-            className="group rounded-xl border border-white/[0.07] bg-card/40 p-4 text-left transition-all duration-150 hover:border-white/[0.12] hover:bg-card/60"
+            className={`group rounded-xl border p-4 text-left transition-all duration-150 ${
+              artist.isPublished
+                ? "border-accent/18 bg-accent/[0.04] hover:border-accent/28 hover:bg-accent/[0.07]"
+                : "border-white/[0.07] bg-card/40 hover:border-white/[0.12] hover:bg-card/60"
+            }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/32">Profile</span>
               <Globe className="h-3.5 w-3.5 text-muted-foreground/18 transition-colors group-hover:text-muted-foreground/38" />
             </div>
-            <p className={`mt-2.5 text-[22px] font-bold tracking-tight ${artist.isPublished ? "text-accent" : "text-muted-foreground/42"}`}>
+            <div className={`mt-2.5 flex items-center gap-2 text-[22px] font-bold tracking-tight ${artist.isPublished ? "text-accent" : "text-muted-foreground/42"}`}>
+              {artist.isPublished && <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />}
               {artist.isPublished ? "Live" : "Draft"}
-            </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground/26">
-              {artist.isPublished ? "Visible to bookers" : "Not yet published"}
+            </div>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/26">
+              {artist.isPublished
+                ? `${APP_DISPLAY_HOST}/${artist.handle}`
+                : "Not yet published"}
             </p>
           </button>
 
@@ -1935,8 +1942,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <p className={`mt-2.5 text-[22px] font-bold tabular-nums tracking-tight ${upcomingCount > 0 ? "text-foreground/88" : "text-muted-foreground/42"}`}>
               {upcomingCount}
             </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground/26">
-              {upcomingCount === 1 ? "upcoming show" : upcomingCount > 1 ? "upcoming shows" : "None scheduled"}
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/26">
+              {upcomingShowsList[0]
+                ? `Next: ${upcomingShowsList[0].eventName || upcomingShowsList[0].venue || "Show"}${upcomingShowsList[0].city ? ` · ${upcomingShowsList[0].city}` : ""}`
+                : "None scheduled"}
             </p>
           </button>
 
@@ -1953,10 +1962,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <p className={`mt-2.5 text-[22px] font-bold tabular-nums tracking-tight ${artist.releases.length > 0 ? "text-foreground/88" : "text-muted-foreground/42"}`}>
               {artist.releases.length}
             </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground/26">
-              {artist.releases.filter((r) => r.isFeatured).length > 0
-                ? `${artist.releases.filter((r) => r.isFeatured).length} featured`
-                : artist.releases.length > 0 ? "In catalog" : "None added yet"}
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/26">
+              {artist.releases[0]
+                ? `Latest: ${artist.releases[0].title}`
+                : "None added yet"}
             </p>
           </button>
 
@@ -1964,17 +1973,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <button
             type="button"
             onClick={() => setActiveSection("press-kit")}
-            className="group rounded-xl border border-white/[0.07] bg-card/40 p-4 text-left transition-all duration-150 hover:border-white/[0.12] hover:bg-card/60"
+            className={`group rounded-xl border p-4 text-left transition-all duration-150 ${
+              hasPressKit
+                ? "border-accent/18 bg-accent/[0.04] hover:border-accent/28 hover:bg-accent/[0.07]"
+                : "border-white/[0.07] bg-card/40 hover:border-white/[0.12] hover:bg-card/60"
+            }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/32">Press Kit</span>
               <FileText className="h-3.5 w-3.5 text-muted-foreground/18 transition-colors group-hover:text-muted-foreground/38" />
             </div>
-            <p className={`mt-2.5 text-[22px] font-bold tracking-tight ${hasPressKit ? "text-accent" : "text-muted-foreground/42"}`}>
+            <div className={`mt-2.5 flex items-center gap-2 text-[22px] font-bold tracking-tight ${hasPressKit ? "text-accent" : "text-muted-foreground/42"}`}>
+              {hasPressKit && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
               {hasPressKit ? "Ready" : "Off"}
-            </p>
+            </div>
             <p className="mt-0.5 text-[11px] text-muted-foreground/26">
-              {hasPressKit ? "Available to media" : "Enable in Business"}
+              {hasPressKit ? "Bio, photos and assets ready" : "Enable in Business"}
             </p>
           </button>
         </div>
@@ -2001,19 +2015,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {upcomingShowsList.length > 0 ? (
                 <>
                   {/* Table column headers — desktop only */}
-                  <div className="hidden grid-cols-[80px_1fr_1fr_90px] gap-4 border-b border-white/[0.04] px-5 py-2 lg:grid">
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/20">Date</span>
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/20">Event</span>
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/20">Venue · Location</span>
-                    <span className="text-right text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/20">Status</span>
+                  <div className="hidden grid-cols-[80px_1fr_1fr_88px] gap-4 border-b border-white/[0.04] px-5 py-2 lg:grid">
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Date</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Event</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Venue · Location</span>
+                    <span className="text-right text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Status</span>
                   </div>
 
                   {/* Rows */}
                   <div className="divide-y divide-white/[0.03]">
                     {upcomingShowsList.map((g, idx) => {
                       const isNext = idx === 0
-                      const mm = g.date.split("-")[1]
-                      const dd = g.date.split("-")[2]
+                      const mm = g.date.substring(5, 7)   // safe even with T00:00:00Z suffix
+                      const dd = g.date.substring(8, 10)
                       const venueLine = [g.venue && g.eventName ? g.venue : null, g.city, g.country].filter(Boolean).join(" · ")
                       const eventLabel = g.eventName || g.venue || "—"
                       return (
@@ -2043,7 +2057,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           </div>
 
                           {/* Desktop table row */}
-                          <div className="hidden grid-cols-[80px_1fr_1fr_90px] items-center gap-4 px-5 py-3 lg:grid">
+                          <div className="hidden grid-cols-[80px_1fr_1fr_88px] items-center gap-4 px-5 py-3.5 lg:grid">
                             <span className={`font-mono text-[11px] tabular-nums ${isNext ? "text-foreground/72" : "text-muted-foreground/35"}`}>
                               {MONTHS_SHORT[Number(mm) - 1]} {Number(dd)}
                             </span>
@@ -2143,7 +2157,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Artist readiness */}
             <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Readiness</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Artist Readiness</span>
                 <span className={`font-mono text-[11px] font-bold tabular-nums ${readinessDone === readinessChecks.length ? "text-accent/70" : "text-muted-foreground/38"}`}>
                   {readinessDone}/{readinessChecks.length}
                 </span>
@@ -2185,7 +2199,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Recommended actions */}
             <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
               <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">
-                Recommended
+                Next Steps
               </span>
               <div className="space-y-2">
                 {nextActions.map((action) => (
@@ -2193,13 +2207,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     key={action.label}
                     type="button"
                     onClick={() => setActiveSection(action.section)}
-                    className="group flex w-full flex-col rounded-lg border border-white/[0.05] bg-white/[0.02] p-3.5 text-left transition-all duration-100 hover:border-white/[0.10] hover:bg-white/[0.04]"
+                    className="group flex w-full flex-col rounded-lg border border-white/[0.07] bg-white/[0.02] p-3.5 text-left transition-all duration-100 hover:border-accent/20 hover:bg-accent/[0.035]"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] font-semibold text-foreground/72 transition-colors group-hover:text-foreground">
                         {action.label}
                       </span>
-                      <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-accent/60" />
+                      <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/22 transition-all group-hover:translate-x-0.5 group-hover:text-accent/75" />
                     </div>
                     <span className="mt-1 text-[11px] leading-snug text-muted-foreground/28">
                       {action.reason}
@@ -2230,10 +2244,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <span className="text-[12px] text-muted-foreground/42 transition-colors group-hover:text-foreground/58">
                       {label}
                     </span>
-                    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                      ok ? "bg-accent/[0.09] text-accent/68" : "bg-white/[0.03] text-muted-foreground/22"
+                    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[3px] text-[9px] font-semibold uppercase tracking-wider ${
+                      ok
+                        ? "border-accent/22 bg-accent/[0.09] text-accent/80"
+                        : "border-white/[0.05] bg-transparent text-muted-foreground/22"
                     }`}>
-                      <span className={`h-1 w-1 rounded-full ${ok ? "bg-accent/75" : "bg-white/[0.12]"}`} />
+                      <span className={`h-1 w-1 rounded-full ${ok ? "bg-accent" : "bg-white/[0.10]"}`} />
                       {ok ? onText : offText}
                     </span>
                   </button>
