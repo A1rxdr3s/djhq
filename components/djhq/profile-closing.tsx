@@ -22,6 +22,19 @@ const SOCIAL_ICONS: Partial<Record<SocialPlatform, LucideIcon>> = {
   other:            Link2,
 }
 
+const PLATFORM_LABELS: Record<string, string> = {
+  spotify:          "Spotify",
+  beatport:         "Beatport",
+  soundcloud:       "SoundCloud",
+  youtube:          "YouTube",
+  instagram:        "Instagram",
+  tiktok:           "TikTok",
+  "resident-advisor": "Resident Advisor",
+  bandsintown:      "Bandsintown",
+  website:          "Website",
+  other:            "Website",
+}
+
 type Props = {
   artistName: string
   location?: string
@@ -39,6 +52,8 @@ export function ProfileClosing({
   bookingEmail,
   isPro,
   socialLinks = [],
+  hasPressKit = false,
+  pressKitHref = null,
 }: Props) {
   const [email, setEmail]   = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
@@ -56,135 +71,190 @@ export function ProfileClosing({
 
   const year       = new Date().getFullYear()
   const hasBooking = !!bookingEmail.trim()
-  const activeSocialLinks = socialLinks
-    .filter((l) => l.url.trim().length > 0)
+
+  const exploreLinks = [
+    { label: "Releases", href: "#music",       external: false },
+    { label: "Shows",    href: "#shows",       external: false },
+    { label: "Sets",     href: "#performance", external: false },
+    ...(hasPressKit && pressKitHref
+      ? [{ label: "Press Kit", href: pressKitHref, external: true }]
+      : []),
+    ...(hasBooking
+      ? [{ label: "Contact", href: "#contact", external: false }]
+      : []),
+  ]
+
+  const filteredSocialLinks = socialLinks.filter((l) => l.url.trim().length > 0)
+
+  const connectLinks = filteredSocialLinks
+    .slice(0, 5)
+    .map((l) => ({ label: PLATFORM_LABELS[l.platform] ?? l.label, href: resolveSafeHref(l.url) }))
+    .filter((l): l is { label: string; href: string } => l.href !== null)
+
+  const iconLinks = filteredSocialLinks
     .slice(0, 6)
+    .map((l) => ({ ...l, href: resolveSafeHref(l.url), Icon: SOCIAL_ICONS[l.platform] }))
+    .filter((l): l is typeof l & { href: string; Icon: LucideIcon } => l.href !== null && l.Icon !== undefined)
 
   return (
     <footer className="border-t border-white/[0.06]">
+      {/* ── Main grid ─────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-x-8 gap-y-10 py-10 sm:grid-cols-2 sm:gap-x-12 sm:py-12 lg:grid-cols-4 lg:gap-x-16 lg:py-14">
 
-      {/* ── Newsletter ────────────────────────────────────────────────────── */}
-      <div className="px-4 py-10 text-center sm:py-14 lg:py-16">
-        {status === "success" ? (
-          <div>
-            <p className="text-[1.25rem] font-black tracking-[-0.02em] text-foreground sm:text-[1.5rem]">
-              You&apos;re on the list.
-            </p>
-            <p className="mt-2 text-[12px] text-white/28">
-              We&apos;ll be in touch.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Footer-scale headline — not a hero element */}
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/22">
-              Stay Connected
-            </p>
-            <h2 className="mt-2 text-[1.5rem] font-black leading-none tracking-[-0.02em] text-foreground sm:text-[1.9rem]">
-              Join the List
-            </h2>
-            <p className="mx-auto mt-2.5 max-w-xs text-[13px] text-white/30 sm:mt-3">
-              New music, future shows, guest lists and exclusive updates.
-            </p>
-            <form
-              onSubmit={handleSubmit}
-              noValidate
-              className="mx-auto mt-5 flex max-w-sm items-stretch gap-2 sm:mt-6"
-            >
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value)
-                  if (status === "error") setStatus("idle")
-                }}
-                placeholder="your@email.com"
-                aria-label="Email address"
-                className={cn(
-                  "h-10 min-w-0 flex-1 rounded-full border bg-white/[0.04] px-4 text-[13px] text-foreground outline-none transition-colors duration-200 placeholder:text-white/18 sm:h-11",
-                  status === "error"
-                    ? "border-red-500/35 focus:border-red-500/55"
-                    : "border-white/[0.10] focus:border-accent/40",
+        {/* Col 1 — Explore */}
+        <div>
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
+            Explore
+          </p>
+          <ul className="space-y-2.5">
+            {exploreLinks.map(({ label, href, external }) => (
+              <li key={label}>
+                {external ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white/95"
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  <a
+                    href={href}
+                    className="text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white/95"
+                  >
+                    {label}
+                  </a>
                 )}
-              />
-              <button
-                type="submit"
-                disabled={status === "loading"}
-                className="h-10 shrink-0 rounded-full bg-accent px-5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent-foreground transition-all duration-200 hover:bg-accent/90 disabled:opacity-50 sm:h-11 sm:px-6"
-              >
-                {status === "loading" ? "···" : "Join"}
-              </button>
-            </form>
-            {status === "error" ? (
-              <p className="mt-2 text-[10px] text-red-400/65">
-                Please enter a valid email address.
-              </p>
-            ) : (
-              <p className="mt-2 text-[10px] text-white/16">
-                Occasional updates only.
-              </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Col 2 — Connect: text links + icon row */}
+        {(connectLinks.length > 0 || iconLinks.length > 0) && (
+          <div>
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
+              Connect
+            </p>
+            {connectLinks.length > 0 && (
+              <ul className="space-y-2.5">
+                {connectLinks.map(({ label, href }) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white/95"
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             )}
-          </>
+            {/* Social icons — visual focal point below text links */}
+            {iconLinks.length > 0 && (
+              <div className="mt-5 flex items-center gap-4">
+                {iconLinks.map(({ platform, url, label, href, Icon }) => (
+                  <a
+                    key={`ico-${platform}-${url}`}
+                    href={href}
+                    aria-label={label}
+                    title={label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/45 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                  >
+                    <Icon className="h-[18px] w-[18px]" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Col 3 — Join the List */}
+        <div>
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
+            Join the List
+          </p>
+          {status === "success" ? (
+            <p className="text-[13px] font-medium text-white/55">You&apos;re on the list.</p>
+          ) : (
+            <>
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="flex flex-col gap-2"
+              >
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (status === "error") setStatus("idle")
+                  }}
+                  placeholder="your@email.com"
+                  aria-label="Email address"
+                  className={cn(
+                    "h-9 rounded-full border bg-white/[0.03] px-4 text-[12px] text-foreground outline-none transition-colors duration-200 placeholder:text-white/16",
+                    status === "error"
+                      ? "border-red-500/30 focus:border-red-500/50"
+                      : "border-white/[0.09] focus:border-accent/38",
+                  )}
+                />
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="h-9 rounded-full bg-accent px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-accent-foreground transition-all duration-200 hover:bg-accent/90 disabled:opacity-50"
+                >
+                  {status === "loading" ? "···" : "Join"}
+                </button>
+              </form>
+              {status === "error" ? (
+                <p className="mt-2 text-[10px] text-red-400/65">
+                  Enter a valid email address.
+                </p>
+              ) : (
+                <p className="mt-2 text-[10px] text-white/16">
+                  Occasional updates only.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Col 4 — Booking */}
+        {hasBooking && (
+          <div>
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
+              Booking
+            </p>
+            <a
+              href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
+              className="block text-[14px] font-medium leading-relaxed text-white/62 transition-colors duration-200 hover:text-accent/85"
+            >
+              {bookingEmail}
+            </a>
+          </div>
         )}
       </div>
 
-      {/* ── Social icons ──────────────────────────────────────────────────── */}
-      {activeSocialLinks.length > 0 && (
-        <div className="px-4 pb-8 text-center sm:pb-10">
-          <div className="flex items-center justify-center gap-6 sm:gap-8">
-            {activeSocialLinks.map((link) => {
-              const href = resolveSafeHref(link.url)
-              if (!href) return null
-              const Icon = SOCIAL_ICONS[link.platform]
-              if (!Icon) return null
-              return (
-                <a
-                  key={`foot-${link.platform}-${link.url}`}
-                  href={href}
-                  aria-label={link.label}
-                  title={link.label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/38 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/88"
-                >
-                  <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-                </a>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Booking ───────────────────────────────────────────────────────── */}
-      {hasBooking && (
-        <div className="px-4 pb-8 text-center sm:pb-10">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/18">
-            Booking
-          </p>
-          <a
-            href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
-            className="mt-1.5 block text-[13px] text-white/38 transition-colors duration-200 hover:text-accent/72"
-          >
-            {bookingEmail}
-          </a>
-        </div>
-      )}
-
-      {/* ── Copyright ─────────────────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.04] py-4 text-center">
-        <p className="text-[10px] text-white/15">
+      {/* ── Bottom bar ─────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between border-t border-white/[0.04] py-4">
+        <p className="text-[10px] font-medium text-white/22">
           © {year} {artistName}
-          {!isPro && (
-            <>
-              {" · "}
-              <Link href="/" className="transition-colors duration-150 hover:text-white/30">
-                {brand.copy.poweredBy}
-              </Link>
-            </>
-          )}
         </p>
+        {!isPro && (
+          <Link
+            href="/"
+            className="text-[10px] font-medium text-white/18 transition-colors duration-150 hover:text-white/35"
+          >
+            {brand.copy.poweredBy}
+          </Link>
+        )}
       </div>
-
     </footer>
   )
 }

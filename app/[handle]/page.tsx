@@ -1437,19 +1437,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         )}
 
         <div id="contact" className="scroll-mt-16">
-          <div className="mx-auto max-w-5xl">
-            <ProfileClosing
-              artistName={artist.artistName}
-              location={artist.location}
-              bookingEmail={artist.bookingInfo.email}
-              isPro={isPro}
-              genres={artist.genres}
-              socialLinks={prioritizedLinks}
-              hasPressKit={hasPressKit}
-              pressKitHref={safePressKitHref}
-              artistHandle={artist.handle}
-            />
-          </div>
+          <ProfileClosing
+            artistName={artist.artistName}
+            location={artist.location}
+            bookingEmail={artist.bookingInfo.email}
+            isPro={isPro}
+            genres={artist.genres}
+            socialLinks={prioritizedLinks}
+            hasPressKit={hasPressKit}
+            pressKitHref={safePressKitHref}
+            artistHandle={artist.handle}
+          />
         </div>
 
         </MobileTabManager>
