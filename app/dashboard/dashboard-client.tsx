@@ -1859,16 +1859,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       : `${APP_DISPLAY_HOST}/${artist.handle}`
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-4">
 
         {/* ═══════════════════════════════════════════════════════════
             ZONE A — The Stage
-            No card. Raw content on the page surface.
             ═══════════════════════════════════════════════════════════ */}
         <div>
           {/* Identity row */}
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-[20px] font-bold tracking-tight text-foreground">{artist.artistName}</h1>
+          <div className="flex items-baseline justify-between gap-4 pb-1">
+            <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-foreground">{artist.artistName}</h1>
             <div className="flex shrink-0 items-center gap-2.5">
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[4px] text-[10px] font-semibold ${
                 artist.isPublished
@@ -1882,7 +1881,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 href={publicProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[12px] text-muted-foreground/42 transition-colors hover:text-foreground/70"
+                className="text-[12px] text-muted-foreground/38 transition-colors hover:text-foreground/65"
               >
                 View Profile <ExternalLink className="mb-px ml-0.5 inline h-3 w-3" />
               </a>
@@ -1894,30 +1893,30 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <button
               type="button"
               onClick={() => setActiveSection("shows")}
-              className="group mt-4 flex w-full items-center gap-4 rounded-lg border-l-[3px] border-accent/40 bg-white/[0.015] px-5 py-4 text-left transition-colors hover:bg-white/[0.025]"
+              className="group mt-3 flex w-full items-center gap-5 rounded-xl border-l-[3px] border-accent/45 bg-white/[0.018] px-6 py-5 text-left transition-all duration-150 hover:bg-white/[0.03]"
             >
-              <div className="flex h-[52px] w-[42px] shrink-0 flex-col items-center justify-center rounded-lg border border-accent/20 bg-accent/[0.06]">
-                <span className="text-[7.5px] font-bold uppercase tracking-[0.2em] text-accent/60">{MONTH_ABBR[Number(nextShow.date.substring(5, 7)) - 1]}</span>
-                <span className="text-[18px] font-black leading-none tabular-nums text-foreground/88">{Number(nextShow.date.substring(8, 10))}</span>
+              <div className="flex h-[58px] w-[46px] shrink-0 flex-col items-center justify-center rounded-xl border border-accent/22 bg-accent/[0.06]">
+                <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-accent/60">{MONTH_ABBR[Number(nextShow.date.substring(5, 7)) - 1]}</span>
+                <span className="text-[22px] font-black leading-none tabular-nums text-foreground/90">{Number(nextShow.date.substring(8, 10))}</span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent/50">Next Show</p>
-                <p className="mt-0.5 truncate text-[16px] font-bold tracking-tight text-foreground/92">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/48">Next Show</p>
+                <p className="mt-1 truncate text-[18px] font-bold tracking-[-0.01em] text-foreground/94">
                   {nextShow.eventName || nextShow.venue || "TBD"}
                 </p>
-                <p className="mt-0.5 truncate text-[12px] text-muted-foreground/38">
+                <p className="mt-0.5 truncate text-[13px] text-muted-foreground/40">
                   {[nextShow.eventName && nextShow.venue ? nextShow.venue : null, nextShow.city, nextShow.country].filter(Boolean).join(" · ")}
                 </p>
               </div>
-              <span className="shrink-0 text-[11px] font-medium text-accent/45 transition-colors group-hover:text-accent">
-                Manage Shows →
+              <span className="shrink-0 text-[11px] font-medium text-accent/40 transition-colors group-hover:text-accent/75">
+                Manage →
               </span>
             </button>
           )}
 
-          {/* Schedule — remaining shows, no card wrapper */}
+          {/* Schedule */}
           {scheduleShows.length > 0 && (
-            <div className="mt-1">
+            <div className="mt-0.5">
               {scheduleShows.map((g) => {
                 const mm = g.date.substring(5, 7)
                 const dd = g.date.substring(8, 10)
@@ -1926,15 +1925,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     key={g.id}
                     type="button"
                     onClick={() => setActiveSection("shows")}
-                    className="group flex w-full items-center gap-3 py-2 pl-[22px] text-left transition-colors hover:bg-white/[0.015]"
+                    className="group flex w-full items-center gap-3 py-[7px] pl-[26px] text-left transition-colors hover:bg-white/[0.012]"
                   >
-                    <span className="w-[48px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/32">
+                    <span className="w-[50px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/30">
                       {MONTHS_SHORT[Number(mm) - 1]} {Number(dd)}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-foreground/50 transition-colors group-hover:text-foreground/72">
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-foreground/45 transition-colors group-hover:text-foreground/70">
                       {g.eventName || g.venue || "TBD"}
                     </span>
-                    <span className="shrink-0 truncate text-[11px] text-muted-foreground/22">
+                    <span className="shrink-0 truncate text-[11px] text-muted-foreground/20">
                       {[g.venue && g.eventName ? g.venue : null, g.city].filter(Boolean).join(" · ")}
                     </span>
                   </button>
@@ -1944,7 +1943,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <button
                   type="button"
                   onClick={() => setActiveSection("shows")}
-                  className="mt-0.5 pl-[22px] text-[11px] font-medium text-accent/50 transition-colors hover:text-accent"
+                  className="mt-0.5 pl-[26px] text-[11px] font-medium text-accent/45 transition-colors hover:text-accent"
                 >
                   View all {upcomingCount} shows →
                 </button>
@@ -1952,47 +1951,44 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           )}
 
-          {/* Content strip */}
-          <div className="mt-4 flex items-center gap-1 border-t border-white/[0.05] pt-3">
+          {/* Metrics strip — Stripe/Vercel style */}
+          <div className="mt-4 flex items-end gap-8 border-t border-white/[0.05] pt-4 sm:gap-10">
             {[
-              { label: "releases", value: artist.releases.length, section: "releases" },
-              { label: "sets",     value: artist.djSets.length,   section: "sets"     },
-              { label: "photos",   value: artist.galleryImages.length, section: "gallery" },
-              { label: "videos",   value: artist.videos.length,   section: "media"    },
-            ].map(({ label, value, section }, idx) => (
-              <span key={label} className="flex items-center">
-                {idx > 0 && <span className="mx-2 text-[11px] text-white/[0.10]">·</span>}
-                <button
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="text-[12px] text-muted-foreground/35 transition-colors hover:text-foreground/60"
-                >
-                  <span className="font-bold tabular-nums text-foreground/55">{value}</span>{" "}{label}
-                </button>
-              </span>
+              { label: "Upcoming",  value: upcomingCount,                 section: "shows"    },
+              { label: "Releases",  value: artist.releases.length,        section: "releases" },
+              { label: "Sets",      value: artist.djSets.length,          section: "sets"     },
+              { label: "Photos",    value: artist.galleryImages.length,   section: "gallery"  },
+            ].map(({ label, value, section }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setActiveSection(section)}
+                className="group text-left transition-colors"
+              >
+                <span className="block text-[24px] font-bold tabular-nums leading-none text-foreground/72 transition-colors group-hover:text-foreground">
+                  {value}
+                </span>
+                <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/48">
+                  {label}
+                </span>
+              </button>
             ))}
-            <div className="flex-1" />
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
-              isAllSet ? "bg-accent/[0.10] text-accent/75" : "bg-white/[0.04] text-muted-foreground/32"
-            }`}>
-              {readinessPct}%
-            </span>
           </div>
         </div>
 
 
         {/* ═══════════════════════════════════════════════════════════
-            ZONE B + C — two-column grid
+            ZONE B + C
             ═══════════════════════════════════════════════════════════ */}
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
 
-          {/* ── ZONE B — Presence ────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.07] bg-card/35">
+          {/* ── ZONE B — Presence ─────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.07] bg-card/35 transition-colors duration-150 hover:border-white/[0.10]">
 
             {/* Publishing status */}
-            <div className="p-5 pb-4">
-              <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/32">Presence</span>
-              <div className="space-y-1">
+            <div className="px-5 pb-3.5 pt-5">
+              <span className="mb-3.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Presence</span>
+              <div className="space-y-3">
                 {[
                   {
                     label: "Profile",
@@ -2027,16 +2023,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     key={label}
                     type="button"
                     onClick={() => setActiveSection(section)}
-                    className="group flex w-full items-center gap-3 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
+                    className="group flex w-full items-baseline gap-3 text-left transition-colors"
                   >
-                    <span className="w-[72px] shrink-0 text-[12px] text-muted-foreground/42 transition-colors group-hover:text-foreground/55">
+                    <span className="w-[68px] shrink-0 text-[11px] text-muted-foreground/35">
                       {label}
                     </span>
-                    <span className={`text-[12px] font-semibold ${ok ? "text-accent/75" : "text-muted-foreground/25"}`}>
+                    <span className={`text-[13px] font-semibold ${ok ? "text-accent/80" : "text-muted-foreground/22"}`}>
                       {status}
                     </span>
                     {detail && (
-                      <span className="min-w-0 truncate font-mono text-[10px] text-muted-foreground/22">
+                      <span className="min-w-0 truncate font-mono text-[11px] text-muted-foreground/20 transition-colors group-hover:text-muted-foreground/35">
                         {detail}
                       </span>
                     )}
@@ -2048,28 +2044,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Latest content */}
             {(latestRelease || latestSet) && (
               <div className="border-t border-white/[0.05] px-5 py-4">
-                <span className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/25">Latest</span>
-                <div className="space-y-2">
+                <span className="mb-3 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/25">Latest</span>
+                <div className="space-y-3">
                   {latestRelease && (
                     <button
                       type="button"
                       onClick={() => setActiveSection("releases")}
-                      className="group flex w-full items-center gap-3 rounded-md py-0.5 text-left transition-colors hover:bg-white/[0.02]"
+                      className="group flex w-full items-center gap-3.5 text-left transition-colors"
                     >
-                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
+                      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-secondary/50 ring-1 ring-white/[0.06]">
                         {latestRelease.artworkUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={latestRelease.artworkUrl} alt={latestRelease.title} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center"><Disc3 className="h-3.5 w-3.5 text-muted-foreground/18" /></div>
+                          <div className="flex h-full w-full items-center justify-center"><Disc3 className="h-4 w-4 text-muted-foreground/18" /></div>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-foreground/70 transition-colors group-hover:text-foreground/90">{latestRelease.title}</p>
-                        <p className="text-[11px] text-muted-foreground/28">
+                        <p className="truncate text-[14px] font-semibold text-foreground/75 transition-colors group-hover:text-foreground">{latestRelease.title}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground/30">
                           {latestRelease.releaseType
                             ? latestRelease.releaseType.charAt(0).toUpperCase() + latestRelease.releaseType.slice(1)
                             : (latestRelease.type || "Release")}
+                          {latestRelease.label ? ` · ${latestRelease.label}` : ""}
                         </p>
                       </div>
                     </button>
@@ -2078,14 +2075,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <button
                       type="button"
                       onClick={() => setActiveSection("sets")}
-                      className="group flex w-full items-center gap-3 rounded-md py-0.5 text-left transition-colors hover:bg-white/[0.02]"
+                      className="group flex w-full items-center gap-3.5 text-left transition-colors"
                     >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
-                        <Headphones className="h-3.5 w-3.5 text-muted-foreground/22" />
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary/50 ring-1 ring-white/[0.06]">
+                        <Headphones className="h-4 w-4 text-muted-foreground/20" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-foreground/70 transition-colors group-hover:text-foreground/90">{latestSet.title}</p>
-                        <p className="truncate text-[11px] text-muted-foreground/28">
+                        <p className="truncate text-[14px] font-semibold text-foreground/75 transition-colors group-hover:text-foreground">{latestSet.title}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground/30">
                           {[latestSet.event, latestSet.venue].filter(Boolean).join(" · ") || "Set"}
                         </p>
                       </div>
@@ -2097,45 +2094,51 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
 
 
-          {/* ── ZONE C — Setup ───────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/32">Setup</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
-                isAllSet ? "bg-accent/[0.10] text-accent/75" : "bg-white/[0.04] text-muted-foreground/32"
-              }`}>
-                {readinessDone}/{readinessItems.length}
-              </span>
-            </div>
-
+          {/* ── ZONE C — Setup ────────────────────────────────────── */}
+          <div className={cn(
+            "rounded-xl border border-white/[0.07] bg-card/35 transition-colors duration-150 hover:border-white/[0.10]",
+            isAllSet ? "p-4" : "p-5",
+          )}>
             {isAllSet ? (
-              <div className="flex items-center gap-2 py-1">
-                <Check className="h-4 w-4 text-accent/70" />
-                <span className="text-[13px] font-medium text-foreground/55">All set</span>
+              /* Compact success state */
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/[0.12]">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-[13px] font-medium text-foreground/55">Artist setup complete</span>
+                </div>
+                <span className="font-mono text-[11px] text-muted-foreground/25">{readinessDone}/{readinessItems.length}</span>
               </div>
             ) : (
               <>
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Setup</span>
+                  <span className="font-mono text-[11px] font-bold tabular-nums text-muted-foreground/28">
+                    {readinessDone}/{readinessItems.length}
+                  </span>
+                </div>
                 <div className="mb-3.5 h-[2px] overflow-hidden rounded-full bg-white/[0.06]">
                   <div className="h-full rounded-full bg-accent/55 transition-all duration-700" style={{ width: `${readinessPct}%` }} />
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-px">
                   {readinessItems.map(({ label, done, section, action }) => (
                     <button
                       key={label}
                       type="button"
                       onClick={() => setActiveSection(section)}
-                      className="group flex w-full items-center gap-2.5 rounded-md px-1 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
+                      className="group flex w-full items-center gap-2.5 rounded-md px-1 py-[5px] text-left transition-colors hover:bg-white/[0.02]"
                     >
                       <span className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${
                         done ? "border-accent/30 bg-accent/[0.12]" : "border-white/[0.10]"
                       }`}>
                         {done && <Check className="h-2 w-2 text-accent" />}
                       </span>
-                      <span className={`flex-1 text-[12px] ${done ? "text-foreground/50" : "text-muted-foreground/42"}`}>
+                      <span className={`flex-1 text-[12px] ${done ? "text-foreground/48" : "text-muted-foreground/40"}`}>
                         {label}
                       </span>
                       {!done && (
-                        <span className="text-[10px] font-medium text-accent/45 opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="text-[10px] font-medium text-accent/40 opacity-0 transition-opacity group-hover:opacity-100">
                           {action} →
                         </span>
                       )}
@@ -2146,10 +2149,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <button
                     type="button"
                     onClick={() => setActiveSection(topPriority.section)}
-                    className="mt-3.5 flex w-full items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.015] px-3 py-2 text-left transition-all hover:border-accent/18 hover:bg-accent/[0.025]"
+                    className="mt-3 flex w-full items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.015] px-3 py-2 text-left transition-all duration-150 hover:border-accent/18 hover:bg-accent/[0.02]"
                   >
-                    <span className="text-[12px] font-semibold text-foreground/70">{topPriority.action} {topPriority.label.toLowerCase().split(" ").slice(-1)[0]}</span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground/20" />
+                    <span className="text-[12px] font-semibold text-foreground/65">{topPriority.action} {topPriority.label.toLowerCase().replace(/^.+ /, "")}</span>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground/18" />
                   </button>
                 )}
               </>
