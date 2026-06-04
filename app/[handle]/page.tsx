@@ -923,7 +923,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       <MobileScrollNav />
 
       {/* ── Content sections ── */}
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px]" style={{ paddingInline: "clamp(24px, 3vw, 48px)" }}>
         <MobileTabManager>
 
         {/* ── Mobile Home Overview: removed — content available in main sections ── */}
@@ -1433,21 +1433,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {artist.playlist && (
           <MobileSection tab="community">
           <section className="mt-10 lg:mt-14">
-            <SectionHeader>Selected Tracks</SectionHeader>
-            <div className="mt-4">
-              <SelectedTracksSection playlist={artist.playlist} />
+            <div className="mx-auto max-w-5xl">
+              <SectionHeader>Selected Tracks</SectionHeader>
+              <div className="mt-4">
+                <SelectedTracksSection playlist={artist.playlist} />
+              </div>
             </div>
           </section>
           </MobileSection>
         )}
 
         <div id="contact" className="scroll-mt-16">
-          <ProfileClosing
-            artistName={artist.artistName}
-            location={artist.location}
-            bookingEmail={artist.bookingInfo.email}
-            isPro={isPro}
-          />
+          <div className="mx-auto max-w-5xl">
+            <ProfileClosing
+              artistName={artist.artistName}
+              location={artist.location}
+              bookingEmail={artist.bookingInfo.email}
+              isPro={isPro}
+            />
+          </div>
         </div>
 
         </MobileTabManager>
