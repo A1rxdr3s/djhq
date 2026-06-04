@@ -1828,7 +1828,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       .sort((a, b) => a.date.localeCompare(b.date))
     const upcomingCount = upcomingShowsList.length
     const nextShow = upcomingShowsList[0] ?? null
-    const topShows = upcomingShowsList.slice(0, 4)
+    const scheduleShows = upcomingShowsList.slice(1, 4)
 
     const hasActiveDomain = customDomains.some((d) => d.status === "active")
     const activeDomainName = customDomains.find((d) => d.status === "active")?.domain
@@ -1836,41 +1836,40 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const hasPressKit     = pressKitEnabled
 
     const readinessItems = [
-      { label: "Profile published",      done: artist.isPublished,       section: "publish"   },
-      { label: "Custom domain",           done: hasActiveDomain,          section: "domain"    },
-      { label: "Booking contact",         done: hasBooking,               section: "booking"   },
-      { label: "Press kit",               done: hasPressKit,              section: "press-kit" },
-      { label: "Release catalog",         done: artist.releases.length > 0, section: "releases" },
-      { label: "Shows scheduled",         done: upcomingCount > 0,        section: "shows"     },
+      { label: "Public profile live",      done: artist.isPublished,          section: "publish",   action: "Publish"  },
+      { label: "Custom domain connected",  done: hasActiveDomain,             section: "domain",    action: "Connect"  },
+      { label: "Booking contact active",   done: hasBooking,                  section: "booking",   action: "Set up"   },
+      { label: "Press kit published",      done: hasPressKit,                 section: "press-kit", action: "Enable"   },
+      { label: "Release catalog updated",  done: artist.releases.length > 0,  section: "releases",  action: "Add"      },
+      { label: "Upcoming shows listed",    done: upcomingCount > 0,           section: "shows",     action: "Add"      },
     ]
     const readinessDone = readinessItems.filter((c) => c.done).length
     const readinessPct  = Math.round((readinessDone / readinessItems.length) * 100)
+    const isAllSet = readinessDone === readinessItems.length
+    const topPriority = readinessItems.find((c) => !c.done) ?? null
 
-    const MONTH_ABBR = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
     const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    const MONTH_ABBR   = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
 
-    const greeting = (() => {
-      const h = new Date().getHours()
-      if (h < 12) return "Good morning"
-      if (h < 18) return "Good afternoon"
-      return "Good evening"
-    })()
+    const latestRelease = artist.releases[0] ?? null
+    const latestSet     = artist.djSets[0] ?? null
+
+    const profileUrl = activeDomainName
+      ? activeDomainName
+      : `${APP_DISPLAY_HOST}/${artist.handle}`
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
 
-        {/* ══════════════════════════════════════════════════════════════
-            LEVEL 1 — Command Center Hero
-            ══════════════════════════════════════════════════════════════ */}
-        <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-card/40">
-
-          {/* Top row: greeting + actions */}
-          <div className="flex items-start justify-between gap-4 px-6 pb-4 pt-5">
-            <div>
-              <p className="text-[13px] text-muted-foreground/42">{greeting}</p>
-              <h1 className="mt-0.5 text-[20px] font-bold tracking-tight text-foreground">{artist.artistName}</h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2 pt-1">
+        {/* ═══════════════════════════════════════════════════════════
+            ZONE A — The Stage
+            No card. Raw content on the page surface.
+            ═══════════════════════════════════════════════════════════ */}
+        <div>
+          {/* Identity row */}
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="text-[20px] font-bold tracking-tight text-foreground">{artist.artistName}</h1>
+            <div className="flex shrink-0 items-center gap-2.5">
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[4px] text-[10px] font-semibold ${
                 artist.isPublished
                   ? "border-accent/22 bg-accent/[0.08] text-accent"
@@ -1879,288 +1878,285 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/28"}`} />
                 {artist.isPublished ? "Live" : "Draft"}
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="h-7 rounded-lg border border-white/[0.09] bg-white/[0.02] px-2.5 text-[11px] text-muted-foreground/55 hover:border-white/[0.16] hover:text-foreground/85"
+              <a
+                href={publicProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[12px] text-muted-foreground/42 transition-colors hover:text-foreground/70"
               >
-                <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
-                  View Profile <ExternalLink className="ml-1 h-3 w-3" />
-                </Link>
-              </Button>
+                View Profile <ExternalLink className="mb-px ml-0.5 inline h-3 w-3" />
+              </a>
             </div>
           </div>
 
-          {/* Next show spotlight — only if a show exists */}
+          {/* Next Show spotlight */}
           {nextShow && (
             <button
               type="button"
               onClick={() => setActiveSection("shows")}
-              className="group flex w-full items-center gap-4 border-t border-white/[0.05] px-6 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+              className="group mt-4 flex w-full items-center gap-4 rounded-lg border-l-[3px] border-accent/40 bg-white/[0.015] px-5 py-4 text-left transition-colors hover:bg-white/[0.025]"
             >
-              <div className="flex h-12 w-10 shrink-0 flex-col items-center justify-center rounded-lg border border-accent/22 bg-accent/[0.06]">
-                <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-accent/65">{MONTH_ABBR[Number(nextShow.date.substring(5, 7)) - 1]}</span>
-                <span className="text-[17px] font-black leading-none tabular-nums text-foreground/88">{Number(nextShow.date.substring(8, 10))}</span>
+              <div className="flex h-[52px] w-[42px] shrink-0 flex-col items-center justify-center rounded-lg border border-accent/20 bg-accent/[0.06]">
+                <span className="text-[7.5px] font-bold uppercase tracking-[0.2em] text-accent/60">{MONTH_ABBR[Number(nextShow.date.substring(5, 7)) - 1]}</span>
+                <span className="text-[18px] font-black leading-none tabular-nums text-foreground/88">{Number(nextShow.date.substring(8, 10))}</span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/55">Next Show</p>
-                <p className="mt-0.5 truncate text-[15px] font-bold text-foreground/90">{nextShow.eventName || nextShow.venue || "TBD"}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent/50">Next Show</p>
+                <p className="mt-0.5 truncate text-[16px] font-bold tracking-tight text-foreground/92">
+                  {nextShow.eventName || nextShow.venue || "TBD"}
+                </p>
                 <p className="mt-0.5 truncate text-[12px] text-muted-foreground/38">
-                  {[nextShow.eventName && nextShow.venue ? nextShow.venue : null, nextShow.city].filter(Boolean).join(" · ") || ""}
+                  {[nextShow.eventName && nextShow.venue ? nextShow.venue : null, nextShow.city, nextShow.country].filter(Boolean).join(" · ")}
                 </p>
               </div>
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-accent/60" />
+              <span className="shrink-0 text-[11px] font-medium text-accent/45 transition-colors group-hover:text-accent">
+                Manage Shows →
+              </span>
             </button>
           )}
 
-          {/* Stats strip */}
-          <div className="grid grid-cols-4 divide-x divide-white/[0.05] border-t border-white/[0.05]">
+          {/* Schedule — remaining shows, no card wrapper */}
+          {scheduleShows.length > 0 && (
+            <div className="mt-1">
+              {scheduleShows.map((g) => {
+                const mm = g.date.substring(5, 7)
+                const dd = g.date.substring(8, 10)
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => setActiveSection("shows")}
+                    className="group flex w-full items-center gap-3 py-2 pl-[22px] text-left transition-colors hover:bg-white/[0.015]"
+                  >
+                    <span className="w-[48px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/32">
+                      {MONTHS_SHORT[Number(mm) - 1]} {Number(dd)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-foreground/50 transition-colors group-hover:text-foreground/72">
+                      {g.eventName || g.venue || "TBD"}
+                    </span>
+                    <span className="shrink-0 truncate text-[11px] text-muted-foreground/22">
+                      {[g.venue && g.eventName ? g.venue : null, g.city].filter(Boolean).join(" · ")}
+                    </span>
+                  </button>
+                )
+              })}
+              {upcomingCount > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("shows")}
+                  className="mt-0.5 pl-[22px] text-[11px] font-medium text-accent/50 transition-colors hover:text-accent"
+                >
+                  View all {upcomingCount} shows →
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Content strip */}
+          <div className="mt-4 flex items-center gap-1 border-t border-white/[0.05] pt-3">
             {[
-              { label: "Shows",    value: String(upcomingCount), section: "shows"    as const },
-              { label: "Releases", value: String(artist.releases.length), section: "releases" as const },
-              { label: "Sets",     value: String(artist.djSets.length), section: "sets"     as const },
-              { label: "Gallery",  value: String(artist.galleryImages.length), section: "gallery"  as const },
-            ].map(({ label, value, section }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setActiveSection(section)}
-                className="group py-3 text-center transition-colors hover:bg-white/[0.02]"
-              >
-                <span className="text-[18px] font-bold tabular-nums leading-none text-foreground/78 transition-colors group-hover:text-foreground">
-                  {value}
-                </span>
-                <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/48">
-                  {label}
-                </span>
-              </button>
+              { label: "releases", value: artist.releases.length, section: "releases" },
+              { label: "sets",     value: artist.djSets.length,   section: "sets"     },
+              { label: "photos",   value: artist.galleryImages.length, section: "gallery" },
+              { label: "videos",   value: artist.videos.length,   section: "media"    },
+            ].map(({ label, value, section }, idx) => (
+              <span key={label} className="flex items-center">
+                {idx > 0 && <span className="mx-2 text-[11px] text-white/[0.10]">·</span>}
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="text-[12px] text-muted-foreground/35 transition-colors hover:text-foreground/60"
+                >
+                  <span className="font-bold tabular-nums text-foreground/55">{value}</span>{" "}{label}
+                </button>
+              </span>
             ))}
+            <div className="flex-1" />
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
+              isAllSet ? "bg-accent/[0.10] text-accent/75" : "bg-white/[0.04] text-muted-foreground/32"
+            }`}>
+              {readinessPct}%
+            </span>
           </div>
         </div>
 
 
-        {/* ══════════════════════════════════════════════════════════════
-            LEVEL 2 — two-column: Health + Shows
-            ══════════════════════════════════════════════════════════════ */}
-        <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
+        {/* ═══════════════════════════════════════════════════════════
+            ZONE B + C — two-column grid
+            ═══════════════════════════════════════════════════════════ */}
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
 
-          {/* ── Artist Health ──────────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
-            <div className="mb-3.5 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Artist Readiness</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
-                readinessPct === 100 ? "bg-accent/[0.10] text-accent/80" : "bg-white/[0.04] text-muted-foreground/35"
-              }`}>
-                {readinessPct}%
-              </span>
-            </div>
-            <div className="mb-4 h-[2px] overflow-hidden rounded-full bg-white/[0.06]">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${readinessPct === 100 ? "bg-accent" : "bg-accent/55"}`}
-                style={{ width: `${readinessPct}%` }}
-              />
-            </div>
-            <div className="space-y-0.5">
-              {readinessItems.map(({ label, done, section }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="group flex w-full items-center gap-2.5 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
-                >
-                  <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                    done ? "border-accent/30 bg-accent/[0.12]" : "border-white/[0.10]"
-                  }`}>
-                    {done && <Check className="h-2.5 w-2.5 text-accent" />}
-                  </div>
-                  <span className={`text-[12px] ${done ? "text-foreground/55" : "text-muted-foreground/42"}`}>
-                    {label}
-                  </span>
-                  {!done && <ArrowRight className="ml-auto h-3 w-3 text-muted-foreground/15 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100 group-hover:text-accent/50" />}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Upcoming Shows ─────────────────────────────────────────── */}
+          {/* ── ZONE B — Presence ────────────────────────────────────── */}
           <div className="rounded-xl border border-white/[0.07] bg-card/35">
-            <div className="flex items-center justify-between border-b border-white/[0.05] px-5 py-3">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Upcoming Shows</span>
-              <button type="button" onClick={() => setActiveSection("shows")} className="text-[11px] font-semibold text-accent/60 transition-colors hover:text-accent">
-                {upcomingCount > 4 ? `View all ${upcomingCount} →` : "Manage →"}
-              </button>
-            </div>
-            {topShows.length > 0 ? (
-              <div className="divide-y divide-white/[0.03]">
-                {topShows.map((g, idx) => {
-                  const isNext = idx === 0
-                  const mm = g.date.substring(5, 7)
-                  const dd = g.date.substring(8, 10)
-                  return (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => setActiveSection("shows")}
-                      className={`group flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-white/[0.02] ${isNext ? "bg-white/[0.015]" : ""}`}
-                    >
-                      <span className="w-[52px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/40">
-                        {MONTHS_SHORT[Number(mm) - 1]} {Number(dd)}
+
+            {/* Publishing status */}
+            <div className="p-5 pb-4">
+              <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/32">Presence</span>
+              <div className="space-y-1">
+                {[
+                  {
+                    label: "Profile",
+                    ok: artist.isPublished,
+                    status: artist.isPublished ? "Live" : "Draft",
+                    detail: artist.isPublished ? profileUrl : null,
+                    section: "publish",
+                  },
+                  {
+                    label: "Domain",
+                    ok: hasActiveDomain,
+                    status: hasActiveDomain ? "Connected" : "—",
+                    detail: activeDomainName ?? null,
+                    section: "domain",
+                  },
+                  {
+                    label: "Press Kit",
+                    ok: hasPressKit,
+                    status: hasPressKit ? "Published" : "Off",
+                    detail: null,
+                    section: "press-kit",
+                  },
+                  {
+                    label: "Booking",
+                    ok: hasBooking,
+                    status: hasBooking ? "Active" : "—",
+                    detail: hasBooking ? artist.bookingInfo.email : null,
+                    section: "booking",
+                  },
+                ].map(({ label, ok, status, detail, section }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setActiveSection(section)}
+                    className="group flex w-full items-center gap-3 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
+                  >
+                    <span className="w-[72px] shrink-0 text-[12px] text-muted-foreground/42 transition-colors group-hover:text-foreground/55">
+                      {label}
+                    </span>
+                    <span className={`text-[12px] font-semibold ${ok ? "text-accent/75" : "text-muted-foreground/25"}`}>
+                      {status}
+                    </span>
+                    {detail && (
+                      <span className="min-w-0 truncate font-mono text-[10px] text-muted-foreground/22">
+                        {detail}
                       </span>
-                      <span className={`min-w-0 flex-1 truncate text-[13px] font-semibold ${isNext ? "text-foreground/85" : "text-foreground/48"}`}>
-                        {g.eventName || g.venue || "TBD"}
-                      </span>
-                      <span className={`shrink-0 truncate text-[11px] ${isNext ? "text-muted-foreground/35" : "text-muted-foreground/22"}`}>
-                        {g.city || ""}
-                      </span>
-                    </button>
-                  )
-                })}
+                    )}
+                  </button>
+                ))}
               </div>
-            ) : (
-              <div className="px-5 py-8 text-center">
-                <p className="text-[13px] text-muted-foreground/28">No shows scheduled.</p>
-                <button type="button" onClick={() => setActiveSection("shows")} className="mt-2 text-[11px] font-medium text-accent/55 hover:text-accent">
-                  Add your first show →
-                </button>
+            </div>
+
+            {/* Latest content */}
+            {(latestRelease || latestSet) && (
+              <div className="border-t border-white/[0.05] px-5 py-4">
+                <span className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/25">Latest</span>
+                <div className="space-y-2">
+                  {latestRelease && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("releases")}
+                      className="group flex w-full items-center gap-3 rounded-md py-0.5 text-left transition-colors hover:bg-white/[0.02]"
+                    >
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
+                        {latestRelease.artworkUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={latestRelease.artworkUrl} alt={latestRelease.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center"><Disc3 className="h-3.5 w-3.5 text-muted-foreground/18" /></div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-foreground/70 transition-colors group-hover:text-foreground/90">{latestRelease.title}</p>
+                        <p className="text-[11px] text-muted-foreground/28">
+                          {latestRelease.releaseType
+                            ? latestRelease.releaseType.charAt(0).toUpperCase() + latestRelease.releaseType.slice(1)
+                            : (latestRelease.type || "Release")}
+                        </p>
+                      </div>
+                    </button>
+                  )}
+                  {latestSet && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("sets")}
+                      className="group flex w-full items-center gap-3 rounded-md py-0.5 text-left transition-colors hover:bg-white/[0.02]"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
+                        <Headphones className="h-3.5 w-3.5 text-muted-foreground/22" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-foreground/70 transition-colors group-hover:text-foreground/90">{latestSet.title}</p>
+                        <p className="truncate text-[11px] text-muted-foreground/28">
+                          {[latestSet.event, latestSet.venue].filter(Boolean).join(" · ") || "Set"}
+                        </p>
+                      </div>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        </div>
 
 
-        {/* ══════════════════════════════════════════════════════════════
-            LEVEL 3 — three-column: Catalog + Publishing + Activity
-            ══════════════════════════════════════════════════════════════ */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-
-          {/* ── Catalog ────────────────────────────────────────────────── */}
+          {/* ── ZONE C — Setup ───────────────────────────────────────── */}
           <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
-            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Catalog</span>
-            <div className="space-y-2">
-              {[
-                { Icon: Disc3,      label: "Releases", value: artist.releases.length, section: "releases", detail: artist.releases[0]?.title },
-                { Icon: Headphones, label: "DJ Sets",   value: artist.djSets.length,   section: "sets",     detail: artist.djSets[0]?.title },
-                { Icon: Play,       label: "Videos",    value: artist.videos.length,    section: "media",    detail: null },
-                { Icon: ImageIcon,  label: "Gallery",   value: artist.galleryImages.length, section: "gallery", detail: null },
-              ].map(({ Icon, label, value, section, detail }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="group flex w-full items-center gap-3 rounded-lg px-1.5 py-1.5 text-left transition-colors hover:bg-white/[0.025]"
-                >
-                  <Icon className="h-[14px] w-[14px] shrink-0 text-muted-foreground/25" />
-                  <span className="flex-1 text-[12px] text-muted-foreground/50 transition-colors group-hover:text-foreground/60">{label}</span>
-                  <span className="mr-0.5 tabular-nums text-[13px] font-bold text-foreground/60">{value}</span>
-                </button>
-              ))}
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/32">Setup</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
+                isAllSet ? "bg-accent/[0.10] text-accent/75" : "bg-white/[0.04] text-muted-foreground/32"
+              }`}>
+                {readinessDone}/{readinessItems.length}
+              </span>
             </div>
-          </div>
 
-          {/* ── Publishing ─────────────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
-            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Publishing</span>
-            <div className="space-y-1">
-              {[
-                { label: "Profile",    ok: artist.isPublished, on: "Live",      off: "Draft",   section: "publish",   detail: artist.isPublished ? `${APP_DISPLAY_HOST}/${artist.handle}` : null },
-                { label: "Domain",     ok: hasActiveDomain,    on: "Connected", off: "—",       section: "domain",    detail: activeDomainName ?? null },
-                { label: "Press Kit",  ok: hasPressKit,        on: "Published", off: "Off",     section: "press-kit", detail: null },
-                { label: "Booking",    ok: hasBooking,         on: "Active",    off: "—",       section: "booking",   detail: null },
-              ].map(({ label, ok, on, off, section, detail }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="group flex w-full items-center gap-2.5 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
-                >
-                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ok ? "bg-accent" : "bg-white/[0.10]"}`} />
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-muted-foreground/45 transition-colors group-hover:text-foreground/58">
-                    {label}
-                    {detail && <span className="ml-1.5 font-mono text-[10px] text-muted-foreground/25">{detail}</span>}
-                  </span>
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider ${ok ? "text-accent/72" : "text-muted-foreground/25"}`}>
-                    {ok ? on : off}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Quick Actions ──────────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5 sm:col-span-2 lg:col-span-1">
-            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Quick Actions</span>
-            <div className="space-y-1.5">
-              {(() => {
-                const actions: { label: string; reason: string; section: string }[] = [
-                  ...(!artist.isPublished            ? [{ label: "Publish profile",       reason: "Not visible to bookers yet",          section: "publish"   }] : []),
-                  ...(upcomingCount === 0            ? [{ label: "Add upcoming show",     reason: "Active schedule builds credibility",  section: "shows"     }] : []),
-                  ...(artist.releases.length === 0  ? [{ label: "Add a release",          reason: "Music is the first thing bookers check", section: "releases" }] : []),
-                  ...(!hasPressKit                   ? [{ label: "Enable press kit",       reason: "Professional overview for media",     section: "press-kit" }] : []),
-                  ...(!hasBooking                    ? [{ label: "Set up booking",         reason: "Let bookers reach you directly",      section: "booking"   }] : []),
-                  ...(!hasActiveDomain               ? [{ label: "Connect domain",         reason: "Custom URL looks professional",       section: "domain"    }] : []),
-                ]
-                const display = actions.length > 0 ? actions.slice(0, 4) : [
-                  { label: "Update shows",     reason: "Keep schedule current",        section: "shows"    },
-                  { label: "Add new release",  reason: "Latest music in your catalog",  section: "releases" },
-                  { label: "Preview press kit",reason: "Check how media sees you",      section: "press-kit"},
-                ]
-                return display.map((a) => (
-                  <button
-                    key={a.label}
-                    type="button"
-                    onClick={() => setActiveSection(a.section)}
-                    className="group flex w-full items-center gap-2.5 rounded-md border border-white/[0.06] bg-white/[0.015] px-3 py-2.5 text-left transition-all duration-100 hover:border-accent/18 hover:bg-accent/[0.03]"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[12px] font-semibold text-foreground/75 transition-colors group-hover:text-foreground">{a.label}</span>
-                      <span className="ml-2 text-[11px] text-muted-foreground/30">{a.reason}</span>
-                    </div>
-                    <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/18 transition-all group-hover:translate-x-0.5 group-hover:text-accent/65" />
-                  </button>
-                ))
-              })()}
-            </div>
-          </div>
-        </div>
-
-
-        {/* ══════════════════════════════════════════════════════════════
-            LEVEL 4 — Recent Releases (if any)
-            ══════════════════════════════════════════════════════════════ */}
-        {artist.releases.length > 0 && (
-          <div className="rounded-xl border border-white/[0.07] bg-card/35">
-            <div className="flex items-center justify-between border-b border-white/[0.05] px-5 py-3">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Recent Releases</span>
-              <button type="button" onClick={() => setActiveSection("releases")} className="text-[11px] font-semibold text-accent/60 transition-colors hover:text-accent">
-                Manage →
-              </button>
-            </div>
-            <div className="divide-y divide-white/[0.03]">
-              {artist.releases.slice(0, 3).map((r) => (
-                <div key={r.id} className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-white/[0.015]">
-                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
-                    {r.artworkUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.artworkUrl} alt={r.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center"><Disc3 className="h-3.5 w-3.5 text-muted-foreground/18" /></div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-foreground/72">{r.title}</p>
-                  </div>
-                  <span className="shrink-0 text-[11px] text-muted-foreground/25">
-                    {r.releaseType ? r.releaseType.charAt(0).toUpperCase() + r.releaseType.slice(1) : (r.type || "Release")}
-                  </span>
-                  {r.isFeatured && (
-                    <span className="shrink-0 rounded bg-accent/[0.08] px-1.5 py-0.5 text-[9px] font-semibold uppercase text-accent/60">Featured</span>
-                  )}
+            {isAllSet ? (
+              <div className="flex items-center gap-2 py-1">
+                <Check className="h-4 w-4 text-accent/70" />
+                <span className="text-[13px] font-medium text-foreground/55">All set</span>
+              </div>
+            ) : (
+              <>
+                <div className="mb-3.5 h-[2px] overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="h-full rounded-full bg-accent/55 transition-all duration-700" style={{ width: `${readinessPct}%` }} />
                 </div>
-              ))}
-            </div>
+                <div className="space-y-0.5">
+                  {readinessItems.map(({ label, done, section, action }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setActiveSection(section)}
+                      className="group flex w-full items-center gap-2.5 rounded-md px-1 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
+                    >
+                      <span className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${
+                        done ? "border-accent/30 bg-accent/[0.12]" : "border-white/[0.10]"
+                      }`}>
+                        {done && <Check className="h-2 w-2 text-accent" />}
+                      </span>
+                      <span className={`flex-1 text-[12px] ${done ? "text-foreground/50" : "text-muted-foreground/42"}`}>
+                        {label}
+                      </span>
+                      {!done && (
+                        <span className="text-[10px] font-medium text-accent/45 opacity-0 transition-opacity group-hover:opacity-100">
+                          {action} →
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {topPriority && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection(topPriority.section)}
+                    className="mt-3.5 flex w-full items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.015] px-3 py-2 text-left transition-all hover:border-accent/18 hover:bg-accent/[0.025]"
+                  >
+                    <span className="text-[12px] font-semibold text-foreground/70">{topPriority.action} {topPriority.label.toLowerCase().split(" ").slice(-1)[0]}</span>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground/20" />
+                  </button>
+                )}
+              </>
+            )}
           </div>
-        )}
+
+        </div>
 
       </div>
     )
