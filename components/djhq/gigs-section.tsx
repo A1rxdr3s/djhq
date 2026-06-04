@@ -78,7 +78,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
       {/* Date tile */}
       <div
         className={cn(
-          "flex h-14 w-11 xl:h-16 xl:w-12 shrink-0 flex-col items-center justify-center rounded-lg border",
+          "flex h-14 w-11 lg:h-[3.75rem] lg:w-12 xl:h-[4rem] xl:w-[3.25rem] shrink-0 flex-col items-center justify-center rounded-lg border",
           isPast
             ? "border-white/[0.04] bg-transparent"
             : isNext
@@ -88,7 +88,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
       >
         <span
           className={cn(
-            "text-xl xl:text-2xl font-black leading-none tracking-tight",
+            "text-xl lg:text-2xl xl:text-[1.625rem] font-black leading-none tracking-tight",
             isPast ? "text-foreground/22" : "text-foreground/82",
           )}
         >

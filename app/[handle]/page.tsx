@@ -1098,7 +1098,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90 lg:text-[11px]">
                   {featuredRelease.type}
                 </p>
-                <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl xl:text-3xl">
+                <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl lg:text-[1.75rem] xl:text-3xl">
                   {featuredRelease.title}
                 </h2>
                 {featuredRelease.credits ? (
@@ -1111,7 +1111,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 </p>
                 <Button
                   asChild
-                  className="mt-4 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-4 sm:w-auto lg:mt-4 xl:h-12 xl:px-8"
+                  className="mt-4 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-4 sm:w-auto lg:mt-5 lg:h-12 lg:px-7 xl:h-12 xl:px-8"
                 >
                   <a href={resolveSafeHref(featuredRelease.platformUrl) ?? "#"} target="_blank" rel="noopener noreferrer">
                     Listen / Buy
