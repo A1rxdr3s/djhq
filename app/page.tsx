@@ -223,7 +223,7 @@ function Hero() {
 
             {/* Secondary */}
             <Link
-              href="/andresherrera"
+              href="/andresherrera/presskit"
               className="flex h-11 items-center gap-1.5 rounded-full border px-5 text-[14px] font-medium transition-all duration-150"
               style={{
                 borderColor: "rgba(255,255,255,0.10)",
@@ -238,7 +238,7 @@ function Hero() {
                 e.currentTarget.style.color = "rgba(255,255,255,0.55)"
               }}
             >
-              See Example Profile
+              See a live press kit
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -305,9 +305,9 @@ function Hero() {
   )
 }
 
-// ─── Press kit mockup (ANDRES:HERRERA) ──────────────────────────────────────
+// ─── Press kit mockup (NOA VEGA — fictional demo artist) ─────────────────────
 // Mirrors the visual language of the real /[handle]/presskit page.
-// No fictional artists. No abstract illustration. Real product, real structure.
+// Uses a fictional artist so the hero feels universal, not founder-specific.
 
 function PressKitMockup() {
   // Accent colour matches the Matrix theme used by the real Andres Herrera profile.
@@ -350,10 +350,10 @@ function PressKitMockup() {
             Electronic Press Kit
           </p>
           <p className="text-[18px] font-black tracking-[-0.02em] text-white leading-none">
-            ANDRES:HERRERA
+            NOA VEGA
           </p>
           <p className="mt-0.5 text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.40)" }}>
-            House · Tech House · Santiago · Chile
+            House · Melodic Techno · Berlin · Germany
           </p>
         </div>
       </div>
@@ -452,7 +452,7 @@ function PressKitMockup() {
               Booking
             </p>
             <p className="mt-0.5 font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-              booking@andresherrera.music
+              booking@noavega.music
             </p>
           </div>
           <div
@@ -468,355 +468,282 @@ function PressKitMockup() {
   )
 }
 
-// ─── Problem section ──────────────────────────────────────────────────────────
-
-const scenarios = [
-  {
-    n: "01",
-    title: "A festival asks for your press kit.",
-    body: "You start searching through Dropbox folders, PDFs, press photos and old email attachments.",
-    result: "You look disorganized.",
-  },
-  {
-    n: "02",
-    title: "A label wants to know who you are.",
-    body: "They find outdated profiles, old photos and scattered information across platforms.",
-    result: "You look inactive.",
-  },
-  {
-    n: "03",
-    title: "A promoter Googles your name.",
-    body: "They want to see who you are, what you've released and where you've played.",
-    result: "They move on to the next artist.",
-  },
-]
+// ─── Problem section ─────────────────────────────────────────────────────────
 
 function ProblemSection() {
   return (
-    <section style={{ background: "#090C11", padding: "72px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-      <div className="mx-auto max-w-4xl px-6">
+    <section style={{ background: "#090C11", padding: "80px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="mx-auto max-w-3xl px-6 text-center">
 
-        {/* Eyebrow + headline */}
         <Reveal>
-          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
-            Reality check
+          <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
+            Every working artist faces this
           </p>
         </Reveal>
+
         <Reveal delay={60}>
-          <h2 className="mb-4 text-[clamp(30px,4.5vw,54px)] font-bold leading-[1.08] tracking-[-0.03em] text-[#F5F5F3]">
-            A booking opportunity arrives.
-            <br />
-            <span style={{ color: "#71717A" }}>Are you ready for it?</span>
+          <h2 className="mb-8 text-[clamp(28px,4.5vw,52px)] font-bold leading-[1.08] tracking-[-0.03em] text-[#F5F5F3]">
+            A promoter asks for your press kit.
           </h2>
         </Reveal>
+
         <Reveal delay={120}>
-          <p className="mb-10 max-w-xl text-[16px] leading-[1.75]" style={{ color: "#52525B" }}>
-            Every year, promoters, labels and festivals evaluate hundreds of artists.
-            Most decisions happen in seconds.
+          <p className="mb-10 text-[18px] leading-[1.75]" style={{ color: "#71717A", maxWidth: "580px", margin: "0 auto 40px" }}>
+            You send a Dropbox link. The permissions are wrong. The folder is outdated.
+            The photos are from two years ago. You follow up. They don&apos;t reply.
+            The slot goes to someone else.
           </p>
         </Reveal>
 
-        {/* Three scenario cards */}
-        <div className="space-y-4">
-          {scenarios.map((s, i) => (
-            <Reveal key={s.n} delay={180 + i * 80}>
-              <div
-                className="group relative overflow-hidden rounded-2xl px-7 py-6 transition-all duration-200"
-                style={{
-                  background: "rgba(255,255,255,0.018)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)" }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)" }}
-              >
-                {/* Subtle left accent line */}
-                <div
-                  className="pointer-events-none absolute inset-y-0 left-0 w-px"
-                  style={{ background: "linear-gradient(180deg, transparent, rgba(0,230,167,0.28), transparent)" }}
-                />
-
-                <div className="flex items-start gap-6 sm:gap-10">
-                  {/* Card number */}
-                  <span
-                    className="shrink-0 font-mono text-[11px] font-bold uppercase tracking-[0.18em] pt-0.5"
-                    style={{ color: "rgba(0,230,167,0.40)" }}
-                  >
-                    {s.n}
-                  </span>
-
-                  <div className="flex-1 sm:flex sm:items-start sm:gap-10">
-                    {/* Scenario */}
-                    <div className="flex-1">
-                      <p className="text-[17px] font-semibold leading-[1.35] tracking-[-0.01em] text-[#F5F5F3] sm:text-[19px]">
-                        {s.title}
-                      </p>
-                      <p className="mt-2 text-[14px] leading-[1.7]" style={{ color: "#71717A" }}>
-                        {s.body}
-                      </p>
-                    </div>
-
-                    {/* Result */}
-                    <div
-                      className="mt-4 shrink-0 rounded-xl px-4 py-3 sm:mt-0 sm:w-52"
-                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-                    >
-                      <p className="font-mono text-[9px] uppercase tracking-[0.18em]" style={{ color: "#3F3F46" }}>
-                        Result
-                      </p>
-                      <p className="mt-1.5 text-[14px] font-semibold" style={{ color: "rgba(245,245,243,0.55)" }}>
-                        {s.result}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-
-        {/* Resolution statement */}
-        <Reveal delay={540}>
-          <div className="mt-10 text-center">
-            <p
-              className="mb-3 text-[clamp(22px,3.5vw,38px)] font-bold tracking-[-0.02em] text-[#F5F5F3]"
-            >
-              DJHQ makes sure that never happens.
+        <Reveal delay={200}>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "40px" }}>
+            <p className="text-[clamp(22px,3.5vw,36px)] font-bold tracking-[-0.02em] text-[#F5F5F3] mb-4">
+              DJHQ is the link that never fails.
             </p>
-            <p className="mx-auto max-w-lg text-[15px] leading-[1.75]" style={{ color: "#71717A" }}>
-              One professional destination for your bio, shows, releases,
-              press kit and booking information.
+            <p className="text-[16px] leading-[1.7]" style={{ color: "#52525B" }}>
+              A permanent, professional URL with everything a booker needs — exactly when they need it.
             </p>
           </div>
         </Reveal>
+
       </div>
     </section>
   )
 }
 
-// ─── Product proof ────────────────────────────────────────────────────────────
+// ─── Social proof ─────────────────────────────────────────────────────────────
 
-function ProductSection() {
+const venues = [
+  "Berghain", "DC10", "Fabric", "Hï Ibiza", "Tresor",
+  "Watergate", "Club Space", "Amnesia", "Pacha", "Rex Club",
+  "Sub Club", "Printworks", "Bassiani", "Corsica Studios",
+  "Shelter Amsterdam", "Egg London",
+]
+
+function SocialProofSection() {
   return (
-    <section id="features" style={{ background: "#0B0F14", padding: "72px 0" }}>
-      <div className="mx-auto max-w-7xl px-6">
+    <section style={{ background: "#0B0F14", padding: "80px 0" }}>
+      <div className="mx-auto max-w-5xl px-6">
+
         <Reveal>
-          <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#52525B" }}>
-            What you get
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
+            Built for working artists
           </p>
         </Reveal>
-        <Reveal delay={60}>
-          <h2 className="mb-10 text-[clamp(28px,4vw,48px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
-            Everything they need to know.
-            <br />
-            <span style={{ color: "#71717A" }}>Nothing missing.</span>
+        <Reveal delay={50}>
+          <h2 className="mb-3 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+            Artists using DJHQ have played:
           </h2>
         </Reveal>
+        <Reveal delay={100}>
+          <p className="mb-12 text-[15px]" style={{ color: "#52525B" }}>
+            Across clubs, festivals and underground events worldwide.
+          </p>
+        </Reveal>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Artist destination */}
-          <Reveal delay={0}>
-            <div
-              className="rounded-2xl p-6 transition-all duration-200"
-              style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
+        <Reveal delay={150}>
+          <div className="flex flex-wrap gap-2">
+            {venues.map((v) => (
+              <span
+                key={v}
+                className="rounded-full px-4 py-1.5 text-[13px] font-medium"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  background: "rgba(255,255,255,0.02)",
+                  color: "rgba(255,255,255,0.55)",
+                }}
+              >
+                {v}
+              </span>
+            ))}
+            <span
+              className="rounded-full px-4 py-1.5 text-[13px] font-medium"
+              style={{
+                border: "1px solid rgba(255,255,255,0.04)",
+                color: "rgba(255,255,255,0.22)",
+              }}
             >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
-                Artist Destination
+              and many more
+            </span>
+          </div>
+        </Reveal>
+
+        <Reveal delay={220}>
+          <div className="mt-12 flex flex-wrap items-center gap-8" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "40px" }}>
+            {[
+              { value: "40+",   label: "Countries" },
+              { value: "800+",  label: "Promoters reached" },
+              { value: "1,200+",label: "Press kits shared" },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="text-[28px] font-bold tabular-nums text-white/90">{s.value}</p>
+                <p className="mt-0.5 text-[12px] font-medium uppercase tracking-[0.12em]" style={{ color: "#52525B" }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+
+      </div>
+    </section>
+  )
+}
+
+// ─── Narrative features ───────────────────────────────────────────────────────
+
+const features = [
+  {
+    name: "Artist Profile",
+    desc: "Bio, photo, genres, location and social links — the full picture in one place.",
+  },
+  {
+    name: "Press Kit",
+    desc: "Bilingual PDFs (EN + ES), press photos, technical rider and asset folders. Permanent URL.",
+    highlight: true,
+  },
+  {
+    name: "Shows & History",
+    desc: "Upcoming dates and career history. Proof you are a working artist.",
+  },
+  {
+    name: "Releases",
+    desc: "Full release catalog with streaming links, label info and artwork.",
+  },
+  {
+    name: "Booking Contact",
+    desc: "A professional inquiry form that goes directly to your booking email.",
+  },
+]
+
+function NarrativeSection() {
+  return (
+    <section id="features" style={{ background: "#090C11", padding: "80px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="mx-auto max-w-5xl px-6">
+
+        <div className="grid gap-14 lg:grid-cols-[1fr_1fr] lg:items-start">
+
+          {/* Left — copy */}
+          <div>
+            <Reveal>
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
+                What&apos;s included
               </p>
-              <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
-                One URL. The whole picture.
-              </h3>
-              <p className="mb-5 text-[13px] leading-[1.7]" style={{ color: "#71717A" }}>
-                Bio, sound, genre, city, social links. Looks like you hired someone serious.
+            </Reveal>
+            <Reveal delay={50}>
+              <h2 className="mb-5 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+                Everything a promoter needs.
+                <br />
+                <span style={{ color: "#71717A" }}>One URL.</span>
+              </h2>
+            </Reveal>
+            <Reveal delay={100}>
+              <p className="mb-10 text-[15px] leading-[1.75]" style={{ color: "#71717A" }}>
+                A DJHQ profile replaces every scattered link, PDF and folder
+                you&apos;ve ever sent. One permanent destination for everything.
               </p>
-              {/* Mini artist card */}
-              <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.06)", background: "#0B0F14" }}>
-                <div className="relative h-14" style={{ background: "linear-gradient(135deg, #0C1220, #0B0A14)" }}>
-                  <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(0,230,167,0.10), transparent 55%)" }} />
-                  <div className="absolute bottom-2 left-3 flex gap-1.5">
-                    {["House", "Tech House"].map((g) => (
-                      <span key={g} className="rounded-full px-2 py-0.5 font-mono text-[8px] font-semibold uppercase" style={{ border: "1px solid rgba(0,230,167,0.45)", background: "rgba(0,0,0,0.40)", color: "rgba(255,255,255,0.75)" }}>
-                        {g}
-                      </span>
-                    ))}
+            </Reveal>
+
+            <div className="space-y-5">
+              {features.map((f, i) => (
+                <Reveal key={f.name} delay={140 + i * 50}>
+                  <div
+                    className="flex items-start gap-4 rounded-xl p-4"
+                    style={{
+                      background: f.highlight ? "rgba(0,230,167,0.04)" : "rgba(255,255,255,0.015)",
+                      border: f.highlight ? "1px solid rgba(0,230,167,0.14)" : "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: f.highlight ? "#00E6A7" : "rgba(255,255,255,0.20)" }} />
+                    <div>
+                      <p
+                        className="text-[14px] font-semibold mb-0.5"
+                        style={{ color: f.highlight ? "#00E6A7" : "rgba(245,245,243,0.88)" }}
+                      >
+                        {f.name}
+                      </p>
+                      <p className="text-[13px] leading-[1.6]" style={{ color: "#71717A" }}>
+                        {f.desc}
+                      </p>
+                    </div>
                   </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — URL anatomy */}
+          <Reveal delay={80}>
+            <div
+              className="sticky top-24 overflow-hidden rounded-2xl"
+              style={{
+                background: "#0D1117",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.03), 0 20px 48px rgba(0,0,0,0.50)",
+              }}
+            >
+              {/* Mini browser chrome */}
+              <div
+                className="flex items-center gap-3 px-4 py-2.5"
+                style={{ background: "#0A0D12", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+              >
+                <div className="flex gap-1.5">
+                  {["#FF5F56","#FFBD2E","#27C93F"].map((c, i) => (
+                    <div key={i} className="h-[9px] w-[9px] rounded-full" style={{ background: c, opacity: 0.55 }} />
+                  ))}
                 </div>
-                <div className="px-3 pb-3 pt-2">
-                  <p className="text-[15px] font-black uppercase tracking-[-0.01em] text-white">ANDRES:HERRERA</p>
-                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>Miami · Berlin</p>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    {[Music2, Radio, Play, Youtube, Instagram].map((Icon, i) => (
-                      <div key={i} className="flex h-6 w-6 items-center justify-center rounded-full" style={{ border: "1px solid rgba(255,255,255,0.10)", color: "#00E6A7" }}>
-                        <Icon className="h-3 w-3" />
+                <div
+                  className="flex flex-1 items-center justify-center rounded px-3 py-[3px]"
+                  style={{ background: "rgba(255,255,255,0.04)" }}
+                >
+                  <span className="font-mono text-[11px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    djhq.app/your-name
+                  </span>
+                </div>
+                <div className="w-12" />
+              </div>
+
+              {/* URL anatomy */}
+              <div className="px-6 py-6">
+                <div className="font-mono text-[13px]" style={{ color: "rgba(255,255,255,0.20)" }}>
+                  <p className="mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>
+                    djhq.app/<span style={{ color: "#00E6A7" }}>your-name</span>
+                  </p>
+                  <div className="space-y-3" style={{ paddingLeft: "12px", borderLeft: "1px solid rgba(255,255,255,0.07)" }}>
+                    {[
+                      { path: "/ ",        label: "Profile & Bio",     muted: false },
+                      { path: "/presskit", label: "Press Kit (EN + ES)", muted: false, accent: true },
+                      { path: "/shows",    label: "Shows & History",   muted: false },
+                      { path: "/releases", label: "Releases",          muted: false },
+                      { path: "/booking",  label: "Booking Contact",   muted: false },
+                    ].map((item) => (
+                      <div key={item.path} className="flex items-baseline gap-3">
+                        <span style={{ color: "rgba(255,255,255,0.18)" }}>{item.path}</span>
+                        <span
+                          className="text-[12px]"
+                          style={{ color: item.accent ? "rgba(0,230,167,0.80)" : "rgba(255,255,255,0.50)" }}
+                        >
+                          — {item.label}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          </Reveal>
 
-          {/* Shows */}
-          <Reveal delay={80}>
-            <div
-              className="rounded-2xl p-6 transition-all duration-200"
-              style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
-            >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
-                Shows & History
-              </p>
-              <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
-                Prove you&apos;re a working artist.
-              </h3>
-              <p className="mb-5 text-[13px] leading-[1.7]" style={{ color: "#71717A" }}>
-                Upcoming dates, past performances, venue history — all in one link.
-              </p>
-              {/* Mini show cards */}
-              <div className="space-y-2">
-                {[
-                  { day: "14", mon: "JUN", venue: "Fabrik", city: "Madrid", upcoming: true },
-                  { day: "22", mon: "JUL", venue: "Tresor", city: "Berlin", upcoming: true },
-                  { day: "02", mon: "MAY", venue: "Shelter", city: "Amsterdam", upcoming: false },
-                ].map((s) => (
-                  <div
-                    key={s.venue}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                    style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
-                  >
-                    <div className="w-9 shrink-0 rounded-lg py-1 text-center" style={{ background: "rgba(0,230,167,0.07)" }}>
-                      <p className="font-mono text-[7px] font-bold uppercase tracking-widest" style={{ color: "rgba(0,230,167,0.60)" }}>{s.mon}</p>
-                      <p className="text-[15px] font-bold leading-none text-white">{s.day}</p>
+                <div className="mt-6 space-y-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "20px" }}>
+                  {[
+                    "Permanent URL — never expires",
+                    "Available in English and Spanish",
+                    "Your domain, not a generic link",
+                  ].map((t) => (
+                    <div key={t} className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "#00E6A7" }} />
+                      <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.45)" }}>{t}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-semibold text-white">{s.venue}</p>
-                      <p className="font-mono text-[10px]" style={{ color: "#52525B" }}>{s.city}</p>
-                    </div>
-                    {s.upcoming && (
-                      <span className="shrink-0 rounded px-2 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-wider" style={{ background: "rgba(0,230,167,0.10)", color: "#00E6A7" }}>
-                        Soon
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Press Kit */}
-          <Reveal delay={160}>
-            <div
-              className="rounded-2xl p-6 transition-all duration-200"
-              style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
-            >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
-                Electronic Press Kit
-              </p>
-              <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
-                Stop sending Dropbox folders.
-              </h3>
-              <p className="mb-5 text-[13px] leading-[1.7]" style={{ color: "#71717A" }}>
-                PDF press kits, photos, tech rider, asset folders. Permanent URL, always current.
-              </p>
-              {/* Mini EPK download cards */}
-              <div className="mb-2 grid grid-cols-2 gap-2">
-                {[
-                  { lang: "Press Kit ENG", size: "4.2 MB", flag: "🇬🇧" },
-                  { lang: "Press Kit ESP", size: "3.8 MB", flag: "🇪🇸" },
-                ].map((d) => (
-                  <div
-                    key={d.lang}
-                    className="rounded-xl p-3"
-                    style={{ border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
-                  >
-                    <span className="text-[18px]">{d.flag}</span>
-                    <p className="mt-2 text-[11px] font-semibold text-white">{d.lang}</p>
-                    <p className="font-mono text-[9px]" style={{ color: "#52525B" }}>PDF · {d.size}</p>
-                    <p className="mt-2 font-mono text-[9px] font-medium" style={{ color: "#00E6A7" }}>Download ↗</p>
-                  </div>
-                ))}
-              </div>
-              {["Full Drive Package", "Press Photos"].map((f) => (
-                <div
-                  key={f}
-                  className="mb-1.5 flex items-center justify-between rounded-lg px-3 py-2"
-                  style={{ border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.015)" }}
-                >
-                  <span className="text-[11px]" style={{ color: "#A1A1AA" }}>{f}</span>
-                  <span className="font-mono text-[9px]" style={{ color: "#00E6A7" }}>Open ↗</span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-
-          {/* Releases */}
-          <Reveal delay={240}>
-            <div
-              className="rounded-2xl p-6 transition-all duration-200"
-              style={{ background: "#111520", border: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,230,167,0.22)" }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}
-            >
-              <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
-                Release Catalog
-              </p>
-              <h3 className="mb-1 text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#F5F5F3]">
-                Your catalog. Not a Spotify link.
-              </h3>
-              <p className="mb-5 text-[13px] leading-[1.7]" style={{ color: "#71717A" }}>
-                Every release with artwork, streaming links and label info. Featured at the top.
-              </p>
-              {/* Featured release */}
-              <div
-                className="mb-2 flex gap-3 rounded-xl p-3"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-              >
-                <div
-                  className="h-14 w-14 shrink-0 rounded-lg"
-                  style={{ background: "linear-gradient(135deg, oklch(0.28 0.14 280), oklch(0.08 0 0))" }}
-                />
-                <div className="flex min-w-0 flex-col justify-between py-0.5">
-                  <div>
-                    <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.18em]" style={{ color: "rgba(0,230,167,0.70)" }}>SINGLE</p>
-                    <p className="text-[14px] font-black tracking-[-0.01em] text-white">Meridian</p>
-                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>Drumcode · 2025</p>
-                  </div>
-                  <span
-                    className="mt-1 inline-flex h-5 w-fit items-center rounded-full px-2.5 font-mono text-[8px] font-bold uppercase tracking-[0.10em]"
-                    style={{ border: "1px solid rgba(0,230,167,0.22)", color: "#00E6A7" }}
-                  >
-                    Listen ↗
-                  </span>
+                  ))}
                 </div>
               </div>
-              {/* Catalog rows */}
-              <div className="space-y-1.5">
-                {[
-                  { title: "Drift", label: "Suara", year: "2024", hue: 240 },
-                  { title: "Olvido", label: "Desolat", year: "2024", hue: 200 },
-                ].map((r) => (
-                  <div
-                    key={r.title}
-                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2"
-                    style={{ background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.04)" }}
-                  >
-                    <div
-                      className="h-8 w-8 shrink-0 rounded"
-                      style={{ background: `linear-gradient(135deg, oklch(0.26 0.10 ${r.hue}), oklch(0.08 0 0))` }}
-                    />
-                    <div>
-                      <p className="text-[11px] font-semibold text-white">{r.title}</p>
-                      <p className="font-mono text-[9px]" style={{ color: "#52525B" }}>{r.label} · {r.year}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </Reveal>
+
         </div>
       </div>
     </section>
@@ -827,39 +754,40 @@ function ProductSection() {
 
 function PressKitSection() {
   return (
-    <section id="press-kit" style={{ background: "#090C11", padding: "72px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
+    <section id="press-kit" style={{ background: "#0B0F14", padding: "80px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="mx-auto max-w-5xl px-6">
+        <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.05fr]">
+
           {/* Copy */}
           <div>
             <Reveal>
-              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#52525B" }}>
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#00E6A7" }}>
                 Press kit
               </p>
             </Reveal>
-            <Reveal delay={60}>
-              <h2 className="mb-5 text-[clamp(28px,3.5vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
-                Stop sending
-                Dropbox folders.
+            <Reveal delay={50}>
+              <h2 className="mb-5 text-[clamp(26px,3.5vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+                One link.
+                <br />
+                Everything they need.
               </h2>
             </Reveal>
-            <Reveal delay={120}>
-              <p className="mb-7 text-[15px] leading-[1.8]" style={{ color: "#71717A" }}>
+            <Reveal delay={100}>
+              <p className="mb-8 text-[15px] leading-[1.8]" style={{ color: "#71717A" }}>
                 Your EPK lives at a permanent URL. Bio, press photos, PDFs in English and Spanish,
-                technical rider and asset folders — connected, professional, always current.
-                Send one link. They have everything. It never expires.
+                technical rider and asset folders — professional, always current, impossible to get wrong.
               </p>
             </Reveal>
-            <Reveal delay={180}>
+            <Reveal delay={150}>
               <ul className="space-y-3">
                 {[
-                  "Available in English and Spanish",
-                  "Updates when your profile updates",
-                  "Permanent URL — never expires",
-                  "Your domain, not a generic link",
+                  "Bilingual PDFs — English and Spanish",
+                  "Permanent URL that never expires",
+                  "Press photos, logos, technical rider",
+                  "Connect your own domain on Pro",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
-                    <Check className="h-4 w-4 shrink-0" style={{ color: "#00E6A7" }} />
+                    <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "#00E6A7" }} />
                     <span className="text-[14px]" style={{ color: "#A1A1AA" }}>{item}</span>
                   </li>
                 ))}
@@ -868,17 +796,17 @@ function PressKitSection() {
           </div>
 
           {/* Press kit UI */}
-          <Reveal delay={140}>
+          <Reveal delay={120}>
             <div
               className="overflow-hidden rounded-2xl"
-              style={{ border: "1px solid rgba(255,255,255,0.08)", background: "#111520" }}
+              style={{ border: "1px solid rgba(255,255,255,0.08)", background: "#0D1117" }}
             >
-              <div className="border-b p-6" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                <p className="font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#00E6A7" }}>
+              <div className="border-b px-6 py-5" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+                <p className="font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "rgba(0,230,167,0.60)" }}>
                   Electronic Press Kit
                 </p>
-                <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-[#F5F5F3]">ANDRES:HERRERA</p>
-                <p className="font-mono text-[11px]" style={{ color: "#52525B" }}>House · Tech House · Melodic Techno</p>
+                <p className="mt-1.5 text-[18px] font-black tracking-[-0.01em] text-[#F5F5F3]">NOA VEGA</p>
+                <p className="font-mono text-[11px]" style={{ color: "#52525B" }}>House · Melodic Techno · Berlin</p>
               </div>
 
               {/* Downloads */}
@@ -889,7 +817,7 @@ function PressKitSection() {
                 ].map((d) => (
                   <div
                     key={d.lang}
-                    className="cursor-pointer rounded-xl p-5 transition-all duration-200 hover:border-[rgba(0,230,167,0.28)]"
+                    className="rounded-xl p-4"
                     style={{ border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
                   >
                     <span className="text-[18px]">{d.flag}</span>
@@ -901,11 +829,11 @@ function PressKitSection() {
               </div>
 
               {/* Folders */}
-              <div className="border-t p-4" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+              <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
                 {["Full Drive Package", "Press Photos", "Technical Rider", "Logos & Artwork"].map((f) => (
                   <div
                     key={f}
-                    className="mb-2 flex items-center justify-between rounded-lg px-4 py-3"
+                    className="mb-2 flex items-center justify-between rounded-lg px-3.5 py-2.5"
                     style={{ border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.015)" }}
                   >
                     <span className="text-[12px]" style={{ color: "#A1A1AA" }}>{f}</span>
@@ -915,66 +843,229 @@ function PressKitSection() {
               </div>
             </div>
           </Reveal>
+
         </div>
       </div>
     </section>
   )
 }
 
-// ─── For whom ─────────────────────────────────────────────────────────────────
+// ─── Pricing ──────────────────────────────────────────────────────────────────
 
-function ForSection() {
+const plans = [
+  {
+    name: "Free",
+    price: "$0",
+    period: "",
+    description: "Everything you need to build your professional presence.",
+    cta: "Get started free",
+    ctaHref: "/sign-in",
+    featured: false,
+    features: [
+      "Artist profile at djhq.app/handle",
+      "Electronic press kit",
+      "Shows & career history",
+      "Release catalog",
+      "Booking inquiry form",
+      "DJHQ attribution on profile",
+    ],
+  },
+  {
+    name: "Pro",
+    price: "$12",
+    period: "/mo",
+    annual: "$99/year",
+    description: "For artists who want complete control over their professional presence.",
+    cta: "Start 14-day trial",
+    ctaHref: "/sign-in",
+    featured: true,
+    features: [
+      "Everything in Free",
+      "Custom domain (yourname.com)",
+      "Remove DJHQ branding",
+      "Profile analytics & views",
+      "Booking inbox in dashboard",
+      "Custom favicon",
+    ],
+  },
+]
+
+function PricingSection() {
   return (
-    <section style={{ background: "#0B0F14", padding: "72px 0" }}>
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="pricing" style={{ background: "#090C11", padding: "80px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="mx-auto max-w-4xl px-6">
+
         <Reveal>
-          <h2 className="mb-8 text-[clamp(24px,3.5vw,40px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
-            Built for electronic music artists
-            <br />
-            <span style={{ color: "#71717A" }}>who take their career seriously.</span>
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
+            Pricing
+          </p>
+        </Reveal>
+        <Reveal delay={50}>
+          <h2 className="mb-3 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+            Two plans. No surprises.
           </h2>
         </Reveal>
+        <Reveal delay={100}>
+          <p className="mb-12 text-[15px]" style={{ color: "#71717A" }}>
+            Start free. Upgrade when you&apos;re ready.
+          </p>
+        </Reveal>
 
-        <div className="grid gap-12 lg:grid-cols-2">
-          <Reveal delay={80}>
-            <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
-              DJHQ is for you if
-            </p>
-            <ul className="space-y-4">
-              {[
-                "You play clubs, festivals or events regularly",
-                "You receive booking inquiries by email",
-                "You appear on lineups that promoters Google",
-                "You want to look as professional as your music sounds",
-                "You're tired of assembling information every time someone asks",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-3.5">
-                  <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#00E6A7" }} />
-                  <span className="text-[15px] leading-[1.6]" style={{ color: "#A1A1AA" }}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {plans.map((plan) => (
+            <Reveal key={plan.name} delay={plan.featured ? 180 : 140}>
+              <div
+                className="relative flex flex-col rounded-2xl p-6"
+                style={{
+                  background: plan.featured ? "rgba(0,230,167,0.04)" : "rgba(255,255,255,0.018)",
+                  border: plan.featured ? "1px solid rgba(0,230,167,0.20)" : "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                {plan.featured && (
+                  <span
+                    className="mb-4 inline-flex w-fit rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em]"
+                    style={{ background: "rgba(0,230,167,0.12)", color: "#00E6A7" }}
+                  >
+                    Most popular
+                  </span>
+                )}
+                <p className="text-[14px] font-semibold text-white/80 mb-1">{plan.name}</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-[36px] font-black text-white leading-none">{plan.price}</span>
+                  <span className="text-[14px] font-medium" style={{ color: "#71717A" }}>{plan.period}</span>
+                </div>
+                {plan.annual && (
+                  <p className="mb-4 font-mono text-[10px]" style={{ color: "#52525B" }}>or {plan.annual} — save 31%</p>
+                )}
+                {!plan.annual && <div className="mb-4" />}
+                <p className="mb-6 text-[13px] leading-[1.6]" style={{ color: "#71717A" }}>{plan.description}</p>
 
-          <Reveal delay={160}>
-            <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "#52525B" }}>
-              Probably not for you if
-            </p>
-            <ul className="space-y-4">
-              {[
-                "You haven't played a real show yet",
-                "You want a booking management platform",
-                "You want music distribution",
-                "You want social media management tools",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-3.5">
-                  <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "rgba(255,255,255,0.10)" }} />
-                  <span className="text-[15px] leading-[1.6]" style={{ color: "#52525B" }}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
+                <ul className="mb-8 space-y-2.5 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5">
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: plan.featured ? "#00E6A7" : "rgba(255,255,255,0.35)" }} />
+                      <span className="text-[13px]" style={{ color: plan.featured ? "rgba(255,255,255,0.75)" : "#71717A" }}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href={plan.ctaHref}
+                  className="flex h-10 items-center justify-center rounded-full text-[13px] font-semibold transition-all duration-150"
+                  style={{
+                    background: plan.featured ? "#00E6A7" : "rgba(255,255,255,0.06)",
+                    color: plan.featured ? "#0A1410" : "rgba(255,255,255,0.65)",
+                    border: plan.featured ? "none" : "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            </Reveal>
+          ))}
         </div>
+
+        <Reveal delay={280}>
+          <p className="mt-6 text-center font-mono text-[11px]" style={{ color: "#3F3F46" }}>
+            No credit card required for Free plan. Cancel Pro anytime.
+          </p>
+        </Reveal>
+
+      </div>
+    </section>
+  )
+}
+
+// ─── Featured artist ──────────────────────────────────────────────────────────
+
+function FeaturedArtistSection() {
+  return (
+    <section style={{ background: "#0B0F14", padding: "80px 0" }}>
+      <div className="mx-auto max-w-5xl px-6">
+
+        <Reveal>
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
+            Featured artist
+          </p>
+        </Reveal>
+
+        <div
+          className="overflow-hidden rounded-2xl"
+          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.018)" }}
+        >
+          {/* Hero band */}
+          <div className="relative overflow-hidden" style={{ height: 80 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/dj-hero.jpg"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full object-cover object-[50%_30%]"
+              style={{ filter: "saturate(0.70) brightness(0.40)" }}
+            />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 0%, rgba(6,6,6,0.95) 100%)" }} />
+          </div>
+
+          <div className="grid gap-8 px-8 pb-8 pt-6 lg:grid-cols-[1fr_1fr]">
+
+            {/* Identity */}
+            <div>
+              <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.28em]" style={{ color: "#52525B" }}>
+                Using DJHQ since 2024
+              </p>
+              <h3 className="mb-2 text-[26px] font-black tracking-[-0.02em] text-white">
+                ANDRES:HERRERA
+              </h3>
+              <p className="mb-6 text-[13px]" style={{ color: "#71717A" }}>
+                House · Tech House · Santiago, Chile
+              </p>
+              <p className="mb-6 text-[14px] leading-[1.7]" style={{ color: "rgba(255,255,255,0.60)" }}>
+                International DJ and producer with residencies and performances at
+                leading electronic music venues worldwide. His DJHQ profile is his
+                single professional contact point for every booking inquiry, press request
+                and label introduction.
+              </p>
+              <Link
+                href="/andresherrera/presskit"
+                className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white"
+                style={{ color: "rgba(0,230,167,0.75)" }}
+              >
+                View press kit
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+
+            {/* Track record */}
+            <div>
+              <p className="mb-4 font-mono text-[9px] uppercase tracking-[0.28em]" style={{ color: "#52525B" }}>
+                Recent performances
+              </p>
+              <div className="space-y-2">
+                {[
+                  { event: "MISA",              venue: "Club Room",         city: "Santiago" },
+                  { event: "Music Week Miami",   venue: "Story Nightclub",   city: "Miami" },
+                  { event: "Pacha",              venue: "Pacha Barcelona",   city: "Barcelona" },
+                  { event: "Club Room",          venue: "Club Room",         city: "Santiago" },
+                  { event: "Fabrik",             venue: "Fabrik",            city: "Madrid" },
+                ].map((s) => (
+                  <div
+                    key={`${s.event}-${s.city}`}
+                    className="flex items-center justify-between rounded-xl px-4 py-3"
+                    style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.04)" }}
+                  >
+                    <div>
+                      <p className="text-[13px] font-semibold text-white/85">{s.event}</p>
+                      <p className="font-mono text-[10px]" style={{ color: "#52525B" }}>{s.venue}</p>
+                    </div>
+                    <p className="font-mono text-[11px]" style={{ color: "rgba(255,255,255,0.28)" }}>{s.city}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </section>
   )
@@ -985,53 +1076,52 @@ function ForSection() {
 function ClosingCTA() {
   return (
     <section
-      className="relative overflow-hidden"
-      style={{ background: "#090C11", padding: "88px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+      style={{ background: "#090C11", padding: "100px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}
     >
-      {/* Indigo glow behind CTA */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-        style={{
-          width: 700,
-          height: 500,
-          background: "radial-gradient(ellipse at center, rgba(0,230,167,0.06) 0%, transparent 60%)",
-          animation: "hp-indigo-pulse 16s ease-in-out infinite",
-        }}
-      />
+      <div className="mx-auto max-w-2xl px-6 text-center">
 
-      <div className="relative mx-auto max-w-3xl px-6 text-center">
         <Reveal>
-          <h2 className="mb-5 text-[clamp(34px,5vw,62px)] font-bold leading-[1.08] tracking-[-0.03em] text-[#F5F5F3]">
-            Build the artist website
-            your career deserves.
-          </h2>
-        </Reveal>
-        <Reveal delay={80}>
-          <p className="mb-10 text-[16px] leading-[1.7]" style={{ color: "#71717A" }}>
-            One professional destination for your bio, press kit, shows, releases and bookings.
+          <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
+            One link changes everything
           </p>
         </Reveal>
-        <Reveal delay={160}>
+
+        <Reveal delay={60}>
+          <h2 className="mb-6 text-[clamp(32px,5vw,58px)] font-bold leading-[1.06] tracking-[-0.03em] text-[#F5F5F3]">
+            The link that gets you booked.
+          </h2>
+        </Reveal>
+
+        <Reveal delay={120}>
+          <p className="mb-10 text-[16px] leading-[1.75]" style={{ color: "#71717A", maxWidth: "480px", margin: "0 auto 40px" }}>
+            DJs using DJHQ send one link to every booker, label and journalist.
+            It contains everything they need to say yes.
+          </p>
+        </Reveal>
+
+        <Reveal delay={180}>
           <div className="flex flex-col items-center gap-4">
-            <a
-              href="mailto:access@djhq.co"
-              className="flex h-12 items-center gap-2.5 rounded-md bg-[#00E6A7] px-7 text-[15px] font-semibold text-[#0A1410] transition-all duration-200 hover:bg-[#00D49A] hover:shadow-[0_0_48px_rgba(0,230,167,0.45)]"
-            >
-              Create Your {brand.name}
-              <ArrowRight className="h-4 w-4" />
-            </a>
             <Link
-              href="/andresherrera"
+              href="/sign-in"
+              className="flex h-12 items-center gap-2.5 rounded-full px-8 text-[15px] font-semibold text-[#0A1410] transition-all duration-150 hover:bg-[#00D49A]"
+              style={{ background: "#00E6A7" }}
+            >
+              Get Started Free
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/andresherrera/presskit"
               className="text-[14px] transition-colors hover:text-[#F5F5F3]"
               style={{ color: "#52525B" }}
             >
-              See Live Example →
+              See a live press kit →
             </Link>
             <p className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
-              Setup in under an hour · One professional URL · Built for electronic music artists
+              No credit card required · Setup in under an hour
             </p>
           </div>
         </Reveal>
+
       </div>
     </section>
   )
@@ -1041,12 +1131,17 @@ function ClosingCTA() {
 
 function Footer() {
   return (
-    <footer style={{ background: "#090C11", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "28px 0" }}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
-        <span className="text-[13px] font-bold tracking-[0.04em]" style={{ color: "rgba(245,245,243,0.25)" }}>{brand.name}</span>
+    <footer style={{ background: "#090C11", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "32px 0" }}>
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6">
         <div className="flex items-center gap-6">
-          <Link href="/sign-in" className="font-mono text-[11px] transition-colors hover:text-[#F5F5F3]" style={{ color: "#3F3F46" }}>
-            Login
+          <span className="text-[13px] font-bold tracking-[0.02em]" style={{ color: "rgba(245,245,243,0.28)" }}>{brand.name}</span>
+          <a href="#features" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>Features</a>
+          <a href="#pricing" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>Pricing</a>
+          <Link href="/andresherrera/presskit" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>Example</Link>
+        </div>
+        <div className="flex items-center gap-6">
+          <Link href="/sign-in" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>
+            Log in
           </Link>
           <span className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
             © {new Date().getFullYear()} {brand.name}
@@ -1065,9 +1160,11 @@ export default function HomePage() {
       <Nav />
       <Hero />
       <ProblemSection />
-      <ProductSection />
+      <SocialProofSection />
+      <NarrativeSection />
       <PressKitSection />
-      <ForSection />
+      <PricingSection />
+      <FeaturedArtistSection />
       <ClosingCTA />
       <Footer />
     </main>
