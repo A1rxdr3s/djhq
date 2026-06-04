@@ -869,8 +869,18 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            {/* CTA block — left-anchored for editorial asymmetry: logo anchors center, CTAs anchor bottom-left */}
+            {/* Brand cluster — tagline + CTAs share one left-anchored column
+                Logo floats independently at center; this block is the brand statement + action unit */}
             <div className="absolute bottom-[13%] left-0 z-10 px-6 sm:bottom-[15%] sm:px-10 lg:px-12">
+              {/* Tagline — brand statement, lighter than the logo, supporting role */}
+              {displayHeroTagline && (
+                <p
+                  className="mb-4 max-w-[320px] text-[11px] font-medium uppercase tracking-[0.22em] text-white/58 sm:mb-5 sm:text-[12px]"
+                  style={{ textShadow: "0 1px 6px rgba(0,0,0,0.30)" }}
+                >
+                  {displayHeroTagline}
+                </p>
+              )}
               {(artist.bookingInfo.email.trim() || hasPressKit) ? (
                 <div className="flex items-center gap-3">
                   {artist.bookingInfo.email.trim() ? (
@@ -1447,6 +1457,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             hasPressKit={hasPressKit}
             pressKitHref={safePressKitHref}
             artistHandle={artist.handle}
+            heroLogoUrl={artist.heroLogoUrl}
+            heroIdentityMode={artist.heroIdentityMode}
           />
         </div>
 

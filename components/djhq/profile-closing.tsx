@@ -22,19 +22,6 @@ const SOCIAL_ICONS: Partial<Record<SocialPlatform, LucideIcon>> = {
   other:            Link2,
 }
 
-const PLATFORM_LABELS: Record<string, string> = {
-  spotify:          "Spotify",
-  beatport:         "Beatport",
-  soundcloud:       "SoundCloud",
-  youtube:          "YouTube",
-  instagram:        "Instagram",
-  tiktok:           "TikTok",
-  "resident-advisor": "Resident Advisor",
-  bandsintown:      "Bandsintown",
-  website:          "Website",
-  other:            "Website",
-}
-
 type Props = {
   artistName: string
   location?: string
@@ -45,6 +32,8 @@ type Props = {
   hasPressKit?: boolean
   pressKitHref?: string | null
   artistHandle?: string
+  heroLogoUrl?: string | null
+  heroIdentityMode?: string
 }
 
 export function ProfileClosing({
@@ -52,8 +41,8 @@ export function ProfileClosing({
   bookingEmail,
   isPro,
   socialLinks = [],
-  hasPressKit = false,
-  pressKitHref = null,
+  heroLogoUrl,
+  heroIdentityMode,
 }: Props) {
   const [email, setEmail]   = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
@@ -72,189 +61,140 @@ export function ProfileClosing({
   const year       = new Date().getFullYear()
   const hasBooking = !!bookingEmail.trim()
 
-  const exploreLinks = [
-    { label: "Releases", href: "#music",       external: false },
-    { label: "Shows",    href: "#shows",       external: false },
-    { label: "Sets",     href: "#performance", external: false },
-    ...(hasPressKit && pressKitHref
-      ? [{ label: "Press Kit", href: pressKitHref, external: true }]
-      : []),
-    ...(hasBooking
-      ? [{ label: "Contact", href: "#contact", external: false }]
-      : []),
-  ]
+  const showLogo = !!heroLogoUrl?.trim() &&
+    (heroIdentityMode === "logo" || heroIdentityMode === "both" || !heroIdentityMode)
 
-  const filteredSocialLinks = socialLinks.filter((l) => l.url.trim().length > 0)
-
-  const connectLinks = filteredSocialLinks
-    .slice(0, 5)
-    .map((l) => ({ label: PLATFORM_LABELS[l.platform] ?? l.label, href: resolveSafeHref(l.url) }))
-    .filter((l): l is { label: string; href: string } => l.href !== null)
-
-  const iconLinks = filteredSocialLinks
+  const iconLinks = socialLinks
+    .filter((l) => l.url.trim().length > 0)
     .slice(0, 6)
-    .map((l) => ({ ...l, href: resolveSafeHref(l.url), Icon: SOCIAL_ICONS[l.platform] }))
-    .filter((l): l is typeof l & { href: string; Icon: LucideIcon } => l.href !== null && l.Icon !== undefined)
+    .map((l) => ({
+      platform: l.platform,
+      url:      l.url,
+      label:    l.label,
+      href:     resolveSafeHref(l.url),
+      Icon:     SOCIAL_ICONS[l.platform],
+    }))
+    .filter((l): l is typeof l & { href: string; Icon: LucideIcon } =>
+      l.href !== null && l.Icon !== undefined,
+    )
 
   return (
-    <footer className="border-t border-white/[0.06]">
-      {/* ── Main grid ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-x-8 gap-y-10 py-10 sm:grid-cols-2 sm:gap-x-12 sm:py-12 lg:grid-cols-4 lg:gap-x-16 lg:py-14">
+    <footer className="border-t border-white/[0.05] mt-12 sm:mt-16 lg:mt-20">
 
-        {/* Col 1 — Explore */}
-        <div>
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
-            Explore
+      {/* ── Identity + social + booking ─────────────────────────────── */}
+      <div className="flex flex-col items-center px-6 pb-10 pt-14 text-center sm:pb-14 sm:pt-20 lg:pt-24">
+
+        {/* Logo — the footer's visual anchor */}
+        {showLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={heroLogoUrl!}
+            alt={artistName}
+            className="mx-auto max-h-[110px] max-w-[260px] object-contain opacity-88 sm:max-h-[130px] sm:max-w-[300px] lg:max-h-[150px] lg:max-w-[340px]"
+          />
+        ) : (
+          <p className="text-[2rem] font-black tracking-[-0.025em] text-foreground/88 sm:text-[2.5rem]">
+            {artistName}
           </p>
-          <ul className="space-y-2.5">
-            {exploreLinks.map(({ label, href, external }) => (
-              <li key={label}>
-                {external ? (
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white/95"
-                  >
-                    {label}
-                  </a>
-                ) : (
-                  <a
-                    href={href}
-                    className="text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white/95"
-                  >
-                    {label}
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+        )}
 
-        {/* Col 2 — Connect: text links + icon row */}
-        {(connectLinks.length > 0 || iconLinks.length > 0) && (
-          <div>
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
-              Connect
-            </p>
-            {connectLinks.length > 0 && (
-              <ul className="space-y-2.5">
-                {connectLinks.map(({ label, href }) => (
-                  <li key={label}>
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[13px] font-medium text-white/55 transition-colors duration-200 hover:text-white/95"
-                    >
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {/* Social icons — visual focal point below text links */}
-            {iconLinks.length > 0 && (
-              <div className="mt-5 flex items-center gap-4">
-                {iconLinks.map(({ platform, url, label, href, Icon }) => (
-                  <a
-                    key={`ico-${platform}-${url}`}
-                    href={href}
-                    aria-label={label}
-                    title={label}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/45 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
-                  >
-                    <Icon className="h-[18px] w-[18px]" />
-                  </a>
-                ))}
-              </div>
-            )}
+        {/* Social icons — icon-only, premium hover */}
+        {iconLinks.length > 0 && (
+          <div className="mt-8 flex items-center justify-center gap-5 sm:mt-10 sm:gap-7">
+            {iconLinks.map(({ platform, url, label, href, Icon }) => (
+              <a
+                key={`foot-${platform}-${url}`}
+                href={href}
+                aria-label={label}
+                title={label}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/38 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/90"
+              >
+                <Icon className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px]" />
+              </a>
+            ))}
           </div>
         )}
 
-        {/* Col 3 — Join the List */}
-        <div>
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
-            Join the List
-          </p>
-          {status === "success" ? (
-            <p className="text-[13px] font-medium text-white/55">You&apos;re on the list.</p>
-          ) : (
-            <>
-              <form
-                onSubmit={handleSubmit}
-                noValidate
-                className="flex flex-col gap-2"
+        {/* Booking — single clean line, no heading */}
+        {hasBooking && (
+          <a
+            href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
+            className="mt-7 text-[13px] font-medium text-white/40 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/75 sm:mt-8 sm:text-[14px]"
+          >
+            {bookingEmail}
+          </a>
+        )}
+      </div>
+
+      {/* ── Newsletter — secondary, compact ─────────────────────────── */}
+      <div className="border-t border-white/[0.04] px-6 py-8 text-center sm:py-10">
+        {status === "success" ? (
+          <p className="text-[12px] font-medium text-white/42">You&apos;re on the list.</p>
+        ) : (
+          <>
+            <p className="mb-3.5 text-[10px] font-bold uppercase tracking-[0.22em] text-white/20">
+              Stay Connected
+            </p>
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="mx-auto flex max-w-[280px] gap-2 sm:max-w-xs"
+            >
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (status === "error") setStatus("idle")
+                }}
+                placeholder="your@email.com"
+                aria-label="Email address"
+                className={cn(
+                  "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/85 outline-none transition-colors duration-200 placeholder:text-white/15",
+                  status === "error"
+                    ? "border-red-500/30 focus:border-red-500/50"
+                    : "border-white/[0.09] focus:border-accent/35",
+                )}
+              />
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="h-9 shrink-0 rounded-full bg-accent px-5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent-foreground transition-colors duration-200 hover:bg-accent/90 disabled:opacity-50"
               >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (status === "error") setStatus("idle")
-                  }}
-                  placeholder="your@email.com"
-                  aria-label="Email address"
-                  className={cn(
-                    "h-9 rounded-full border bg-white/[0.03] px-4 text-[12px] text-foreground outline-none transition-colors duration-200 placeholder:text-white/16",
-                    status === "error"
-                      ? "border-red-500/30 focus:border-red-500/50"
-                      : "border-white/[0.09] focus:border-accent/38",
-                  )}
-                />
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="h-9 rounded-full bg-accent px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-accent-foreground transition-all duration-200 hover:bg-accent/90 disabled:opacity-50"
-                >
-                  {status === "loading" ? "···" : "Join"}
-                </button>
-              </form>
-              {status === "error" ? (
-                <p className="mt-2 text-[10px] text-red-400/65">
-                  Enter a valid email address.
-                </p>
-              ) : (
-                <p className="mt-2 text-[10px] text-white/16">
-                  Occasional updates only.
-                </p>
-              )}
+                {status === "loading" ? "···" : "Join"}
+              </button>
+            </form>
+            {status === "error" && (
+              <p className="mt-2 text-[10px] text-red-400/60">
+                Enter a valid email address.
+              </p>
+            )}
+            {status !== "error" && (
+              <p className="mt-2 text-[10px] text-white/14">
+                Occasional updates only.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Copyright ────────────────────────────────────────────────── */}
+      <div className="border-t border-white/[0.04] py-4 text-center">
+        <p className="text-[10px] font-medium text-white/18">
+          © {year} {artistName}
+          {!isPro && (
+            <>
+              {" · "}
+              <Link href="/" className="transition-colors duration-150 hover:text-white/35">
+                {brand.copy.poweredBy}
+              </Link>
             </>
           )}
-        </div>
-
-        {/* Col 4 — Booking */}
-        {hasBooking && (
-          <div>
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
-              Booking
-            </p>
-            <a
-              href={resolveSafeHref(`mailto:${bookingEmail}`) ?? "#"}
-              className="block text-[14px] font-medium leading-relaxed text-white/62 transition-colors duration-200 hover:text-accent/85"
-            >
-              {bookingEmail}
-            </a>
-          </div>
-        )}
-      </div>
-
-      {/* ── Bottom bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-t border-white/[0.04] py-4">
-        <p className="text-[10px] font-medium text-white/22">
-          © {year} {artistName}
         </p>
-        {!isPro && (
-          <Link
-            href="/"
-            className="text-[10px] font-medium text-white/18 transition-colors duration-150 hover:text-white/35"
-          >
-            {brand.copy.poweredBy}
-          </Link>
-        )}
       </div>
+
     </footer>
   )
 }
