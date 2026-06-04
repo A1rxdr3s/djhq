@@ -35,11 +35,11 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
   const locationStr = location.replace(/\s*\/\s*/g, " • ")
 
   return (
-    <div className="border-t border-white/[0.06] px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <div className="border-t border-white/[0.06]">
+      <div>
 
         {/* ── Layer 1 + 2: Newsletter ── */}
-        <div className="py-2 text-center sm:py-8">
+        <div className="py-10 text-center sm:py-14">
           {status === "success" ? (
             <div>
               <p className="text-[1.5rem] font-black tracking-[-0.02em] text-foreground">
@@ -51,12 +51,12 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
             </div>
           ) : (
             <>
-              <h2 className="text-[1.3rem] font-black leading-none tracking-[-0.02em] text-foreground sm:text-[2.25rem]">
+              <h2 className="text-[1.4rem] font-black leading-none tracking-[-0.02em] text-foreground sm:text-[2.5rem]">
                 GET ON THE LIST
               </h2>
 
               {/* 2×2 benefits grid — visual anchor of the section */}
-              <div className="mx-auto mt-3 grid max-w-[300px] grid-cols-2 gap-x-6 gap-y-0 sm:mt-5 sm:max-w-[360px]">
+              <div className="mx-auto mt-3 grid max-w-[320px] grid-cols-2 gap-x-6 gap-y-0 sm:mt-5 sm:max-w-[400px]">
                 {["Guest Lists", "Early Access", "Free Downloads", "New Music"].map((benefit) => (
                   <div
                     key={benefit}
@@ -73,7 +73,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
               <form
                 onSubmit={handleSubmit}
                 noValidate
-                className="mx-auto mt-2 flex max-w-[300px] items-center gap-2.5 sm:mt-3 sm:max-w-[360px]"
+                className="mx-auto mt-2 flex max-w-[320px] items-center gap-2.5 sm:mt-3 sm:max-w-[400px]"
               >
                 <input
                   type="email"
@@ -136,7 +136,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
         </div>
 
         {/* Desktop: two-column layout, with location */}
-        <div className="hidden border-t border-white/[0.04] pt-5 sm:pt-6 lg:block">
+        <div className="hidden border-t border-white/[0.04] pt-6 sm:pt-8 lg:block">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[0.95rem] font-black uppercase leading-none tracking-[-0.02em] text-foreground/85">
@@ -160,7 +160,7 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
               </div>
             )}
           </div>
-          <p className="mt-4 pb-6 text-[10px] text-white/16 sm:pb-7">
+          <p className="mt-4 pb-8 text-[10px] text-white/16 sm:pb-10">
             © {year} {artistName}
           </p>
         </div>
@@ -169,8 +169,8 @@ export function ProfileClosing({ artistName, location, bookingEmail, isPro }: Pr
 
       {/* Free plan attribution — absent on pro */}
       {!isPro && (
-        <div className="border-t border-white/[0.03] py-3.5 px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
+        <div className="border-t border-white/[0.03] py-3.5">
+          <div>
             <Link
               href="/"
               className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/14 transition-colors duration-150 hover:text-white/32"

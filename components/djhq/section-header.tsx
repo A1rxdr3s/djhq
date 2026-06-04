@@ -11,7 +11,7 @@ export function SectionHeader({ children, variant = "secondary" }: SectionHeader
     <div className="flex items-center gap-4">
       <h2
         className={cn(
-          "shrink-0 text-[11px] font-medium uppercase tracking-[0.30em]",
+          "shrink-0 text-[11px] font-medium uppercase tracking-[0.28em] xl:text-[13px] xl:tracking-[0.26em]",
           variant === "primary" ? "text-accent/90" : "text-accent/70",
         )}
       >
