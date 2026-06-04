@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowRight, Calendar, Camera, Check, ChevronDown, ExternalLink, FileText, FolderOpen, Globe, Headphones, Instagram, Layers, LogOut, Mail, MapPin, MoreVertical, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Wrench, Youtube } from "lucide-react"
+import { ArrowRight, Calendar, Camera, Check, ChevronDown, Disc3, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, MoreVertical, Music, Music2, Play, Plus, Radio, Save, Send, Star, Trash2, User, Wrench, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -31,38 +31,39 @@ const APP_DISPLAY_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.app")
   .replace(/^https?:\/\//, "")
   .replace(/\/$/, "")
 
-type NavGroup = { label: string; items: { id: string; label: string }[] }
+type NavItem = { id: string; label: string; icon: React.ComponentType<{ className?: string }> }
+type NavGroup = { label: string; items: NavItem[] }
 
 const navGroups: NavGroup[] = [
   {
     label: "Artist",
     items: [
-      { id: "profile", label: "Profile" },
-      { id: "links", label: "Links" },
-      { id: "gallery", label: "Gallery" },
+      { id: "profile", label: "Profile", icon: User },
+      { id: "links", label: "Links", icon: Link2 },
+      { id: "gallery", label: "Gallery", icon: ImageIcon },
     ],
   },
   {
     label: "Content",
     items: [
-      { id: "releases", label: "Releases" },
-      { id: "shows", label: "Shows" },
-      { id: "sets", label: "Sets" },
-      { id: "media", label: "Videos" },
+      { id: "releases", label: "Releases", icon: Disc3 },
+      { id: "shows", label: "Shows", icon: Calendar },
+      { id: "sets", label: "Sets", icon: Headphones },
+      { id: "media", label: "Videos", icon: Play },
     ],
   },
   {
     label: "Business",
     items: [
-      { id: "booking", label: "Booking" },
-      { id: "press-kit", label: "Press Kit" },
-      { id: "domain", label: "Domain" },
+      { id: "booking", label: "Booking", icon: Mail },
+      { id: "press-kit", label: "Press Kit", icon: FileText },
+      { id: "domain", label: "Domain", icon: Globe },
     ],
   },
   {
     label: "Publish",
     items: [
-      { id: "publish", label: "Publish" },
+      { id: "publish", label: "Publish", icon: Send },
     ],
   },
 ]
@@ -1821,444 +1822,345 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderHome() {
-    // ── Dates + upcoming ───────────────────────────────────────────────
-    const today            = new Date().toISOString().slice(0, 10)
+    const today = new Date().toISOString().slice(0, 10)
     const upcomingShowsList = [...artist.upcomingGigs]
       .filter((g) => g.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(0, 5)
-    const upcomingCount = artist.upcomingGigs.filter((g) => g.date >= today).length
+    const upcomingCount = upcomingShowsList.length
+    const nextShow = upcomingShowsList[0] ?? null
+    const topShows = upcomingShowsList.slice(0, 4)
 
-    // ── Publishing / feature state ─────────────────────────────────────
     const hasActiveDomain = customDomains.some((d) => d.status === "active")
+    const activeDomainName = customDomains.find((d) => d.status === "active")?.domain
     const hasBooking      = !!artist.bookingInfo.email.trim()
     const hasPressKit     = pressKitEnabled
 
-    // ── Readiness checklist ───────────────────────────────────────────
-    const readinessChecks = [
-      { label: "Profile published",  done: artist.isPublished,                                                              section: "publish"   },
-      { label: "Custom domain",       done: hasActiveDomain,                                                                  section: "domain"    },
-      { label: "Booking contact",    done: hasBooking,                                                                      section: "booking"   },
-      { label: "Press kit enabled",  done: hasPressKit,                                                                     section: "press-kit" },
-      { label: "Release in catalog", done: artist.releases.length > 0,                                                     section: "releases"  },
-      { label: "Upcoming show",      done: upcomingCount > 0,                                                               section: "shows"     },
+    const readinessItems = [
+      { label: "Profile published",      done: artist.isPublished,       section: "publish"   },
+      { label: "Custom domain",           done: hasActiveDomain,          section: "domain"    },
+      { label: "Booking contact",         done: hasBooking,               section: "booking"   },
+      { label: "Press kit",               done: hasPressKit,              section: "press-kit" },
+      { label: "Release catalog",         done: artist.releases.length > 0, section: "releases" },
+      { label: "Shows scheduled",         done: upcomingCount > 0,        section: "shows"     },
     ]
-    const readinessDone = readinessChecks.filter((c) => c.done).length
+    const readinessDone = readinessItems.filter((c) => c.done).length
+    const readinessPct  = Math.round((readinessDone / readinessItems.length) * 100)
 
-    // ── Recommended next actions ───────────────────────────────────────
-    const allActions: { label: string; reason: string; section: string }[] = [
-      ...(!artist.isPublished            ? [{ label: "Publish your profile",   reason: "Your profile is in draft — bookers can't find you yet.",          section: "publish"   }] : []),
-      ...(upcomingCount === 0            ? [{ label: "Add an upcoming show",   reason: "An active schedule signals a working artist to bookers.",         section: "shows"     }] : []),
-      ...(artist.releases.length === 0  ? [{ label: "Add a release",          reason: "Bookers want to hear your music before they reach out.",          section: "releases"  }] : []),
-      ...(!hasPressKit                   ? [{ label: "Enable press kit",       reason: "One-click professional overview for media and bookers.",          section: "press-kit" }] : []),
-      ...(!hasBooking                    ? [{ label: "Set up booking contact", reason: "Make it easy for bookers to contact you directly.",               section: "booking"   }] : []),
-      ...(!hasActiveDomain               ? [{ label: "Connect a domain",       reason: "A custom URL looks more professional than a shared handle.",      section: "domain"    }] : []),
-    ]
-    const nextActions = allActions.length > 0 ? allActions.slice(0, 3) : [
-      { label: "Manage shows",     reason: "Keep your schedule up to date.",   section: "shows"    },
-      { label: "Update releases",  reason: "Add your latest music.",            section: "releases" },
-    ]
-
-    // ── Recent content ────────────────────────────────────────────────
-    const recentReleases = artist.releases.slice(0, 4)
-
-    // ── Month helpers ─────────────────────────────────────────────────
+    const MONTH_ABBR = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
     const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    const MONTH_ABBR   = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+
+    const greeting = (() => {
+      const h = new Date().getHours()
+      if (h < 12) return "Good morning"
+      if (h < 18) return "Good afternoon"
+      return "Good evening"
+    })()
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-4">
 
-        {/* ── Page header ────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Overview</h1>
-            <p className="mt-1 text-[13px] text-muted-foreground/42">
-              Your artist presence, bookability and content status at a glance.
-            </p>
+        {/* ══════════════════════════════════════════════════════════════
+            LEVEL 1 — Command Center Hero
+            ══════════════════════════════════════════════════════════════ */}
+        <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-card/40">
+
+          {/* Top row: greeting + actions */}
+          <div className="flex items-start justify-between gap-4 px-6 pb-4 pt-5">
+            <div>
+              <p className="text-[13px] text-muted-foreground/42">{greeting}</p>
+              <h1 className="mt-0.5 text-[20px] font-bold tracking-tight text-foreground">{artist.artistName}</h1>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 pt-1">
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[4px] text-[10px] font-semibold ${
+                artist.isPublished
+                  ? "border-accent/22 bg-accent/[0.08] text-accent"
+                  : "border-white/[0.07] bg-white/[0.03] text-muted-foreground/42"
+              }`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/28"}`} />
+                {artist.isPublished ? "Live" : "Draft"}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="h-7 rounded-lg border border-white/[0.09] bg-white/[0.02] px-2.5 text-[11px] text-muted-foreground/55 hover:border-white/[0.16] hover:text-foreground/85"
+              >
+                <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
+                  View Profile <ExternalLink className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2 pt-0.5">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="h-8 border-white/[0.10] bg-white/[0.02] px-3 text-[12px] text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.18] hover:bg-white/[0.04] hover:text-foreground/90"
+
+          {/* Next show spotlight — only if a show exists */}
+          {nextShow && (
+            <button
+              type="button"
+              onClick={() => setActiveSection("shows")}
+              className="group flex w-full items-center gap-4 border-t border-white/[0.05] px-6 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
             >
-              <Link href={`/${artist.handle}/presskit`} target="_blank" rel="noopener noreferrer">
-                Press kit ↗
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="h-8 border-white/[0.10] bg-white/[0.02] px-3 text-[12px] text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.18] hover:bg-white/[0.04] hover:text-foreground/90"
-            >
-              <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
-                View profile ↗
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* ── Metric cards ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-
-          {/* Profile status */}
-          <button
-            type="button"
-            onClick={() => setActiveSection("publish")}
-            className={`group rounded-xl border p-4 text-left transition-all duration-150 ${
-              artist.isPublished
-                ? "border-accent/18 bg-accent/[0.04] transition-all duration-150 hover:border-accent/28 hover:bg-accent/[0.08]"
-                : "border-white/[0.07] bg-card/40 transition-all duration-150 hover:border-white/[0.13] hover:bg-card/55"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/32">Profile</span>
-              <Globe className="h-3.5 w-3.5 text-muted-foreground/18 transition-colors group-hover:text-muted-foreground/38" />
-            </div>
-            <div className={`mt-2.5 flex items-center gap-2 text-[22px] font-bold tracking-tight ${artist.isPublished ? "text-accent" : "text-muted-foreground/42"}`}>
-              {artist.isPublished && <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />}
-              {artist.isPublished ? "Live" : "Draft"}
-            </div>
-            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/26">
-              {artist.isPublished
-                ? `${APP_DISPLAY_HOST}/${artist.handle}`
-                : "Not yet published"}
-            </p>
-          </button>
-
-          {/* Upcoming shows */}
-          <button
-            type="button"
-            onClick={() => setActiveSection("shows")}
-            className="group rounded-xl border border-white/[0.07] bg-card/40 p-4 text-left transition-all duration-150 hover:border-white/[0.12] hover:bg-card/60"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/32">Shows</span>
-              <Calendar className="h-3.5 w-3.5 text-muted-foreground/18 transition-colors group-hover:text-muted-foreground/38" />
-            </div>
-            <p className={`mt-2.5 text-[22px] font-bold tabular-nums tracking-tight ${upcomingCount > 0 ? "text-foreground/88" : "text-muted-foreground/42"}`}>
-              {upcomingCount}
-            </p>
-            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/26">
-              {upcomingShowsList[0]
-                ? `Next: ${upcomingShowsList[0].eventName || upcomingShowsList[0].venue || "Show"}${upcomingShowsList[0].city ? ` · ${upcomingShowsList[0].city}` : ""}`
-                : "None scheduled"}
-            </p>
-          </button>
-
-          {/* Releases */}
-          <button
-            type="button"
-            onClick={() => setActiveSection("releases")}
-            className="group rounded-xl border border-white/[0.07] bg-card/40 p-4 text-left transition-all duration-150 hover:border-white/[0.12] hover:bg-card/60"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/32">Releases</span>
-              <Music2 className="h-3.5 w-3.5 text-muted-foreground/18 transition-colors group-hover:text-muted-foreground/38" />
-            </div>
-            <p className={`mt-2.5 text-[22px] font-bold tabular-nums tracking-tight ${artist.releases.length > 0 ? "text-foreground/88" : "text-muted-foreground/42"}`}>
-              {artist.releases.length}
-            </p>
-            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/26">
-              {artist.releases[0]
-                ? `Latest: ${artist.releases[0].title}`
-                : "None added yet"}
-            </p>
-          </button>
-
-          {/* Press kit */}
-          <button
-            type="button"
-            onClick={() => setActiveSection("press-kit")}
-            className={`group rounded-xl border p-4 text-left transition-all duration-150 ${
-              hasPressKit
-                ? "border-accent/18 bg-accent/[0.04] transition-all duration-150 hover:border-accent/28 hover:bg-accent/[0.08]"
-                : "border-white/[0.07] bg-card/40 transition-all duration-150 hover:border-white/[0.13] hover:bg-card/55"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/32">Press Kit</span>
-              <FileText className="h-3.5 w-3.5 text-muted-foreground/18 transition-colors group-hover:text-muted-foreground/38" />
-            </div>
-            <div className={`mt-2.5 flex items-center gap-2 text-[22px] font-bold tracking-tight ${hasPressKit ? "text-accent" : "text-muted-foreground/42"}`}>
-              {hasPressKit && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
-              {hasPressKit ? "Ready" : "Off"}
-            </div>
-            <p className="mt-0.5 text-[11px] text-muted-foreground/26">
-              {hasPressKit ? "Bio, photos and assets ready" : "Enable in Business"}
-            </p>
-          </button>
-        </div>
-
-        {/* ── Main two-column grid ────────────────────────────────────── */}
-        <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-
-          {/* ── Left column ─────────────────────────────────────────── */}
-          <div className="space-y-4">
-
-            {/* Upcoming shows — table */}
-            <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-card/35">
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Upcoming Shows</span>
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("shows")}
-                  className="text-[11px] font-semibold text-accent/65 transition-colors hover:text-accent"
-                >
-                  Manage →
-                </button>
+              <div className="flex h-12 w-10 shrink-0 flex-col items-center justify-center rounded-lg border border-accent/22 bg-accent/[0.06]">
+                <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-accent/65">{MONTH_ABBR[Number(nextShow.date.substring(5, 7)) - 1]}</span>
+                <span className="text-[17px] font-black leading-none tabular-nums text-foreground/88">{Number(nextShow.date.substring(8, 10))}</span>
               </div>
-
-              {upcomingShowsList.length > 0 ? (
-                <>
-                  {/* Table column headers — desktop only */}
-                  <div className="hidden grid-cols-[80px_1fr_1fr_88px] gap-4 border-b border-white/[0.04] px-5 py-2 lg:grid">
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Date</span>
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Event</span>
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Venue · Location</span>
-                    <span className="text-right text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/22">Status</span>
-                  </div>
-
-                  {/* Rows */}
-                  <div className="divide-y divide-white/[0.03]">
-                    {upcomingShowsList.map((g, idx) => {
-                      const isNext = idx === 0
-                      const mm = g.date.substring(5, 7)   // safe even with T00:00:00Z suffix
-                      const dd = g.date.substring(8, 10)
-                      const venueLine = [g.venue && g.eventName ? g.venue : null, g.city, g.country].filter(Boolean).join(" · ")
-                      const eventLabel = g.eventName || g.venue || "—"
-                      return (
-                        <button
-                          key={g.id}
-                          type="button"
-                          onClick={() => setActiveSection("shows")}
-                          className={`group w-full text-left transition-colors duration-100 hover:bg-white/[0.025] ${isNext ? "bg-white/[0.015]" : ""}`}
-                        >
-                          {/* Mobile view */}
-                          <div className="flex items-center gap-3.5 px-4 py-3 lg:hidden">
-                            <div className={`flex h-10 w-8 shrink-0 flex-col items-center justify-center rounded-lg border ${isNext ? "border-accent/22 bg-accent/[0.06]" : "border-white/[0.05] bg-white/[0.015]"}`}>
-                              <span className={`text-[6.5px] font-bold uppercase tracking-widest ${isNext ? "text-accent/60" : "text-muted-foreground/22"}`}>{MONTH_ABBR[Number(mm) - 1]}</span>
-                              <span className={`text-[13px] font-black leading-tight tabular-nums ${isNext ? "text-foreground/88" : "text-foreground/38"}`}>{Number(dd)}</span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className={`truncate font-semibold ${isNext ? "text-[13px] text-foreground/88" : "text-xs text-foreground/48"}`}>{eventLabel}</p>
-                              {venueLine && <p className={`mt-0.5 truncate text-[11px] ${isNext ? "text-muted-foreground/40" : "text-muted-foreground/20"}`}>{venueLine}</p>}
-                            </div>
-                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                              g.eventStatus === "sold_out"  ? "border-amber-500/25 bg-amber-500/[0.07] text-amber-400/75"
-                              : g.eventStatus === "cancelled" ? "border-red-500/25 bg-red-500/[0.07] text-red-400/65"
-                              : "border-white/[0.10] bg-white/[0.04] text-muted-foreground/52"
-                            }`}>
-                              {g.eventStatus === "sold_out" ? "Sold Out" : g.eventStatus === "cancelled" ? "Cancelled" : "Scheduled"}
-                            </span>
-                          </div>
-
-                          {/* Desktop table row */}
-                          <div className="hidden grid-cols-[80px_1fr_1fr_88px] items-center gap-4 px-5 py-3.5 lg:grid">
-                            <span className={`font-mono text-[11px] tabular-nums ${isNext ? "text-foreground/72" : "text-muted-foreground/35"}`}>
-                              {MONTHS_SHORT[Number(mm) - 1]} {Number(dd)}
-                            </span>
-                            <span className={`truncate text-[13px] font-semibold ${isNext ? "text-foreground/88" : "text-foreground/48"}`}>
-                              {eventLabel}
-                            </span>
-                            <span className={`truncate text-[12px] ${isNext ? "text-muted-foreground/45" : "text-muted-foreground/22"}`}>
-                              {venueLine || "—"}
-                            </span>
-                            <div className="flex justify-end">
-                              <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                                g.eventStatus === "sold_out"  ? "border-amber-500/25 bg-amber-500/[0.07] text-amber-400/75"
-                                : g.eventStatus === "cancelled" ? "border-red-500/25 bg-red-500/[0.07] text-red-400/65"
-                                : "border-white/[0.10] bg-white/[0.04] text-muted-foreground/52"
-                              }`}>
-                                {g.eventStatus === "sold_out" ? "Sold Out" : g.eventStatus === "cancelled" ? "Cancelled" : "Scheduled"}
-                              </span>
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </>
-              ) : (
-                <div className="px-5 py-10 text-center">
-                  <Calendar className="mx-auto mb-3 h-8 w-8 text-muted-foreground/12" />
-                  <p className="text-[13px] text-muted-foreground/30">No upcoming shows scheduled.</p>
-                  <button type="button" onClick={() => setActiveSection("shows")} className="mt-2.5 text-[11px] font-medium text-accent/55 transition-colors hover:text-accent">
-                    Add your first show →
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Recent releases */}
-            <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-card/35">
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Recent Releases</span>
-                <button type="button" onClick={() => setActiveSection("releases")} className="text-[11px] font-semibold text-accent/65 transition-colors hover:text-accent">
-                  Manage →
-                </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/55">Next Show</p>
+                <p className="mt-0.5 truncate text-[15px] font-bold text-foreground/90">{nextShow.eventName || nextShow.venue || "TBD"}</p>
+                <p className="mt-0.5 truncate text-[12px] text-muted-foreground/38">
+                  {[nextShow.eventName && nextShow.venue ? nextShow.venue : null, nextShow.city].filter(Boolean).join(" · ") || ""}
+                </p>
               </div>
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-accent/60" />
+            </button>
+          )}
 
-              {recentReleases.length > 0 ? (
-                <div className="divide-y divide-white/[0.03]">
-                  {recentReleases.map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center gap-3.5 px-5 py-3 transition-colors hover:bg-white/[0.02]"
-                    >
-                      {/* Thumbnail */}
-                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
-                        {r.artworkUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={r.artworkUrl} alt={r.title} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <Music2 className="h-4 w-4 text-muted-foreground/22" />
-                          </div>
-                        )}
-                      </div>
-                      {/* Info */}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-foreground/80">{r.title}</p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground/32">
-                          {r.releaseType
-                            ? r.releaseType.charAt(0).toUpperCase() + r.releaseType.slice(1)
-                            : (r.type ? r.type : "Release")}
-                          {r.isFeatured ? " · Featured" : ""}
-                        </p>
-                      </div>
-                      {/* Featured pill */}
-                      {r.isFeatured && (
-                        <span className="shrink-0 rounded-full bg-accent/[0.08] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent/62">
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="px-5 py-8 text-center">
-                  <Music2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground/12" />
-                  <p className="text-[13px] text-muted-foreground/30">No releases added yet.</p>
-                  <button type="button" onClick={() => setActiveSection("releases")} className="mt-2.5 text-[11px] font-medium text-accent/55 transition-colors hover:text-accent">
-                    Add first release →
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── Right column ─────────────────────────────────────────── */}
-          <div className="space-y-3">
-
-            {/* Artist readiness */}
-            <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Artist Readiness</span>
-                <span className={`font-mono text-[11px] font-bold tabular-nums ${readinessDone === readinessChecks.length ? "text-accent/70" : "text-muted-foreground/38"}`}>
-                  {readinessDone}/{readinessChecks.length}
+          {/* Stats strip */}
+          <div className="grid grid-cols-4 divide-x divide-white/[0.05] border-t border-white/[0.05]">
+            {[
+              { label: "Shows",    value: String(upcomingCount), section: "shows"    as const },
+              { label: "Releases", value: String(artist.releases.length), section: "releases" as const },
+              { label: "Sets",     value: String(artist.djSets.length), section: "sets"     as const },
+              { label: "Gallery",  value: String(artist.galleryImages.length), section: "gallery"  as const },
+            ].map(({ label, value, section }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setActiveSection(section)}
+                className="group py-3 text-center transition-colors hover:bg-white/[0.02]"
+              >
+                <span className="text-[18px] font-bold tabular-nums leading-none text-foreground/78 transition-colors group-hover:text-foreground">
+                  {value}
                 </span>
-              </div>
-              {/* Progress bar */}
-              <div className="mb-4 h-[3px] overflow-hidden rounded-full bg-white/[0.06]">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${readinessDone === readinessChecks.length ? "bg-accent" : "bg-accent/50"}`}
-                  style={{ width: `${Math.round((readinessDone / readinessChecks.length) * 100)}%` }}
-                />
-              </div>
-              {/* Checklist */}
-              <div className="space-y-0.5">
-                {readinessChecks.map(({ label, done, section }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setActiveSection(section)}
-                    className="group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.03]"
-                  >
-                    <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                      done
-                        ? "border-accent/32 bg-accent/[0.12]"
-                        : "border-white/[0.08] bg-transparent group-hover:border-white/[0.14]"
-                    }`}>
-                      {done && <Check className="h-2.5 w-2.5 text-accent/80" />}
-                    </div>
-                    <span className={`text-[12px] transition-colors group-hover:text-foreground/65 ${done ? "text-foreground/60" : "text-muted-foreground/38"}`}>
-                      {label}
-                    </span>
-                    {!done && (
-                      <ArrowRight className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/18 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100 group-hover:text-accent/50" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Recommended actions */}
-            <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
-              <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">
-                Next Steps
-              </span>
-              <div className="space-y-2">
-                {nextActions.map((action) => (
-                  <button
-                    key={action.label}
-                    type="button"
-                    onClick={() => setActiveSection(action.section)}
-                    className="group flex w-full flex-col rounded-lg border border-white/[0.09] bg-white/[0.025] p-3.5 text-left transition-all duration-100 hover:border-accent/22 hover:bg-accent/[0.04]"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[12px] font-semibold text-foreground/82 transition-colors group-hover:text-foreground">
-                        {action.label}
-                      </span>
-                      <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/22 transition-all group-hover:translate-x-0.5 group-hover:text-accent/75" />
-                    </div>
-                    <span className="mt-1 text-[11px] leading-snug text-muted-foreground/38">
-                      {action.reason}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Publishing status */}
-            <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
-              <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">
-                Publishing
-              </span>
-              <div className="space-y-px">
-                {[
-                  { label: "Public Profile", ok: artist.isPublished, onText: "Live",      offText: "Draft",   section: "publish"   },
-                  { label: "Custom Domain",  ok: hasActiveDomain,    onText: "Connected", offText: "Not set", section: "domain"    },
-                  { label: "Press Kit",      ok: hasPressKit,        onText: "Published", offText: "Off",     section: "press-kit" },
-                  { label: "Booking Form",   ok: hasBooking,         onText: "Active",    offText: "Not set", section: "booking"   },
-                ].map(({ label, ok, onText, offText, section }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setActiveSection(section)}
-                    className="group flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.03]"
-                  >
-                    <span className="text-[12px] text-muted-foreground/42 transition-colors group-hover:text-foreground/58">
-                      {label}
-                    </span>
-                    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-wider ${
-                      ok
-                        ? "border-accent/25 bg-accent/[0.10] text-accent/88"
-                        : "border-white/[0.07] bg-transparent text-muted-foreground/30"
-                    }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-accent" : "bg-white/[0.12]"}`} />
-                      {ok ? onText : offText}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
+                <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/48">
+                  {label}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
+
+
+        {/* ══════════════════════════════════════════════════════════════
+            LEVEL 2 — two-column: Health + Shows
+            ══════════════════════════════════════════════════════════════ */}
+        <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
+
+          {/* ── Artist Health ──────────────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
+            <div className="mb-3.5 flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Artist Readiness</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
+                readinessPct === 100 ? "bg-accent/[0.10] text-accent/80" : "bg-white/[0.04] text-muted-foreground/35"
+              }`}>
+                {readinessPct}%
+              </span>
+            </div>
+            <div className="mb-4 h-[2px] overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${readinessPct === 100 ? "bg-accent" : "bg-accent/55"}`}
+                style={{ width: `${readinessPct}%` }}
+              />
+            </div>
+            <div className="space-y-0.5">
+              {readinessItems.map(({ label, done, section }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="group flex w-full items-center gap-2.5 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
+                >
+                  <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                    done ? "border-accent/30 bg-accent/[0.12]" : "border-white/[0.10]"
+                  }`}>
+                    {done && <Check className="h-2.5 w-2.5 text-accent" />}
+                  </div>
+                  <span className={`text-[12px] ${done ? "text-foreground/55" : "text-muted-foreground/42"}`}>
+                    {label}
+                  </span>
+                  {!done && <ArrowRight className="ml-auto h-3 w-3 text-muted-foreground/15 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100 group-hover:text-accent/50" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Upcoming Shows ─────────────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.07] bg-card/35">
+            <div className="flex items-center justify-between border-b border-white/[0.05] px-5 py-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Upcoming Shows</span>
+              <button type="button" onClick={() => setActiveSection("shows")} className="text-[11px] font-semibold text-accent/60 transition-colors hover:text-accent">
+                {upcomingCount > 4 ? `View all ${upcomingCount} →` : "Manage →"}
+              </button>
+            </div>
+            {topShows.length > 0 ? (
+              <div className="divide-y divide-white/[0.03]">
+                {topShows.map((g, idx) => {
+                  const isNext = idx === 0
+                  const mm = g.date.substring(5, 7)
+                  const dd = g.date.substring(8, 10)
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setActiveSection("shows")}
+                      className={`group flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-white/[0.02] ${isNext ? "bg-white/[0.015]" : ""}`}
+                    >
+                      <span className="w-[52px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/40">
+                        {MONTHS_SHORT[Number(mm) - 1]} {Number(dd)}
+                      </span>
+                      <span className={`min-w-0 flex-1 truncate text-[13px] font-semibold ${isNext ? "text-foreground/85" : "text-foreground/48"}`}>
+                        {g.eventName || g.venue || "TBD"}
+                      </span>
+                      <span className={`shrink-0 truncate text-[11px] ${isNext ? "text-muted-foreground/35" : "text-muted-foreground/22"}`}>
+                        {g.city || ""}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="px-5 py-8 text-center">
+                <p className="text-[13px] text-muted-foreground/28">No shows scheduled.</p>
+                <button type="button" onClick={() => setActiveSection("shows")} className="mt-2 text-[11px] font-medium text-accent/55 hover:text-accent">
+                  Add your first show →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+
+        {/* ══════════════════════════════════════════════════════════════
+            LEVEL 3 — three-column: Catalog + Publishing + Activity
+            ══════════════════════════════════════════════════════════════ */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+          {/* ── Catalog ────────────────────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
+            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Catalog</span>
+            <div className="space-y-2">
+              {[
+                { Icon: Disc3,      label: "Releases", value: artist.releases.length, section: "releases", detail: artist.releases[0]?.title },
+                { Icon: Headphones, label: "DJ Sets",   value: artist.djSets.length,   section: "sets",     detail: artist.djSets[0]?.title },
+                { Icon: Play,       label: "Videos",    value: artist.videos.length,    section: "media",    detail: null },
+                { Icon: ImageIcon,  label: "Gallery",   value: artist.galleryImages.length, section: "gallery", detail: null },
+              ].map(({ Icon, label, value, section, detail }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="group flex w-full items-center gap-3 rounded-lg px-1.5 py-1.5 text-left transition-colors hover:bg-white/[0.025]"
+                >
+                  <Icon className="h-[14px] w-[14px] shrink-0 text-muted-foreground/25" />
+                  <span className="flex-1 text-[12px] text-muted-foreground/50 transition-colors group-hover:text-foreground/60">{label}</span>
+                  <span className="mr-0.5 tabular-nums text-[13px] font-bold text-foreground/60">{value}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Publishing ─────────────────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5">
+            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Publishing</span>
+            <div className="space-y-1">
+              {[
+                { label: "Profile",    ok: artist.isPublished, on: "Live",      off: "Draft",   section: "publish",   detail: artist.isPublished ? `${APP_DISPLAY_HOST}/${artist.handle}` : null },
+                { label: "Domain",     ok: hasActiveDomain,    on: "Connected", off: "—",       section: "domain",    detail: activeDomainName ?? null },
+                { label: "Press Kit",  ok: hasPressKit,        on: "Published", off: "Off",     section: "press-kit", detail: null },
+                { label: "Booking",    ok: hasBooking,         on: "Active",    off: "—",       section: "booking",   detail: null },
+              ].map(({ label, ok, on, off, section, detail }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="group flex w-full items-center gap-2.5 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-white/[0.025]"
+                >
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ok ? "bg-accent" : "bg-white/[0.10]"}`} />
+                  <span className="min-w-0 flex-1 truncate text-[12px] text-muted-foreground/45 transition-colors group-hover:text-foreground/58">
+                    {label}
+                    {detail && <span className="ml-1.5 font-mono text-[10px] text-muted-foreground/25">{detail}</span>}
+                  </span>
+                  <span className={`text-[10px] font-semibold uppercase tracking-wider ${ok ? "text-accent/72" : "text-muted-foreground/25"}`}>
+                    {ok ? on : off}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Quick Actions ──────────────────────────────────────────── */}
+          <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5 sm:col-span-2 lg:col-span-1">
+            <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Quick Actions</span>
+            <div className="space-y-1.5">
+              {(() => {
+                const actions: { label: string; reason: string; section: string }[] = [
+                  ...(!artist.isPublished            ? [{ label: "Publish profile",       reason: "Not visible to bookers yet",          section: "publish"   }] : []),
+                  ...(upcomingCount === 0            ? [{ label: "Add upcoming show",     reason: "Active schedule builds credibility",  section: "shows"     }] : []),
+                  ...(artist.releases.length === 0  ? [{ label: "Add a release",          reason: "Music is the first thing bookers check", section: "releases" }] : []),
+                  ...(!hasPressKit                   ? [{ label: "Enable press kit",       reason: "Professional overview for media",     section: "press-kit" }] : []),
+                  ...(!hasBooking                    ? [{ label: "Set up booking",         reason: "Let bookers reach you directly",      section: "booking"   }] : []),
+                  ...(!hasActiveDomain               ? [{ label: "Connect domain",         reason: "Custom URL looks professional",       section: "domain"    }] : []),
+                ]
+                const display = actions.length > 0 ? actions.slice(0, 4) : [
+                  { label: "Update shows",     reason: "Keep schedule current",        section: "shows"    },
+                  { label: "Add new release",  reason: "Latest music in your catalog",  section: "releases" },
+                  { label: "Preview press kit",reason: "Check how media sees you",      section: "press-kit"},
+                ]
+                return display.map((a) => (
+                  <button
+                    key={a.label}
+                    type="button"
+                    onClick={() => setActiveSection(a.section)}
+                    className="group flex w-full items-center gap-2.5 rounded-md border border-white/[0.06] bg-white/[0.015] px-3 py-2.5 text-left transition-all duration-100 hover:border-accent/18 hover:bg-accent/[0.03]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[12px] font-semibold text-foreground/75 transition-colors group-hover:text-foreground">{a.label}</span>
+                      <span className="ml-2 text-[11px] text-muted-foreground/30">{a.reason}</span>
+                    </div>
+                    <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/18 transition-all group-hover:translate-x-0.5 group-hover:text-accent/65" />
+                  </button>
+                ))
+              })()}
+            </div>
+          </div>
+        </div>
+
+
+        {/* ══════════════════════════════════════════════════════════════
+            LEVEL 4 — Recent Releases (if any)
+            ══════════════════════════════════════════════════════════════ */}
+        {artist.releases.length > 0 && (
+          <div className="rounded-xl border border-white/[0.07] bg-card/35">
+            <div className="flex items-center justify-between border-b border-white/[0.05] px-5 py-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">Recent Releases</span>
+              <button type="button" onClick={() => setActiveSection("releases")} className="text-[11px] font-semibold text-accent/60 transition-colors hover:text-accent">
+                Manage →
+              </button>
+            </div>
+            <div className="divide-y divide-white/[0.03]">
+              {artist.releases.slice(0, 3).map((r) => (
+                <div key={r.id} className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-white/[0.015]">
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
+                    {r.artworkUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.artworkUrl} alt={r.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center"><Disc3 className="h-3.5 w-3.5 text-muted-foreground/18" /></div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold text-foreground/72">{r.title}</p>
+                  </div>
+                  <span className="shrink-0 text-[11px] text-muted-foreground/25">
+                    {r.releaseType ? r.releaseType.charAt(0).toUpperCase() + r.releaseType.slice(1) : (r.type || "Release")}
+                  </span>
+                  {r.isFeatured && (
+                    <span className="shrink-0 rounded bg-accent/[0.08] px-1.5 py-0.5 text-[9px] font-semibold uppercase text-accent/60">Featured</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     )
@@ -6554,7 +6456,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 type="button"
                 aria-pressed={activeSection === "home"}
                 onClick={() => setActiveSection("home")}
-                className={`relative w-full rounded-lg py-2 text-left text-[13px] transition-all duration-100 ${
+                className={`relative flex w-full items-center gap-2.5 rounded-lg px-3 py-[7px] text-left text-[13px] transition-all duration-100 ${
                   activeSection === "home"
                     ? "bg-accent/[0.08] font-semibold text-foreground"
                     : "text-muted-foreground/55 hover:bg-white/[0.04] hover:text-foreground/85"
@@ -6563,22 +6465,25 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 {activeSection === "home" && (
                   <span className="absolute inset-y-1 left-0 w-[3px] rounded-r-full bg-accent" />
                 )}
-                <span className="block px-4">Overview</span>
+                <Layers className={`h-[14px] w-[14px] shrink-0 ${activeSection === "home" ? "text-accent/80" : "text-muted-foreground/30"}`} />
+                Overview
               </button>
               <div className="h-px bg-white/[0.04]" />
               {navGroups.map((group) => (
                 <div key={group.label}>
-                  <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/25">
+                  <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/25">
                     {group.label}
                   </p>
-                  <div className="space-y-0.5">
-                    {group.items.map((item) => (
+                  <div className="space-y-px">
+                    {group.items.map((item) => {
+                      const Icon = item.icon
+                      return (
                       <button
                         key={item.id}
                         type="button"
                         aria-pressed={activeSection === item.id}
                         onClick={() => setActiveSection(item.id)}
-                        className={`relative w-full rounded-lg py-2 text-left text-[13px] transition-all duration-100 ${
+                        className={`relative flex w-full items-center gap-2.5 rounded-lg px-3 py-[7px] text-left text-[13px] transition-all duration-100 ${
                           activeSection === item.id
                             ? "bg-accent/[0.08] font-semibold text-foreground"
                             : "text-muted-foreground/55 hover:bg-white/[0.04] hover:text-foreground/85"
@@ -6587,9 +6492,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         {activeSection === item.id && (
                           <span className="absolute inset-y-1 left-0 w-[3px] rounded-r-full bg-accent" />
                         )}
-                        <span className="block px-4">{item.label}</span>
+                        <Icon className={`h-[14px] w-[14px] shrink-0 ${activeSection === item.id ? "text-accent/80" : "text-muted-foreground/30"}`} />
+                        {item.label}
                       </button>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               ))}
