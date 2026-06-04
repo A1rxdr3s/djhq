@@ -1882,7 +1882,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               variant="outline"
               size="sm"
               asChild
-              className="h-8 border-white/[0.08] bg-transparent px-3 text-[12px] text-muted-foreground/52 hover:border-white/[0.15] hover:text-foreground"
+              className="h-8 border-white/[0.10] bg-white/[0.02] px-3 text-[12px] text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.18] hover:bg-white/[0.04] hover:text-foreground/90"
             >
               <Link href={`/${artist.handle}/presskit`} target="_blank" rel="noopener noreferrer">
                 Press kit ↗
@@ -1892,7 +1892,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               variant="outline"
               size="sm"
               asChild
-              className="h-8 border-white/[0.08] bg-transparent px-3 text-[12px] text-muted-foreground/52 hover:border-white/[0.15] hover:text-foreground"
+              className="h-8 border-white/[0.10] bg-white/[0.02] px-3 text-[12px] text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.18] hover:bg-white/[0.04] hover:text-foreground/90"
             >
               <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
                 View profile ↗
@@ -1910,8 +1910,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             onClick={() => setActiveSection("publish")}
             className={`group rounded-xl border p-4 text-left transition-all duration-150 ${
               artist.isPublished
-                ? "border-accent/18 bg-accent/[0.04] hover:border-accent/28 hover:bg-accent/[0.07]"
-                : "border-white/[0.07] bg-card/40 hover:border-white/[0.12] hover:bg-card/60"
+                ? "border-accent/18 bg-accent/[0.04] transition-all duration-150 hover:border-accent/28 hover:bg-accent/[0.08]"
+                : "border-white/[0.07] bg-card/40 transition-all duration-150 hover:border-white/[0.13] hover:bg-card/55"
             }`}
           >
             <div className="flex items-center justify-between">
@@ -1975,8 +1975,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             onClick={() => setActiveSection("press-kit")}
             className={`group rounded-xl border p-4 text-left transition-all duration-150 ${
               hasPressKit
-                ? "border-accent/18 bg-accent/[0.04] hover:border-accent/28 hover:bg-accent/[0.07]"
-                : "border-white/[0.07] bg-card/40 hover:border-white/[0.12] hover:bg-card/60"
+                ? "border-accent/18 bg-accent/[0.04] transition-all duration-150 hover:border-accent/28 hover:bg-accent/[0.08]"
+                : "border-white/[0.07] bg-card/40 transition-all duration-150 hover:border-white/[0.13] hover:bg-card/55"
             }`}
           >
             <div className="flex items-center justify-between">
@@ -2006,7 +2006,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <button
                   type="button"
                   onClick={() => setActiveSection("shows")}
-                  className="text-[11px] font-medium text-accent/48 transition-colors hover:text-accent"
+                  className="text-[11px] font-semibold text-accent/65 transition-colors hover:text-accent"
                 >
                   Manage →
                 </button>
@@ -2050,7 +2050,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
                               g.eventStatus === "sold_out"  ? "border-amber-500/25 bg-amber-500/[0.07] text-amber-400/75"
                               : g.eventStatus === "cancelled" ? "border-red-500/25 bg-red-500/[0.07] text-red-400/65"
-                              : "border-white/[0.06] bg-white/[0.02] text-muted-foreground/28"
+                              : "border-white/[0.10] bg-white/[0.04] text-muted-foreground/52"
                             }`}>
                               {g.eventStatus === "sold_out" ? "Sold Out" : g.eventStatus === "cancelled" ? "Cancelled" : "Scheduled"}
                             </span>
@@ -2071,7 +2071,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                               <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
                                 g.eventStatus === "sold_out"  ? "border-amber-500/25 bg-amber-500/[0.07] text-amber-400/75"
                                 : g.eventStatus === "cancelled" ? "border-red-500/25 bg-red-500/[0.07] text-red-400/65"
-                                : "border-white/[0.06] bg-white/[0.02] text-muted-foreground/28"
+                                : "border-white/[0.10] bg-white/[0.04] text-muted-foreground/52"
                               }`}>
                                 {g.eventStatus === "sold_out" ? "Sold Out" : g.eventStatus === "cancelled" ? "Cancelled" : "Scheduled"}
                               </span>
@@ -2097,7 +2097,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-card/35">
               <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Recent Releases</span>
-                <button type="button" onClick={() => setActiveSection("releases")} className="text-[11px] font-medium text-accent/48 transition-colors hover:text-accent">
+                <button type="button" onClick={() => setActiveSection("releases")} className="text-[11px] font-semibold text-accent/65 transition-colors hover:text-accent">
                   Manage →
                 </button>
               </div>
@@ -2180,12 +2180,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   >
                     <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
                       done
-                        ? "border-accent/28 bg-accent/[0.09]"
+                        ? "border-accent/32 bg-accent/[0.12]"
                         : "border-white/[0.08] bg-transparent group-hover:border-white/[0.14]"
                     }`}>
                       {done && <Check className="h-2.5 w-2.5 text-accent/80" />}
                     </div>
-                    <span className={`text-[12px] transition-colors group-hover:text-foreground/65 ${done ? "text-foreground/52" : "text-muted-foreground/35"}`}>
+                    <span className={`text-[12px] transition-colors group-hover:text-foreground/65 ${done ? "text-foreground/60" : "text-muted-foreground/38"}`}>
                       {label}
                     </span>
                     {!done && (
@@ -2207,15 +2207,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     key={action.label}
                     type="button"
                     onClick={() => setActiveSection(action.section)}
-                    className="group flex w-full flex-col rounded-lg border border-white/[0.07] bg-white/[0.02] p-3.5 text-left transition-all duration-100 hover:border-accent/20 hover:bg-accent/[0.035]"
+                    className="group flex w-full flex-col rounded-lg border border-white/[0.09] bg-white/[0.025] p-3.5 text-left transition-all duration-100 hover:border-accent/22 hover:bg-accent/[0.04]"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[12px] font-semibold text-foreground/72 transition-colors group-hover:text-foreground">
+                      <span className="text-[12px] font-semibold text-foreground/82 transition-colors group-hover:text-foreground">
                         {action.label}
                       </span>
                       <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/22 transition-all group-hover:translate-x-0.5 group-hover:text-accent/75" />
                     </div>
-                    <span className="mt-1 text-[11px] leading-snug text-muted-foreground/28">
+                    <span className="mt-1 text-[11px] leading-snug text-muted-foreground/38">
                       {action.reason}
                     </span>
                   </button>
@@ -2244,12 +2244,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <span className="text-[12px] text-muted-foreground/42 transition-colors group-hover:text-foreground/58">
                       {label}
                     </span>
-                    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[3px] text-[9px] font-semibold uppercase tracking-wider ${
+                    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-wider ${
                       ok
-                        ? "border-accent/22 bg-accent/[0.09] text-accent/80"
-                        : "border-white/[0.05] bg-transparent text-muted-foreground/22"
+                        ? "border-accent/25 bg-accent/[0.10] text-accent/88"
+                        : "border-white/[0.07] bg-transparent text-muted-foreground/30"
                     }`}>
-                      <span className={`h-1 w-1 rounded-full ${ok ? "bg-accent" : "bg-white/[0.10]"}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-accent" : "bg-white/[0.12]"}`} />
                       {ok ? onText : offText}
                     </span>
                   </button>
@@ -3663,7 +3663,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {isMenuOpen && (
                     <div className="flex items-center justify-between border-t border-white/[0.04] bg-destructive/[0.03] px-3 py-2">
                       <span className="text-[11px] text-muted-foreground/45">Delete this release?</span>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => setReleaseMenuOpenId(null)}
@@ -6434,13 +6434,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="flex items-center gap-1.5">
             {/* Publish status badge */}
             <span
-              className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-[11px] font-medium sm:inline-flex ${
+              className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-[11px] font-semibold sm:inline-flex ${
                 artist.isPublished
-                  ? "border-accent/18 bg-accent/[0.07] text-accent"
-                  : "border-white/[0.05] bg-white/[0.025] text-muted-foreground/40"
+                  ? "border-accent/22 bg-accent/[0.08] text-accent"
+                  : "border-white/[0.07] bg-white/[0.02] text-muted-foreground/45"
               }`}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/30"}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/28"}`} />
               {artist.isPublished ? "Published" : "Draft"}
             </span>
 
@@ -6449,7 +6449,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               asChild
               variant="ghost"
               size="sm"
-              className="hidden h-8 gap-1.5 px-2.5 text-[12px] text-muted-foreground/50 hover:text-foreground sm:inline-flex"
+              className="hidden h-8 gap-1.5 rounded-lg border border-white/[0.09] bg-white/[0.02] px-2.5 text-[12px] text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.16] hover:bg-white/[0.045] hover:text-foreground/90 sm:inline-flex"
             >
               <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -6463,12 +6463,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="h-8 px-2 text-muted-foreground/35 hover:text-muted-foreground/70"
+              className="h-8 rounded-lg px-2 text-muted-foreground/32 transition-colors duration-150 hover:text-muted-foreground/68"
               title="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="ml-1 hidden text-[12px] sm:block">Sign out</span>
             </Button>
+
+            {/* Visual separator — demarcates primary action from secondary cluster */}
+            <div className="mx-0.5 hidden h-[18px] w-px bg-white/[0.09] sm:block" />
 
             {/* Save — primary action */}
             <Button
@@ -6520,8 +6523,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               onClick={() => setActiveSection("home")}
               className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] transition-colors duration-100 ${
                 activeSection === "home"
-                  ? "bg-accent/[0.10] font-semibold text-accent"
-                  : "bg-white/[0.04] text-muted-foreground/55 hover:bg-white/[0.06] hover:text-foreground/75"
+                  ? "bg-accent/[0.12] font-semibold text-accent"
+                  : "bg-white/[0.04] text-muted-foreground/58 hover:bg-white/[0.06] hover:text-foreground/80"
               }`}
             >
               Overview
@@ -6534,8 +6537,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               onClick={() => setActiveSection(item.id)}
               className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] transition-colors duration-100 ${
                 activeSection === item.id
-                  ? "bg-accent/[0.10] font-semibold text-accent"
-                  : "bg-white/[0.04] text-muted-foreground/55 hover:bg-white/[0.06] hover:text-foreground/75"
+                  ? "bg-accent/[0.12] font-semibold text-accent"
+                  : "bg-white/[0.04] text-muted-foreground/58 hover:bg-white/[0.06] hover:text-foreground/80"
               }`}
             >
               {item.label}
@@ -6553,8 +6556,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onClick={() => setActiveSection("home")}
                 className={`relative w-full rounded-lg py-2 text-left text-[13px] transition-all duration-100 ${
                   activeSection === "home"
-                    ? "bg-white/[0.05] font-semibold text-foreground"
-                    : "text-muted-foreground/55 hover:bg-white/[0.03] hover:text-foreground/80"
+                    ? "bg-accent/[0.08] font-semibold text-foreground"
+                    : "text-muted-foreground/55 hover:bg-white/[0.04] hover:text-foreground/85"
                 }`}
               >
                 {activeSection === "home" && (
@@ -6577,8 +6580,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         onClick={() => setActiveSection(item.id)}
                         className={`relative w-full rounded-lg py-2 text-left text-[13px] transition-all duration-100 ${
                           activeSection === item.id
-                            ? "bg-white/[0.05] font-semibold text-foreground"
-                            : "text-muted-foreground/55 hover:bg-white/[0.03] hover:text-foreground/80"
+                            ? "bg-accent/[0.08] font-semibold text-foreground"
+                            : "text-muted-foreground/55 hover:bg-white/[0.04] hover:text-foreground/85"
                         }`}
                       >
                         {activeSection === item.id && (
