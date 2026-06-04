@@ -798,7 +798,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               priority
               loading="eager"
               sizes="100vw"
-              className="object-cover saturate-[0.96] contrast-[1.06] brightness-[0.88]"
+              className="object-cover saturate-[0.92] contrast-[1.10] brightness-[0.86]"
             />
             {/* ── Cinematic gradient composition — poster / editorial style ─────────
                 Zone 1 (top):    Soft vignette — logo readable, crowd/lights above breathe.
@@ -815,7 +815,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Zone 3 — cinematic bottom lift: extended reach for smooth hero-to-content transition */}
             <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.58) 22%, rgba(0,0,0,0.18) 46%, rgba(0,0,0,0.04) 62%, rgba(0,0,0,0) 76%)" }} />
             {/* Zone 3b — bottom-left corner ellipse: readability behind text, image open above */}
-            <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.30) 30%, rgba(0,0,0,0) 60%)" }} />
+            <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.40) 38%, rgba(0,0,0,0) 68%)" }} />
             {/* Zone 4 — accent atmosphere: warm accent glow for brand character */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.09),_transparent_42%)]" />
             {/* Zone 5 — film grade: very light tonal unity — reduced to preserve image energy */}
@@ -849,7 +849,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 continue to use the existing hasFloatingLogo layer above. */}
             {!isFloatingPlacement && (
               <div
-                className="absolute inset-x-0 top-[16%] z-10 flex items-start justify-center px-4 sm:top-[20%]"
+                className="absolute inset-x-0 top-[18%] z-10 flex items-start justify-center px-4 sm:top-[22%]"
                 style={{ filter: "drop-shadow(0 2px 16px rgba(0,0,0,0.65)) drop-shadow(0 0 52px rgba(0,0,0,0.30))" }}
               >
                 <HeroIdentity
@@ -869,8 +869,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            {/* Centered CTA area — directly below the logo, minimal */}
-            <div className="absolute inset-x-0 bottom-[18%] z-10 flex flex-col items-center gap-4 px-4 sm:bottom-[20%]">
+            {/* CTA block — left-anchored for editorial asymmetry: logo anchors center, CTAs anchor bottom-left */}
+            <div className="absolute bottom-[10%] left-0 z-10 px-6 sm:bottom-[12%] sm:px-10 lg:px-12">
               {(artist.bookingInfo.email.trim() || hasPressKit) ? (
                 <div className="flex items-center gap-3">
                   {artist.bookingInfo.email.trim() ? (
