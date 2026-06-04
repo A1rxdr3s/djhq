@@ -791,6 +791,30 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
+            {/* ── Upper-center artist identity ─────────────────────────────────
+                Positioned independently from the content card so the artist brand
+                mark reads as the dominant visual element — festival poster hierarchy.
+                Only shown in editorial/non-floating placement; floating placements
+                continue to use the existing hasFloatingLogo layer above. */}
+            {!isFloatingPlacement && (
+              <div className="absolute inset-x-0 top-[16%] z-10 flex items-start justify-center px-4 sm:top-[20%]">
+                <HeroIdentity
+                  artistName={artist.artistName}
+                  heroLogoUrl={artist.heroLogoUrl}
+                  heroIdentityMode={artist.heroIdentityMode ?? "text"}
+                  heroTextStyle={heroTextStyle}
+                  heroLogoScale={logoScale}
+                  heroLogoLayout={logoLayout}
+                  heroLogoAlignment={logoAlignment}
+                  heroLogoOffsetX={logoOffsetX}
+                  heroLogoOffsetY={logoOffsetY}
+                  heroLogoStyle={logoStyle}
+                  heroLogoReadability={logoReadability}
+                  isPro={isPro}
+                />
+              </div>
+            )}
+
             <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
               {/* Cinematic content fade — stronger bottom lift */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
@@ -817,24 +841,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       </span>
                     ))}
                   </div>
-                )}
-
-                {/* Hero identity — skipped for floating placements (logo rendered in floating layer above) */}
-                {!isFloatingPlacement && (
-                  <HeroIdentity
-                    artistName={artist.artistName}
-                    heroLogoUrl={artist.heroLogoUrl}
-                    heroIdentityMode={artist.heroIdentityMode ?? "text"}
-                    heroTextStyle={heroTextStyle}
-                    heroLogoScale={logoScale}
-                    heroLogoLayout={logoLayout}
-                    heroLogoAlignment={logoAlignment}
-                    heroLogoOffsetX={logoOffsetX}
-                    heroLogoOffsetY={logoOffsetY}
-                    heroLogoStyle={logoStyle}
-                    heroLogoReadability={logoReadability}
-                    isPro={isPro}
-                  />
                 )}
 
                 {/* Text content block — width controlled by heroContentWidth */}
@@ -904,7 +910,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       <MobileScrollNav />
 
       {/* ── Content sections ── */}
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <MobileTabManager>
 
         {/* ── Mobile Home Overview: removed — content available in main sections ── */}

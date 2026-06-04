@@ -70,27 +70,31 @@ function Nav() {
     >
       <div className="mx-auto flex h-[56px] max-w-6xl items-center justify-between px-5">
 
-        {/* Left — wordmark */}
-        <Link
-          href="/"
-          className="text-[14px] font-bold tracking-[0.01em] text-white/90 transition-opacity duration-150 hover:text-white"
-        >
-          {brand.name}
+        {/* Left — wordmark + descriptor */}
+        <Link href="/" className="group flex flex-col leading-none">
+          <span className="text-[14px] font-bold tracking-[0.01em] text-white/90 transition-colors duration-150 group-hover:text-white">
+            {brand.name}
+          </span>
+          <span
+            className="mt-[3px] hidden font-mono text-[8.5px] tracking-[0.07em] sm:block"
+            style={{ color: "rgba(255,255,255,0.26)" }}
+          >
+            The professional standard
+          </span>
         </Link>
 
-        {/* Center — four primary links (desktop only) */}
+        {/* Center — three focused links (desktop only) */}
         <div className="hidden items-center gap-8 md:flex">
           {[
-            { label: "Features",  href: "#features" },
-            { label: "Press Kit", href: "#press-kit" },
-            { label: "Pricing",   href: "#pricing" },
-            { label: "Examples",  href: "/andresherrera" },
+            { label: "Product", href: "#features" },
+            { label: "Pricing", href: "#pricing" },
+            { label: "Example", href: "/andresherrera" },
           ].map(({ label, href }) =>
             href.startsWith("/") ? (
               <Link
                 key={label}
                 href={href}
-                className="text-[13px] font-medium text-white/40 transition-colors duration-150 hover:text-white/80"
+                className="text-[13px] font-medium text-white/38 transition-colors duration-150 hover:text-white/78"
               >
                 {label}
               </Link>
@@ -98,7 +102,7 @@ function Nav() {
               <a
                 key={label}
                 href={href}
-                className="text-[13px] font-medium text-white/40 transition-colors duration-150 hover:text-white/80"
+                className="text-[13px] font-medium text-white/38 transition-colors duration-150 hover:text-white/78"
               >
                 {label}
               </a>
@@ -153,7 +157,7 @@ function Hero() {
         alt=""
         aria-hidden
         className="absolute inset-0 h-full w-full object-cover"
-        style={{ objectPosition: "50% 30%", filter: "saturate(0.75) contrast(1.08) brightness(0.50)" }}
+        style={{ objectPosition: "50% 42%", filter: "saturate(0.65) contrast(1.12) brightness(0.45)" }}
       />
 
       {/* ── Cinematic dark treatment — layered for editorial depth ─────────── */}
