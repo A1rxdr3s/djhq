@@ -52,7 +52,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Brand",
+    label: "Business",
     items: [
       { id: "booking", label: "Booking" },
       { id: "press-kit", label: "Press Kit" },
@@ -6308,95 +6308,107 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.035] blur-[120px]" />
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
+      <header className="sticky top-0 z-40 border-b border-white/[0.05] bg-background/92 backdrop-blur-xl">
+        <div className="mx-auto flex h-[52px] max-w-7xl items-center gap-2 px-4 sm:px-6">
+          {/* Left: brand + artist context */}
           <button
             type="button"
             onClick={() => setActiveSection("home")}
-            className="flex shrink-0 items-center gap-2"
+            className="flex shrink-0 items-center gap-2.5 transition-opacity duration-150 hover:opacity-80"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent">
-              <span className="text-xs font-bold text-accent-foreground">DJ</span>
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent">
+              <span className="text-[10px] font-black text-accent-foreground">DJ</span>
             </div>
-            <span className="text-sm font-bold tracking-tight text-foreground">DJHQ</span>
+            <span className="text-[13px] font-bold tracking-tight text-foreground">{brand.name}</span>
           </button>
-          <span className="select-none text-border">/</span>
-          <p className="min-w-0 truncate text-sm text-muted-foreground">{artist.artistName}</p>
+          <span className="select-none text-[13px] text-white/[0.14]">/</span>
+          <p className="min-w-0 truncate text-[13px] font-medium text-muted-foreground/60">{artist.artistName}</p>
+
           <div className="flex-1" />
-          <span
-            className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium sm:inline-flex ${
-              artist.isPublished
-                ? "border-accent/20 bg-accent/10 text-accent"
-                : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
-            }`}
-          >
+
+          {/* Right: status + actions */}
+          <div className="flex items-center gap-1.5">
+            {/* Publish status badge */}
             <span
-              className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
-            />
-            {artist.isPublished ? "Published" : "Draft"}
-          </span>
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="hidden text-muted-foreground hover:text-foreground sm:inline-flex"
-          >
-            <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-              View
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:block">Sign out</span>
-          </Button>
-          <Button
-            size="sm"
-            disabled={
-              !isSaveDirty ||
-              isSaving ||
-              isPublishing ||
-              importingSelectedReleaseIndex !== null ||
-              importingVideoIndex !== null ||
-              isUploadingHeroImage ||
-              isUploadingGalleryImage
-            }
-            onClick={handleSaveChanges}
-            className={`relative transition-all duration-200 ${
-              isSaving
-                ? "bg-accent/60 text-accent-foreground/70"
-                : isSaveDirty
-                  ? "bg-accent text-accent-foreground shadow-sm shadow-accent/20 hover:bg-accent/90"
-                  : "bg-accent text-accent-foreground hover:bg-accent/90"
-            }`}
-          >
-            {isSaveDirty && !isSaving && (
-              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-foreground ring-[1.5px] ring-background" />
-            )}
-            {savedRecently && !isSaveDirty && !isSaving ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {isSaving ? "Saving…" : savedRecently && !isSaveDirty ? "Saved" : "Save"}
-          </Button>
+              className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-[11px] font-medium sm:inline-flex ${
+                artist.isPublished
+                  ? "border-accent/18 bg-accent/[0.07] text-accent"
+                  : "border-white/[0.05] bg-white/[0.025] text-muted-foreground/40"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/30"}`} />
+              {artist.isPublished ? "Published" : "Draft"}
+            </span>
+
+            {/* View profile */}
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="hidden h-8 gap-1.5 px-2.5 text-[12px] text-muted-foreground/50 hover:text-foreground sm:inline-flex"
+            >
+              <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" />
+                View
+              </Link>
+            </Button>
+
+            {/* Sign out — lower priority, icon only on mobile */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="h-8 px-2 text-muted-foreground/35 hover:text-muted-foreground/70"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="ml-1 hidden text-[12px] sm:block">Sign out</span>
+            </Button>
+
+            {/* Save — primary action */}
+            <Button
+              size="sm"
+              disabled={
+                !isSaveDirty ||
+                isSaving ||
+                isPublishing ||
+                importingSelectedReleaseIndex !== null ||
+                importingVideoIndex !== null ||
+                isUploadingHeroImage ||
+                isUploadingGalleryImage
+              }
+              onClick={handleSaveChanges}
+              className={`relative h-8 px-3.5 text-[12px] font-semibold transition-all duration-200 ${
+                isSaving
+                  ? "bg-accent/55 text-accent-foreground/65"
+                  : isSaveDirty
+                    ? "bg-accent text-accent-foreground shadow-md shadow-accent/25 hover:bg-accent/90"
+                    : "bg-accent/80 text-accent-foreground hover:bg-accent"
+              }`}
+            >
+              {isSaveDirty && !isSaving && (
+                <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-white ring-[1.5px] ring-background" />
+              )}
+              {savedRecently && !isSaveDirty && !isSaving ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              {isSaving ? "Saving…" : savedRecently && !isSaveDirty ? "Saved" : "Save"}
+            </Button>
+          </div>
         </div>
         {(saveMessage || statusMessage) ? (
           <div className="border-t border-white/[0.04] px-4 py-1.5 sm:px-6">
-            <p className={`text-xs ${saveMessage && !saveMessage.startsWith("Changes") && !saveMessage.startsWith("Release") && !saveMessage.startsWith("DJ set") && !saveMessage.startsWith("Video") && !saveMessage.startsWith("Gallery") ? "text-destructive/70" : "text-muted-foreground"}`}>
+            <p className={`text-[11px] ${saveMessage && !saveMessage.startsWith("Changes") && !saveMessage.startsWith("Release") && !saveMessage.startsWith("DJ set") && !saveMessage.startsWith("Video") && !saveMessage.startsWith("Gallery") ? "text-destructive/65" : "text-muted-foreground/50"}`}>
               {saveMessage || statusMessage}
             </p>
           </div>
         ) : null}
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5">
         <div className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
           {navGroups.flatMap((group) => group.items).map((item) => (
             <button
@@ -6404,10 +6416,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               type="button"
               aria-pressed={activeSection === item.id}
               onClick={() => setActiveSection(item.id)}
-              className={`shrink-0 rounded-full px-3.5 py-2 text-xs transition-colors duration-150 ${
+              className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] transition-colors duration-100 ${
                 activeSection === item.id
-                  ? "bg-accent/10 font-medium text-accent"
-                  : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  ? "bg-accent/[0.10] font-semibold text-accent"
+                  : "bg-white/[0.04] text-muted-foreground/55 hover:bg-white/[0.06] hover:text-foreground/75"
               }`}
             >
               {item.label}
@@ -6416,11 +6428,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         <div className="flex gap-8">
-          <aside className="hidden w-[176px] shrink-0 lg:block">
-            <nav className="sticky top-20 space-y-3">
+          <aside className="hidden w-[200px] shrink-0 lg:block">
+            <nav className="sticky top-[72px] space-y-5">
               {navGroups.map((group) => (
                 <div key={group.label}>
-                  <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/30">
+                  <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/25">
                     {group.label}
                   </p>
                   <div className="space-y-0.5">
@@ -6430,16 +6442,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         type="button"
                         aria-pressed={activeSection === item.id}
                         onClick={() => setActiveSection(item.id)}
-                        className={`relative w-full rounded-md py-1.5 text-left text-sm transition-all duration-150 ${
+                        className={`relative w-full rounded-lg py-2 text-left text-[13px] transition-all duration-100 ${
                           activeSection === item.id
-                            ? "bg-accent/[0.08] font-medium text-foreground"
-                            : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                            ? "bg-white/[0.05] font-semibold text-foreground"
+                            : "text-muted-foreground/55 hover:bg-white/[0.03] hover:text-foreground/80"
                         }`}
                       >
                         {activeSection === item.id && (
-                          <span className="absolute inset-y-0.5 left-0 w-0.5 rounded-full bg-accent" />
+                          <span className="absolute inset-y-1 left-0 w-[3px] rounded-r-full bg-accent" />
                         )}
-                        <span className="block px-3">{item.label}</span>
+                        <span className="block px-4">{item.label}</span>
                       </button>
                     ))}
                   </div>
