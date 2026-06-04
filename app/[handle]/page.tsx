@@ -866,13 +866,22 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     {artist.location.replace(/\s*\/\s*/g, ' • ')}
                   </p>
 
-                  <p className="mt-2.5 max-w-[700px] text-base font-medium leading-[1.7] tracking-[0.02em] text-white/92 sm:mt-3">
+                  {/* Social links — discovery actions, positioned before bio for hierarchy */}
+                  {prioritizedLinks.length > 0 ? (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5 sm:mt-3">
+                      {prioritizedLinks.map((link) => (
+                        <MainLink key={`${link.platform}-${link.url}`} link={link} />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <p className="mt-2 max-w-[700px] text-base font-medium leading-[1.7] tracking-[0.02em] text-white/92 sm:mt-2.5">
                     {artist.shortBio}
                   </p>
 
-                  {/* CTA row — BOOKING and/or PRESS KIT; hidden if neither is configured */}
+                  {/* CTA row — BOOKING and/or PRESS KIT */}
                   {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                    <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-5">
+                    <div className="mt-3 flex flex-wrap items-center gap-2.5 sm:mt-3.5">
                       {artist.bookingInfo.email.trim() ? (
                         <div className="transition-transform duration-150 hover:-translate-y-0.5">
                           <BookingInquiryModal
@@ -895,14 +904,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           Press Kit
                         </a>
                       ) : null}
-                    </div>
-                  ) : null}
-
-                  {prioritizedLinks.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-2.5 sm:mt-4">
-                      {prioritizedLinks.map((link) => (
-                        <MainLink key={`${link.platform}-${link.url}`} link={link} />
-                      ))}
                     </div>
                   ) : null}
                 </div>
