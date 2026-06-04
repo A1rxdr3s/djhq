@@ -773,8 +773,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.55)_0%,_hsl(var(--background)/0.14)_26%,_transparent_48%)]" />
             {/* Zone 2 — edge vignette: subtle periphery framing */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_130%_100%_at_50%_0%,_transparent_42%,_hsl(var(--background)/0.22)_100%)]" />
-            {/* Zone 3 — cinematic bottom lift: text sits directly on the image */}
-            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.48) 26%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 66%)" }} />
+            {/* Zone 3 — cinematic bottom lift: extended reach for smooth hero-to-content transition */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.58) 22%, rgba(0,0,0,0.18) 46%, rgba(0,0,0,0.04) 62%, rgba(0,0,0,0) 76%)" }} />
             {/* Zone 3b — bottom-left corner ellipse: readability behind text, image open above */}
             <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.30) 30%, rgba(0,0,0,0) 60%)" }} />
             {/* Zone 4 — accent atmosphere: warm accent glow for brand character */}
@@ -830,7 +830,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-20 sm:pt-6 lg:px-12 lg:pb-24 lg:pt-8">
 
               <div className="relative">
 
@@ -853,7 +853,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Tagline — primary artistic proposition */}
                   {displayHeroTagline ? (
                     <p
-                      className="mt-1.5 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-2 sm:text-lg"
+                      className="mt-1.5 text-lg font-semibold uppercase tracking-[0.07em] text-accent/92 sm:mt-2 sm:text-xl"
                       style={{ textShadow: `0 0 12px rgba(0,0,0,0.45), 0 0 10px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
                     >
                       {displayHeroTagline}
