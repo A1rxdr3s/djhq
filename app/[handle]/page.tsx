@@ -1075,10 +1075,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           {/* Featured Release → Music tab */}
           {featuredRelease && (
           <MobileSection tab="music" className="max-lg:hidden lg:col-start-2 lg:row-start-1">
-          <section className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-5 xl:p-8">
+          <section className="flex h-full flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-5 xl:p-8">
             <SectionHeader>Featured Release</SectionHeader>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:items-center sm:gap-5 lg:mt-4 lg:grid-cols-2 lg:gap-3.5">
-              <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full">
+            <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:gap-5 lg:mt-4 lg:grid-cols-[minmax(0,44%)_minmax(0,1fr)] lg:items-stretch lg:gap-5 xl:gap-7">
+              <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full lg:aspect-auto lg:self-stretch">
                 {!hasFeaturedArtwork ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
                     <Music2 className="h-10 w-10 text-accent/80" />
@@ -1094,19 +1094,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
               </div>
-              <div className="flex min-w-0 flex-col justify-center sm:py-0.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90">
+              <div className="flex min-w-0 flex-col justify-between sm:py-1 lg:py-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90 lg:text-[11px]">
                   {featuredRelease.type}
                 </p>
                 <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl xl:text-3xl">
                   {featuredRelease.title}
                 </h2>
                 {featuredRelease.credits ? (
-                  <p className="mt-1 text-xs text-muted-foreground/85 sm:mt-1.5">
+                  <p className="mt-1.5 text-xs text-muted-foreground/85 sm:mt-2">
                     {featuredRelease.credits}
                   </p>
                 ) : null}
-                <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:mt-2">
+                <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:mt-2.5">
                   {featuredRelease.label} · {featuredReleaseYear}
                 </p>
                 <Button
