@@ -733,9 +733,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <div className="absolute left-1/2 top-0 h-[720px] w-[min(1280px,98vw)] -translate-x-1/2 rounded-full bg-accent/[0.025] blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
+      {/* ── Full-bleed cinematic hero — edge-to-edge, no card container ── */}
+      <section className="relative overflow-hidden" style={{ minHeight: "100dvh" }}>
+        {/* DJHQ branding — floats at top, invisible until scroll reveals the nav */}
         {(artist.plan !== "pro" || artist.showHeaderBranding) && (
-          <header className="mb-4 flex items-center justify-between sm:mb-5">
+          <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-4 pt-5 sm:px-6 sm:pt-6">
             <Link
               href="/"
               className="group flex items-center gap-2 text-foreground/28 transition-colors duration-200 hover:text-foreground/55"
@@ -749,16 +751,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </header>
         )}
 
-        <section className="group overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-card/20 shadow-xl shadow-black/30">
-          <div className="relative min-h-[390px] sm:min-h-[420px] lg:min-h-[540px]">
+        <div className="relative min-h-[100dvh]">
             <Image
               src={artist.heroImageUrl}
               alt={`${artist.artistName} performing behind the decks`}
               fill
               priority
               loading="eager"
-              sizes="(min-width: 1024px) 1120px, (min-width: 768px) 640px, 100vw"
-              className="object-cover saturate-[0.93] contrast-[1.08] brightness-[0.82] transition-transform duration-[1800ms] ease-out group-hover:scale-[1.02]"
+              sizes="100vw"
+              className="object-cover saturate-[0.93] contrast-[1.08] brightness-[0.82]"
             />
             {/* Multi-layer gradient system — cinematic depth and separation */}
             <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
@@ -790,7 +791,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-10 sm:pt-6 lg:px-8 lg:pb-12 lg:pt-8">
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
               {/* Cinematic content fade — stronger bottom lift */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
 
@@ -896,9 +897,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       {/* ── Sticky mobile scroll nav — outside padded wrapper so it spans the full viewport ── */}
       <MobileScrollNav />

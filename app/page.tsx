@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Check, ExternalLink, Music2, Radio, Play, Youtube, Instagram } from "lucide-react"
+import { ArrowRight, Check, ExternalLink } from "lucide-react"
 import { brand } from "@/lib/brand"
 
 // ─── Scroll reveal hook ───────────────────────────────────────────────────────
@@ -127,31 +127,41 @@ function Nav() {
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
+// Full-bleed atmospheric layout.
+// dj-hero.jpg becomes the environment; copy floats over cinematic dark treatment.
+// Product evidence appears below the fold in PressKitSection and NarrativeSection.
 
 function Hero() {
   return (
-    <section
-      className="relative overflow-hidden"
-      style={{ background: "#080808" }}
-    >
-      {/* Subtle top-right glow — intentionally faint */}
-      <div
-        className="pointer-events-none absolute right-[-120px] top-[-80px] h-[600px] w-[600px] opacity-40"
-        style={{
-          background: "radial-gradient(ellipse at 70% 20%, rgba(0,230,167,0.06) 0%, transparent 60%)",
-        }}
+    <section className="relative overflow-hidden" style={{ minHeight: "100dvh" }}>
+
+      {/* ── Full-bleed DJ photo — the atmosphere ─────────────────────────── */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/dj-hero.jpg"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: "50% 30%", filter: "saturate(0.75) contrast(1.08) brightness(0.50)" }}
       />
 
-      {/* Grid overlay — barely visible texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.018]"
-        style={{ backgroundImage: "url('/grid.svg')" }}
-      />
+      {/* ── Cinematic dark treatment — layered for editorial depth ─────────── */}
+      {/* Bottom lift — ensures copy sits on readable darkness */}
+      <div className="pointer-events-none absolute inset-0" style={{
+        background: "linear-gradient(180deg, rgba(8,8,8,0.08) 0%, rgba(8,8,8,0.02) 25%, rgba(8,8,8,0.48) 62%, rgba(8,8,8,0.97) 100%)"
+      }} />
+      {/* Left vignette — editorial anchor for the copy block */}
+      <div className="pointer-events-none absolute inset-0" style={{
+        background: "linear-gradient(96deg, rgba(8,8,8,0.88) 0%, rgba(8,8,8,0.55) 40%, rgba(8,8,8,0.12) 65%, transparent 80%)"
+      }} />
+      {/* Radial edge darkening — keeps the frame contained */}
+      <div className="pointer-events-none absolute inset-0" style={{
+        background: "radial-gradient(ellipse at center, transparent 38%, rgba(8,8,8,0.42) 100%)"
+      }} />
 
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-24 pt-28 lg:grid-cols-[1fr_1.08fr] lg:gap-14 lg:pb-28 lg:pt-32">
-
-        {/* ── Left column — copy ────────────────────────────────────────────── */}
-        <div className="flex flex-col items-start">
+      {/* ── Copy — editorial positioning in lower-left ─────────────────────── */}
+      <div className="relative z-10 flex min-h-[100dvh] items-end px-5 pb-14 sm:px-8 sm:pb-20 lg:px-12 lg:pb-24">
+        <div className="w-full max-w-[560px]">
 
           {/* Category badge */}
           <div
@@ -162,21 +172,15 @@ function Hero() {
               animation: "hp-fade-up 0.4s cubic-bezier(0.16,1,0.3,1) 0.05s both",
             }}
           >
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: "#00E6A7" }}
-            />
-            <span
-              className="font-mono text-[11px] font-medium uppercase tracking-[0.16em]"
-              style={{ color: "#00E6A7" }}
-            >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "#00E6A7" }} />
+            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.16em]" style={{ color: "#00E6A7" }}>
               The professional standard for DJs and electronic music artists
             </span>
           </div>
 
           {/* Headline */}
           <h1
-            className="mb-5 text-[clamp(40px,4.8vw,66px)] font-bold leading-[1.04] tracking-[-0.03em] text-white"
+            className="mb-5 text-[clamp(38px,5vw,66px)] font-bold leading-[1.04] tracking-[-0.03em] text-white"
             style={{ animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.12s both" }}
           >
             The link every booker
@@ -188,7 +192,7 @@ function Hero() {
           <p
             className="mb-9 max-w-[420px] text-[16px] leading-[1.65]"
             style={{
-              color: "rgba(255,255,255,0.48)",
+              color: "rgba(255,255,255,0.55)",
               animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.2s both",
             }}
           >
@@ -205,9 +209,7 @@ function Hero() {
             <Link
               href="/sign-in"
               className="flex h-11 items-center gap-2 rounded-full px-6 text-[14px] font-semibold text-[#0A1410] transition-all duration-150"
-              style={{
-                background: "#00E6A7",
-              }}
+              style={{ background: "#00E6A7" }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "#00D49A"
                 e.currentTarget.style.boxShadow = "0 0 32px rgba(0,230,167,0.35)"
@@ -225,17 +227,14 @@ function Hero() {
             <Link
               href="/andresherrera/presskit"
               className="flex h-11 items-center gap-1.5 rounded-full border px-5 text-[14px] font-medium transition-all duration-150"
-              style={{
-                borderColor: "rgba(255,255,255,0.10)",
-                color: "rgba(255,255,255,0.55)",
-              }}
+              style={{ borderColor: "rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.60)" }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.20)"
-                e.currentTarget.style.color = "rgba(255,255,255,0.85)"
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.26)"
+                e.currentTarget.style.color = "rgba(255,255,255,0.90)"
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)"
-                e.currentTarget.style.color = "rgba(255,255,255,0.55)"
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)"
+                e.currentTarget.style.color = "rgba(255,255,255,0.60)"
               }}
             >
               See a live press kit
@@ -244,227 +243,9 @@ function Hero() {
           </div>
 
         </div>
-
-        {/* ── Right column — product screenshot ─────────────────────────── */}
-        <div
-          className="w-full"
-          style={{ animation: "hp-fade-up 0.55s cubic-bezier(0.16,1,0.3,1) 0.18s both" }}
-        >
-          {/* Browser frame */}
-          <div
-            className="w-full overflow-hidden"
-            style={{
-              borderRadius: "14px",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.03), 0 24px 60px rgba(0,0,0,0.65), 0 4px 16px rgba(0,0,0,0.40)",
-            }}
-          >
-            {/* Browser chrome */}
-            <div
-              className="flex items-center gap-0 px-3.5 py-2.5"
-              style={{
-                background: "#0D0D0D",
-                borderBottom: "1px solid rgba(255,255,255,0.05)",
-              }}
-            >
-              {/* Traffic lights */}
-              <div className="flex items-center gap-1.5">
-                {["#FF5F56", "#FFBD2E", "#27C93F"].map((c, i) => (
-                  <div
-                    key={i}
-                    className="h-[10px] w-[10px] rounded-full"
-                    style={{ background: c, opacity: 0.65 }}
-                  />
-                ))}
-              </div>
-              {/* URL bar */}
-              <div className="mx-3 flex flex-1 items-center justify-center">
-                <div
-                  className="rounded px-3 py-[3px]"
-                  style={{ background: "rgba(255,255,255,0.04)" }}
-                >
-                  <span
-                    className="font-mono text-[11px]"
-                    style={{ color: "rgba(255,255,255,0.22)" }}
-                  >
-                    andresherrera.djhq.app/presskit
-                  </span>
-                </div>
-              </div>
-              {/* Spacer */}
-              <div className="w-[54px]" />
-            </div>
-
-            {/* Press kit content */}
-            <PressKitMockup />
-          </div>
-        </div>
-
       </div>
+
     </section>
-  )
-}
-
-// ─── Press kit mockup (NOA VEGA — fictional demo artist) ─────────────────────
-// Mirrors the visual language of the real /[handle]/presskit page.
-// Uses a fictional artist so the hero feels universal, not founder-specific.
-
-function PressKitMockup() {
-  // Accent colour matches the Matrix theme used by the real Andres Herrera profile.
-  const accent = "#00E6A7"
-  const accentMuted = "rgba(0,230,167,0.65)"
-  const accentBg = "rgba(0,230,167,0.07)"
-  const border = "1px solid rgba(255,255,255,0.06)"
-  const cardBg = "rgba(255,255,255,0.02)"
-
-  const folders = [
-    { label: "Press Photos",     icon: "📷" },
-    { label: "Technical Rider",  icon: "🎛" },
-    { label: "Logos & Artwork",  icon: "🖼" },
-    { label: "Full Drive Package", icon: "📦", badge: "Complete" },
-  ]
-
-  return (
-    <div style={{ background: "oklch(0.08 0 0)", overflow: "hidden" }}>
-
-      {/* ── Compact hero banner ──────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ height: 96 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/dj-hero.jpg"
-          alt=""
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-cover object-[50%_25%]"
-          style={{ filter: "saturate(0.80) contrast(1.10) brightness(0.55)" }}
-        />
-        {/* Multi-layer gradient — matches real presskit hero fade */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,6,6,0.18) 0%, rgba(6,6,6,0.50) 55%, rgba(6,6,6,0.96) 100%)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(6,6,6,0.30) 0%, transparent 60%)" }} />
-
-        {/* Identity overlay */}
-        <div className="absolute bottom-0 left-0 px-4 pb-3">
-          <p
-            className="font-mono text-[8px] font-semibold uppercase tracking-[0.28em] mb-0.5"
-            style={{ color: `${accent}88` }}
-          >
-            Electronic Press Kit
-          </p>
-          <p className="text-[18px] font-black tracking-[-0.02em] text-white leading-none">
-            NOA VEGA
-          </p>
-          <p className="mt-0.5 text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.40)" }}>
-            House · Melodic Techno · Berlin · Germany
-          </p>
-        </div>
-      </div>
-
-      {/* ── EPK body ─────────────────────────────────────────────────────── */}
-      <div className="px-4 pb-5 pt-4 space-y-4">
-
-        {/* Section label */}
-        <div>
-          <p
-            className="mb-2.5 font-mono text-[8px] font-bold uppercase tracking-[0.26em]"
-            style={{ color: `${accent}60` }}
-          >
-            Press Kit Downloads
-          </p>
-
-          {/* PDF cards */}
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { flag: "🇬🇧", lang: "ENG", label: "Press Kit ENG", size: "4.2 MB" },
-              { flag: "🇪🇸", lang: "ESP", label: "Press Kit ESP", size: "3.8 MB" },
-            ].map((d) => (
-              <div
-                key={d.lang}
-                className="relative overflow-hidden p-3.5"
-                style={{
-                  background: cardBg,
-                  border,
-                  borderRadius: "18px",
-                }}
-              >
-                {/* Hover glow — static for mockup */}
-                <div className="pointer-events-none absolute inset-0 rounded-[18px]" style={{ background: accentBg, opacity: 0 }} />
-                <span className="text-[20px] leading-none">{d.flag}</span>
-                <p className="mt-2.5 text-[11px] font-semibold text-white/90">{d.label}</p>
-                <p className="mt-0.5 font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                  PDF · {d.size}
-                </p>
-                <p className="mt-2.5 font-mono text-[9px] font-semibold" style={{ color: accent }}>
-                  Download ↗
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section label */}
-        <div>
-          <p
-            className="mb-2.5 font-mono text-[8px] font-bold uppercase tracking-[0.26em]"
-            style={{ color: `${accent}60` }}
-          >
-            Asset Folders
-          </p>
-
-          {/* Folder cards — 2×2 grid */}
-          <div className="grid grid-cols-2 gap-2">
-            {folders.map((f) => (
-              <div
-                key={f.label}
-                className="flex items-center justify-between p-2.5"
-                style={{
-                  background: cardBg,
-                  border,
-                  borderRadius: "10px",
-                }}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-[10px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.75)" }}>
-                    {f.label}
-                  </p>
-                  {f.badge && (
-                    <span
-                      className="mt-0.5 inline-block rounded-full px-1.5 py-px font-mono text-[7px] font-semibold uppercase tracking-[0.10em]"
-                      style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.28)" }}
-                    >
-                      {f.badge}
-                    </span>
-                  )}
-                </div>
-                <p className="ml-2 shrink-0 font-mono text-[9px] font-semibold" style={{ color: accentMuted }}>
-                  Open ↗
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Booking email strip */}
-        <div
-          className="flex items-center justify-between px-3.5 py-2.5"
-          style={{ background: "rgba(255,255,255,0.015)", border, borderRadius: "10px" }}
-        >
-          <div>
-            <p className="font-mono text-[8px] font-bold uppercase tracking-[0.22em]" style={{ color: "rgba(255,255,255,0.22)" }}>
-              Booking
-            </p>
-            <p className="mt-0.5 font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-              booking@noavega.music
-            </p>
-          </div>
-          <div
-            className="rounded-full px-3 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.10em]"
-            style={{ background: accentBg, color: accent, border: `1px solid ${accentMuted}` }}
-          >
-            Contact
-          </div>
-        </div>
-
-      </div>
-    </div>
   )
 }
 
