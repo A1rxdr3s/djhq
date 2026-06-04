@@ -9,9 +9,9 @@ export const djhqBrand = {
 
   copy: {
     poweredBy: "Powered by DJHQ",
-    metaTitle: "DJHQ — Professional Presence for Electronic Music Artists",
+    metaTitle: "DJHQ — Your Professional Presence as a DJ, Ready Today",
     metaDescription:
-      "One professional destination for your DJ career. Press kit, artist profile, shows, releases and booking contact — one URL.",
+      "One URL for your profile, press kit, shows, releases and booking contact. Built for DJs and electronic music artists who take their career seriously.",
     metaKeywords: [
       "DJ",
       "producer",
@@ -21,9 +21,9 @@ export const djhqBrand = {
       "artist profile",
       "music industry",
     ],
-    heroLabel: "For electronic music artists",
+    heroLabel: "For DJs & electronic music artists",
     heroSubheading:
-      "DJHQ gives you one professional destination — press kit, profile, shows, releases and booking contact. Everything a promoter needs. One URL.",
+      "One URL for your profile, press kit, shows, releases and booking contact. Built for artists who take their career seriously.",
   },
 } as const
 

@@ -53,42 +53,74 @@ function Reveal({
 function Nav() {
   const [solid, setSolid] = useState(false)
   useEffect(() => {
-    const h = () => setSolid(window.scrollY > 60)
+    const h = () => setSolid(window.scrollY > 80)
     window.addEventListener("scroll", h, { passive: true })
     return () => window.removeEventListener("scroll", h)
   }, [])
 
   return (
     <nav
-      className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+      className="fixed inset-x-0 top-0 z-50 transition-all duration-200"
       style={{
-        background: solid ? "rgba(11,15,20,0.92)" : "transparent",
-        backdropFilter: solid ? "blur(16px)" : "none",
-        borderBottom: solid ? "1px solid rgba(255,255,255,0.06)" : "none",
+        background: solid ? "rgba(8,8,8,0.88)" : "transparent",
+        backdropFilter: solid ? "blur(20px) saturate(180%)" : "none",
+        WebkitBackdropFilter: solid ? "blur(20px) saturate(180%)" : "none",
+        borderBottom: solid ? "1px solid rgba(255,255,255,0.07)" : "none",
       }}
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-        <span className="text-[13px] font-bold tracking-[0.04em] text-[#F5F5F3]">{brand.name}</span>
-        <div className="flex items-center gap-6">
-          <a href="#features" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
-            Features
-          </a>
-          <a href="#press-kit" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
-            Press Kit
-          </a>
-          <Link href="/andresherrera" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
-            Demo
-          </Link>
-          <Link href="/sign-in" className="hidden text-[13px] text-[#71717A] transition-colors duration-150 hover:text-[#F5F5F3] sm:block">
-            Sign in
-          </Link>
-          <a
-            href="mailto:access@djhq.co"
-            className="rounded-md bg-[#00E6A7] px-4 py-2 text-[13px] font-semibold text-[#0A1410] transition-all duration-200 hover:bg-[#00D49A] hover:shadow-[0_0_20px_rgba(0,230,167,0.30)]"
-          >
-            Get started
-          </a>
+      <div className="mx-auto flex h-[52px] max-w-6xl items-center justify-between px-5">
+
+        {/* Left — wordmark */}
+        <Link
+          href="/"
+          className="text-[14px] font-bold tracking-[0.01em] text-white transition-opacity duration-150 hover:opacity-80"
+        >
+          {brand.name}
+        </Link>
+
+        {/* Center — primary nav links (desktop only) */}
+        <div className="hidden items-center gap-7 md:flex">
+          {[
+            { label: "Features", href: "#features" },
+            { label: "Pricing",  href: "#pricing" },
+            { label: "Examples", href: "/andresherrera" },
+          ].map(({ label, href }) =>
+            href.startsWith("/") ? (
+              <Link
+                key={label}
+                href={href}
+                className="text-[13px] text-white/45 transition-colors duration-150 hover:text-white/80"
+              >
+                {label}
+              </Link>
+            ) : (
+              <a
+                key={label}
+                href={href}
+                className="text-[13px] text-white/45 transition-colors duration-150 hover:text-white/80"
+              >
+                {label}
+              </a>
+            )
+          )}
         </div>
+
+        {/* Right — auth actions */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/sign-in"
+            className="hidden text-[13px] font-medium text-white/45 transition-colors duration-150 hover:text-white/75 sm:block"
+          >
+            Log in
+          </Link>
+          <Link
+            href="/sign-in"
+            className="rounded-full bg-white px-4 py-1.5 text-[13px] font-semibold text-black transition-all duration-150 hover:bg-white/90"
+          >
+            Get Started
+          </Link>
+        </div>
+
       </div>
     </nav>
   )
@@ -99,182 +131,237 @@ function Nav() {
 function Hero() {
   return (
     <section
-      className="relative overflow-hidden pt-14"
-      style={{ background: "#0B0F14", minHeight: "100vh" }}
+      className="relative overflow-hidden"
+      style={{ background: "#080808" }}
     >
-      {/* Indigo radial glow — behind right column */}
+      {/* Subtle top-right glow — intentionally faint */}
       <div
-        className="pointer-events-none absolute right-0 top-0 h-[700px] w-[700px]"
+        className="pointer-events-none absolute right-[-120px] top-[-80px] h-[600px] w-[600px] opacity-40"
         style={{
-          background: "radial-gradient(ellipse at 70% 30%, rgba(0,230,167,0.05) 0%, transparent 65%)",
-          animation: "hp-indigo-pulse 12s ease-in-out infinite",
+          background: "radial-gradient(ellipse at 70% 20%, rgba(0,230,167,0.06) 0%, transparent 60%)",
         }}
       />
 
-      <div className="mx-auto grid min-h-[calc(100vh-56px)] max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+      {/* Grid overlay — barely visible texture */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.018]"
+        style={{ backgroundImage: "url('/grid.svg')" }}
+      />
 
-        {/* Left */}
-        <div>
-          {/* Label */}
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-24 pt-28 lg:grid-cols-[1fr_1.08fr] lg:gap-14 lg:pb-28 lg:pt-32">
+
+        {/* ── Left column — copy ────────────────────────────────────────────── */}
+        <div className="flex flex-col items-start">
+
+          {/* Category badge */}
           <div
-            className="mb-6 inline-flex items-center gap-2"
-            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both" }}
+            className="mb-7 inline-flex items-center gap-2 rounded-full border px-3 py-1"
+            style={{
+              borderColor: "rgba(0,230,167,0.25)",
+              background: "rgba(0,230,167,0.06)",
+              animation: "hp-fade-up 0.4s cubic-bezier(0.16,1,0.3,1) 0.05s both",
+            }}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-[#00E6A7]" />
-            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[#00E6A7]">
-              {brand.copy.heroLabel}
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: "#00E6A7" }}
+            />
+            <span
+              className="font-mono text-[11px] font-medium uppercase tracking-[0.16em]"
+              style={{ color: "#00E6A7" }}
+            >
+              For DJs &amp; electronic music artists
             </span>
           </div>
 
           {/* Headline */}
           <h1
-            className="mb-5 text-[clamp(38px,5vw,68px)] font-bold leading-[1.06] tracking-[-0.03em] text-[#F5F5F3]"
-            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.18s both" }}
+            className="mb-5 text-[clamp(40px,4.8vw,66px)] font-bold leading-[1.04] tracking-[-0.03em] text-white"
+            style={{ animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.12s both" }}
           >
-            Your music is{" "}
-            <span style={{ color: "#F5F5F3" }}>professional.</span>
+            Your professional
             <br />
-            <span style={{ color: "#71717A" }}>Your online presence</span>
-            <br />
-            <span style={{ color: "#71717A" }}>probably isn&apos;t.</span>
+            presence, ready today.
           </h1>
 
-          {/* Sub */}
+          {/* Supporting copy */}
           <p
-            className="mb-8 max-w-[440px] text-[16px] leading-[1.7] text-[#71717A]"
-            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.26s both" }}
+            className="mb-9 max-w-[420px] text-[16px] leading-[1.65]"
+            style={{
+              color: "rgba(255,255,255,0.48)",
+              animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.2s both",
+            }}
           >
-            {brand.copy.heroSubheading}
+            One URL for your profile, press kit, shows, releases and booking contact.
+            Built for artists who take their career seriously.
           </p>
 
           {/* CTAs */}
           <div
-            className="mb-8 flex flex-wrap items-center gap-4"
-            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.34s both" }}
+            className="flex flex-wrap items-center gap-3"
+            style={{ animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.28s both" }}
           >
-            <a
-              href="mailto:access@djhq.co"
-              className="flex h-12 items-center gap-2.5 rounded-md bg-[#00E6A7] px-7 text-[15px] font-semibold text-[#0A1410] transition-all duration-200 hover:bg-[#00D49A] hover:shadow-[0_0_36px_rgba(0,230,167,0.40)]"
+            {/* Primary */}
+            <Link
+              href="/sign-in"
+              className="flex h-11 items-center gap-2 rounded-full px-6 text-[14px] font-semibold text-[#0A1410] transition-all duration-150"
+              style={{
+                background: "#00E6A7",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#00D49A"
+                e.currentTarget.style.boxShadow = "0 0 32px rgba(0,230,167,0.35)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#00E6A7"
+                e.currentTarget.style.boxShadow = "none"
+              }}
             >
-              Create Your {brand.name}
-              <ArrowRight className="h-4 w-4" />
-            </a>
+              Get Started Free
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+
+            {/* Secondary */}
             <Link
               href="/andresherrera"
-              className="flex items-center gap-1.5 text-[14px] text-[#71717A] transition-colors hover:text-[#F5F5F3]"
+              className="flex h-11 items-center gap-1.5 rounded-full border px-5 text-[14px] font-medium transition-all duration-150"
+              style={{
+                borderColor: "rgba(255,255,255,0.10)",
+                color: "rgba(255,255,255,0.55)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.20)"
+                e.currentTarget.style.color = "rgba(255,255,255,0.85)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)"
+                e.currentTarget.style.color = "rgba(255,255,255,0.55)"
+              }}
             >
-              See Live Example
+              See Example Profile
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          {/* Trust */}
-          <div
-            className="flex flex-wrap items-center gap-5"
-            style={{ animation: "hp-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.42s both" }}
-          >
-            {["Professional artist profile", "Setup in under an hour", "One professional URL"].map((t) => (
-              <div key={t} className="flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-[#00E6A7]" />
-                <span className="text-[12px] text-[#52525B]">{t}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Right — artist page preview */}
-        <div style={{ animation: "hp-fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.28s both" }}>
+        {/* ── Right column — product screenshot ─────────────────────────── */}
+        <div
+          className="w-full"
+          style={{ animation: "hp-fade-up 0.55s cubic-bezier(0.16,1,0.3,1) 0.18s both" }}
+        >
+          {/* Browser frame */}
           <div
-            className="overflow-hidden"
+            className="w-full overflow-hidden"
             style={{
-              borderRadius: "20px",
+              borderRadius: "14px",
               border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 0 0 1px rgba(0,230,167,0.07), 0 32px 80px rgba(0,0,0,0.70)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.03), 0 24px 60px rgba(0,0,0,0.65), 0 4px 16px rgba(0,0,0,0.40)",
             }}
           >
-            {/* Minimal browser strip — traffic lights + URL only */}
+            {/* Browser chrome */}
             <div
-              className="flex items-center justify-between px-3 py-2"
-              style={{ background: "rgba(8,11,15,0.95)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+              className="flex items-center gap-0 px-3.5 py-2.5"
+              style={{
+                background: "#0D0D0D",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+              }}
             >
-              <div className="flex gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }} />
+              {/* Traffic lights */}
+              <div className="flex items-center gap-1.5">
+                {["#FF5F56", "#FFBD2E", "#27C93F"].map((c, i) => (
+                  <div
+                    key={i}
+                    className="h-[10px] w-[10px] rounded-full"
+                    style={{ background: c, opacity: 0.65 }}
+                  />
                 ))}
               </div>
-              <span className="font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>
-                noavel.djhq.co
-              </span>
-              <div className="w-9" />
+              {/* URL bar */}
+              <div className="mx-3 flex flex-1 items-center justify-center">
+                <div
+                  className="rounded px-3 py-[3px]"
+                  style={{ background: "rgba(255,255,255,0.04)" }}
+                >
+                  <span
+                    className="font-mono text-[11px]"
+                    style={{ color: "rgba(255,255,255,0.22)" }}
+                  >
+                    andresherrera.djhq.co
+                  </span>
+                </div>
+              </div>
+              {/* Spacer */}
+              <div className="w-[54px]" />
             </div>
 
-            {/* Artist page */}
+            {/* Artist profile content */}
             <ProfileMockup />
           </div>
         </div>
+
       </div>
     </section>
   )
 }
 
+// ─── Profile mockup (ANDRES:HERRERA) ─────────────────────────────────────────
+
 function ProfileMockup() {
   return (
     <div className="relative overflow-hidden" style={{ minHeight: 460, background: "#060810" }}>
-      {/* Actual photo background */}
+      {/* Hero photo */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/images/dj-hero.jpg"
         alt=""
         aria-hidden
         className="absolute inset-0 h-full w-full object-cover"
-        style={{ filter: "saturate(0.93) contrast(1.08) brightness(0.80)" }}
+        style={{ filter: "saturate(0.90) contrast(1.10) brightness(0.78)" }}
       />
 
-      {/* Multi-layer gradient overlay — exact real artist page system */}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(11,15,20,0.32) 0%, rgba(11,15,20,0.04) 28%, rgba(11,15,20,0.55) 66%, rgba(11,15,20,0.99) 100%)" }} />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 10%, transparent 18%, rgba(11,15,20,0.24) 55%, rgba(11,15,20,0.72) 100%)" }} />
-      <div className="absolute inset-y-0 left-0 w-3/4" style={{ background: "linear-gradient(92deg, rgba(11,15,20,0.52), transparent 72%)" }} />
-      <div className="absolute inset-x-0 bottom-0 h-3/5" style={{ background: "radial-gradient(ellipse at 20% 90%, rgba(0,230,167,0.07), transparent 38%)" }} />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 45%, rgba(11,15,20,0.30) 100%)" }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(92deg, rgba(0,0,0,0.20) 0%, transparent 50%), linear-gradient(0deg, rgba(0,0,0,0.18) 0%, transparent 32%)" }} />
+      {/* Gradient system */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,8,16,0.28) 0%, rgba(6,8,16,0.02) 28%, rgba(6,8,16,0.52) 66%, rgba(6,8,16,0.99) 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 10%, transparent 18%, rgba(6,8,16,0.22) 55%, rgba(6,8,16,0.70) 100%)" }} />
+      <div className="absolute inset-y-0 left-0 w-3/4" style={{ background: "linear-gradient(92deg, rgba(6,8,16,0.50), transparent 72%)" }} />
+      <div className="absolute inset-x-0 bottom-0 h-3/5" style={{ background: "radial-gradient(ellipse at 20% 90%, rgba(0,230,167,0.06), transparent 38%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(92deg, rgba(0,0,0,0.18) 0%, transparent 50%), linear-gradient(0deg, rgba(0,0,0,0.16) 0%, transparent 30%)" }} />
 
-      {/* Content area pinned to bottom */}
-      <div className="absolute inset-x-0 bottom-0 px-5 pb-6 pt-4">
-        {/* Bottom gradient lift */}
+      {/* Content pinned to bottom */}
+      <div className="absolute inset-x-0 bottom-0 px-5 pb-5 pt-4">
+        {/* Bottom lift */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 bottom-0"
-          style={{ height: "min(78%,460px)", background: "linear-gradient(0deg, rgba(11,15,20,0.95) 0%, rgba(11,15,20,0.62) 38%, rgba(11,15,20,0.10) 72%, transparent 100%)" }}
+          style={{ height: "min(78%,460px)", background: "linear-gradient(0deg, rgba(6,8,16,0.97) 0%, rgba(6,8,16,0.60) 38%, rgba(6,8,16,0.08) 72%, transparent 100%)" }}
         />
 
-        {/* Glass surface — matches real contentSurface="soft" */}
+        {/* Glass surface */}
         <div
-          className="relative rounded-[1.5rem] px-4 py-3"
+          className="relative rounded-[1.4rem] px-4 py-3"
           style={{
             border: "1px solid rgba(255,255,255,0.07)",
-            background: "rgba(0,0,0,0.14)",
+            background: "rgba(0,0,0,0.12)",
             backdropFilter: "blur(1.5px)",
-            boxShadow: "inset 0 0 60px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.06)",
+            boxShadow: "inset 0 0 60px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          {/* Subtle inner gradient */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.5rem]"
-            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.05), transparent)" }}
+            className="pointer-events-none absolute inset-0 rounded-[1.4rem]"
+            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.04), transparent)" }}
           />
 
           {/* Genre chips */}
-          <div className="mb-3 flex flex-wrap gap-2">
-            {["House", "Tech House"].map((g) => (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {["House", "Tech House", "Melodic Techno"].map((g) => (
               <span
                 key={g}
-                className="rounded-full px-3.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.09em]"
+                className="rounded-full px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.09em]"
                 style={{
-                  border: "1px solid rgba(0,230,167,0.65)",
+                  border: "1px solid rgba(0,230,167,0.55)",
                   background: "rgba(0,0,0,0.35)",
-                  color: "rgba(255,255,255,0.90)",
-                  boxShadow: "0 0 16px rgba(0,230,167,0.10)",
+                  color: "rgba(255,255,255,0.88)",
                 }}
               >
                 {g}
@@ -284,63 +371,66 @@ function ProfileMockup() {
 
           {/* Artist name */}
           <p
-            className="text-[38px] font-black uppercase leading-none tracking-[-0.02em] text-white"
+            className="text-[34px] font-black uppercase leading-none tracking-[-0.02em] text-white"
             style={{ textShadow: "0 2px 20px rgba(0,0,0,0.50)" }}
           >
-            NOA VEL
+            ANDRES:HERRERA
           </p>
 
           {/* Tagline */}
           <p
-            className="mt-2 text-[13px] font-medium uppercase tracking-[0.07em]"
-            style={{ color: "rgba(0,230,167,0.90)", textShadow: "0 0 12px rgba(0,0,0,0.45)" }}
+            className="mt-1.5 text-[12px] font-medium uppercase tracking-[0.07em]"
+            style={{ color: "rgba(0,230,167,0.85)" }}
           >
-            Groove-driven electronic music
+            Peak-time house &amp; techno
           </p>
 
           {/* Location */}
-          <p className="mt-1.5 flex items-center gap-1.5 text-[13px]" style={{ color: "rgba(255,255,255,0.70)" }}>
-            <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <p className="mt-1.5 flex items-center gap-1.5 text-[12px]" style={{ color: "rgba(255,255,255,0.55)" }}>
+            <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
             </svg>
-            Madrid · Spain
+            Miami · Berlin
           </p>
 
-          {/* Short bio */}
-          <p className="mt-2.5 max-w-[480px] text-[13px] font-medium leading-[1.7] tracking-[0.02em]" style={{ color: "rgba(255,255,255,0.75)" }}>
-            Groove-driven electronic music for clubs, festivals and late nights.
+          {/* Bio — first sentence only */}
+          <p
+            className="mt-2 max-w-[400px] text-[12px] font-medium leading-[1.6] tracking-[0.01em]"
+            style={{ color: "rgba(255,255,255,0.65)" }}
+          >
+            Dark, groove-led house and techno shaped for peak-time dance floors. Recent releases and club sets across Fabric, Watergate and Robert Johnson.
           </p>
 
-          {/* CTA buttons */}
-          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+          {/* CTAs */}
+          <div className="mt-3.5 flex flex-wrap items-center gap-2">
             <span
-              className="flex h-10 cursor-default items-center rounded-full px-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#0A1410]"
+              className="flex h-9 cursor-default items-center rounded-full px-5 text-[12px] font-semibold uppercase tracking-[0.10em] text-[#0A1410]"
               style={{ background: "#00E6A7" }}
             >
               Booking
             </span>
             <span
-              className="flex h-10 cursor-default items-center gap-2 rounded-full px-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-white"
-              style={{ border: "1px solid rgba(0,230,167,0.45)", background: "transparent" }}
+              className="flex h-9 cursor-default items-center gap-2 rounded-full px-5 text-[12px] font-semibold uppercase tracking-[0.10em] text-white"
+              style={{ border: "1px solid rgba(0,230,167,0.40)", background: "transparent" }}
             >
               Press Kit
             </span>
           </div>
 
-          {/* Social icon row */}
-          <div className="mt-3 flex items-center gap-2.5">
+          {/* Social icons */}
+          <div className="mt-3 flex items-center gap-2">
             {[Music2, Radio, Play, Youtube, Instagram].map((Icon, i) => (
               <div
                 key={i}
-                className="flex h-9 w-9 items-center justify-center rounded-full"
+                className="flex h-8 w-8 items-center justify-center rounded-full"
                 style={{
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.04)",
                   color: "#00E6A7",
                 }}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
               </div>
             ))}
           </div>
@@ -525,8 +615,8 @@ function ProductSection() {
                   </div>
                 </div>
                 <div className="px-3 pb-3 pt-2">
-                  <p className="text-[15px] font-black uppercase tracking-[-0.01em] text-white">NOA VEL</p>
-                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>Madrid · Spain</p>
+                  <p className="text-[15px] font-black uppercase tracking-[-0.01em] text-white">ANDRES:HERRERA</p>
+                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>Miami · Berlin</p>
                   <div className="mt-2 flex items-center gap-1.5">
                     {[Music2, Radio, Play, Youtube, Instagram].map((Icon, i) => (
                       <div key={i} className="flex h-6 w-6 items-center justify-center rounded-full" style={{ border: "1px solid rgba(255,255,255,0.10)", color: "#00E6A7" }}>
@@ -759,8 +849,8 @@ function PressKitSection() {
                 <p className="font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "#00E6A7" }}>
                   Electronic Press Kit
                 </p>
-                <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-[#F5F5F3]">NOA VEL</p>
-                <p className="font-mono text-[11px]" style={{ color: "#52525B" }}>House · Tech House · Madrid</p>
+                <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-[#F5F5F3]">ANDRES:HERRERA</p>
+                <p className="font-mono text-[11px]" style={{ color: "#52525B" }}>House · Tech House · Melodic Techno</p>
               </div>
 
               {/* Downloads */}
