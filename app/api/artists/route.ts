@@ -452,6 +452,12 @@ export async function PATCH(request: Request) {
         press_kit_pdf_en_size: payload.booking.pressKitPdfEnSize?.trim() || null,
         press_kit_pdf_es_size: payload.booking.pressKitPdfEsSize?.trim() || null,
         press_kit_use_gallery_photos: payload.booking.pressKitUseGalleryPhotos,
+        footer_logo_url: payload.footer?.logoUrl?.trim() || null,
+        footer_logo_width: Math.max(80, Math.min(400, payload.footer?.logoWidth ?? 180)),
+        footer_booking_email: payload.footer?.bookingEmail?.trim() || null,
+        footer_newsletter_enabled: payload.footer?.newsletterEnabled ?? true,
+        footer_socials_enabled: payload.footer?.socialsEnabled ?? true,
+        footer_copyright: payload.footer?.copyright?.trim() || null,
       })
       .eq("id", artistId)
 

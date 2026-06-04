@@ -55,6 +55,12 @@ type ArtistRow = {
   hero_content_width: string
   artist_accent_theme: string
   is_published: boolean
+  footer_logo_url: string | null
+  footer_logo_width: number
+  footer_booking_email: string | null
+  footer_newsletter_enabled: boolean
+  footer_socials_enabled: boolean
+  footer_copyright: string | null
   created_at: string
   updated_at: string
 }
@@ -465,6 +471,12 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     heroContentWidth: (artistRow.hero_content_width || "standard") as "compact" | "standard" | "wide",
     accentTheme: (artistRow.artist_accent_theme || "matrix") as "matrix" | "electric_blue" | "signal_red",
     isPublished: artistRow.is_published,
+    footerLogoUrl: artistRow.footer_logo_url ?? null,
+    footerLogoWidth: artistRow.footer_logo_width ?? 180,
+    footerBookingEmail: artistRow.footer_booking_email ?? null,
+    footerNewsletterEnabled: artistRow.footer_newsletter_enabled ?? true,
+    footerSocialsEnabled: artistRow.footer_socials_enabled ?? true,
+    footerCopyright: artistRow.footer_copyright ?? null,
     createdAt: artistRow.created_at,
     updatedAt: artistRow.updated_at,
   }
