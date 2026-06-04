@@ -231,10 +231,10 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const pastGroups = hasPastToggle ? groupByYear(visiblePast) : []
 
   return (
-    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5 xl:p-7 xl:pt-6">
+    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:h-full lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5 xl:p-7 xl:pt-6">
       <SectionHeader>Shows</SectionHeader>
 
-      <div className="mt-4">
+      <div className="mt-4 lg:flex-1">
         {/* Upcoming rows */}
         {upcomingSlice.length > 0 && (
           <motion.div
@@ -280,7 +280,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
         <button
           type="button"
           onClick={() => setPastExpanded((v) => !v)}
-          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/50 transition-colors duration-150 hover:text-accent"
+          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/50 transition-colors duration-150 hover:text-accent lg:mt-auto"
         >
           {pastExpanded ? "Hide Past Shows ↑" : "View Past Shows →"}
         </button>

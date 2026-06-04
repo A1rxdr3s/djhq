@@ -1071,73 +1071,84 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             aria-hidden
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
           />
-        <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.3fr)_minmax(380px,0.82fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8 xl:gap-x-16 xl:gap-y-10">
-          {/* Featured Release → Music tab */}
-          {featuredRelease && (
-          <MobileSection tab="music" className="max-lg:hidden lg:col-start-2 lg:row-start-1">
-          <section className="flex h-full flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-5 xl:p-8">
-            <SectionHeader>Featured Release</SectionHeader>
-            <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:gap-5 lg:mt-4 lg:grid-cols-[minmax(0,44%)_minmax(0,1fr)] lg:items-stretch lg:gap-5 xl:gap-7">
-              <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full lg:aspect-auto lg:self-stretch">
-                {!hasFeaturedArtwork ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                    <Music2 className="h-10 w-10 text-accent/80" />
-                  </div>
-                ) : (
-                  <Image
-                    src={featuredRelease.artworkUrl}
-                    alt={`${featuredRelease.title} artwork`}
-                    fill
-                    sizes="(min-width: 1280px) 280px, (min-width: 1024px) 200px, (min-width: 640px) 42vw, 200px"
-                    className="object-cover"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-              </div>
-              <div className="flex min-w-0 flex-col justify-between sm:py-1 lg:py-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90 lg:text-[11px]">
-                  {featuredRelease.type}
-                </p>
-                <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl lg:text-[1.75rem] xl:text-3xl">
-                  {featuredRelease.title}
-                </h2>
-                {featuredRelease.credits ? (
-                  <p className="mt-1.5 text-xs text-muted-foreground/85 sm:mt-2">
-                    {featuredRelease.credits}
-                  </p>
-                ) : null}
-                <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:mt-2.5">
-                  {featuredRelease.label} · {featuredReleaseYear}
-                </p>
-                <Button
-                  asChild
-                  className="mt-4 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-4 sm:w-auto lg:mt-5 lg:h-12 lg:px-7 xl:h-12 xl:px-8"
-                >
-                  <a href={resolveSafeHref(featuredRelease.platformUrl) ?? "#"} target="_blank" rel="noopener noreferrer">
-                    Listen / Buy
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </section>
-          </MobileSection>
-          )}
+        {/* ── New 1-row × 2-col grid: Moments left, nested Release+Shows right ──
+            The outer grid has ONE row. Moments (left) defines the section height.
+            The right wrapper uses its own fr-based nested grid to divide that
+            height proportionally between Featured Release (42%) and Shows (58%). */}
+        <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.55fr)_minmax(420px,0.95fr)] lg:items-stretch lg:gap-x-10 xl:gap-x-14">
 
-          {/* Upcoming Gigs → Live tab */}
-          {upcomingGigs.length > 0 && (
-            <MobileSection tab="live" id="shows" className="lg:col-start-2 lg:row-start-2">
-              <GigsSection gigs={upcomingGigs} />
-            </MobileSection>
-          )}
-
-          {/* Gallery / Moments → Media tab */}
-          <MobileSection tab="media" className="max-lg:hidden lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <section className="flex flex-col">
+          {/* ── LEFT: Moments — the height anchor for this entire section ─────── */}
+          <MobileSection tab="media" className="max-lg:hidden">
+            <section className="flex h-full flex-col">
               <SectionHeader variant="primary">Moments</SectionHeader>
               <GallerySection images={galleryImages} />
             </section>
           </MobileSection>
+
+          {/* ── RIGHT: nested proportional grid fills exactly the Moments height ─ */}
+          {/* Mobile: flex-col stack. Desktop: height-filling nested grid with fr rows. */}
+          <div className="flex flex-col gap-y-6 lg:grid lg:h-full lg:grid-rows-[42fr_58fr] lg:gap-y-8 xl:gap-y-10">
+
+            {/* Featured Release — top 42% of right column height */}
+            {featuredRelease && (
+            <MobileSection tab="music" className="max-lg:hidden">
+            <section className="flex h-full flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-5 xl:p-8">
+              <SectionHeader>Featured Release</SectionHeader>
+              <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:gap-5 lg:mt-4 lg:grid-cols-[minmax(0,44%)_minmax(0,1fr)] lg:items-stretch lg:gap-5 xl:gap-7">
+                <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full lg:aspect-auto lg:self-stretch">
+                  {!hasFeaturedArtwork ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                      <Music2 className="h-10 w-10 text-accent/80" />
+                    </div>
+                  ) : (
+                    <Image
+                      src={featuredRelease.artworkUrl}
+                      alt={`${featuredRelease.title} artwork`}
+                      fill
+                      sizes="(min-width: 1280px) 280px, (min-width: 1024px) 200px, (min-width: 640px) 42vw, 200px"
+                      className="object-cover"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                </div>
+                <div className="flex min-w-0 flex-col justify-between sm:py-1 lg:py-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90 lg:text-[11px]">
+                    {featuredRelease.type}
+                  </p>
+                  <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl lg:text-[1.75rem] xl:text-3xl">
+                    {featuredRelease.title}
+                  </h2>
+                  {featuredRelease.credits ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground/85 sm:mt-2">
+                      {featuredRelease.credits}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:mt-2.5">
+                    {featuredRelease.label} · {featuredReleaseYear}
+                  </p>
+                  <Button
+                    asChild
+                    className="mt-4 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-4 sm:w-auto lg:mt-5 lg:h-12 lg:px-7 xl:h-12 xl:px-8"
+                  >
+                    <a href={resolveSafeHref(featuredRelease.platformUrl) ?? "#"} target="_blank" rel="noopener noreferrer">
+                      Listen / Buy
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </section>
+            </MobileSection>
+            )}
+
+            {/* Shows — bottom 58% of right column height */}
+            {upcomingGigs.length > 0 && (
+              <MobileSection tab="live" id="shows">
+                <GigsSection gigs={upcomingGigs} />
+              </MobileSection>
+            )}
+
+          </div>
 
         </div>
         </div>
