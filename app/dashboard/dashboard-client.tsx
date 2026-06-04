@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { Camera, Check, ChevronDown, ExternalLink, FileText, FolderOpen, Globe, Headphones, Instagram, Layers, LogOut, Mail, MapPin, MoreVertical, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Wrench, Youtube } from "lucide-react"
+import { ArrowRight, Calendar, Camera, Check, ChevronDown, ExternalLink, FileText, FolderOpen, Globe, Headphones, Instagram, Layers, LogOut, Mail, MapPin, MoreVertical, Music, Music2, Play, Plus, Radio, Save, Star, Trash2, Wrench, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -6394,7 +6394,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5">
         <div className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
-          {navGroups.flatMap((group) => group.items).map((item) => (
+          <button
+              type="button"
+              aria-pressed={activeSection === "home"}
+              onClick={() => setActiveSection("home")}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] transition-colors duration-100 ${
+                activeSection === "home"
+                  ? "bg-accent/[0.10] font-semibold text-accent"
+                  : "bg-white/[0.04] text-muted-foreground/55 hover:bg-white/[0.06] hover:text-foreground/75"
+              }`}
+            >
+              Overview
+            </button>
+            {navGroups.flatMap((group) => group.items).map((item) => (
             <button
               key={item.id}
               type="button"
@@ -6412,8 +6424,25 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         <div className="flex gap-8">
-          <aside className="hidden w-[200px] shrink-0 lg:block">
-            <nav className="sticky top-[72px] space-y-5">
+          <aside className="hidden w-[224px] shrink-0 lg:block">
+            <nav className="sticky top-[72px] space-y-4">
+              {/* Overview */}
+              <button
+                type="button"
+                aria-pressed={activeSection === "home"}
+                onClick={() => setActiveSection("home")}
+                className={`relative w-full rounded-lg py-2 text-left text-[13px] transition-all duration-100 ${
+                  activeSection === "home"
+                    ? "bg-white/[0.05] font-semibold text-foreground"
+                    : "text-muted-foreground/55 hover:bg-white/[0.03] hover:text-foreground/80"
+                }`}
+              >
+                {activeSection === "home" && (
+                  <span className="absolute inset-y-1 left-0 w-[3px] rounded-r-full bg-accent" />
+                )}
+                <span className="block px-4">Overview</span>
+              </button>
+              <div className="h-px bg-white/[0.04]" />
               {navGroups.map((group) => (
                 <div key={group.label}>
                   <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/25">
