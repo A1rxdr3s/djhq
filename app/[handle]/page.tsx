@@ -828,9 +828,28 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
-              {/* Cinematic content fade — stronger bottom lift */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(90%,580px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.97)_0%,_hsl(var(--background)/0.80)_20%,_hsl(var(--background)/0.55)_40%,_hsl(var(--background)/0.26)_58%,_hsl(var(--background)/0.08)_75%,_transparent_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 border-t border-white/[0.05] px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
+              {/* Atmospheric fog — emerges from the left, dissolves into the image on the right.
+                  Two-layer approach: the blur div blurs the hero behind it; the gradient div
+                  applies the dark→transparent color overlay independently so both can be masked
+                  cleanly without one affecting the other's alpha. */}
+              {/* Layer A: backdrop blur, masked left→right so blur fades with the panel */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  maskImage: "linear-gradient(90deg, black 0%, black 38%, transparent 78%)",
+                  WebkitMaskImage: "linear-gradient(90deg, black 0%, black 38%, transparent 78%)",
+                }}
+              />
+              {/* Layer B: horizontal color gradient — left dark, right transparent */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background: "linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.45) 48%, rgba(0,0,0,0) 100%)",
+                }}
+              />
 
               <div className={cn(
                 "relative",
