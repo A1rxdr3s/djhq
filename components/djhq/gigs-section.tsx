@@ -280,7 +280,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
         <button
           type="button"
           onClick={() => setPastExpanded((v) => !v)}
-          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-white/50 transition-colors duration-150 hover:text-accent lg:mt-auto"
+          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
         >
           {pastExpanded ? "Hide Past Shows ↑" : "View Past Shows →"}
         </button>
@@ -297,13 +297,13 @@ export function GigsSection({ gigs }: GigsSectionProps) {
             style={{ overflow: "hidden" }}
           >
             <div className="mt-3 space-y-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/48">
                 Past Shows
               </p>
               <div className="space-y-4 opacity-75">
                 {pastGroups.map(({ year, gigs: yearGigs }) => (
                   <div key={year}>
-                    <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/30">
+                    <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/32">
                       {year}
                     </p>
                     <div className="flex flex-col gap-1.5">
@@ -318,7 +318,7 @@ export function GigsSection({ gigs }: GigsSectionProps) {
                 <button
                   type="button"
                   onClick={() => setShowAllPast(true)}
-                  className="text-xs font-medium uppercase tracking-[0.14em] text-white/35 transition-colors duration-150 hover:text-accent"
+                  className="text-xs font-semibold uppercase tracking-[0.20em] text-white/38 transition-colors duration-200 hover:text-accent"
                 >
                   Show More →
                 </button>

@@ -8,16 +8,13 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ children, variant = "secondary" }: SectionHeaderProps) {
   return (
-    <div className="flex items-center gap-4">
-      <h2
-        className={cn(
-          "shrink-0 text-[12px] font-semibold uppercase tracking-[0.28em] xl:text-[14px] xl:tracking-[0.28em]",
-          variant === "primary" ? "text-accent/90" : "text-accent/70",
-        )}
-      >
-        {children}
-      </h2>
-      <div className="h-px flex-1 bg-gradient-to-r from-accent/30 to-transparent" />
-    </div>
+    <h2
+      className={cn(
+        "text-[12px] font-bold uppercase tracking-[0.22em] xl:text-[14px]",
+        variant === "primary" ? "text-accent/90" : "text-accent/65",
+      )}
+    >
+      {children}
+    </h2>
   )
 }

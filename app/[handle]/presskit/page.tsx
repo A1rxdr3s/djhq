@@ -267,7 +267,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           {/* Back link */}
           <Link
             href={profileHref}
-            className="mb-8 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/25 transition-colors duration-150 hover:text-white/50"
+            className="mb-8 inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-white/30 transition-colors duration-200 hover:text-white/60"
           >
             <ArrowLeft className="h-3 w-3" />
             {artist.artistName}
@@ -294,7 +294,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
             <div className="px-6 pb-6 pt-5 sm:px-8 sm:pb-7 sm:pt-6">
               {/* Eyebrow */}
-              <p className="mb-3 text-[8px] font-bold uppercase tracking-[0.32em] text-accent/55">
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
                 Electronic Press Kit
               </p>
 
@@ -331,7 +331,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           {/* ── Press Kit Downloads ────────────────────────────────────── */}
           <div className="mt-8">
             <div className="mb-5">
-              <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
                 Press Kit Downloads
               </p>
               <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
@@ -454,7 +454,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           {hasIndividualFolders && (
             <div className="pk-section-lazy mt-10">
               <div className="mb-5">
-                <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
                   Press Kit Assets
                 </p>
                 <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
@@ -500,7 +500,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             <div className="pk-section-lazy mt-10">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.30em] text-accent/55">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
                     Press Photos
                   </p>
                   <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
@@ -548,7 +548,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           {/* ── Compact Booking Contact ────────────────────────────────── */}
           {artist.bookingInfo.email.trim() && (
             <div className="pk-section-lazy mt-10 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-              <p className="text-[8px] font-bold uppercase tracking-[0.28em] text-white/25">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/28">
                 Booking Contact
               </p>
               <a
@@ -562,7 +562,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* Footer */}
           {artist.showHeaderBranding && (
-            <p className="mt-12 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-white/15">
+            <p className="mt-12 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white/18">
               Powered by{" "}
               <Link href="/" className="transition-colors duration-150 hover:text-white/30">
                 DJHQ

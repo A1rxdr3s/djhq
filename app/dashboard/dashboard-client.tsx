@@ -6433,7 +6433,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <div className="h-px bg-white/[0.04]" />
               {navGroups.map((group) => (
                 <div key={group.label}>
-                  <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/25">
+                  <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.26em] text-muted-foreground/28">
                     {group.label}
                   </p>
                   <div className="space-y-px">

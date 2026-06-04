@@ -1094,7 +1094,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                 </div>
                 <div className="flex min-w-0 flex-col justify-between sm:py-1 lg:py-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-accent/90 lg:text-[12px]">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent/90 lg:text-[12px]">
                     {featuredRelease.type}
                   </p>
                   <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl lg:text-[2rem] xl:text-[2.25rem]">
@@ -1105,7 +1105,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       {featuredRelease.credits}
                     </p>
                   ) : null}
-                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:mt-2.5">
+                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground sm:mt-2.5">
                     {featuredRelease.label} · {featuredReleaseYear}
                   </p>
                   <Button
@@ -1209,7 +1209,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     </div>
                     {/* Text block */}
                     <div className="mt-1">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/45">Featured Performance</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/58">Featured Performance</p>
                       {(() => {
                         const { displayTitle } = getVideoDisplayInfo(featuredVideo, artist.artistName)
                         const metaParts = [
@@ -1239,7 +1239,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {secondaryVideos.length > 0 ? (
                     <MobileArchive label="View Archive ↓">
                     <div className="border-t border-white/[0.03] px-2.5 pb-1.5 sm:px-3 sm:pb-2">
-                      <p className="pb-1 pt-1 text-[8px] font-semibold uppercase tracking-[0.28em] text-foreground/18">Archive</p>
+                      <p className="pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/22">Archive</p>
                       <div className="space-y-px">
                         {secondaryVideos.map((video, index) => {
                           const videoHref = resolveSafeHref(video.platformUrl)
@@ -1330,7 +1330,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       </div>
                     )}
                     <div className="mt-1">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-accent/45">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/58">
                         Featured Set
                       </p>
                       {/* Event name — editorial primary title */}
