@@ -70,7 +70,10 @@
 
 @theme inline {
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Menlo', monospace;
+  /* Satoshi for display headlines — stronger geometric presence than Inter */
+  --font-heading: 'Satoshi', 'Inter', system-ui, sans-serif;
+  /* Geist Mono replaces JetBrains Mono — cleaner for UI labels and microcopy */
+  --font-mono: var(--font-geist-mono), 'Geist Mono', 'Menlo', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

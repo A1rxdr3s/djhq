@@ -170,6 +170,50 @@ function Hero() {
         background: "radial-gradient(ellipse at center, transparent 38%, rgba(8,8,8,0.42) 100%)"
       }} />
 
+      {/* ── Product activity signals — left side, stacked vertically ─────────── */}
+      {/* Communicate real product activity: credibility without claiming it */}
+      <div
+        className="absolute left-5 top-[18%] z-20 hidden flex-col gap-2 sm:flex sm:left-8 lg:left-12"
+        style={{ animation: "hp-fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.55s both" }}
+      >
+        {[
+          { dot: "#00E6A7", glow: true,  label: "Booking requests", value: "24 this month" },
+          { dot: "rgba(0,230,167,0.45)", glow: false, label: "Press Kit",        value: "EN + ES · Active" },
+          { dot: "rgba(255,255,255,0.20)", glow: false, label: "Last updated",   value: "7 days ago" },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="flex w-[168px] items-center gap-2.5 rounded-[10px] px-3 py-2.5"
+            style={{
+              background: "rgba(8,8,8,0.62)",
+              border: "1px solid rgba(255,255,255,0.09)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.40)",
+            }}
+          >
+            <span
+              className="h-[6px] w-[6px] shrink-0 rounded-full"
+              style={{
+                background: s.dot,
+                boxShadow: s.glow ? "0 0 8px rgba(0,230,167,0.55)" : "none",
+              }}
+            />
+            <div>
+              <p
+                className="font-mono text-[7.5px] uppercase tracking-[0.18em]"
+                style={{ color: "rgba(255,255,255,0.32)" }}
+              >
+                {s.label}
+              </p>
+              <p className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.80)" }}>
+                {s.value}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* ── Floating press kit product panel — right side, desktop only ──────── */}
       <div
         className="pointer-events-none absolute bottom-0 right-8 top-0 z-20 hidden lg:flex lg:items-center xl:right-16"
@@ -245,7 +289,7 @@ function Hero() {
 
           {/* Headline */}
           <h1
-            className="mb-5 text-[clamp(38px,5vw,66px)] font-bold leading-[1.04] tracking-[-0.03em] text-white"
+            className="mb-5 font-heading text-[clamp(38px,5vw,66px)] font-bold leading-[1.04] tracking-[-0.03em] text-white"
             style={{ animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.12s both" }}
           >
             The link every booker
@@ -328,7 +372,7 @@ function ProblemSection() {
         </Reveal>
 
         <Reveal delay={60}>
-          <h2 className="mb-8 text-[clamp(28px,4.5vw,52px)] font-bold leading-[1.08] tracking-[-0.03em] text-[#F5F5F3]">
+          <h2 className="mb-8 font-heading text-[clamp(28px,4.5vw,52px)] font-bold leading-[1.08] tracking-[-0.03em] text-[#F5F5F3]">
             A promoter asks for your press kit.
           </h2>
         </Reveal>
@@ -343,7 +387,7 @@ function ProblemSection() {
 
         <Reveal delay={200}>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "40px" }}>
-            <p className="text-[clamp(22px,3.5vw,36px)] font-bold tracking-[-0.02em] text-[#F5F5F3] mb-4">
+            <p className="font-heading text-[clamp(22px,3.5vw,36px)] font-bold tracking-[-0.02em] text-[#F5F5F3] mb-4">
               DJHQ is the professional standard.
             </p>
             <p className="text-[16px] leading-[1.7]" style={{ color: "#52525B" }}>
@@ -377,7 +421,7 @@ function SocialProofSection() {
           </p>
         </Reveal>
         <Reveal delay={50}>
-          <h2 className="mb-6 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+          <h2 className="mb-6 font-heading text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
             Artists using DJHQ perform at:
           </h2>
         </Reveal>
@@ -469,7 +513,7 @@ function NarrativeSection() {
               </p>
             </Reveal>
             <Reveal delay={50}>
-              <h2 className="mb-5 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+              <h2 className="mb-5 font-heading text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
                 Everything a promoter needs.
                 <br />
                 <span style={{ color: "#71717A" }}>One URL.</span>
@@ -606,7 +650,7 @@ function PressKitSection() {
               </p>
             </Reveal>
             <Reveal delay={50}>
-              <h2 className="mb-5 text-[clamp(26px,3.5vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+              <h2 className="mb-5 font-heading text-[clamp(26px,3.5vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
                 One link.
                 <br />
                 Everything they need.
@@ -742,7 +786,7 @@ function PricingSection() {
           </p>
         </Reveal>
         <Reveal delay={50}>
-          <h2 className="mb-3 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+          <h2 className="mb-3 font-heading text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
             Two plans. No surprises.
           </h2>
         </Reveal>
@@ -859,7 +903,7 @@ function FeaturedArtistSection() {
               <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.28em]" style={{ color: "#52525B" }}>
                 Using DJHQ since 2024
               </p>
-              <h3 className="mb-2 text-[26px] font-black tracking-[-0.02em] text-white">
+              <h3 className="mb-2 font-heading text-[26px] font-black tracking-[-0.02em] text-white">
                 ANDRES:HERRERA
               </h3>
               <p className="mb-6 text-[13px]" style={{ color: "#71717A" }}>
@@ -933,7 +977,7 @@ function ClosingCTA() {
         </Reveal>
 
         <Reveal delay={60}>
-          <h2 className="mb-6 text-[clamp(32px,5vw,58px)] font-bold leading-[1.06] tracking-[-0.03em] text-[#F5F5F3]">
+          <h2 className="mb-6 font-heading text-[clamp(32px,5vw,58px)] font-bold leading-[1.06] tracking-[-0.03em] text-[#F5F5F3]">
             The link that gets you booked.
           </h2>
         </Reveal>

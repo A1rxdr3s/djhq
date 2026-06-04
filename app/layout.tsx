@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { brand } from '@/lib/brand'
 import './globals.css'
@@ -9,9 +9,10 @@ const inter = Inter({
   variable: "--font-inter"
 });
 
-const jetbrainsMono = JetBrains_Mono({
+// Geist Mono by Vercel — cleaner, more intentional than JetBrains for UI labels
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-jetbrains-mono"
+  variable: "--font-geist-mono"
 });
 
 export const metadata: Metadata = {
@@ -50,7 +51,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <head>
+        {/* Satoshi — geometric editorial sans by Indian Type Foundry via Fontshare.
+            Used for display headings on the landing page. Not loaded on dashboard routes. */}
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link
+          rel="stylesheet"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
+        />
+      </head>
+      <body className={`${inter.variable} ${geistMono.variable} font-sans antialiased`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
