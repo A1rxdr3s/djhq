@@ -467,6 +467,13 @@ export interface Artist {
   heroContentWidth?: HeroContentWidth
   /** Curated accent color theme. Pro only. */
   accentTheme?: ArtistAccentTheme
+  /** Footer branding — artist-configurable identity shown in the site footer. */
+  footerLogoUrl?: string | null
+  footerLogoWidth?: number
+  footerBookingEmail?: string | null
+  footerNewsletterEnabled?: boolean
+  footerSocialsEnabled?: boolean
+  footerCopyright?: string | null
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */
