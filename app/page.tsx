@@ -170,7 +170,7 @@ function Hero() {
               className="font-mono text-[11px] font-medium uppercase tracking-[0.16em]"
               style={{ color: "#00E6A7" }}
             >
-              For DJs &amp; electronic music artists
+              The professional standard for DJs and electronic music artists
             </span>
           </div>
 
@@ -179,9 +179,9 @@ function Hero() {
             className="mb-5 text-[clamp(40px,4.8vw,66px)] font-bold leading-[1.04] tracking-[-0.03em] text-white"
             style={{ animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.12s both" }}
           >
-            Your professional
+            The link every booker
             <br />
-            presence, ready today.
+            expects to receive.
           </h1>
 
           {/* Supporting copy */}
@@ -192,8 +192,8 @@ function Hero() {
               animation: "hp-fade-up 0.45s cubic-bezier(0.16,1,0.3,1) 0.2s both",
             }}
           >
-            One URL for your profile, press kit, shows, releases and booking contact.
-            Built for artists who take their career seriously.
+            Profile. Press Kit. Shows. Releases. Booking contact.
+            One permanent URL that tells bookers, labels and festivals everything they need to know — before they have to ask.
           </p>
 
           {/* CTAs */}
@@ -477,7 +477,7 @@ function ProblemSection() {
 
         <Reveal>
           <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
-            Every working artist faces this
+            The booking process has a problem
           </p>
         </Reveal>
 
@@ -498,10 +498,10 @@ function ProblemSection() {
         <Reveal delay={200}>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "40px" }}>
             <p className="text-[clamp(22px,3.5vw,36px)] font-bold tracking-[-0.02em] text-[#F5F5F3] mb-4">
-              DJHQ is the link that never fails.
+              DJHQ is the professional standard.
             </p>
             <p className="text-[16px] leading-[1.7]" style={{ color: "#52525B" }}>
-              A permanent, professional URL with everything a booker needs — exactly when they need it.
+              A single URL that contains everything a promoter, label or festival needs — before they have to ask.
             </p>
           </div>
         </Reveal>
@@ -527,7 +527,7 @@ function SocialProofSection() {
 
         <Reveal>
           <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
-            Built for working artists
+            Where working artists belong
           </p>
         </Reveal>
         <Reveal delay={50}>
@@ -537,7 +537,7 @@ function SocialProofSection() {
         </Reveal>
         <Reveal delay={100}>
           <p className="mb-12 text-[15px]" style={{ color: "#52525B" }}>
-            Across clubs, festivals and underground events worldwide.
+            Their artists book shows with credibility. So can you.
           </p>
         </Reveal>
 
@@ -593,24 +593,24 @@ function SocialProofSection() {
 const features = [
   {
     name: "Artist Profile",
-    desc: "Bio, photo, genres, location and social links — the full picture in one place.",
+    desc: "Your bio, genres, location and social links. Your identity, positioned for the industry.",
   },
   {
     name: "Press Kit",
-    desc: "Bilingual PDFs (EN + ES), press photos, technical rider and asset folders. Permanent URL.",
+    desc: "Downloadable PDFs in English and Spanish. Photos, tech rider, asset folders. A permanent link that never expires or breaks.",
     highlight: true,
   },
   {
     name: "Shows & History",
-    desc: "Upcoming dates and career history. Proof you are a working artist.",
+    desc: "Tour history and upcoming dates. Concrete evidence of activity for any booker doing due diligence.",
   },
   {
     name: "Releases",
-    desc: "Full release catalog with streaming links, label info and artwork.",
+    desc: "Your full discography with label credits, artwork and streaming links. The context labels and press need.",
   },
   {
     name: "Booking Contact",
-    desc: "A professional inquiry form that goes directly to your booking email.",
+    desc: "A direct inquiry form. Serious requests reach you immediately — no intermediaries.",
   },
 ]
 
@@ -625,7 +625,7 @@ function NarrativeSection() {
           <div>
             <Reveal>
               <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
-                What&apos;s included
+                What bookers actually look for
               </p>
             </Reveal>
             <Reveal delay={50}>
@@ -637,8 +637,8 @@ function NarrativeSection() {
             </Reveal>
             <Reveal delay={100}>
               <p className="mb-10 text-[15px] leading-[1.75]" style={{ color: "#71717A" }}>
-                A DJHQ profile replaces every scattered link, PDF and folder
-                you&apos;ve ever sent. One permanent destination for everything.
+                Promoters, labels and festivals evaluate artists in seconds. Your DJHQ
+                answers every question before they have to ask it.
               </p>
             </Reveal>
 
@@ -730,9 +730,9 @@ function NarrativeSection() {
 
                 <div className="mt-6 space-y-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "20px" }}>
                   {[
-                    "Permanent URL — never expires",
-                    "Available in English and Spanish",
-                    "Your domain, not a generic link",
+                    "Permanent. Not a link tree. Not a Dropbox folder.",
+                    "Industry-ready in English and Spanish",
+                    "Your own domain, not a generic platform URL",
                   ].map((t) => (
                     <div key={t} className="flex items-center gap-2">
                       <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "#00E6A7" }} />
@@ -762,7 +762,7 @@ function PressKitSection() {
           <div>
             <Reveal>
               <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.20em]" style={{ color: "#00E6A7" }}>
-                Press kit
+                The press kit that gets read
               </p>
             </Reveal>
             <Reveal delay={50}>
@@ -774,17 +774,18 @@ function PressKitSection() {
             </Reveal>
             <Reveal delay={100}>
               <p className="mb-8 text-[15px] leading-[1.8]" style={{ color: "#71717A" }}>
-                Your EPK lives at a permanent URL. Bio, press photos, PDFs in English and Spanish,
-                technical rider and asset folders — professional, always current, impossible to get wrong.
+                Your press kit lives at a permanent URL. Send it to any promoter, label or festival.
+                Bio, photos, PDFs in English and Spanish, technical rider, asset folders.
+                It never expires. It never has broken links. It never embarrasses you.
               </p>
             </Reveal>
             <Reveal delay={150}>
               <ul className="space-y-3">
                 {[
-                  "Bilingual PDFs — English and Spanish",
-                  "Permanent URL that never expires",
-                  "Press photos, logos, technical rider",
-                  "Connect your own domain on Pro",
+                  "PDFs in English and Spanish — standard for international bookings",
+                  "Permanent URL — send it once, use it for every booking, forever",
+                  "Photos, logos and technical rider organised in one place",
+                  "Custom domain on Pro — yourname.com/presskit",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "#00E6A7" }} />
@@ -857,14 +858,14 @@ const plans = [
     name: "Free",
     price: "$0",
     period: "",
-    description: "Everything you need to build your professional presence.",
+    description: "Everything you need to be taken seriously by the industry.",
     cta: "Get started free",
     ctaHref: "/sign-in",
     featured: false,
     features: [
       "Artist profile at djhq.app/handle",
-      "Electronic press kit",
-      "Shows & career history",
+      "Electronic press kit (EN + ES)",
+      "Shows & touring history",
       "Release catalog",
       "Booking inquiry form",
       "DJHQ attribution on profile",
@@ -875,16 +876,16 @@ const plans = [
     price: "$12",
     period: "/mo",
     annual: "$99/year",
-    description: "For artists who want complete control over their professional presence.",
+    description: "For artists who want to own their professional identity completely.",
     cta: "Start 14-day trial",
     ctaHref: "/sign-in",
     featured: true,
     features: [
       "Everything in Free",
       "Custom domain (yourname.com)",
-      "Remove DJHQ branding",
-      "Profile analytics & views",
-      "Booking inbox in dashboard",
+      "Remove DJHQ branding — fully yours",
+      "Profile view analytics",
+      "Booking inbox — all inquiries in one place",
       "Custom favicon",
     ],
   },
@@ -1082,7 +1083,7 @@ function ClosingCTA() {
 
         <Reveal>
           <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
-            One link changes everything
+            Your next booking starts here
           </p>
         </Reveal>
 
@@ -1117,7 +1118,7 @@ function ClosingCTA() {
               See a live press kit →
             </Link>
             <p className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
-              No credit card required · Setup in under an hour
+              No credit card required · Up and running in under an hour
             </p>
           </div>
         </Reveal>
