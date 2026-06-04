@@ -830,87 +830,46 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-20 sm:pt-6 lg:px-12 lg:pb-24 lg:pt-8">
-
-              <div className="relative">
-
-                {/* Genre chips — above logo, photo-safe overlay style */}
-                {artist.genres.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2 sm:mb-4">
-                    {artist.genres.map((genre) => (
-                      <span
-                        key={genre}
-                        className="genre-chip rounded-full border border-accent/70 bg-black/35 px-3.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm"
-                      >
-                        {genre}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Text content block — width controlled by heroContentWidth */}
-                <div className={cn("relative", contentWidthClass)}>
-                  {/* Tagline — primary artistic proposition */}
-                  {displayHeroTagline ? (
-                    <p
-                      className="mt-1.5 text-lg font-semibold uppercase tracking-[0.07em] text-accent/92 sm:mt-2 sm:text-xl"
-                      style={{ textShadow: `0 0 12px rgba(0,0,0,0.45), 0 0 10px rgba(${accentThemeConfig.glowRgb}, 0.15)` }}
+            {/* Centered CTA area — directly below the logo, minimal */}
+            <div className="absolute inset-x-0 bottom-[18%] z-10 flex flex-col items-center gap-4 px-4 sm:bottom-[20%]">
+              {(artist.bookingInfo.email.trim() || hasPressKit) ? (
+                <div className="flex items-center gap-3">
+                  {artist.bookingInfo.email.trim() ? (
+                    <div className="transition-transform duration-150 hover:-translate-y-0.5">
+                      <BookingInquiryModal
+                        artistHandle={artist.handle}
+                        artistName={artist.artistName}
+                        pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
+                      />
+                    </div>
+                  ) : null}
+                  {hasPressKit && safePressKitHref ? (
+                    <a
+                      href={safePressKitHref}
+                      {...(!isSafeInternalPath(safePressKitHref) && {
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                      })}
+                      className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:h-12 sm:px-8"
                     >
-                      {displayHeroTagline}
-                    </p>
-                  ) : null}
-
-                  {/* Location — supporting metadata */}
-                  <p className={cn("flex items-center gap-2 text-sm text-white/70", displayHeroTagline ? "mt-1.5" : "mt-2.5")}>
-                    <MapPin className="h-3.5 w-3.5 shrink-0 text-white/70 sm:h-4 sm:w-4" />
-                    {artist.location.replace(/\s*\/\s*/g, ' • ')}
-                  </p>
-
-                  {/* Social links — discovery actions, positioned before bio for hierarchy */}
-                  {prioritizedLinks.length > 0 ? (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5 sm:mt-3">
-                      {prioritizedLinks.map((link) => (
-                        <MainLink key={`${link.platform}-${link.url}`} link={link} />
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <p className="mt-2 max-w-[700px] text-base font-medium leading-[1.7] tracking-[0.02em] text-white/92 sm:mt-2.5">
-                    {artist.shortBio}
-                  </p>
-
-                  {/* CTA row — BOOKING and/or PRESS KIT */}
-                  {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-2.5 sm:mt-3.5">
-                      {artist.bookingInfo.email.trim() ? (
-                        <div className="transition-transform duration-150 hover:-translate-y-0.5">
-                          <BookingInquiryModal
-                            artistHandle={artist.handle}
-                            artistName={artist.artistName}
-                            pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
-                          />
-                        </div>
-                      ) : null}
-                      {hasPressKit && safePressKitHref ? (
-                        <a
-                          href={safePressKitHref}
-                          {...(!isSafeInternalPath(safePressKitHref) && {
-                            target: "_blank",
-                            rel: "noopener noreferrer",
-                          })}
-                          className="flex h-10 w-fit items-center gap-2.5 rounded-full border border-accent/50 bg-transparent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/80 hover:bg-accent/10 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_18%,transparent)] sm:h-11"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Press Kit
-                        </a>
-                      ) : null}
-                    </div>
+                      <Download className="h-3.5 w-3.5" />
+                      Press Kit
+                    </a>
                   ) : null}
                 </div>
-              </div>
+              ) : null}
             </div>
         </div>
       </section>
+
+      {/* ── Social links strip — below hero, above content ── */}
+      {prioritizedLinks.length > 0 && (
+        <div className="flex items-center justify-center gap-3 border-b border-white/[0.04] py-4">
+          {prioritizedLinks.map((link) => (
+            <MainLink key={`sub-${link.platform}-${link.url}`} link={link} />
+          ))}
+        </div>
+      )}
 
       {/* ── Sticky mobile scroll nav — outside padded wrapper so it spans the full viewport ── */}
       <MobileScrollNav />

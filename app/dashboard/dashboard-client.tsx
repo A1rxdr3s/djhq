@@ -1823,6 +1823,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderHome() {
     const today = new Date().toISOString().slice(0, 10)
+    const nowMs = new Date(today).getTime()
     const upcomingShowsList = [...artist.upcomingGigs]
       .filter((g) => g.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
@@ -1830,11 +1831,56 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const nextShow = upcomingShowsList[0] ?? null
     const scheduleShows = upcomingShowsList.slice(1, 4)
 
-    const hasActiveDomain = customDomains.some((d) => d.status === "active")
+    const hasActiveDomain  = customDomains.some((d) => d.status === "active")
     const activeDomainName = customDomains.find((d) => d.status === "active")?.domain
-    const hasBooking      = !!artist.bookingInfo.email.trim()
-    const hasPressKit     = pressKitEnabled
+    const hasBooking       = !!artist.bookingInfo.email.trim()
+    const hasPressKit      = pressKitEnabled
 
+    const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    const MONTH_ABBR   = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+
+    const profileUrl = activeDomainName ?? `${APP_DISPLAY_HOST}/${artist.handle}`
+
+    // ── Countdown ────────────────────────────────────────────────────
+    const countdown = nextShow ? (() => {
+      const showDate = new Date(nextShow.date.substring(0, 10) + "T00:00:00")
+      const todayDate = new Date(today + "T00:00:00")
+      const diff = Math.round((showDate.getTime() - todayDate.getTime()) / 86400000)
+      if (diff === 0) return "Today"
+      if (diff === 1) return "Tomorrow"
+      return `${diff} days`
+    })() : null
+
+    // ── Freshness signals ────────────────────────────────────────────
+    const daysAgo = (iso: string | undefined | null): number | null => {
+      if (!iso) return null
+      const d = new Date(iso.substring(0, 10)).getTime()
+      return Math.max(0, Math.floor((nowMs - d) / 86400000))
+    }
+    const formatAge = (days: number | null): string => {
+      if (days === null) return "never"
+      if (days === 0) return "today"
+      if (days === 1) return "yesterday"
+      if (days < 30) return `${days}d ago`
+      if (days < 365) return `${Math.floor(days / 30)}mo ago`
+      return `${Math.floor(days / 365)}y ago`
+    }
+
+    const latestRelease     = artist.releases[0] ?? null
+    const latestSet         = artist.djSets[0] ?? null
+    const latestReleaseAge  = daysAgo(latestRelease?.releaseDate)
+    const latestSetAge      = daysAgo(latestSet?.setDate)
+    const galleryAge        = artist.galleryImages.length > 0 ? daysAgo(artist.updatedAt) : null
+    const profileAge        = daysAgo(artist.updatedAt)
+
+    const freshness = [
+      { label: "Latest release",  age: latestReleaseAge,  section: "releases" },
+      { label: "Latest DJ set",   age: latestSetAge,       section: "sets"     },
+      { label: "Gallery",         age: galleryAge,         section: "gallery"  },
+      { label: "Profile updated", age: profileAge,         section: "profile"  },
+    ].filter(({ age }) => age !== null) as { label: string; age: number; section: string }[]
+
+    // ── Readiness (for setup card when incomplete) ────────────────────
     const readinessItems = [
       { label: "Public profile live",      done: artist.isPublished,          section: "publish",   action: "Publish"  },
       { label: "Custom domain connected",  done: hasActiveDomain,             section: "domain",    action: "Connect"  },
@@ -1845,27 +1891,27 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     ]
     const readinessDone = readinessItems.filter((c) => c.done).length
     const readinessPct  = Math.round((readinessDone / readinessItems.length) * 100)
-    const isAllSet = readinessDone === readinessItems.length
-    const topPriority = readinessItems.find((c) => !c.done) ?? null
+    const isAllSet      = readinessDone === readinessItems.length
 
-    const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    const MONTH_ABBR   = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
-
-    const latestRelease = artist.releases[0] ?? null
-    const latestSet     = artist.djSets[0] ?? null
-
-    const profileUrl = activeDomainName
-      ? activeDomainName
-      : `${APP_DISPLAY_HOST}/${artist.handle}`
+    // ── Suggested action (single, highest priority) ──────────────────
+    const suggestion = (() => {
+      if (!artist.isPublished)           return { label: "Publish your profile",    section: "publish"   }
+      if (upcomingCount === 0)           return { label: "Add your next show",      section: "shows"     }
+      if (artist.releases.length === 0) return { label: "Add your first release",  section: "releases"  }
+      if (!hasPressKit)                  return { label: "Publish your press kit",  section: "press-kit" }
+      if (!hasBooking)                   return { label: "Set up booking contact",  section: "booking"   }
+      if (!hasActiveDomain)              return { label: "Connect a custom domain", section: "domain"    }
+      if (latestSetAge !== null && latestSetAge > 60) return { label: "Upload a recent DJ set", section: "sets" }
+      if (galleryAge !== null && galleryAge > 90) return { label: "Update your gallery", section: "gallery" }
+      return null
+    })()
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
 
-        {/* ═══════════════════════════════════════════════════════════
-            ZONE A — The Stage
-            ═══════════════════════════════════════════════════════════ */}
+        {/* ── Section 1: Next Show ──────────────────────────────────── */}
         <div>
-          {/* Identity row */}
+          {/* Identity */}
           <div className="flex items-baseline justify-between gap-4 pb-1">
             <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-foreground">{artist.artistName}</h1>
             <div className="flex shrink-0 items-center gap-2.5">
@@ -1877,19 +1923,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/28"}`} />
                 {artist.isPublished ? "Live" : "Draft"}
               </span>
-              <a
-                href={publicProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[12px] text-muted-foreground/38 transition-colors hover:text-foreground/65"
-              >
+              <a href={publicProfileUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] text-muted-foreground/38 transition-colors hover:text-foreground/65">
                 View Profile <ExternalLink className="mb-px ml-0.5 inline h-3 w-3" />
               </a>
             </div>
           </div>
 
-          {/* Next Show spotlight */}
-          {nextShow && (
+          {/* Next show with countdown */}
+          {nextShow ? (
             <button
               type="button"
               onClick={() => setActiveSection("shows")}
@@ -1900,7 +1941,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <span className="text-[22px] font-black leading-none tabular-nums text-foreground/90">{Number(nextShow.date.substring(8, 10))}</span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/48">Next Show</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/48">Next Show</span>
+                  <span className="rounded-full bg-accent/[0.08] px-2 py-px text-[10px] font-bold tabular-nums text-accent/60">{countdown}</span>
+                </div>
                 <p className="mt-1 truncate text-[18px] font-bold tracking-[-0.01em] text-foreground/94">
                   {nextShow.eventName || nextShow.venue || "TBD"}
                 </p>
@@ -1912,6 +1956,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 Manage →
               </span>
             </button>
+          ) : (
+            <div className="mt-3 rounded-xl border border-dashed border-white/[0.08] px-6 py-5">
+              <p className="text-[14px] text-muted-foreground/35">No upcoming shows</p>
+              <button type="button" onClick={() => setActiveSection("shows")} className="mt-1.5 text-[12px] font-medium text-accent/55 transition-colors hover:text-accent">
+                Add Show →
+              </button>
+            </div>
           )}
 
           {/* Schedule */}
@@ -1940,102 +1991,33 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 )
               })}
               {upcomingCount > 4 && (
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("shows")}
-                  className="mt-0.5 pl-[26px] text-[11px] font-medium text-accent/45 transition-colors hover:text-accent"
-                >
+                <button type="button" onClick={() => setActiveSection("shows")} className="mt-0.5 pl-[26px] text-[11px] font-medium text-accent/45 transition-colors hover:text-accent">
                   View all {upcomingCount} shows →
                 </button>
               )}
             </div>
           )}
-
-          {/* Metrics strip — Stripe/Vercel style */}
-          <div className="mt-4 flex items-end gap-8 border-t border-white/[0.05] pt-4 sm:gap-10">
-            {[
-              { label: "Upcoming",  value: upcomingCount,                 section: "shows"    },
-              { label: "Releases",  value: artist.releases.length,        section: "releases" },
-              { label: "Sets",      value: artist.djSets.length,          section: "sets"     },
-              { label: "Photos",    value: artist.galleryImages.length,   section: "gallery"  },
-            ].map(({ label, value, section }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setActiveSection(section)}
-                className="group text-left transition-colors"
-              >
-                <span className="block text-[24px] font-bold tabular-nums leading-none text-foreground/72 transition-colors group-hover:text-foreground">
-                  {value}
-                </span>
-                <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/48">
-                  {label}
-                </span>
-              </button>
-            ))}
-          </div>
         </div>
 
 
-        {/* ═══════════════════════════════════════════════════════════
-            ZONE B + C
-            ═══════════════════════════════════════════════════════════ */}
+        {/* ── Two-column: Presence + Freshness/Setup ───────────────── */}
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
 
-          {/* ── ZONE B — Presence ─────────────────────────────────── */}
+          {/* ── Presence ──────────────────────────────────────────────── */}
           <div className="rounded-xl border border-white/[0.07] bg-card/35 transition-colors duration-150 hover:border-white/[0.10]">
-
-            {/* Publishing status */}
             <div className="px-5 pb-3.5 pt-5">
               <span className="mb-3.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Presence</span>
               <div className="space-y-3">
                 {[
-                  {
-                    label: "Profile",
-                    ok: artist.isPublished,
-                    status: artist.isPublished ? "Live" : "Draft",
-                    detail: artist.isPublished ? profileUrl : null,
-                    section: "publish",
-                  },
-                  {
-                    label: "Domain",
-                    ok: hasActiveDomain,
-                    status: hasActiveDomain ? "Connected" : "—",
-                    detail: activeDomainName ?? null,
-                    section: "domain",
-                  },
-                  {
-                    label: "Press Kit",
-                    ok: hasPressKit,
-                    status: hasPressKit ? "Published" : "Off",
-                    detail: null,
-                    section: "press-kit",
-                  },
-                  {
-                    label: "Booking",
-                    ok: hasBooking,
-                    status: hasBooking ? "Active" : "—",
-                    detail: hasBooking ? artist.bookingInfo.email : null,
-                    section: "booking",
-                  },
+                  { label: "Profile",   ok: artist.isPublished, status: artist.isPublished ? "Live" : "Draft", detail: artist.isPublished ? profileUrl : null, section: "publish" },
+                  { label: "Domain",    ok: hasActiveDomain,    status: hasActiveDomain ? "Connected" : "—",   detail: activeDomainName ?? null,               section: "domain" },
+                  { label: "Press Kit", ok: hasPressKit,        status: hasPressKit ? "Published" : "Off",      detail: null,                                  section: "press-kit" },
+                  { label: "Booking",   ok: hasBooking,         status: hasBooking ? "Active" : "—",            detail: hasBooking ? artist.bookingInfo.email : null, section: "booking" },
                 ].map(({ label, ok, status, detail, section }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setActiveSection(section)}
-                    className="group flex w-full items-baseline gap-3 text-left transition-colors"
-                  >
-                    <span className="w-[68px] shrink-0 text-[11px] text-muted-foreground/35">
-                      {label}
-                    </span>
-                    <span className={`text-[13px] font-semibold ${ok ? "text-accent/80" : "text-muted-foreground/22"}`}>
-                      {status}
-                    </span>
-                    {detail && (
-                      <span className="min-w-0 truncate font-mono text-[11px] text-muted-foreground/20 transition-colors group-hover:text-muted-foreground/35">
-                        {detail}
-                      </span>
-                    )}
+                  <button key={label} type="button" onClick={() => setActiveSection(section)} className="group flex w-full items-baseline gap-3 text-left transition-colors">
+                    <span className="w-[68px] shrink-0 text-[11px] text-muted-foreground/35">{label}</span>
+                    <span className={`text-[13px] font-semibold ${ok ? "text-accent/80" : "text-muted-foreground/22"}`}>{status}</span>
+                    {detail && <span className="min-w-0 truncate font-mono text-[11px] text-muted-foreground/20 transition-colors group-hover:text-muted-foreground/35">{detail}</span>}
                   </button>
                 ))}
               </div>
@@ -2047,11 +2029,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <span className="mb-3 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/25">Latest</span>
                 <div className="space-y-3">
                   {latestRelease && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("releases")}
-                      className="group flex w-full items-center gap-3.5 text-left transition-colors"
-                    >
+                    <button type="button" onClick={() => setActiveSection("releases")} className="group flex w-full items-center gap-3.5 text-left transition-colors">
                       <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-secondary/50 ring-1 ring-white/[0.06]">
                         {latestRelease.artworkUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -2063,28 +2041,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[14px] font-semibold text-foreground/75 transition-colors group-hover:text-foreground">{latestRelease.title}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground/30">
-                          {latestRelease.releaseType
-                            ? latestRelease.releaseType.charAt(0).toUpperCase() + latestRelease.releaseType.slice(1)
-                            : (latestRelease.type || "Release")}
+                          {latestRelease.releaseType ? latestRelease.releaseType.charAt(0).toUpperCase() + latestRelease.releaseType.slice(1) : (latestRelease.type || "Release")}
                           {latestRelease.label ? ` · ${latestRelease.label}` : ""}
                         </p>
                       </div>
                     </button>
                   )}
                   {latestSet && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("sets")}
-                      className="group flex w-full items-center gap-3.5 text-left transition-colors"
-                    >
+                    <button type="button" onClick={() => setActiveSection("sets")} className="group flex w-full items-center gap-3.5 text-left transition-colors">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary/50 ring-1 ring-white/[0.06]">
                         <Headphones className="h-4 w-4 text-muted-foreground/20" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[14px] font-semibold text-foreground/75 transition-colors group-hover:text-foreground">{latestSet.title}</p>
-                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground/30">
-                          {[latestSet.event, latestSet.venue].filter(Boolean).join(" · ") || "Set"}
-                        </p>
+                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground/30">{[latestSet.event, latestSet.venue].filter(Boolean).join(" · ") || "Set"}</p>
                       </div>
                     </button>
                   )}
@@ -2094,69 +2064,62 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
 
 
-          {/* ── ZONE C — Setup ────────────────────────────────────── */}
-          <div className={cn(
-            "rounded-xl border border-white/[0.07] bg-card/35 transition-colors duration-150 hover:border-white/[0.10]",
-            isAllSet ? "p-4" : "p-5",
-          )}>
-            {isAllSet ? (
-              /* Compact success state */
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/[0.12]">
-                    <Check className="h-3 w-3 text-accent" />
-                  </div>
-                  <span className="text-[13px] font-medium text-foreground/55">Artist setup complete</span>
+          {/* ── Right column: Freshness (when setup complete) or Setup ── */}
+          <div className="space-y-3">
+
+            {/* Freshness — replaces Setup when all set */}
+            {isAllSet && freshness.length > 0 && (
+              <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5 transition-colors duration-150 hover:border-white/[0.10]">
+                <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Freshness</span>
+                <div className="space-y-2">
+                  {freshness.map(({ label, age, section }) => (
+                    <button key={label} type="button" onClick={() => setActiveSection(section)} className="group flex w-full items-center justify-between py-0.5 text-left transition-colors">
+                      <span className="text-[12px] text-muted-foreground/42 transition-colors group-hover:text-foreground/55">{label}</span>
+                      <span className={`font-mono text-[11px] tabular-nums ${age > 90 ? "text-muted-foreground/50" : "text-muted-foreground/28"}`}>
+                        {formatAge(age)}
+                      </span>
+                    </button>
+                  ))}
                 </div>
-                <span className="font-mono text-[11px] text-muted-foreground/25">{readinessDone}/{readinessItems.length}</span>
               </div>
-            ) : (
-              <>
+            )}
+
+            {/* Setup — only when incomplete */}
+            {!isAllSet && (
+              <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5 transition-colors duration-150 hover:border-white/[0.10]">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Setup</span>
-                  <span className="font-mono text-[11px] font-bold tabular-nums text-muted-foreground/28">
-                    {readinessDone}/{readinessItems.length}
-                  </span>
+                  <span className="font-mono text-[11px] font-bold tabular-nums text-muted-foreground/28">{readinessDone}/{readinessItems.length}</span>
                 </div>
                 <div className="mb-3.5 h-[2px] overflow-hidden rounded-full bg-white/[0.06]">
                   <div className="h-full rounded-full bg-accent/55 transition-all duration-700" style={{ width: `${readinessPct}%` }} />
                 </div>
                 <div className="space-y-px">
                   {readinessItems.map(({ label, done, section, action }) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => setActiveSection(section)}
-                      className="group flex w-full items-center gap-2.5 rounded-md px-1 py-[5px] text-left transition-colors hover:bg-white/[0.02]"
-                    >
-                      <span className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${
-                        done ? "border-accent/30 bg-accent/[0.12]" : "border-white/[0.10]"
-                      }`}>
+                    <button key={label} type="button" onClick={() => setActiveSection(section)} className="group flex w-full items-center gap-2.5 rounded-md px-1 py-[5px] text-left transition-colors hover:bg-white/[0.02]">
+                      <span className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${done ? "border-accent/30 bg-accent/[0.12]" : "border-white/[0.10]"}`}>
                         {done && <Check className="h-2 w-2 text-accent" />}
                       </span>
-                      <span className={`flex-1 text-[12px] ${done ? "text-foreground/48" : "text-muted-foreground/40"}`}>
-                        {label}
-                      </span>
-                      {!done && (
-                        <span className="text-[10px] font-medium text-accent/40 opacity-0 transition-opacity group-hover:opacity-100">
-                          {action} →
-                        </span>
-                      )}
+                      <span className={`flex-1 text-[12px] ${done ? "text-foreground/48" : "text-muted-foreground/40"}`}>{label}</span>
+                      {!done && <span className="text-[10px] font-medium text-accent/40 opacity-0 transition-opacity group-hover:opacity-100">{action} →</span>}
                     </button>
                   ))}
                 </div>
-                {topPriority && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection(topPriority.section)}
-                    className="mt-3 flex w-full items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.015] px-3 py-2 text-left transition-all duration-150 hover:border-accent/18 hover:bg-accent/[0.02]"
-                  >
-                    <span className="text-[12px] font-semibold text-foreground/65">{topPriority.action} {topPriority.label.toLowerCase().replace(/^.+ /, "")}</span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground/18" />
-                  </button>
-                )}
-              </>
+              </div>
             )}
+
+            {/* Suggested action — single, contextual */}
+            {suggestion && (
+              <button
+                type="button"
+                onClick={() => setActiveSection(suggestion.section)}
+                className="group flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-card/35 px-5 py-3.5 text-left transition-all duration-150 hover:border-accent/18 hover:bg-accent/[0.02]"
+              >
+                <span className="text-[12px] font-semibold text-foreground/62 transition-colors group-hover:text-foreground/80">{suggestion.label}</span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/18 transition-all group-hover:translate-x-0.5 group-hover:text-accent/60" />
+              </button>
+            )}
+
           </div>
 
         </div>
@@ -6428,7 +6391,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   : "bg-white/[0.04] text-muted-foreground/58 hover:bg-white/[0.06] hover:text-foreground/80"
               }`}
             >
-              Overview
+              Home
             </button>
             {navGroups.flatMap((group) => group.items).map((item) => (
             <button
@@ -6450,7 +6413,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="flex gap-8">
           <aside className="hidden w-[224px] shrink-0 lg:block">
             <nav className="sticky top-[72px] space-y-4">
-              {/* Overview */}
+              {/* Home */}
               <button
                 type="button"
                 aria-pressed={activeSection === "home"}
@@ -6465,7 +6428,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <span className="absolute inset-y-1 left-0 w-[3px] rounded-r-full bg-accent" />
                 )}
                 <Layers className={`h-[14px] w-[14px] shrink-0 ${activeSection === "home" ? "text-accent/80" : "text-muted-foreground/30"}`} />
-                Overview
+                Home
               </button>
               <div className="h-px bg-white/[0.04]" />
               {navGroups.map((group) => (
