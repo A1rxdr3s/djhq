@@ -761,20 +761,22 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               sizes="100vw"
               className="object-cover saturate-[0.93] contrast-[1.08] brightness-[0.82]"
             />
-            {/* ── Three-zone gradient composition ─────────────────────────────────
-                Zone 1 (top): Strong vignette frames the logo area and gives it depth.
-                              The logo sits in a darkened zone — it reads against the image.
-                Zone 2 (edges): Elliptical vignette focuses the eye on the center scene.
-                Zone 3 (bottom): Smooth atmospheric lift that dissolves into the card area.
-                Zone 4 (accent): Warm tonal accent at lower-left for brand character.
-                Zone 5 (film grade): Uniform dark base — prevents bright patches, adds depth.
+            {/* ── Cinematic gradient composition — poster / editorial style ─────────
+                Zone 1 (top):    Vignette — frames the logo zone.
+                Zone 2 (edges):  Elliptical vignette — focuses composition on center.
+                Zone 3 (bottom): Strong vertical lift — text sits directly on image.
+                Zone 3b (left):  Horizontal pull — darkens the text side, image open on right.
+                Zone 4 (accent): Brand glow at lower-left.
+                Zone 5 (grade):  Film-grade uniform darkening.
                 ─────────────────────────────────────────────────────────────────────── */}
             {/* Zone 1 — top vignette: creates darkness in the logo zone */}
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.72)_0%,_hsl(var(--background)/0.22)_28%,_transparent_52%)]" />
             {/* Zone 2 — edge vignette: focuses composition on the center, darkens periphery */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_130%_100%_at_50%_0%,_transparent_40%,_hsl(var(--background)/0.38)_100%)]" />
-            {/* Zone 3 — bottom atmosphere: smooth gradient from scene into card zone */}
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,_hsl(var(--background)/0.98)_0%,_hsl(var(--background)/0.70)_18%,_hsl(var(--background)/0.35)_38%,_hsl(var(--background)/0.08)_58%,_transparent_72%)]" />
+            {/* Zone 3 — cinematic bottom lift: text sits directly on the image */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0) 70%)" }} />
+            {/* Zone 3b — left atmospheric pull: darkens left side for text readability */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0) 80%)" }} />
             {/* Zone 4 — accent atmosphere: warm accent glow for brand character */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.09),_transparent_42%)]" />
             {/* Zone 5 — film grade: uniform subtle darkening prevents image from feeling raw */}
@@ -828,38 +830,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 border-t border-white/[0.05] px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
-              {/* Atmospheric fog — emerges from the left, dissolves into the image on the right.
-                  Two-layer approach: the blur div blurs the hero behind it; the gradient div
-                  applies the dark→transparent color overlay independently so both can be masked
-                  cleanly without one affecting the other's alpha. */}
-              {/* Layer A: backdrop blur, masked left→right so blur fades with the panel */}
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  maskImage: "linear-gradient(90deg, black 0%, black 38%, transparent 78%)",
-                  WebkitMaskImage: "linear-gradient(90deg, black 0%, black 38%, transparent 78%)",
-                }}
-              />
-              {/* Layer B: horizontal color gradient — left dark, right transparent */}
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background: "linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.45) 48%, rgba(0,0,0,0) 100%)",
-                }}
-              />
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
 
-              <div className={cn(
-                "relative",
-                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.05] bg-black/[0.10] px-4 py-3 backdrop-blur-[2.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.05)] sm:px-5 sm:py-3",
-                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.18] px-4 py-3 backdrop-blur-[3px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-3",
-              )}>
-                {/* Subtle vertical gradient inside the surface — improves readability without a card look */}
-                {contentSurface !== "none" && (
-                  <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-white/[0.05] to-transparent" />
-                )}
+              <div className="relative">
 
                 {/* Genre chips — above logo, photo-safe overlay style */}
                 {artist.genres.length > 0 && (
