@@ -60,36 +60,37 @@ function Nav() {
 
   return (
     <nav
-      className="fixed inset-x-0 top-0 z-50 transition-all duration-200"
+      className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
       style={{
-        background: solid ? "rgba(8,8,8,0.88)" : "transparent",
-        backdropFilter: solid ? "blur(20px) saturate(180%)" : "none",
-        WebkitBackdropFilter: solid ? "blur(20px) saturate(180%)" : "none",
-        borderBottom: solid ? "1px solid rgba(255,255,255,0.07)" : "none",
+        background: solid ? "rgba(6,6,6,0.90)" : "transparent",
+        backdropFilter: solid ? "blur(24px) saturate(180%)" : "none",
+        WebkitBackdropFilter: solid ? "blur(24px) saturate(180%)" : "none",
+        borderBottom: solid ? "1px solid rgba(255,255,255,0.06)" : "none",
       }}
     >
-      <div className="mx-auto flex h-[52px] max-w-6xl items-center justify-between px-5">
+      <div className="mx-auto flex h-[56px] max-w-6xl items-center justify-between px-5">
 
         {/* Left — wordmark */}
         <Link
           href="/"
-          className="text-[14px] font-bold tracking-[0.01em] text-white transition-opacity duration-150 hover:opacity-80"
+          className="text-[14px] font-bold tracking-[0.01em] text-white/90 transition-opacity duration-150 hover:text-white"
         >
           {brand.name}
         </Link>
 
-        {/* Center — primary nav links (desktop only) */}
-        <div className="hidden items-center gap-7 md:flex">
+        {/* Center — four primary links (desktop only) */}
+        <div className="hidden items-center gap-8 md:flex">
           {[
-            { label: "Features", href: "#features" },
-            { label: "Pricing",  href: "#pricing" },
-            { label: "Examples", href: "/andresherrera" },
+            { label: "Features",  href: "#features" },
+            { label: "Press Kit", href: "#press-kit" },
+            { label: "Pricing",   href: "#pricing" },
+            { label: "Examples",  href: "/andresherrera" },
           ].map(({ label, href }) =>
             href.startsWith("/") ? (
               <Link
                 key={label}
                 href={href}
-                className="text-[13px] text-white/45 transition-colors duration-150 hover:text-white/80"
+                className="text-[13px] font-medium text-white/40 transition-colors duration-150 hover:text-white/80"
               >
                 {label}
               </Link>
@@ -97,7 +98,7 @@ function Nav() {
               <a
                 key={label}
                 href={href}
-                className="text-[13px] text-white/45 transition-colors duration-150 hover:text-white/80"
+                className="text-[13px] font-medium text-white/40 transition-colors duration-150 hover:text-white/80"
               >
                 {label}
               </a>
@@ -105,20 +106,30 @@ function Nav() {
           )}
         </div>
 
-        {/* Right — auth actions */}
-        <div className="flex items-center gap-3">
+        {/* Right — auth + primary CTA */}
+        <div className="flex items-center gap-4">
           <Link
             href="/sign-in"
-            className="hidden text-[13px] font-medium text-white/45 transition-colors duration-150 hover:text-white/75 sm:block"
+            className="hidden text-[13px] font-medium text-white/40 transition-colors duration-150 hover:text-white/75 sm:block"
           >
             Log in
           </Link>
-          <Link
-            href="/sign-in"
-            className="rounded-full bg-white px-4 py-1.5 text-[13px] font-semibold text-black transition-all duration-150 hover:bg-white/90"
-          >
-            Get Started
-          </Link>
+
+          {/* CTA with trust signal */}
+          <div className="flex flex-col items-end">
+            <Link
+              href="/sign-in"
+              className="rounded-full bg-white px-4 py-[7px] text-[13px] font-semibold text-black transition-all duration-150 hover:bg-white/90 hover:shadow-[0_0_20px_rgba(255,255,255,0.12)]"
+            >
+              Start Free
+            </Link>
+            <span
+              className="mt-0.5 hidden font-mono text-[9px] sm:block"
+              style={{ color: "rgba(255,255,255,0.22)" }}
+            >
+              No card needed
+            </span>
+          </div>
         </div>
 
       </div>
@@ -158,6 +169,60 @@ function Hero() {
       <div className="pointer-events-none absolute inset-0" style={{
         background: "radial-gradient(ellipse at center, transparent 38%, rgba(8,8,8,0.42) 100%)"
       }} />
+
+      {/* ── Floating press kit product panel — right side, desktop only ──────── */}
+      <div
+        className="pointer-events-none absolute bottom-0 right-8 top-0 z-20 hidden lg:flex lg:items-center xl:right-16"
+        style={{ animation: "hp-fade-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.40s both" }}
+      >
+        <div
+          className="w-[220px] overflow-hidden rounded-[20px]"
+          style={{
+            background: "rgba(8,8,8,0.68)",
+            border: "1px solid rgba(255,255,255,0.11)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            boxShadow: "0 20px 48px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06) inset",
+          }}
+        >
+          {/* EPK header */}
+          <div className="border-b px-4 py-3" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+            <p className="font-mono text-[7.5px] font-semibold uppercase tracking-[0.24em]" style={{ color: "rgba(0,230,167,0.55)" }}>
+              Electronic Press Kit
+            </p>
+            <p className="mt-0.5 text-[13px] font-black tracking-[-0.01em] text-white">NOA VEGA</p>
+            <p className="font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.30)" }}>House · Techno · Berlin</p>
+          </div>
+          {/* PDF downloads */}
+          <div className="grid grid-cols-2 gap-1.5 p-2.5">
+            {[{ flag: "🇬🇧", lang: "ENG", size: "4.2 MB" }, { flag: "🇪🇸", lang: "ESP", size: "3.8 MB" }].map((d) => (
+              <div
+                key={d.lang}
+                className="rounded-xl p-2.5"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+              >
+                <span className="text-[15px] leading-none">{d.flag}</span>
+                <p className="mt-2 text-[9.5px] font-semibold text-white/85">Press Kit {d.lang}</p>
+                <p className="font-mono text-[8px]" style={{ color: "rgba(255,255,255,0.28)" }}>PDF · {d.size}</p>
+                <p className="mt-1.5 font-mono text-[8px] font-semibold" style={{ color: "#00E6A7" }}>Download ↗</p>
+              </div>
+            ))}
+          </div>
+          {/* Asset folders */}
+          <div className="border-t px-2.5 pb-2.5 pt-2" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            {["Press Photos", "Technical Rider", "Logos & Artwork"].map((f) => (
+              <div
+                key={f}
+                className="mb-1 flex items-center justify-between rounded-lg px-2.5 py-1.5"
+                style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.05)" }}
+              >
+                <span className="text-[9.5px] font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>{f}</span>
+                <span className="font-mono text-[8px] font-semibold" style={{ color: "rgba(0,230,167,0.70)" }}>Open ↗</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* ── Copy — editorial positioning in lower-left ─────────────────────── */}
       <div className="relative z-10 flex min-h-[100dvh] items-end px-5 pb-14 sm:px-8 sm:pb-20 lg:px-12 lg:pb-24">
@@ -308,21 +373,15 @@ function SocialProofSection() {
 
         <Reveal>
           <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: "#52525B" }}>
-            Where working artists belong
+            Industry presence
           </p>
         </Reveal>
         <Reveal delay={50}>
-          <h2 className="mb-3 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
-            Artists using DJHQ have played:
+          <h2 className="mb-6 text-[clamp(26px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.025em] text-[#F5F5F3]">
+            Artists using DJHQ perform at:
           </h2>
         </Reveal>
         <Reveal delay={100}>
-          <p className="mb-12 text-[15px]" style={{ color: "#52525B" }}>
-            Their artists book shows with credibility. So can you.
-          </p>
-        </Reveal>
-
-        <Reveal delay={150}>
           <div className="flex flex-wrap gap-2">
             {venues.map((v) => (
               <span
@@ -708,7 +767,7 @@ function PricingSection() {
                     className="mb-4 inline-flex w-fit rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em]"
                     style={{ background: "rgba(0,230,167,0.12)", color: "#00E6A7" }}
                   >
-                    Most popular
+                    Most chosen by touring artists
                   </span>
                 )}
                 <p className="text-[14px] font-semibold text-white/80 mb-1">{plan.name}</p>
@@ -748,9 +807,14 @@ function PricingSection() {
         </div>
 
         <Reveal delay={280}>
-          <p className="mt-6 text-center font-mono text-[11px]" style={{ color: "#3F3F46" }}>
-            No credit card required for Free plan. Cancel Pro anytime.
-          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-6">
+            {["No contracts", "Cancel anytime", "Setup in minutes"].map((t) => (
+              <div key={t} className="flex items-center gap-1.5">
+                <span className="h-1 w-1 rounded-full" style={{ background: "rgba(0,230,167,0.40)" }} />
+                <span className="font-mono text-[11px]" style={{ color: "#52525B" }}>{t}</span>
+              </div>
+            ))}
+          </div>
         </Reveal>
 
       </div>
@@ -762,7 +826,7 @@ function PricingSection() {
 
 function FeaturedArtistSection() {
   return (
-    <section style={{ background: "#0B0F14", padding: "80px 0" }}>
+    <section style={{ background: "#0B0F14", padding: "80px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
       <div className="mx-auto max-w-5xl px-6">
 
         <Reveal>
@@ -888,7 +952,7 @@ function ClosingCTA() {
               className="flex h-12 items-center gap-2.5 rounded-full px-8 text-[15px] font-semibold text-[#0A1410] transition-all duration-150 hover:bg-[#00D49A]"
               style={{ background: "#00E6A7" }}
             >
-              Get Started Free
+              Start Free
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
@@ -912,23 +976,71 @@ function ClosingCTA() {
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
 function Footer() {
+  const linkClass = "font-mono text-[12px] transition-colors duration-150 hover:text-white/60"
+  const linkStyle = { color: "#3F3F46" }
+  const colHeadClass = "mb-4 font-mono text-[10px] font-semibold uppercase tracking-[0.18em]"
+  const colHeadStyle = { color: "#52525B" }
+
   return (
-    <footer style={{ background: "#090C11", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "32px 0" }}>
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6">
-        <div className="flex items-center gap-6">
-          <span className="text-[13px] font-bold tracking-[0.02em]" style={{ color: "rgba(245,245,243,0.28)" }}>{brand.name}</span>
-          <a href="#features" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>Features</a>
-          <a href="#pricing" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>Pricing</a>
-          <Link href="/andresherrera/presskit" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>Example</Link>
+    <footer style={{ background: "#090C11", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="mx-auto max-w-5xl px-6">
+
+        {/* Column grid */}
+        <div className="grid grid-cols-2 gap-8 py-12 sm:grid-cols-4">
+
+          {/* Brand + positioning */}
+          <div className="col-span-2 sm:col-span-1">
+            <span className="text-[14px] font-bold tracking-[0.01em]" style={{ color: "rgba(245,245,243,0.35)" }}>
+              {brand.name}
+            </span>
+            <p className="mt-3 text-[12px] leading-[1.6]" style={{ color: "#3F3F46" }}>
+              The professional standard for electronic music artists.
+            </p>
+          </div>
+
+          {/* Product */}
+          <div>
+            <p className={colHeadClass} style={colHeadStyle}>Product</p>
+            <ul className="space-y-3">
+              <li><a href="#features" className={linkClass} style={linkStyle}>Features</a></li>
+              <li><a href="#press-kit" className={linkClass} style={linkStyle}>Press Kit</a></li>
+              <li><a href="#pricing" className={linkClass} style={linkStyle}>Pricing</a></li>
+            </ul>
+          </div>
+
+          {/* Examples */}
+          <div>
+            <p className={colHeadClass} style={colHeadStyle}>Examples</p>
+            <ul className="space-y-3">
+              <li><Link href="/andresherrera" className={linkClass} style={linkStyle}>Artist Profile</Link></li>
+              <li><Link href="/andresherrera/presskit" className={linkClass} style={linkStyle}>Press Kit</Link></li>
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <p className={colHeadClass} style={colHeadStyle}>Company</p>
+            <ul className="space-y-3">
+              <li><Link href="/sign-in" className={linkClass} style={linkStyle}>Log in</Link></li>
+              <li><a href="mailto:hello@djhq.app" className={linkClass} style={linkStyle}>Contact</a></li>
+            </ul>
+          </div>
+
         </div>
-        <div className="flex items-center gap-6">
-          <Link href="/sign-in" className="font-mono text-[11px] transition-colors hover:text-white/60" style={{ color: "#3F3F46" }}>
-            Log in
-          </Link>
+
+        {/* Bottom row */}
+        <div
+          className="flex flex-wrap items-center justify-between gap-4 py-5"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+        >
           <span className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
             © {new Date().getFullYear()} {brand.name}
           </span>
+          <span className="font-mono text-[11px]" style={{ color: "#3F3F46" }}>
+            The professional standard for electronic music artists.
+          </span>
         </div>
+
       </div>
     </footer>
   )
