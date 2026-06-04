@@ -759,28 +759,28 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               priority
               loading="eager"
               sizes="100vw"
-              className="object-cover saturate-[0.93] contrast-[1.08] brightness-[0.82]"
+              className="object-cover saturate-[0.96] contrast-[1.06] brightness-[0.88]"
             />
             {/* ── Cinematic gradient composition — poster / editorial style ─────────
-                Zone 1 (top):    Vignette — frames the logo zone.
-                Zone 2 (edges):  Elliptical vignette — focuses composition on center.
-                Zone 3 (bottom): Strong vertical lift — text sits directly on image.
-                Zone 3b (left):  Horizontal pull — darkens the text side, image open on right.
+                Zone 1 (top):    Soft vignette — logo readable, crowd/lights above breathe.
+                Zone 2 (edges):  Light elliptical frame — subtle, does not crush center.
+                Zone 3 (bottom): Bottom lift — text readable, fast falloff into the scene.
+                Zone 3b (corner): Radial ellipse at bottom-left — behind text only.
                 Zone 4 (accent): Brand glow at lower-left.
-                Zone 5 (grade):  Film-grade uniform darkening.
+                Zone 5 (grade):  Very light film grade — tonal unity without crushing energy.
                 ─────────────────────────────────────────────────────────────────────── */}
-            {/* Zone 1 — top vignette: creates darkness in the logo zone */}
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.72)_0%,_hsl(var(--background)/0.22)_28%,_transparent_52%)]" />
-            {/* Zone 2 — edge vignette: focuses composition on the center, darkens periphery */}
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_130%_100%_at_50%_0%,_transparent_40%,_hsl(var(--background)/0.38)_100%)]" />
+            {/* Zone 1 — top vignette: logo readability without crushing the upper scene */}
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.55)_0%,_hsl(var(--background)/0.14)_26%,_transparent_48%)]" />
+            {/* Zone 2 — edge vignette: subtle periphery framing */}
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_130%_100%_at_50%_0%,_transparent_42%,_hsl(var(--background)/0.22)_100%)]" />
             {/* Zone 3 — cinematic bottom lift: text sits directly on the image */}
-            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0) 70%)" }} />
-            {/* Zone 3b — left atmospheric pull: darkens left side for text readability */}
-            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0) 80%)" }} />
+            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.48) 26%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 66%)" }} />
+            {/* Zone 3b — bottom-left corner ellipse: readability behind text, image open above */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.30) 30%, rgba(0,0,0,0) 60%)" }} />
             {/* Zone 4 — accent atmosphere: warm accent glow for brand character */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.09),_transparent_42%)]" />
-            {/* Zone 5 — film grade: uniform subtle darkening prevents image from feeling raw */}
-            <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(0,0,0,0.16)" }} />
+            {/* Zone 5 — film grade: very light tonal unity — reduced to preserve image energy */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(0,0,0,0.08)" }} />
 
             {/* Floating logo layer — renders before content area in DOM so it sits between
                 gradients and editorial content without requiring explicit z-index changes. */}
@@ -811,7 +811,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {!isFloatingPlacement && (
               <div
                 className="absolute inset-x-0 top-[16%] z-10 flex items-start justify-center px-4 sm:top-[20%]"
-                style={{ filter: "drop-shadow(0 4px 32px rgba(0,0,0,0.70))" }}
+                style={{ filter: "drop-shadow(0 2px 16px rgba(0,0,0,0.65)) drop-shadow(0 0 52px rgba(0,0,0,0.30))" }}
               >
                 <HeroIdentity
                   artistName={artist.artistName}
