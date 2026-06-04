@@ -761,14 +761,24 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               sizes="100vw"
               className="object-cover saturate-[0.93] contrast-[1.08] brightness-[0.82]"
             />
-            {/* Multi-layer gradient system — cinematic depth and separation */}
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
-            <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.52),_transparent_72%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
-            {/* Photo vignette — subtle edge darkening for text contrast */}
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(92deg,_rgba(0,0,0,0.20)_0%,_transparent_50%),linear-gradient(0deg,_rgba(0,0,0,0.18)_0%,_transparent_32%)]" />
+            {/* ── Three-zone gradient composition ─────────────────────────────────
+                Zone 1 (top): Strong vignette frames the logo area and gives it depth.
+                              The logo sits in a darkened zone — it reads against the image.
+                Zone 2 (edges): Elliptical vignette focuses the eye on the center scene.
+                Zone 3 (bottom): Smooth atmospheric lift that dissolves into the card area.
+                Zone 4 (accent): Warm tonal accent at lower-left for brand character.
+                Zone 5 (film grade): Uniform dark base — prevents bright patches, adds depth.
+                ─────────────────────────────────────────────────────────────────────── */}
+            {/* Zone 1 — top vignette: creates darkness in the logo zone */}
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.72)_0%,_hsl(var(--background)/0.22)_28%,_transparent_52%)]" />
+            {/* Zone 2 — edge vignette: focuses composition on the center, darkens periphery */}
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_130%_100%_at_50%_0%,_transparent_40%,_hsl(var(--background)/0.38)_100%)]" />
+            {/* Zone 3 — bottom atmosphere: smooth gradient from scene into card zone */}
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,_hsl(var(--background)/0.98)_0%,_hsl(var(--background)/0.70)_18%,_hsl(var(--background)/0.35)_38%,_hsl(var(--background)/0.08)_58%,_transparent_72%)]" />
+            {/* Zone 4 — accent atmosphere: warm accent glow for brand character */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.09),_transparent_42%)]" />
+            {/* Zone 5 — film grade: uniform subtle darkening prevents image from feeling raw */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(0,0,0,0.16)" }} />
 
             {/* Floating logo layer — renders before content area in DOM so it sits between
                 gradients and editorial content without requiring explicit z-index changes. */}
@@ -797,7 +807,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 Only shown in editorial/non-floating placement; floating placements
                 continue to use the existing hasFloatingLogo layer above. */}
             {!isFloatingPlacement && (
-              <div className="absolute inset-x-0 top-[16%] z-10 flex items-start justify-center px-4 sm:top-[20%]">
+              <div
+                className="absolute inset-x-0 top-[16%] z-10 flex items-start justify-center px-4 sm:top-[20%]"
+                style={{ filter: "drop-shadow(0 4px 32px rgba(0,0,0,0.70))" }}
+              >
                 <HeroIdentity
                   artistName={artist.artistName}
                   heroLogoUrl={artist.heroLogoUrl}
@@ -817,12 +830,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
             <div className="absolute inset-x-0 bottom-0 px-4 pb-10 pt-3 sm:px-8 sm:pb-14 sm:pt-6 lg:px-12 lg:pb-16 lg:pt-8">
               {/* Cinematic content fade — stronger bottom lift */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(90%,580px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.97)_0%,_hsl(var(--background)/0.80)_20%,_hsl(var(--background)/0.55)_40%,_hsl(var(--background)/0.26)_58%,_hsl(var(--background)/0.08)_75%,_transparent_100%)]" />
 
               <div className={cn(
                 "relative",
-                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.14] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-3",
-                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.09] bg-black/[0.22] px-4 py-3 backdrop-blur-[1.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-5 sm:py-3",
+                contentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.05] bg-black/[0.10] px-4 py-3 backdrop-blur-[2.5px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.05)] sm:px-5 sm:py-3",
+                contentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.07] bg-black/[0.18] px-4 py-3 backdrop-blur-[3px] [box-shadow:inset_0_0_60px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-5 sm:py-3",
               )}>
                 {/* Subtle vertical gradient inside the surface — improves readability without a card look */}
                 {contentSurface !== "none" && (
