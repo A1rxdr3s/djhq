@@ -123,6 +123,15 @@ type SaveBookingPayload = {
   pressKitUseGalleryPhotos: boolean
 }
 
+type SaveFooterPayload = {
+  logoUrl?: string | null
+  logoWidth?: number
+  bookingEmail?: string | null
+  newsletterEnabled?: boolean
+  socialsEnabled?: boolean
+  copyright?: string | null
+}
+
 type SaveArtistPayload = {
   artistId: string
   isPublished: boolean
@@ -133,6 +142,7 @@ type SaveArtistPayload = {
   djSets: SaveDjSetPayload[]
   videos: SaveVideoPayload[]
   booking: SaveBookingPayload
+  footer?: SaveFooterPayload
 }
 
 type CreateArtistPayload = {

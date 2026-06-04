@@ -869,18 +869,54 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            {/* Brand cluster — tagline + CTAs share one left-anchored column
-                Logo floats independently at center; this block is the brand statement + action unit */}
-            <div className="absolute bottom-[13%] left-0 z-10 px-6 sm:bottom-[15%] sm:px-10 lg:px-12">
-              {/* Tagline — brand statement, lighter than the logo, supporting role */}
+            {/* Brand cluster — complete artist identity layer, left-anchored
+                Hierarchy: tagline → genre/location → bio → CTAs
+                Logo floats independently at center; everything here supports it */}
+            <div className="absolute bottom-[10%] left-0 z-10 max-w-[min(480px,65vw)] px-6 sm:bottom-[12%] sm:px-10 lg:px-12">
+
+              {/* 1. Tagline — artist statement, prominent but below the logo */}
               {displayHeroTagline && (
                 <p
-                  className="mb-4 max-w-[320px] text-[11px] font-medium uppercase tracking-[0.22em] text-white/58 sm:mb-5 sm:text-[12px]"
-                  style={{ textShadow: "0 1px 6px rgba(0,0,0,0.30)" }}
+                  className="mb-3 text-[12px] font-medium uppercase tracking-[0.20em] text-white/72 sm:mb-3.5 sm:text-[13px]"
+                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.40)" }}
                 >
                   {displayHeroTagline}
                 </p>
               )}
+
+              {/* 2. Genre + Location — editorial metadata */}
+              {(artist.genres.length > 0 || artist.location) && (
+                <div className="mb-2.5 space-y-0.5 sm:mb-3">
+                  {artist.genres.length > 0 && (
+                    <p
+                      className="text-[10px] font-medium uppercase tracking-[0.20em] text-white/48 sm:text-[11px]"
+                      style={{ textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}
+                    >
+                      {artist.genres.join(" • ")}
+                    </p>
+                  )}
+                  {artist.location && (
+                    <p
+                      className="text-[10px] font-medium text-white/38 sm:text-[11px]"
+                      style={{ textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}
+                    >
+                      {artist.location.replace(/\s*\/\s*/g, ", ")}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* 3. Short bio — one line, smaller than tagline */}
+              {artist.shortBio && (
+                <p
+                  className="mb-4 line-clamp-1 text-[12px] font-medium text-white/55 sm:mb-5 sm:text-[13px]"
+                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.35)" }}
+                >
+                  {artist.shortBio}
+                </p>
+              )}
+
+              {/* 4. CTAs — integrated into identity, not floating apart */}
               {(artist.bookingInfo.email.trim() || hasPressKit) ? (
                 <div className="flex items-center gap-3">
                   {artist.bookingInfo.email.trim() ? (
@@ -1459,6 +1495,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             artistHandle={artist.handle}
             heroLogoUrl={artist.heroLogoUrl}
             heroIdentityMode={artist.heroIdentityMode}
+            footerLogoUrl={artist.footerLogoUrl}
+            footerLogoWidth={artist.footerLogoWidth}
+            footerBookingEmail={artist.footerBookingEmail}
+            footerNewsletterEnabled={artist.footerNewsletterEnabled}
+            footerSocialsEnabled={artist.footerSocialsEnabled}
+            footerCopyright={artist.footerCopyright}
           />
         </div>
 

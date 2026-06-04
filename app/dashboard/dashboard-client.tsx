@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowRight, Calendar, Camera, Check, ChevronDown, Disc3, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, MoreVertical, Music, Music2, Play, Plus, Radio, Save, Send, Star, Trash2, User, Wrench, Youtube } from "lucide-react"
+import { ArrowRight, Calendar, Camera, Check, ChevronDown, Disc3, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Star, Trash2, User, Wrench, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -58,6 +58,7 @@ const navGroups: NavGroup[] = [
       { id: "booking", label: "Booking", icon: Mail },
       { id: "press-kit", label: "Press Kit", icon: FileText },
       { id: "domain", label: "Domain", icon: Globe },
+      { id: "footer", label: "Footer", icon: PanelBottom },
     ],
   },
   {
@@ -759,6 +760,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [pressKitPdfEsSize, setPressKitPdfEsSize] = useState(initialArtist.pressKit.pdfEsSize ?? "")
   const [pressKitUseGalleryPhotos, setPressKitUseGalleryPhotos] = useState(initialArtist.pressKit.useGalleryPhotos ?? true)
   const [pressKitAdvancedOpen, setPressKitAdvancedOpen] = useState(false)
+  const [footerLogoUrl, setFooterLogoUrl] = useState(initialArtist.footerLogoUrl ?? "")
+  const [footerLogoWidth, setFooterLogoWidth] = useState(initialArtist.footerLogoWidth ?? 180)
+  const [footerBookingEmail, setFooterBookingEmail] = useState(initialArtist.footerBookingEmail ?? "")
+  const [footerNewsletterEnabled, setFooterNewsletterEnabled] = useState(initialArtist.footerNewsletterEnabled ?? true)
+  const [footerSocialsEnabled, setFooterSocialsEnabled] = useState(initialArtist.footerSocialsEnabled ?? true)
+  const [footerCopyright, setFooterCopyright] = useState(initialArtist.footerCopyright ?? "")
   const [pkExpandedIds, setPkExpandedIds] = useState<Set<string>>(new Set())
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
@@ -876,7 +883,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     pressKitPdfEsSize !== (artist.pressKit.pdfEsSize ?? "") ||
     pressKitUseGalleryPhotos !== (artist.pressKit.useGalleryPhotos ?? true) ||
     pressKitPublicUrl !== (artist.pressKit.publicUrl ?? "")
-  const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isPressKitDirty
+  const isFooterDirty =
+    footerLogoUrl !== (artist.footerLogoUrl ?? "") ||
+    footerLogoWidth !== (artist.footerLogoWidth ?? 180) ||
+    footerBookingEmail !== (artist.footerBookingEmail ?? "") ||
+    footerNewsletterEnabled !== (artist.footerNewsletterEnabled ?? true) ||
+    footerSocialsEnabled !== (artist.footerSocialsEnabled ?? true) ||
+    footerCopyright !== (artist.footerCopyright ?? "")
+
+  const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isPressKitDirty || isFooterDirty
 
   async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
     const savedGenres = genres
@@ -1139,6 +1154,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         pdfEsSize: pressKitPdfEsSize.trim() || undefined,
         useGalleryPhotos: pressKitUseGalleryPhotos,
       },
+      footerLogoUrl: footerLogoUrl || null,
+      footerLogoWidth,
+      footerBookingEmail: footerBookingEmail || null,
+      footerNewsletterEnabled,
+      footerSocialsEnabled,
+      footerCopyright: footerCopyright || null,
       updatedAt: new Date().toISOString(),
     }
 
@@ -5949,6 +5970,147 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
+  function renderFooterBranding() {
+    const year = new Date().getFullYear()
+    const effectiveCopyright = footerCopyright.trim() || `© ${year} ${artist.artistName}`
+    const previewLogoUrl = footerLogoUrl.trim() || artist.heroLogoUrl || null
+    const previewBookingEmail = footerBookingEmail.trim() || artist.bookingInfo.email
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Footer</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">
+            Configure the visual identity and content of your profile footer.
+          </p>
+        </div>
+
+        {/* Live preview */}
+        <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/30">Preview</p>
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            {previewLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewLogoUrl}
+                alt={artist.artistName}
+                style={{ maxWidth: `${footerLogoWidth}px` }}
+                className="max-h-[80px] object-contain opacity-80"
+              />
+            ) : (
+              <p className="text-[1.2rem] font-black tracking-[-0.02em] text-foreground/70">{artist.artistName}</p>
+            )}
+            {footerSocialsEnabled && (
+              <p className="text-[11px] text-muted-foreground/35">Social icons row</p>
+            )}
+            {previewBookingEmail && (
+              <p className="text-[12px] text-muted-foreground/45">{previewBookingEmail}</p>
+            )}
+            {footerNewsletterEnabled && (
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/28">Stay Connected · newsletter form</p>
+            )}
+            <p className="text-[10px] text-muted-foreground/22">{effectiveCopyright}</p>
+          </div>
+        </div>
+
+        {/* Footer Logo URL */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+            Footer Logo URL
+          </label>
+          <Input
+            type="url"
+            value={footerLogoUrl}
+            onChange={(e) => setFooterLogoUrl(e.target.value)}
+            placeholder="https://your-logo-url.com/logo.svg"
+            className="font-mono text-[13px]"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground/40">
+            Paste the URL of your footer logo (monogram or symbol). Leave empty to use your hero logo.
+          </p>
+        </div>
+
+        {/* Footer Logo Width */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+              Logo Width
+            </label>
+            <span className="font-mono text-[12px] text-foreground/60">{footerLogoWidth}px</span>
+          </div>
+          <input
+            type="range"
+            min={80}
+            max={400}
+            step={10}
+            value={footerLogoWidth}
+            onChange={(e) => setFooterLogoWidth(Number(e.target.value))}
+            className="mt-3 w-full accent-accent"
+          />
+          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground/28">
+            <span>80px</span><span>400px</span>
+          </div>
+        </div>
+
+        {/* Footer Booking Email */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+            Footer Booking Email
+          </label>
+          <Input
+            type="email"
+            value={footerBookingEmail}
+            onChange={(e) => setFooterBookingEmail(e.target.value)}
+            placeholder={artist.bookingInfo.email || "booking@example.com"}
+            className="text-[13px]"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground/40">
+            Optional. Overrides your main booking email in the footer only.
+          </p>
+        </div>
+
+        {/* Footer Copyright */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+            Copyright Line
+          </label>
+          <Input
+            value={footerCopyright}
+            onChange={(e) => setFooterCopyright(e.target.value)}
+            placeholder={`© ${year} ${artist.artistName}`}
+            className="text-[13px]"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground/40">
+            Optional. Defaults to &ldquo;© {year} {artist.artistName}&rdquo;.
+          </p>
+        </div>
+
+        {/* Toggles */}
+        <div className="space-y-3">
+          {[
+            { label: "Show social icons",    value: footerSocialsEnabled,    set: setFooterSocialsEnabled    },
+            { label: "Show newsletter form", value: footerNewsletterEnabled, set: setFooterNewsletterEnabled },
+          ].map(({ label, value, set }) => (
+            <div key={label} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-card/30 px-5 py-3.5">
+              <span className="text-[13px] text-foreground/75">{label}</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={value}
+                onClick={() => set(!value)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
+                  value ? "bg-accent" : "bg-secondary/60"
+                }`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${value ? "translate-x-4" : "translate-x-0.5"}`} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   function renderCustomDomain() {
     const isPro = artist.plan === "pro"
 
@@ -6262,6 +6424,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderPressKit()
       case "domain":        // renamed from "custom-domain"
         return renderCustomDomain()
+      case "footer":
+        return renderFooterBranding()
       case "publish":
         return renderPublish()
       default:
