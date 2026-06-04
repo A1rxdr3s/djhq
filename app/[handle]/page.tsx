@@ -738,7 +738,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {/* Top readability gradient — supports nav contrast without visible overlay */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[160px]"
-          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.30) 55%, rgba(0,0,0,0) 100%)" }}
+          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.24) 55%, rgba(0,0,0,0) 100%)" }}
         />
 
         {/* Artist-website navigation — integrated into hero */}
@@ -849,8 +849,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 continue to use the existing hasFloatingLogo layer above. */}
             {!isFloatingPlacement && (
               <div
-                className="absolute inset-x-0 top-[18%] z-10 flex items-start justify-center px-4 sm:top-[22%]"
-                style={{ filter: "drop-shadow(0 2px 16px rgba(0,0,0,0.65)) drop-shadow(0 0 52px rgba(0,0,0,0.30))" }}
+                className="absolute inset-x-0 top-[22%] z-10 flex items-start justify-center px-4 sm:top-[26%]"
+                style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}
               >
                 <HeroIdentity
                   artistName={artist.artistName}
@@ -870,7 +870,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             )}
 
             {/* CTA block — left-anchored for editorial asymmetry: logo anchors center, CTAs anchor bottom-left */}
-            <div className="absolute bottom-[10%] left-0 z-10 px-6 sm:bottom-[12%] sm:px-10 lg:px-12">
+            <div className="absolute bottom-[13%] left-0 z-10 px-6 sm:bottom-[15%] sm:px-10 lg:px-12">
               {(artist.bookingInfo.email.trim() || hasPressKit) ? (
                 <div className="flex items-center gap-3">
                   {artist.bookingInfo.email.trim() ? (
