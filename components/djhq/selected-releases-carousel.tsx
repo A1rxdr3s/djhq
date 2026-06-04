@@ -121,7 +121,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
     >
       <div
         ref={scrollRef}
-        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pl-4 select-none [scrollbar-width:none] sm:gap-4 sm:pl-6 lg:pl-0 [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 pl-4 select-none [scrollbar-width:none] sm:gap-5 sm:pl-6 lg:pl-0 [&::-webkit-scrollbar]:hidden"
         style={{ cursor: "grab" }}
       >
         {items.map((release, i) => {
@@ -140,7 +140,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
             <article
               key={`${release.id}-${i}`}
               aria-hidden={isClone}
-              className="w-[min(72vw,200px)] shrink-0 snap-start sm:w-[200px] lg:w-[200px]"
+              className="w-[min(72vw,240px)] shrink-0 snap-start sm:w-[240px] lg:w-[240px]"
             >
               {/* Artwork with hover lift + overlay */}
               <div className="group relative aspect-square overflow-hidden rounded-2xl border border-white/[0.06] bg-secondary shadow-md shadow-black/30 transition-all duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-accent/40 hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
@@ -191,17 +191,17 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                   </div>
                 )}
 
-                <h3 className="text-balance text-sm font-bold leading-tight text-foreground">
+                <h3 className="text-balance text-[15px] font-bold leading-tight text-foreground">
                   {release.title}
                 </h3>
 
-                <p className="mt-0.5 text-[12px] text-white/55 line-clamp-1">{release.credits ?? ""}</p>
+                <p className="mt-0.5 text-[13px] text-white/55 line-clamp-1">{release.credits ?? ""}</p>
 
-                <p className="mt-1.5 line-clamp-1 text-[9px] uppercase tracking-[0.18em] text-white/35">
+                <p className="mt-2 line-clamp-1 text-[10px] uppercase tracking-[0.18em] text-white/35">
                   {release.label}
                 </p>
                 {releaseYear && (
-                  <p className="mt-1 text-xs tracking-[0.12em] text-white/25">
+                  <p className="mt-1 text-[11px] tracking-[0.12em] text-white/25">
                     {releaseYear}
                   </p>
                 )}

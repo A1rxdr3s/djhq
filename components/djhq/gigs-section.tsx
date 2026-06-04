@@ -66,7 +66,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 rounded-xl px-2 py-2 xl:px-3 xl:py-3",
+        "group flex items-center gap-3.5 rounded-xl px-2.5 py-3 xl:px-4 xl:py-4",
         "border transition-colors duration-200",
         isNext
           ? "border-accent/25 bg-accent/[0.04] hover:bg-accent/[0.06]"
@@ -78,7 +78,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
       {/* Date tile */}
       <div
         className={cn(
-          "flex h-14 w-11 lg:h-[3.75rem] lg:w-12 xl:h-[4rem] xl:w-[3.25rem] shrink-0 flex-col items-center justify-center rounded-lg border",
+          "flex h-16 w-[3rem] lg:h-[4.5rem] lg:w-[3.25rem] xl:h-[4.75rem] xl:w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl border",
           isPast
             ? "border-white/[0.04] bg-transparent"
             : isNext
@@ -88,7 +88,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
       >
         <span
           className={cn(
-            "text-xl lg:text-2xl xl:text-[1.625rem] font-black leading-none tracking-tight",
+            "text-2xl lg:text-[1.75rem] xl:text-[2rem] font-black leading-none tracking-tight",
             isPast ? "text-foreground/22" : "text-foreground/82",
           )}
         >
@@ -96,7 +96,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         </span>
         <span
           className={cn(
-            "mt-0.5 text-[7px] font-bold uppercase tracking-[0.18em]",
+            "mt-0.5 text-[8px] font-bold uppercase tracking-[0.18em]",
             isPast ? "text-muted-foreground/18" : "text-accent/60",
           )}
         >
@@ -109,7 +109,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         <div className="flex min-w-0 items-center gap-2">
           <p
             className={cn(
-              "min-w-0 truncate text-sm xl:text-[15px] font-semibold uppercase leading-tight tracking-[0.04em]",
+              "min-w-0 truncate text-[15px] xl:text-[17px] font-semibold uppercase leading-tight tracking-[0.04em]",
               isPast ? "text-foreground/30" : "text-foreground/92",
             )}
           >

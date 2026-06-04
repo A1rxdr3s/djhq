@@ -155,7 +155,7 @@ export function GallerySection({ images }: GallerySectionProps) {
     <>
       {/* ── Masonry grid ─────────────────────────────────────────────────── */}
       <div
-        className="mt-4 grid grid-cols-[11fr_9fr] grid-rows-2 gap-2.5 sm:gap-3 lg:mt-5 lg:h-[590px] xl:h-[650px] lg:grid-rows-[1fr_1fr]"
+        className="mt-4 grid grid-cols-[11fr_9fr] grid-rows-2 gap-3 sm:gap-3.5 lg:mt-5 lg:h-[710px] xl:h-[780px] lg:grid-rows-[1fr_1fr]"
         onMouseEnter={() => {
           if (resumeTimerRef.current) {
             clearTimeout(resumeTimerRef.current)

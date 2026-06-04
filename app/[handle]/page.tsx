@@ -1058,7 +1058,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </MobileSection>
 
         {/* Atmospheric lamina — unifies Press Photos / Featured Release / Gigs visually */}
-        <div className="relative mt-3 lg:mt-12 xl:mt-16">
+        <div className="relative mt-3 lg:mt-14 xl:mt-18">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
@@ -1084,9 +1084,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Featured Release — top 42% of right column height */}
             {featuredRelease && (
             <MobileSection tab="music" className="max-lg:hidden">
-            <section className="flex h-full flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-4 shadow-lg shadow-black/20 sm:p-5 lg:p-5 xl:p-8">
+            <section className="flex h-full flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-5 shadow-lg shadow-black/20 sm:p-6 lg:p-6 xl:p-9">
               <SectionHeader>Featured Release</SectionHeader>
-              <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,42%)_minmax(0,1fr)] sm:gap-5 lg:mt-4 lg:grid-cols-[minmax(0,44%)_minmax(0,1fr)] lg:items-stretch lg:gap-5 xl:gap-7">
+              <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,44%)_minmax(0,1fr)] sm:gap-5 lg:mt-4 lg:grid-cols-[minmax(0,48%)_minmax(0,1fr)] lg:items-stretch lg:gap-6 xl:gap-8">
                 <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full lg:aspect-auto lg:self-stretch">
                   {!hasFeaturedArtwork ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
@@ -1104,10 +1104,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                 </div>
                 <div className="flex min-w-0 flex-col justify-between sm:py-1 lg:py-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-accent/90 lg:text-[11px]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-accent/90 lg:text-[12px]">
                     {featuredRelease.type}
                   </p>
-                  <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl lg:text-[1.75rem] xl:text-3xl">
+                  <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl lg:text-[2rem] xl:text-[2.25rem]">
                     {featuredRelease.title}
                   </h2>
                   {featuredRelease.credits ? (
@@ -1199,7 +1199,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     className="group block p-2 sm:p-2.5 xl:p-4"
                   >
                     {/* Cinematic thumbnail */}
-                    <div className="relative aspect-[21/9] w-full overflow-hidden rounded-[12px] bg-secondary" style={{ maxHeight: "clamp(128px, 14vw, 240px)" }}>
+                    <div className="relative aspect-[21/9] w-full overflow-hidden rounded-[12px] bg-secondary" style={{ maxHeight: "clamp(160px, 17.5vw, 300px)" }}>
                       {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1228,7 +1228,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         ].filter(Boolean)
                         return (
                           <>
-                            <h3 className="mt-0.5 text-balance text-[18px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-white sm:text-[20px] md:text-[22px] xl:text-[28px]">
+                            <h3 className="mt-0.5 text-balance text-[20px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-white sm:text-[22px] md:text-[24px] xl:text-[32px]">
                               {displayTitle}
                             </h3>
                             {metaParts.length > 0 ? (
@@ -1322,12 +1322,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   >
                     {/* Poster showcase — object-contain, centered, premium dark field */}
                     {featuredSet.imageUrl ? (
-                      <div className="relative w-full overflow-hidden rounded-[12px] bg-[#080808]" style={{ maxHeight: "clamp(110px, 12vw, 200px)" }}>
+                      <div className="relative w-full overflow-hidden rounded-[12px] bg-[#080808]" style={{ maxHeight: "clamp(138px, 15vw, 250px)" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={featuredSet.imageUrl}
                           alt={`${featuredSet.title} artwork`}
-                          className="mx-auto block max-h-[110px] max-w-full w-auto object-contain brightness-[0.90] transition-transform duration-200 group-hover:scale-[1.01]"
+                          className="mx-auto block max-h-[138px] max-w-full w-auto object-contain brightness-[0.90] transition-transform duration-200 group-hover:scale-[1.01]"
                         />
                         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_42%,_rgba(0,0,0,0.32)_100%)]" />
                         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-black/20 to-transparent" />
@@ -1344,7 +1344,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         Featured Set
                       </p>
                       {/* Event name — editorial primary title */}
-                      <h3 className="mt-0.5 text-balance text-[18px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground sm:text-[20px] md:text-[22px] xl:text-[28px]">
+                      <h3 className="mt-0.5 text-balance text-[20px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground sm:text-[22px] md:text-[24px] xl:text-[32px]">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                       </h3>
                       {/* City · Date — tighter editorial metadata */}
