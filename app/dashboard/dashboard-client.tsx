@@ -2097,9 +2097,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     >
                       {/* Thumbnail */}
                       <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-secondary/50 ring-1 ring-white/[0.05]">
-                        {r.imageUrl ? (
+                        {r.artworkUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={r.imageUrl} alt={r.title} className="h-full w-full object-cover" />
+                          <img src={r.artworkUrl} alt={r.title} className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center">
                             <Music2 className="h-4 w-4 text-muted-foreground/22" />
@@ -2112,18 +2112,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <p className="mt-0.5 text-[11px] text-muted-foreground/32">
                           {r.releaseType
                             ? r.releaseType.charAt(0).toUpperCase() + r.releaseType.slice(1)
-                            : "Release"}
+                            : (r.type ? r.type : "Release")}
                           {r.isFeatured ? " · Featured" : ""}
                         </p>
                       </div>
-                      {/* Status pill */}
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                        r.isPublished
-                          ? "bg-accent/[0.08] text-accent/62"
-                          : "bg-white/[0.03] text-muted-foreground/22"
-                      }`}>
-                        {r.isPublished ? "Live" : "Draft"}
-                      </span>
+                      {/* Featured pill */}
+                      {r.isFeatured && (
+                        <span className="shrink-0 rounded-full bg-accent/[0.08] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent/62">
+                          Featured
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
