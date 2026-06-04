@@ -735,21 +735,54 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
       {/* ── Full-bleed cinematic hero — edge-to-edge, no card container ── */}
       <section className="relative overflow-hidden" style={{ minHeight: "100dvh" }}>
-        {/* DJHQ branding — floats at top, invisible until scroll reveals the nav */}
-        {(artist.plan !== "pro" || artist.showHeaderBranding) && (
-          <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-4 pt-5 sm:px-6 sm:pt-6">
-            <Link
-              href="/"
-              className="group flex items-center gap-2 text-foreground/28 transition-colors duration-200 hover:text-foreground/55"
-            >
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/45 transition-colors duration-200 group-hover:bg-accent/70" />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.28em]">DJHQ</span>
-            </Link>
-            <span className="text-[11px] font-medium tracking-[0.05em] text-foreground/32">
-              @{artist.handle}
-            </span>
-          </header>
-        )}
+        {/* Artist-website navigation — integrated into hero */}
+        <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
+          {/* Left: section navigation */}
+          <nav className="flex items-center gap-5 sm:gap-7">
+            {[
+              { label: "Releases", href: "#music" },
+              { label: "Shows",    href: "#shows" },
+              { label: "Sets",     href: "#performance" },
+              ...(artist.bookingInfo.email.trim() ? [{ label: "Contact", href: "#contact" }] : []),
+            ].map(({ label, href: navHref }) => (
+              <a
+                key={label}
+                href={navHref}
+                className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45 transition-colors duration-200 hover:text-white/85 sm:text-[12px]"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+          {/* Right: social platform links */}
+          <div className="flex items-center gap-3">
+            {prioritizedLinks.slice(0, 5).map((link) => {
+              const linkHref = resolveSafeHref(link.url)
+              if (!linkHref) return null
+              const SocialIcon = socialIcons[link.platform]
+              return (
+                <a
+                  key={`hero-${link.platform}-${link.url}`}
+                  href={linkHref}
+                  aria-label={link.label}
+                  title={link.label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/35 transition-colors duration-200 hover:text-white/80"
+                >
+                  <SocialIcon className="h-[15px] w-[15px] sm:h-4 sm:w-4" />
+                </a>
+              )
+            })}
+            {/* DJHQ attribution — subtle, non-pro only */}
+            {(artist.plan !== "pro" || artist.showHeaderBranding) && (
+              <Link href="/" className="ml-2 flex items-center gap-1.5 text-white/18 transition-colors duration-200 hover:text-white/40">
+                <span className="inline-block h-1 w-1 rounded-full bg-accent/35" />
+                <span className="text-[9px] font-semibold uppercase tracking-[0.24em]">DJHQ</span>
+              </Link>
+            )}
+          </div>
+        </header>
 
         <div className="relative min-h-[100dvh]">
             <Image
@@ -861,15 +894,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </div>
         </div>
       </section>
-
-      {/* ── Social links strip — below hero, above content ── */}
-      {prioritizedLinks.length > 0 && (
-        <div className="flex items-center justify-center gap-3 border-b border-white/[0.04] py-4">
-          {prioritizedLinks.map((link) => (
-            <MainLink key={`sub-${link.platform}-${link.url}`} link={link} />
-          ))}
-        </div>
-      )}
 
       {/* ── Sticky mobile scroll nav — outside padded wrapper so it spans the full viewport ── */}
       <MobileScrollNav />
