@@ -287,7 +287,7 @@ function Hero() {
                     className="font-mono text-[11px]"
                     style={{ color: "rgba(255,255,255,0.22)" }}
                   >
-                    andresherrera.djhq.co
+                    andresherrera.djhq.app/presskit
                   </span>
                 </div>
               </div>
@@ -295,8 +295,8 @@ function Hero() {
               <div className="w-[54px]" />
             </div>
 
-            {/* Artist profile content */}
-            <ProfileMockup />
+            {/* Press kit content */}
+            <PressKitMockup />
           </div>
         </div>
 
@@ -305,136 +305,164 @@ function Hero() {
   )
 }
 
-// ─── Profile mockup (ANDRES:HERRERA) ─────────────────────────────────────────
+// ─── Press kit mockup (ANDRES:HERRERA) ──────────────────────────────────────
+// Mirrors the visual language of the real /[handle]/presskit page.
+// No fictional artists. No abstract illustration. Real product, real structure.
 
-function ProfileMockup() {
+function PressKitMockup() {
+  // Accent colour matches the Matrix theme used by the real Andres Herrera profile.
+  const accent = "#00E6A7"
+  const accentMuted = "rgba(0,230,167,0.65)"
+  const accentBg = "rgba(0,230,167,0.07)"
+  const border = "1px solid rgba(255,255,255,0.06)"
+  const cardBg = "rgba(255,255,255,0.02)"
+
+  const folders = [
+    { label: "Press Photos",     icon: "📷" },
+    { label: "Technical Rider",  icon: "🎛" },
+    { label: "Logos & Artwork",  icon: "🖼" },
+    { label: "Full Drive Package", icon: "📦", badge: "Complete" },
+  ]
+
   return (
-    <div className="relative overflow-hidden" style={{ minHeight: 460, background: "#060810" }}>
-      {/* Hero photo */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/dj-hero.jpg"
-        alt=""
-        aria-hidden
-        className="absolute inset-0 h-full w-full object-cover"
-        style={{ filter: "saturate(0.90) contrast(1.10) brightness(0.78)" }}
-      />
+    <div style={{ background: "oklch(0.08 0 0)", overflow: "hidden" }}>
 
-      {/* Gradient system */}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,8,16,0.28) 0%, rgba(6,8,16,0.02) 28%, rgba(6,8,16,0.52) 66%, rgba(6,8,16,0.99) 100%)" }} />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 10%, transparent 18%, rgba(6,8,16,0.22) 55%, rgba(6,8,16,0.70) 100%)" }} />
-      <div className="absolute inset-y-0 left-0 w-3/4" style={{ background: "linear-gradient(92deg, rgba(6,8,16,0.50), transparent 72%)" }} />
-      <div className="absolute inset-x-0 bottom-0 h-3/5" style={{ background: "radial-gradient(ellipse at 20% 90%, rgba(0,230,167,0.06), transparent 38%)" }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(92deg, rgba(0,0,0,0.18) 0%, transparent 50%), linear-gradient(0deg, rgba(0,0,0,0.16) 0%, transparent 30%)" }} />
-
-      {/* Content pinned to bottom */}
-      <div className="absolute inset-x-0 bottom-0 px-5 pb-5 pt-4">
-        {/* Bottom lift */}
-        <div
+      {/* ── Compact hero banner ──────────────────────────────────────────── */}
+      <div className="relative overflow-hidden" style={{ height: 96 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/dj-hero.jpg"
+          alt=""
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0"
-          style={{ height: "min(78%,460px)", background: "linear-gradient(0deg, rgba(6,8,16,0.97) 0%, rgba(6,8,16,0.60) 38%, rgba(6,8,16,0.08) 72%, transparent 100%)" }}
+          className="absolute inset-0 h-full w-full object-cover object-[50%_25%]"
+          style={{ filter: "saturate(0.80) contrast(1.10) brightness(0.55)" }}
         />
+        {/* Multi-layer gradient — matches real presskit hero fade */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,6,6,0.18) 0%, rgba(6,6,6,0.50) 55%, rgba(6,6,6,0.96) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(6,6,6,0.30) 0%, transparent 60%)" }} />
 
-        {/* Glass surface */}
-        <div
-          className="relative rounded-[1.4rem] px-4 py-3"
-          style={{
-            border: "1px solid rgba(255,255,255,0.07)",
-            background: "rgba(0,0,0,0.12)",
-            backdropFilter: "blur(1.5px)",
-            boxShadow: "inset 0 0 60px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.06)",
-          }}
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.4rem]"
-            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.04), transparent)" }}
-          />
-
-          {/* Genre chips */}
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {["House", "Tech House", "Melodic Techno"].map((g) => (
-              <span
-                key={g}
-                className="rounded-full px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.09em]"
-                style={{
-                  border: "1px solid rgba(0,230,167,0.55)",
-                  background: "rgba(0,0,0,0.35)",
-                  color: "rgba(255,255,255,0.88)",
-                }}
-              >
-                {g}
-              </span>
-            ))}
-          </div>
-
-          {/* Artist name */}
+        {/* Identity overlay */}
+        <div className="absolute bottom-0 left-0 px-4 pb-3">
           <p
-            className="text-[34px] font-black uppercase leading-none tracking-[-0.02em] text-white"
-            style={{ textShadow: "0 2px 20px rgba(0,0,0,0.50)" }}
+            className="font-mono text-[8px] font-semibold uppercase tracking-[0.28em] mb-0.5"
+            style={{ color: `${accent}88` }}
           >
+            Electronic Press Kit
+          </p>
+          <p className="text-[18px] font-black tracking-[-0.02em] text-white leading-none">
             ANDRES:HERRERA
           </p>
+          <p className="mt-0.5 text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.40)" }}>
+            House · Tech House · Santiago · Chile
+          </p>
+        </div>
+      </div>
 
-          {/* Tagline */}
+      {/* ── EPK body ─────────────────────────────────────────────────────── */}
+      <div className="px-4 pb-5 pt-4 space-y-4">
+
+        {/* Section label */}
+        <div>
           <p
-            className="mt-1.5 text-[12px] font-medium uppercase tracking-[0.07em]"
-            style={{ color: "rgba(0,230,167,0.85)" }}
+            className="mb-2.5 font-mono text-[8px] font-bold uppercase tracking-[0.26em]"
+            style={{ color: `${accent}60` }}
           >
-            Peak-time house &amp; techno
+            Press Kit Downloads
           </p>
 
-          {/* Location */}
-          <p className="mt-1.5 flex items-center gap-1.5 text-[12px]" style={{ color: "rgba(255,255,255,0.55)" }}>
-            <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-            </svg>
-            Miami · Berlin
-          </p>
-
-          {/* Bio — first sentence only */}
-          <p
-            className="mt-2 max-w-[400px] text-[12px] font-medium leading-[1.6] tracking-[0.01em]"
-            style={{ color: "rgba(255,255,255,0.65)" }}
-          >
-            Dark, groove-led house and techno shaped for peak-time dance floors. Recent releases and club sets across Fabric, Watergate and Robert Johnson.
-          </p>
-
-          {/* CTAs */}
-          <div className="mt-3.5 flex flex-wrap items-center gap-2">
-            <span
-              className="flex h-9 cursor-default items-center rounded-full px-5 text-[12px] font-semibold uppercase tracking-[0.10em] text-[#0A1410]"
-              style={{ background: "#00E6A7" }}
-            >
-              Booking
-            </span>
-            <span
-              className="flex h-9 cursor-default items-center gap-2 rounded-full px-5 text-[12px] font-semibold uppercase tracking-[0.10em] text-white"
-              style={{ border: "1px solid rgba(0,230,167,0.40)", background: "transparent" }}
-            >
-              Press Kit
-            </span>
-          </div>
-
-          {/* Social icons */}
-          <div className="mt-3 flex items-center gap-2">
-            {[Music2, Radio, Play, Youtube, Instagram].map((Icon, i) => (
+          {/* PDF cards */}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { flag: "🇬🇧", lang: "ENG", label: "Press Kit ENG", size: "4.2 MB" },
+              { flag: "🇪🇸", lang: "ESP", label: "Press Kit ESP", size: "3.8 MB" },
+            ].map((d) => (
               <div
-                key={i}
-                className="flex h-8 w-8 items-center justify-center rounded-full"
+                key={d.lang}
+                className="relative overflow-hidden p-3.5"
                 style={{
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  background: "rgba(255,255,255,0.04)",
-                  color: "#00E6A7",
+                  background: cardBg,
+                  border,
+                  borderRadius: "18px",
                 }}
               >
-                <Icon className="h-3.5 w-3.5" />
+                {/* Hover glow — static for mockup */}
+                <div className="pointer-events-none absolute inset-0 rounded-[18px]" style={{ background: accentBg, opacity: 0 }} />
+                <span className="text-[20px] leading-none">{d.flag}</span>
+                <p className="mt-2.5 text-[11px] font-semibold text-white/90">{d.label}</p>
+                <p className="mt-0.5 font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                  PDF · {d.size}
+                </p>
+                <p className="mt-2.5 font-mono text-[9px] font-semibold" style={{ color: accent }}>
+                  Download ↗
+                </p>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Section label */}
+        <div>
+          <p
+            className="mb-2.5 font-mono text-[8px] font-bold uppercase tracking-[0.26em]"
+            style={{ color: `${accent}60` }}
+          >
+            Asset Folders
+          </p>
+
+          {/* Folder cards — 2×2 grid */}
+          <div className="grid grid-cols-2 gap-2">
+            {folders.map((f) => (
+              <div
+                key={f.label}
+                className="flex items-center justify-between p-2.5"
+                style={{
+                  background: cardBg,
+                  border,
+                  borderRadius: "10px",
+                }}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {f.label}
+                  </p>
+                  {f.badge && (
+                    <span
+                      className="mt-0.5 inline-block rounded-full px-1.5 py-px font-mono text-[7px] font-semibold uppercase tracking-[0.10em]"
+                      style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.28)" }}
+                    >
+                      {f.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="ml-2 shrink-0 font-mono text-[9px] font-semibold" style={{ color: accentMuted }}>
+                  Open ↗
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Booking email strip */}
+        <div
+          className="flex items-center justify-between px-3.5 py-2.5"
+          style={{ background: "rgba(255,255,255,0.015)", border, borderRadius: "10px" }}
+        >
+          <div>
+            <p className="font-mono text-[8px] font-bold uppercase tracking-[0.22em]" style={{ color: "rgba(255,255,255,0.22)" }}>
+              Booking
+            </p>
+            <p className="mt-0.5 font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>
+              booking@andresherrera.music
+            </p>
+          </div>
+          <div
+            className="rounded-full px-3 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.10em]"
+            style={{ background: accentBg, color: accent, border: `1px solid ${accentMuted}` }}
+          >
+            Contact
+          </div>
+        </div>
+
       </div>
     </div>
   )
