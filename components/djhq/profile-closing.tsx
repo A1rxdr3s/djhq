@@ -51,7 +51,6 @@ export function ProfileClosing({
   socialLinks = [],
   hasPressKit = false,
   pressKitHref = null,
-  artistHandle = "",
   heroLogoUrl,
   heroIdentityMode,
   footerLogoUrl,
@@ -86,7 +85,7 @@ export function ProfileClosing({
       ? heroLogoUrl.trim()
       : null)
 
-  // Contact entries — only render those that have a value
+  // Contact entries — render only those with a value
   const contacts: { label: string; email: string }[] = [
     (footerBookingEmail?.trim() || bookingEmail?.trim())
       ? { label: "Booking", email: (footerBookingEmail?.trim() || bookingEmail?.trim()) as string }
@@ -111,7 +110,6 @@ export function ProfileClosing({
       l.href !== null && l.Icon !== undefined,
     )
 
-  // Sitemap navigation links
   const sitemapLinks = [
     { label: "Releases",  href: "#music" },
     { label: "Shows",     href: "#shows" },
@@ -123,25 +121,29 @@ export function ProfileClosing({
   ]
 
   const legalLinks = [
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Cookie Policy",  href: "/cookies" },
+    { label: "Privacy Policy",   href: "/privacy" },
+    { label: "Cookie Policy",    href: "/cookies" },
     { label: "Terms of Service", href: "/terms" },
   ]
 
-  // Shared typography tokens
-  const headingClass = "mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/22"
-  const linkClass    = "block text-[13px] text-white/45 transition-colors duration-200 hover:text-white/85"
+  // ── Typography tokens ──────────────────────────────────────────────
+  // Raised from /22 → /35 for headings; links brightened proportionally
+  const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
+  const linkClass    = "block text-[13px] text-white/58 transition-colors duration-200 hover:text-white/90"
+
+  // The contact column needs the logo too — determine layout variant
+  const hasContactOrLogo = contacts.length > 0 || !!resolvedLogoUrl
 
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
-      {/* ── Main editorial grid ─────────────────────────────────────── */}
+      {/* ── Main editorial grid ────────────────────────────────────────── */}
       <div className={cn(
         "grid gap-x-10 gap-y-10 py-12 sm:py-14 lg:gap-x-14 lg:py-16",
         "grid-cols-1 sm:grid-cols-2",
-        footerNewsletterEnabled && contacts.length > 0
+        hasContactOrLogo && footerNewsletterEnabled
           ? "lg:grid-cols-4"
-          : contacts.length > 0 || footerNewsletterEnabled
+          : hasContactOrLogo || footerNewsletterEnabled
           ? "lg:grid-cols-3"
           : "lg:grid-cols-2",
       )}>
@@ -154,12 +156,7 @@ export function ProfileClosing({
               {sitemapLinks.map(({ label, href, external }) => (
                 <li key={label}>
                   {external ? (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={linkClass}
-                    >
+                    <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
                       {label}
                     </a>
                   ) : (
@@ -169,15 +166,13 @@ export function ProfileClosing({
               ))}
             </ul>
           </div>
+
           <div>
             <p className={headingClass}>Legal</p>
             <ul className="space-y-2.5">
               {legalLinks.map(({ label, href }) => (
                 <li key={label}>
-                  <Link
-                    href={href}
-                    className={cn(linkClass, "text-white/32 hover:text-white/62")}
-                  >
+                  <Link href={href} className={cn(linkClass, "text-white/42 hover:text-white/70")}>
                     {label}
                   </Link>
                 </li>
@@ -199,7 +194,7 @@ export function ProfileClosing({
                   title={label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/40 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                  className="text-white/52 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
                 >
                   <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
                 </a>
@@ -213,10 +208,10 @@ export function ProfileClosing({
           <div>
             <p className={headingClass}>Stay Connected</p>
             {status === "success" ? (
-              <p className="text-[13px] text-white/40">You&apos;re on the list.</p>
+              <p className="text-[13px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
-                <p className="mb-4 text-[12px] text-white/28">Music. Shows. Guest Lists.</p>
+                <p className="mb-4 text-[12px] text-white/38">Music. Shows. Guest Lists.</p>
                 <form onSubmit={handleSubmit} noValidate className="space-y-2">
                   <input
                     type="email"
@@ -228,16 +223,16 @@ export function ProfileClosing({
                     placeholder="your@email.com"
                     aria-label="Email address"
                     className={cn(
-                      "h-9 w-full rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/15",
+                      "h-9 w-full rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/18",
                       status === "error"
                         ? "border-red-500/30 focus:border-red-500/50"
-                        : "border-white/[0.10] focus:border-accent/38",
+                        : "border-white/[0.12] focus:border-accent/40",
                     )}
                   />
                   <button
                     type="submit"
                     disabled={status === "loading"}
-                    className="h-9 w-full rounded-full border border-white/[0.12] bg-transparent text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40 transition-all duration-200 hover:border-white/[0.22] hover:text-white/65 disabled:opacity-40"
+                    className="h-9 w-full rounded-full border border-white/[0.14] bg-transparent text-[11px] font-semibold uppercase tracking-[0.14em] text-white/48 transition-all duration-200 hover:border-white/[0.26] hover:text-white/72 disabled:opacity-40"
                   >
                     {status === "loading" ? "···" : "Join"}
                   </button>
@@ -245,55 +240,63 @@ export function ProfileClosing({
                 {status === "error" ? (
                   <p className="mt-2 text-[10px] text-red-400/55">Enter a valid email address.</p>
                 ) : (
-                  <p className="mt-2 text-[10px] text-white/14">Occasional updates only.</p>
+                  <p className="mt-2 text-[10px] text-white/18">Occasional updates only.</p>
                 )}
               </>
             )}
           </div>
         )}
 
-        {/* Col 4 — Booking / Contact / Demos */}
-        {contacts.length > 0 && (
-          <div className="space-y-5">
-            {contacts.map(({ label, email: addr }) => (
-              <div key={label}>
-                <p className={headingClass}>{label}</p>
-                <a
-                  href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
-                  className="text-[13px] text-white/45 transition-colors duration-200 hover:text-white/80"
-                >
-                  {addr}
-                </a>
+        {/* Col 4 — Logo + Contacts (logo positioned above email block) */}
+        {hasContactOrLogo && (
+          <div>
+            {/* Footer logo — signature mark, anchored above contact emails */}
+            {resolvedLogoUrl && (
+              <div className="mb-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={resolvedLogoUrl}
+                  alt={artistName}
+                  style={{ maxWidth: `${Math.min(footerLogoWidth, 180)}px` }}
+                  className="max-h-[52px] object-contain opacity-82"
+                />
               </div>
-            ))}
+            )}
+
+            {/* Contact emails */}
+            {contacts.length > 0 && (
+              <div className="space-y-4">
+                {contacts.map(({ label, email: addr }) => (
+                  <div key={label}>
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
+                      {label}
+                    </p>
+                    <a
+                      href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
+                      className="text-[13px] text-white/58 transition-colors duration-200 hover:text-white/88"
+                    >
+                      {addr}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* ── Bottom bar: small logo + copyright ─────────────────────── */}
-      <div className="flex items-center justify-between border-t border-white/[0.04] py-5">
-        {/* Signature mark — small, left-anchored */}
-        {resolvedLogoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={resolvedLogoUrl}
-            alt={artistName}
-            style={{ maxWidth: `${Math.min(footerLogoWidth, 160)}px` }}
-            className="max-h-[40px] object-contain opacity-55"
-          />
-        ) : (
-          <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/18">
-            {artistName}
-          </span>
-        )}
-
-        {/* Copyright + attribution */}
-        <p className="text-[10px] text-white/18">
+      {/* ── Bottom bar — copyright only ──────────────────────────────── */}
+      <div className="border-t border-white/[0.04] py-4">
+        <p className={cn(
+          "text-[10px] text-white/22",
+          // If logo is in the contact column, right-align the copyright line
+          resolvedLogoUrl ? "text-right" : "text-left",
+        )}>
           {copyrightLine}
           {!isPro && (
             <>
               {" · "}
-              <Link href="/" className="transition-colors duration-150 hover:text-white/35">
+              <Link href="/" className="transition-colors duration-150 hover:text-white/40">
                 {brand.copy.poweredBy}
               </Link>
             </>
