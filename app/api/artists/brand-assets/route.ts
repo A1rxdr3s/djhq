@@ -46,13 +46,20 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Access denied." }, { status: 403 })
   }
 
-  const { data: sourceFiles } = await supabase
-    .from("brand_source_files")
-    .select("id, filename, file_type, file_ext, file_url, file_size, status, created_at")
-    .eq("artist_id", artistId)
-    .order("created_at", { ascending: false })
+  const [{ data: sourceFiles }, { data: assets }] = await Promise.all([
+    supabase
+      .from("brand_source_files")
+      .select("id, filename, file_type, file_ext, file_url, file_size, status, created_at")
+      .eq("artist_id", artistId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("brand_assets")
+      .select("id, source_file_id, name, asset_type, status, preview_url, has_solid_bg, created_at")
+      .eq("artist_id", artistId)
+      .order("created_at", { ascending: false }),
+  ])
 
-  return NextResponse.json({ sourceFiles: sourceFiles ?? [], assets: [] })
+  return NextResponse.json({ sourceFiles: sourceFiles ?? [], assets: assets ?? [] })
 }
 
 export async function POST(request: Request) {

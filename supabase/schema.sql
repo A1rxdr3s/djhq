@@ -500,8 +500,47 @@ create policy "brand_assets_owner_all"
   using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
 
 -- ── Storage Buckets ──────────────────────────────────────────────────────────
--- Storage configuration is managed via Supabase dashboard / storage API.
 -- Buckets expected:
---   artist-gallery  (public read, owner write)
---   artist-heroes   (public read, owner write)
--- Policies are set via Supabase Storage UI or management API, not SQL.
+--   artist-gallery  (public, images only)
+--   artist-heroes   (public, images only)
+--   brand-sources   (public, ANY MIME TYPE — no 415 errors for AI/EPS/PDF/ZIP)
+
+-- brand-sources bucket — created via migration 042 or the Storage Management API.
+-- allowed_mime_types = null accepts every MIME type.
+INSERT INTO storage.buckets (id, name, public, allowed_mime_types, file_size_limit)
+VALUES ('brand-sources', 'brand-sources', TRUE, NULL, 52428800)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage RLS policies for brand-sources (migration 042)
+DROP POLICY IF EXISTS "brand_sources_insert" ON storage.objects;
+CREATE POLICY "brand_sources_insert"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'brand-sources'
+    AND auth.role() = 'authenticated'
+    AND (storage.foldername(name))[1] = 'artists'
+    AND EXISTS (
+      SELECT 1 FROM public.artists a
+      WHERE a.id = ((storage.foldername(name))[2])::uuid
+        AND a.owner_user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "brand_sources_select" ON storage.objects;
+CREATE POLICY "brand_sources_select"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'brand-sources');
+
+DROP POLICY IF EXISTS "brand_sources_delete" ON storage.objects;
+CREATE POLICY "brand_sources_delete"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'brand-sources'
+    AND auth.role() = 'authenticated'
+    AND (storage.foldername(name))[1] = 'artists'
+    AND EXISTS (
+      SELECT 1 FROM public.artists a
+      WHERE a.id = ((storage.foldername(name))[2])::uuid
+        AND a.owner_user_id = auth.uid()
+    )
+  );

@@ -808,6 +808,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [brandUploading, setBrandUploading] = useState(false)
   const [brandUploadQueue, setBrandUploadQueue] = useState<{ file: File; status: "pending"|"uploading"|"done"|"error"; error?: string }[]>([])
   const [brandSolidBgIds, setBrandSolidBgIds] = useState<Set<string>>(new Set())
+  const [brandProcessingIds, setBrandProcessingIds] = useState<Set<string>>(new Set())
+  const [brandProcessingLog, setBrandProcessingLog] = useState<Record<string, { steps: {label:string; ok:boolean}[]; error?:string; done:boolean }>>({})
   const [pkExpandedIds, setPkExpandedIds] = useState<Set<string>>(new Set())
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
@@ -5452,45 +5454,155 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderBrand() {
 
-    // ─── Validation ────────────────────────────────────────────────────────────
+    // ─── Constants ───────────────────────────────────────────────────────────
     const SOURCE_EXTS = new Set(["svg","png","jpg","jpeg","webp","pdf","ai","eps","zip","rar"])
-    const MAX_BYTES   = 50 * 1024 * 1024   // 50 MB
+    const PDF_EXTS    = new Set(["pdf"])
+    const MAX_BYTES   = 50 * 1024 * 1024
+    const MAX_PAGES   = 5   // render up to 5 pages per PDF
+    const RENDER_SCALE = 1.8 // quality vs. file size balance
 
     function getExt(name: string) { return name.split(".").pop()?.toLowerCase() ?? "" }
 
     function extLabel(ext: string): string {
-      const map: Record<string, string> = {
-        svg:"SVG", png:"PNG", jpg:"JPG", jpeg:"JPG", webp:"WEBP",
-        pdf:"PDF", ai:"AI", eps:"EPS", zip:"ZIP", rar:"RAR",
-      }
-      return map[ext] ?? ext.toUpperCase()
+      const m: Record<string,string> = {svg:"SVG",png:"PNG",jpg:"JPG",jpeg:"JPG",webp:"WEBP",pdf:"PDF",ai:"AI",eps:"EPS",zip:"ZIP",rar:"RAR"}
+      return m[ext] ?? ext.toUpperCase()
     }
-
     function extColor(ext: string): string {
-      if (["svg","png","jpg","jpeg","webp"].includes(ext))
-        return "border-accent/18 bg-accent/[0.06] text-accent/65"
-      return "border-border bg-secondary text-muted-foreground/45"
+      return ["svg","png","jpg","jpeg","webp"].includes(ext)
+        ? "border-accent/18 bg-accent/[0.06] text-accent/65"
+        : "border-border bg-secondary text-muted-foreground/45"
     }
-
     function validateFile(file: File): string | null {
       const ext = getExt(file.name)
       if (!SOURCE_EXTS.has(ext)) return `.${ext} is not supported`
-      if (file.size > MAX_BYTES)  return `File exceeds 50 MB`
+      if (file.size > MAX_BYTES)  return `Exceeds 50 MB`
       return null
     }
-
     function formatBytes(n: number | null): string {
       if (!n) return "—"
-      if (n < 1024)       return `${n} B`
-      if (n < 1048576)    return `${(n/1024).toFixed(1)} KB`
+      if (n < 1024) return `${n} B`
+      if (n < 1048576) return `${(n/1024).toFixed(1)} KB`
       return `${(n/1048576).toFixed(1)} MB`
     }
-
     function formatDate(iso: string): string {
       return new Date(iso).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })
     }
 
-    // ─── Upload handler ─────────────────────────────────────────────────────────
+    // ─── PDF processing ───────────────────────────────────────────────────────
+    async function processPdfSourceFile(sourceFile: BrandSourceFile) {
+      const fid = sourceFile.id
+      setBrandProcessingIds((prev) => new Set([...prev, fid]))
+
+      function addStep(label: string, ok: boolean) {
+        setBrandProcessingLog((prev) => {
+          const existing = prev[fid] ?? { steps: [], done: false }
+          return { ...prev, [fid]: { ...existing, steps: [...existing.steps, { label, ok }] } }
+        })
+      }
+      function setError(error: string) {
+        setBrandProcessingLog((prev) => {
+          const existing = prev[fid] ?? { steps: [], done: false }
+          return { ...prev, [fid]: { ...existing, error, done: true } }
+        })
+      }
+      function markDone() {
+        setBrandProcessingLog((prev) => {
+          const existing = prev[fid] ?? { steps: [], done: false }
+          return { ...prev, [fid]: { ...existing, done: true } }
+        })
+      }
+
+      // Reset log for this file
+      setBrandProcessingLog((prev) => ({ ...prev, [fid]: { steps: [], done: false } }))
+
+      const newAssets: BrandAsset[] = []
+      try {
+        addStep("Loading PDF renderer", true)
+        const pdfjs = await import("pdfjs-dist")
+        pdfjs.GlobalWorkerOptions.workerSrc =
+          `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+
+        const loadingTask = pdfjs.getDocument({ url: sourceFile.fileUrl })
+        const pdf = await loadingTask.promise
+        const totalPages = Math.min(pdf.numPages, MAX_PAGES)
+        addStep(`Opened PDF — ${pdf.numPages} page${pdf.numPages === 1 ? "" : "s"} detected`, true)
+
+        const { supabase: client } = await import("@/lib/supabase/client")
+        let rendered = 0
+
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+          try {
+            const page = await pdf.getPage(pageNum)
+            const [, , w, h] = page.view
+            const scale = Math.min(RENDER_SCALE, 1400 / Math.max(w, h))
+            const viewport = page.getViewport({ scale })
+
+            const canvas = document.createElement("canvas")
+            canvas.width  = Math.floor(viewport.width)
+            canvas.height = Math.floor(viewport.height)
+            const ctx = canvas.getContext("2d")!
+            ctx.fillStyle = "#ffffff"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            await page.render({ canvas, canvasContext: ctx, viewport }).promise
+
+            const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/png", 0.92))
+            if (!blob) { addStep(`Page ${pageNum}: canvas export failed`, false); continue }
+
+            const filename = `${Date.now()}-page-${pageNum}.png`
+            const filePath = `artists/${artist.id}/generated/${filename}`
+            const { error: upErr } = await client.storage
+              .from("brand-sources")
+              .upload(filePath, blob, { contentType: "image/png", upsert: true })
+            if (upErr) { addStep(`Page ${pageNum}: upload failed — ${upErr.message}`, false); continue }
+
+            const { data: urlData } = client.storage.from("brand-sources").getPublicUrl(filePath)
+            const resp = await fetch("/api/artists/brand-create-asset", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                artistId: artist.id, sourceFileId: fid,
+                name: totalPages === 1
+                  ? sourceFile.filename.replace(/\.pdf$/i, "")
+                  : `${sourceFile.filename.replace(/\.pdf$/i, "")} — Page ${pageNum}`,
+                assetType: "logo", previewUrl: urlData.publicUrl,
+                status: "preview_only", hasSolidBg: true,
+              }),
+            })
+            if (!resp.ok) { addStep(`Page ${pageNum}: asset registration failed`, false); continue }
+
+            const { asset } = await resp.json() as { asset?: Record<string,unknown> }
+            if (asset) {
+              rendered++
+              newAssets.push({
+                id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
+                name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
+                status: asset.status as string, previewUrl: asset.preview_url as string,
+                hasSolidBg: asset.has_solid_bg as boolean, createdAt: asset.created_at as string,
+              })
+              addStep(`Page ${pageNum} rendered and saved as brand asset`, true)
+            }
+          } catch (pageErr) {
+            addStep(`Page ${pageNum}: ${pageErr instanceof Error ? pageErr.message : "failed"}`, false)
+          }
+        }
+
+        if (rendered === 0) {
+          setError("No pages could be rendered. The PDF may be encrypted or contain only non-renderable objects.")
+        } else {
+          addStep(`${rendered} brand asset${rendered === 1 ? "" : "s"} generated`, true)
+          markDone()
+        }
+        if (newAssets.length) setBrandAssets((prev) => [...newAssets, ...prev])
+
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error"
+        setError(`Processing failed: ${msg}`)
+      } finally {
+        setBrandProcessingIds((prev) => { const next = new Set(prev); next.delete(fid); return next })
+      }
+    }
+
+    // ─── Upload handler ───────────────────────────────────────────────────────
     async function uploadSourceFiles(files: File[]) {
       const queue = files.map((f) => ({ file: f, status: "pending" as const, error: undefined as string | undefined }))
       setBrandUploadQueue(queue)
@@ -5505,65 +5617,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           setBrandUploadQueue((prev) => { const c=[...prev]; c[i]={...c[i],status:"error",error:err}; return c })
           continue
         }
-
         setBrandUploadQueue((prev) => { const c=[...prev]; c[i]={...c[i],status:"uploading"}; return c })
         const ext = getExt(file.name)
-
         try {
-          // 1. Get signed upload URL from brand-sources bucket
-          const params = new URLSearchParams({
-            artistId: artist.id,
-            fileExt:  ext,
-            filename: file.name,
-          })
+          const params = new URLSearchParams({ artistId: artist.id, fileExt: ext, filename: file.name })
           const signedResp = await fetch(`/api/artists/brand-upload?${params}`)
-          const signed = await signedResp.json() as {
-            signedUrl?: string; token?: string; filePath?: string; contentType?: string; error?: string
-          }
-          if (!signedResp.ok || !signed.signedUrl || !signed.token || !signed.filePath) {
-            throw new Error(signed.error ?? "Could not get upload URL.")
-          }
+          const signed = await signedResp.json() as { signedUrl?:string; token?:string; filePath?:string; contentType?:string; error?:string }
+          if (!signedResp.ok || !signed.signedUrl || !signed.token || !signed.filePath) throw new Error(signed.error ?? "Upload URL failed")
 
-          // 2. Upload directly to Supabase Storage (brand-sources bucket, any MIME accepted)
           const { supabase: client } = await import("@/lib/supabase/client")
-          const { error: upErr } = await client.storage
-            .from("brand-sources")
-            .uploadToSignedUrl(signed.filePath, signed.token, file, {
-              contentType: signed.contentType ?? file.type ?? "application/octet-stream",
-            })
+          const { error: upErr } = await client.storage.from("brand-sources").uploadToSignedUrl(
+            signed.filePath, signed.token, file,
+            { contentType: signed.contentType ?? file.type ?? "application/octet-stream" }
+          )
           if (upErr) throw new Error(upErr.message)
 
-          // 3. Get public URL
           const { data: urlData } = client.storage.from("brand-sources").getPublicUrl(signed.filePath)
 
-          // 4. Register source file
           const regResp = await fetch("/api/artists/brand-assets", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              artistId: artist.id,
-              filename: file.name,
-              fileType: file.type || `application/${ext}`,
-              fileExt:  ext,
-              fileUrl:  urlData.publicUrl,
-              fileSize: file.size,
-            }),
+            body: JSON.stringify({ artistId: artist.id, filename: file.name, fileType: file.type || `application/${ext}`, fileExt: ext, fileUrl: urlData.publicUrl, fileSize: file.size }),
           })
-          const reg = await regResp.json() as { sourceFile?: Record<string, unknown>; error?: string }
-          if (!regResp.ok) throw new Error(reg.error ?? "Registration failed.")
+          const reg = await regResp.json() as { sourceFile?: Record<string,unknown>; error?: string }
+          if (!regResp.ok) throw new Error(reg.error ?? "Registration failed")
 
           if (reg.sourceFile) {
             const f = reg.sourceFile
-            newSourceFiles.push({
-              id:        f.id as string,
-              filename:  f.filename as string,
-              fileType:  f.file_type as string,
-              fileExt:   f.file_ext as string,
-              fileUrl:   f.file_url as string,
-              fileSize:  f.file_size as number | null,
-              status:    f.status as BrandSourceFile["status"],
+            const sf: BrandSourceFile = {
+              id: f.id as string, filename: f.filename as string, fileType: f.file_type as string,
+              fileExt: f.file_ext as string, fileUrl: f.file_url as string,
+              fileSize: f.file_size as number|null, status: f.status as BrandSourceFile["status"],
               createdAt: f.created_at as string,
-            })
+            }
+            newSourceFiles.push(sf)
+
+            // Auto-trigger PDF processing
+            if (PDF_EXTS.has(ext)) {
+              setTimeout(() => processPdfSourceFile(sf), 100)
+            }
           }
 
           setBrandUploadQueue((prev) => { const c=[...prev]; c[i]={...c[i],status:"done"}; return c })
@@ -5577,13 +5669,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setBrandUploading(false)
     }
 
-    // ─── Delete handler ─────────────────────────────────────────────────────────
     async function deleteSourceFile(id: string) {
       await fetch(`/api/artists/brand-assets?id=${encodeURIComponent(id)}`, { method: "DELETE" })
       setBrandSourceFiles((prev) => prev.filter((f) => f.id !== id))
+      setBrandAssets((prev) => prev.filter((a) => a.sourceFileId !== id))
     }
 
-    // ─── Drag handlers ──────────────────────────────────────────────────────────
+    async function deleteAsset(id: string) {
+      await fetch(`/api/artists/brand-assets?id=${encodeURIComponent(id)}&type=asset`, { method: "DELETE" })
+      setBrandAssets((prev) => prev.filter((a) => a.id !== id))
+    }
+
     function onDragOver(e: React.DragEvent) { e.preventDefault(); setBrandDragActive(true) }
     function onDragLeave() { setBrandDragActive(false) }
     function onDrop(e: React.DragEvent) {
@@ -5597,89 +5693,68 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       e.target.value = ""
     }
 
-    // ─── Render ─────────────────────────────────────────────────────────────────
+    // ─── Render ──────────────────────────────────────────────────────────────
     return (
       <div className="space-y-8">
 
-        {/* ── Header ──────────────────────────────────────────────────────── */}
         <div>
           <h2 className="text-base font-semibold text-foreground">Brand</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Store and manage your artist brand files.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Upload source files and manage generated brand assets.</p>
         </div>
 
-        {/* ── Brand Sources ────────────────────────────────────────────────── */}
+        {/* ── Brand Sources ──────────────────────────────────────────────── */}
         <section className="space-y-4">
           <div>
             <h3 className="text-[13px] font-semibold text-foreground/80">Brand Sources</h3>
             <p className="mt-0.5 text-[12px] text-muted-foreground/50">
-              Upload original logo packages, Illustrator files, PDFs or archives.
-              These are stored as master source files.
+              Upload your original brand package. PDFs are automatically processed into brand assets.
             </p>
           </div>
 
           {/* Upload area */}
           <div
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            className={`relative flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed px-8 py-10 text-center transition-colors duration-150 ${
-              brandDragActive
-                ? "border-accent/50 bg-accent/[0.04]"
-                : "border-border bg-card/60 hover:border-accent/25 hover:bg-accent/[0.015]"
-            }`}
+            onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+            className={`flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed px-8 py-10 text-center transition-colors duration-150 ${brandDragActive ? "border-accent/50 bg-accent/[0.04]" : "border-border bg-card/60 hover:border-accent/25 hover:bg-accent/[0.015]"}`}
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary">
               <Sparkles className={`h-5 w-5 ${brandDragActive ? "text-accent" : "text-muted-foreground/35"}`} />
             </div>
             <div>
-              <p className="text-[14px] font-semibold text-foreground/70">
-                {brandDragActive ? "Drop files to upload" : "Drop brand files here"}
-              </p>
-              <p className="mt-1 text-[12px] text-muted-foreground/45">
-                or click to choose files from your computer
-              </p>
+              <p className="text-[14px] font-semibold text-foreground/70">{brandDragActive ? "Drop files to upload" : "Drop brand files here"}</p>
+              <p className="mt-1 text-[12px] text-muted-foreground/45">PDF uploads are rendered into brand assets automatically</p>
             </div>
-            {/* Accepted formats */}
             <div className="flex flex-wrap justify-center gap-1.5">
-              {["AI","EPS","PDF","ZIP","RAR","SVG","PNG","JPG","WEBP"].map((f)=>(
-                <span key={f} className="rounded border border-border bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/38">{f}</span>
+              {["PDF","AI","EPS","ZIP","RAR","SVG","PNG","JPG"].map((f)=>(
+                <span key={f} className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${f==="PDF" ? "border-accent/20 bg-accent/[0.06] text-accent/65" : "border-border bg-secondary text-muted-foreground/38"}`}>{f}</span>
               ))}
             </div>
             <label className={`cursor-pointer rounded-lg border border-border bg-secondary px-5 py-2 text-[12px] font-semibold text-foreground/65 transition-colors hover:text-foreground/85 ${brandUploading ? "pointer-events-none opacity-50" : ""}`}>
               {brandUploading ? "Uploading…" : "Choose files"}
-              <input
-                type="file"
-                multiple
-                accept=".ai,.eps,.pdf,.zip,.rar,.svg,.png,.jpg,.jpeg,.webp"
-                onChange={onFileInput}
-                className="sr-only"
-              />
+              <input type="file" multiple accept=".ai,.eps,.pdf,.zip,.rar,.svg,.png,.jpg,.jpeg,.webp" onChange={onFileInput} className="sr-only" />
             </label>
-            <p className="text-[10px] text-muted-foreground/28">Max 50 MB per file · All formats stored as-is</p>
+            <p className="text-[10px] text-muted-foreground/28">Max 50 MB per file</p>
           </div>
 
-          {/* Upload progress */}
+          {/* Upload queue */}
           {brandUploadQueue.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/38">Upload Progress</p>
               <div className="space-y-2">
                 {brandUploadQueue.map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <span className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-muted-foreground/40">
-                      {extLabel(getExt(item.file.name))}
-                    </span>
+                    <span className={`shrink-0 rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ${extColor(getExt(item.file.name))}`}>{extLabel(getExt(item.file.name))}</span>
                     <span className="min-w-0 flex-1 truncate text-[12px] text-foreground/65">{item.file.name}</span>
                     <span className="shrink-0 text-[11px]">
-                      {item.status==="uploading" && <span className="text-accent/65">Uploading…</span>}
-                      {item.status==="done"      && <span className="text-accent/75">✓</span>}
-                      {item.status==="error"     && <span className="text-red-500/65" title={item.error}>Failed</span>}
-                      {item.status==="pending"   && <span className="text-muted-foreground/30">—</span>}
+                      {item.status==="uploading"&&<span className="text-accent/65">Uploading…</span>}
+                      {item.status==="done"     &&<span className="text-accent/75">✓ Uploaded</span>}
+                      {item.status==="error"    &&<span className="text-red-500/65" title={item.error}>Failed</span>}
+                      {item.status==="pending"  &&<span className="text-muted-foreground/30">—</span>}
                     </span>
                   </div>
                 ))}
               </div>
               {brandUploadQueue.some((q) => q.status === "error") && (
-                <div className="mt-3 rounded-lg border border-red-500/15 bg-red-500/[0.04] px-3 py-2">
+                <div className="mt-3 space-y-1 rounded-lg border border-red-500/15 bg-red-500/[0.04] px-3 py-2">
                   {brandUploadQueue.filter((q) => q.status === "error").map((q, i) => (
                     <p key={i} className="text-[11px] text-red-500/65">{q.file.name}: {q.error}</p>
                   ))}
@@ -5688,63 +5763,182 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           )}
 
-          {/* Loading indicator */}
-          {brandLoadStatus === "loading" && (
-            <p className="text-[12px] text-muted-foreground/35">Loading brand sources…</p>
-          )}
+          {brandLoadStatus === "loading" && <p className="text-[12px] text-muted-foreground/35">Loading…</p>}
 
           {/* Source files list */}
           {brandSourceFiles.length > 0 && (
             <div className="rounded-xl border border-border bg-card shadow-sm">
               <div className="border-b border-border px-5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/38">
-                  Uploaded Sources ({brandSourceFiles.length})
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/38">Uploaded Sources ({brandSourceFiles.length})</p>
               </div>
               <div className="divide-y divide-border">
-                {brandSourceFiles.map((f) => (
-                  <div key={f.id} className="flex items-center gap-3 px-5 py-3.5">
-                    <span className={`shrink-0 rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ${extColor(f.fileExt)}`}>
-                      {extLabel(f.fileExt)}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground/75">{f.filename}</span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground/35">{formatBytes(f.fileSize)}</span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground/30">{formatDate(f.createdAt)}</span>
-                    <button
-                      type="button"
-                      onClick={() => deleteSourceFile(f.id)}
-                      className="shrink-0 text-[11px] text-muted-foreground/25 transition-colors hover:text-destructive/65"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
+                {brandSourceFiles.map((f) => {
+                  const isProcessing = brandProcessingIds.has(f.id)
+                  return (
+                    <div key={f.id} className="flex items-center gap-3 px-5 py-3.5">
+                      <span className={`shrink-0 rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ${extColor(f.fileExt)}`}>{extLabel(f.fileExt)}</span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground/75">{f.filename}</span>
+                      {isProcessing && (
+                        <span className="shrink-0 text-[11px] text-accent/60 animate-pulse">Rendering PDF…</span>
+                      )}
+                      {!isProcessing && PDF_EXTS.has(f.fileExt) && (
+                        <button type="button" onClick={() => processPdfSourceFile(f)}
+                          className="shrink-0 text-[11px] text-accent/55 transition-colors hover:text-accent/85">
+                          Re-process
+                        </button>
+                      )}
+                      <span className="shrink-0 text-[11px] text-muted-foreground/35">{formatBytes(f.fileSize)}</span>
+                      <span className="shrink-0 text-[11px] text-muted-foreground/28">{formatDate(f.createdAt)}</span>
+                      <button type="button" onClick={() => deleteSourceFile(f.id)}
+                        className="shrink-0 text-[11px] text-muted-foreground/22 transition-colors hover:text-destructive/65">
+                        Remove
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
 
-          {/* Empty state */}
           {brandLoadStatus === "loaded" && brandSourceFiles.length === 0 && (
             <p className="py-4 text-center text-[13px] text-muted-foreground/35">No brand sources uploaded yet.</p>
           )}
         </section>
 
-        {/* ── Brand Assets ─────────────────────────────────────────────────── */}
+        {/* ── Processing Queue ───────────────────────────────────────────── */}
+        {Object.keys(brandProcessingLog).length > 0 && (
+          <section className="space-y-3">
+            <div>
+              <h3 className="text-[13px] font-semibold text-foreground/80">Processing Queue</h3>
+              <p className="mt-0.5 text-[12px] text-muted-foreground/50">Live status of PDF processing jobs.</p>
+            </div>
+            <div className="space-y-3">
+              {Object.entries(brandProcessingLog).map(([fileId, log]) => {
+                const file = brandSourceFiles.find((f) => f.id === fileId)
+                const isActive = brandProcessingIds.has(fileId)
+                return (
+                  <div key={fileId} className={`rounded-xl border bg-card p-4 shadow-sm ${log.error ? "border-red-500/20" : log.done ? "border-accent/15" : "border-border"}`}>
+                    {/* Header */}
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[13px] font-semibold text-foreground/80">{file?.filename ?? "Unknown file"}</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          {isActive && <span className="flex items-center gap-1 text-[11px] text-accent/65"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" /> Processing…</span>}
+                          {!isActive && log.done && !log.error && <span className="text-[11px] text-accent/70">✓ Completed</span>}
+                          {!isActive && log.error && <span className="text-[11px] text-red-500/70">✗ Failed</span>}
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => setBrandProcessingLog((prev) => { const n={...prev}; delete n[fileId]; return n })}
+                        className="shrink-0 text-[10px] text-muted-foreground/25 hover:text-muted-foreground/55">Dismiss</button>
+                    </div>
+                    {/* Step log */}
+                    <div className="space-y-1">
+                      {log.steps.map((step, i) => (
+                        <div key={i} className="flex items-start gap-2 text-[12px]">
+                          <span className={`mt-px shrink-0 ${step.ok ? "text-accent/70" : "text-red-500/65"}`}>{step.ok ? "✓" : "✗"}</span>
+                          <span className={step.ok ? "text-foreground/60" : "text-red-500/60"}>{step.label}</span>
+                        </div>
+                      ))}
+                      {isActive && (
+                        <div className="flex items-center gap-2 text-[12px] text-muted-foreground/40">
+                          <span className="animate-pulse">···</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Error message */}
+                    {log.error && (
+                      <div className="mt-3 rounded-lg border border-red-500/15 bg-red-500/[0.04] px-3 py-2">
+                        <p className="text-[11px] font-semibold text-red-500/65">Error</p>
+                        <p className="mt-0.5 text-[11px] text-red-500/55">{log.error}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ── Brand Assets ───────────────────────────────────────────────── */}
         <section className="space-y-4">
           <div>
             <h3 className="text-[13px] font-semibold text-foreground/80">Brand Assets</h3>
             <p className="mt-0.5 text-[12px] text-muted-foreground/50">
-              Processed logo assets ready for use in Hero, Footer, Press Kit and more.
+              Visual assets ready for use in Hero, Footer, Press Kit and more.
+              {brandAssets.some((a) => a.status === "preview_only") && (
+                <span className="ml-1 text-amber-500/65">· PDF assets are page renders — not extracted transparent logos.</span>
+              )}
             </p>
           </div>
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
-            <Sparkles className="h-6 w-6 text-muted-foreground/22" />
-            <p className="text-[13px] font-semibold text-foreground/45">No brand assets yet</p>
-            <p className="max-w-xs text-[12px] text-muted-foreground/35">
-              Brand asset generation — extracting logos from source files, creating
-              transparent variants — is coming in a future update.
-            </p>
-          </div>
+
+          {/* Loading processing state */}
+          {brandProcessingIds.size > 0 && (
+            <div className="flex items-center gap-2 rounded-xl border border-accent/15 bg-accent/[0.04] px-4 py-3">
+              <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
+              <span className="text-[12px] text-accent/70">Processing PDF — rendering pages to preview images…</span>
+            </div>
+          )}
+
+          {/* Asset grid */}
+          {brandAssets.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {brandAssets.map((asset) => (
+                <div key={asset.id} className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  {/* Dual preview */}
+                  <div className="grid grid-cols-2 divide-x divide-border">
+                    <div className="flex h-28 items-center justify-center bg-[#111] p-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={asset.previewUrl} alt={asset.name ?? ""} className="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div className="flex h-28 items-center justify-center bg-white p-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={asset.previewUrl} alt={asset.name ?? ""} className="max-h-full max-w-full object-contain" />
+                    </div>
+                  </div>
+                  {/* Meta */}
+                  <div className="p-3.5">
+                    <p className="truncate text-[13px] font-semibold text-foreground/80">{asset.name ?? "Untitled"}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <span className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-muted-foreground/45">{asset.assetType}</span>
+                      {asset.status === "preview_only" && (
+                        <span className="rounded border border-amber-500/20 bg-amber-500/[0.06] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-amber-500/65">Preview only</span>
+                      )}
+                    </div>
+                    {/* CSS filter variants */}
+                    <div className="mt-3 flex items-end gap-2">
+                      {[
+                        { label: "Original", filter: "none",                     bg: "bg-secondary/60" },
+                        { label: "White",    filter: "brightness(0) invert(1)", bg: "bg-[#222]" },
+                        { label: "Black",    filter: "brightness(0)",            bg: "bg-secondary/60" },
+                      ].map(({ label, filter, bg }) => (
+                        <div key={label} className="flex flex-col items-center gap-1">
+                          <div className={`flex h-8 w-10 items-center justify-center rounded border border-border ${bg}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={asset.previewUrl} alt={label} className="max-h-6 max-w-full object-contain" style={{ filter }} />
+                          </div>
+                          <span className="text-[8px] text-muted-foreground/32">{label}</span>
+                        </div>
+                      ))}
+                      <div className="ml-auto">
+                        <button type="button" onClick={() => deleteAsset(asset.id)}
+                          className="text-[10px] text-muted-foreground/22 transition-colors hover:text-destructive/65">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card/50 px-6 py-8 text-center">
+              <Sparkles className="h-6 w-6 text-muted-foreground/22" />
+              <p className="text-[13px] font-semibold text-foreground/45">No brand assets yet</p>
+              <p className="max-w-xs text-[12px] text-muted-foreground/35">
+                Upload a PDF brand file above — pages are automatically rendered as preview assets.
+              </p>
+            </div>
+          )}
         </section>
 
       </div>
