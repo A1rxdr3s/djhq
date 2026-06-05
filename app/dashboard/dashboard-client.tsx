@@ -6627,7 +6627,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
       {/* ── Top bar ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/96 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-3 px-5 sm:px-8">
+        <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-5 sm:px-8">
           <button
             type="button"
             onClick={() => setActiveSection("home")}
@@ -6679,7 +6679,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       </header>
 
       {/* ── Body ────────────────────────────────────────────── */}
-      <div className="mx-auto flex max-w-[1440px]">
+      <div className="mx-auto flex max-w-[1600px]">
 
         {/* Sidebar */}
         <aside className="hidden w-[196px] shrink-0 border-r border-border lg:block">
