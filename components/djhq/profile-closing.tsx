@@ -34,7 +34,6 @@ type Props = {
   artistHandle?: string
   heroLogoUrl?: string | null
   heroIdentityMode?: string
-  // Footer-specific fields — preferred over hero equivalents when set
   footerLogoUrl?: string | null
   footerLogoWidth?: number
   footerBookingEmail?: string | null
@@ -50,10 +49,13 @@ export function ProfileClosing({
   bookingEmail,
   isPro,
   socialLinks = [],
+  hasPressKit = false,
+  pressKitHref = null,
+  artistHandle = "",
   heroLogoUrl,
   heroIdentityMode,
   footerLogoUrl,
-  footerLogoWidth = 220,
+  footerLogoWidth = 120,
   footerBookingEmail,
   footerContactEmail,
   footerDemosEmail,
@@ -77,31 +79,24 @@ export function ProfileClosing({
 
   const year = new Date().getFullYear()
 
-  // ── Logo resolution ──────────────────────────────────────────────
-  // Priority: dedicated footer logo → hero logo (if logo-mode) → artist name text
+  // Logo: footer-specific → hero logo (logo/both mode) → null
   const resolvedLogoUrl =
     footerLogoUrl?.trim() ||
     ((heroIdentityMode === "logo" || heroIdentityMode === "both") && heroLogoUrl?.trim()
       ? heroLogoUrl.trim()
       : null)
 
-  // ── Contact emails — show only those with a value ─────────────────
-  // If specific footer emails are set they take priority; otherwise fall back
-  // to the main booking email for the Booking slot only.
+  // Contact entries — only render those that have a value
   const contacts: { label: string; email: string }[] = [
-    footerBookingEmail?.trim()
-      ? { label: "Booking", email: footerBookingEmail.trim() }
-      : bookingEmail?.trim()
-      ? { label: "Booking", email: bookingEmail.trim() }
+    (footerBookingEmail?.trim() || bookingEmail?.trim())
+      ? { label: "Booking", email: (footerBookingEmail?.trim() || bookingEmail?.trim()) as string }
       : null,
     footerContactEmail?.trim() ? { label: "Contact", email: footerContactEmail.trim() } : null,
     footerDemosEmail?.trim()   ? { label: "Demos",   email: footerDemosEmail.trim() }   : null,
   ].filter(Boolean) as { label: string; email: string }[]
 
-  // ── Copyright ─────────────────────────────────────────────────────
   const copyrightLine = footerCopyright?.trim() || `© ${year} ${artistName}`
 
-  // ── Social icons ──────────────────────────────────────────────────
   const iconLinks = socialLinks
     .filter((l) => l.url.trim().length > 0)
     .slice(0, 6)
@@ -116,64 +111,156 @@ export function ProfileClosing({
       l.href !== null && l.Icon !== undefined,
     )
 
+  // Sitemap navigation links
+  const sitemapLinks = [
+    { label: "Releases",  href: "#music" },
+    { label: "Shows",     href: "#shows" },
+    { label: "Sets",      href: "#performance" },
+    ...(hasPressKit && pressKitHref
+      ? [{ label: "Press Kit", href: pressKitHref, external: true }]
+      : []),
+    { label: "Contact",   href: "#contact" },
+  ]
+
+  const legalLinks = [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Cookie Policy",  href: "/cookies" },
+    { label: "Terms of Service", href: "/terms" },
+  ]
+
+  // Shared typography tokens
+  const headingClass = "mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/22"
+  const linkClass    = "block text-[13px] text-white/45 transition-colors duration-200 hover:text-white/85"
+
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
-      {/* ── Identity block: logo → social → contacts ────────────────── */}
-      <div className="flex flex-col items-center px-6 pb-10 pt-14 text-center sm:pb-14 sm:pt-20 lg:pt-24">
+      {/* ── Main editorial grid ─────────────────────────────────────── */}
+      <div className={cn(
+        "grid gap-x-10 gap-y-10 py-12 sm:py-14 lg:gap-x-14 lg:py-16",
+        "grid-cols-1 sm:grid-cols-2",
+        footerNewsletterEnabled && contacts.length > 0
+          ? "lg:grid-cols-4"
+          : contacts.length > 0 || footerNewsletterEnabled
+          ? "lg:grid-cols-3"
+          : "lg:grid-cols-2",
+      )}>
 
-        {/* 1. Footer logo */}
-        {resolvedLogoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={resolvedLogoUrl}
-            alt={artistName}
-            style={{ maxWidth: `${footerLogoWidth}px` }}
-            className="mx-auto max-h-[140px] object-contain opacity-90 sm:max-h-[160px] lg:max-h-[180px]"
-          />
-        ) : (
-          <p className="text-[2rem] font-black tracking-[-0.025em] text-foreground/88 sm:text-[2.5rem]">
-            {artistName}
-          </p>
-        )}
+        {/* Col 1 — Sitemap + Legal */}
+        <div className="space-y-8">
+          <div>
+            <p className={headingClass}>Sitemap</p>
+            <ul className="space-y-2.5">
+              {sitemapLinks.map(({ label, href, external }) => (
+                <li key={label}>
+                  {external ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={linkClass}
+                    >
+                      {label}
+                    </a>
+                  ) : (
+                    <a href={href} className={linkClass}>{label}</a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className={headingClass}>Legal</p>
+            <ul className="space-y-2.5">
+              {legalLinks.map(({ label, href }) => (
+                <li key={label}>
+                  <Link
+                    href={href}
+                    className={cn(linkClass, "text-white/32 hover:text-white/62")}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
 
-        {/* 2. Social icons — centered, icon-only, premium hover */}
+        {/* Col 2 — Connect (social icons) */}
         {footerSocialsEnabled && iconLinks.length > 0 && (
-          <div className="mt-8 flex items-center justify-center gap-6 sm:mt-10 sm:gap-8">
-            {iconLinks.map(({ platform, url, label, href, Icon }) => (
-              <a
-                key={`foot-${platform}-${url}`}
-                href={href}
-                aria-label={label}
-                title={label}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/38 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
-              >
-                <Icon className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px]" />
-              </a>
-            ))}
+          <div>
+            <p className={headingClass}>Connect</p>
+            <div className="flex flex-wrap gap-4">
+              {iconLinks.map(({ platform, url, label, href, Icon }) => (
+                <a
+                  key={`foot-${platform}-${url}`}
+                  href={href}
+                  aria-label={label}
+                  title={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/40 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                >
+                  <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
+                </a>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* 3. Contact emails — premium labeled block */}
-        {contacts.length > 0 && (
-          <div
-            className={cn(
-              "mt-8 sm:mt-10",
-              contacts.length === 1
-                ? ""
-                : "flex flex-wrap items-start justify-center gap-x-10 gap-y-5 sm:gap-x-14",
+        {/* Col 3 — Stay Connected (Newsletter) */}
+        {footerNewsletterEnabled && (
+          <div>
+            <p className={headingClass}>Stay Connected</p>
+            {status === "success" ? (
+              <p className="text-[13px] text-white/40">You&apos;re on the list.</p>
+            ) : (
+              <>
+                <p className="mb-4 text-[12px] text-white/28">Music. Shows. Guest Lists.</p>
+                <form onSubmit={handleSubmit} noValidate className="space-y-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (status === "error") setStatus("idle")
+                    }}
+                    placeholder="your@email.com"
+                    aria-label="Email address"
+                    className={cn(
+                      "h-9 w-full rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/15",
+                      status === "error"
+                        ? "border-red-500/30 focus:border-red-500/50"
+                        : "border-white/[0.10] focus:border-accent/38",
+                    )}
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === "loading"}
+                    className="h-9 w-full rounded-full border border-white/[0.12] bg-transparent text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40 transition-all duration-200 hover:border-white/[0.22] hover:text-white/65 disabled:opacity-40"
+                  >
+                    {status === "loading" ? "···" : "Join"}
+                  </button>
+                </form>
+                {status === "error" ? (
+                  <p className="mt-2 text-[10px] text-red-400/55">Enter a valid email address.</p>
+                ) : (
+                  <p className="mt-2 text-[10px] text-white/14">Occasional updates only.</p>
+                )}
+              </>
             )}
-          >
+          </div>
+        )}
+
+        {/* Col 4 — Booking / Contact / Demos */}
+        {contacts.length > 0 && (
+          <div className="space-y-5">
             {contacts.map(({ label, email: addr }) => (
-              <div key={label} className="text-center">
-                <p className="text-[9px] font-bold uppercase tracking-[0.26em] text-white/22">
-                  {label}
-                </p>
+              <div key={label}>
+                <p className={headingClass}>{label}</p>
                 <a
                   href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
-                  className="mt-1.5 block text-[12px] font-medium text-white/45 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/78 sm:text-[13px]"
+                  className="text-[13px] text-white/45 transition-colors duration-200 hover:text-white/80"
                 >
                   {addr}
                 </a>
@@ -181,70 +268,27 @@ export function ProfileClosing({
             ))}
           </div>
         )}
-
-        <div className="h-8 sm:h-12" />
       </div>
 
-      {/* ── Newsletter — secondary ───────────────────────────────────── */}
-      {footerNewsletterEnabled && (
-        <div className="border-t border-white/[0.04] px-6 py-8 text-center sm:py-10">
-          {status === "success" ? (
-            <p className="text-[12px] font-medium text-white/38">You&apos;re on the list.</p>
-          ) : (
-            <>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/20">
-                Stay Connected
-              </p>
-              <p className="mt-1 text-[12px] text-white/22">
-                Music. Shows. Guest Lists.
-              </p>
-              <form
-                onSubmit={handleSubmit}
-                noValidate
-                className="mx-auto mt-5 flex max-w-[280px] gap-2 sm:max-w-xs"
-              >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (status === "error") setStatus("idle")
-                  }}
-                  placeholder="your@email.com"
-                  aria-label="Email address"
-                  className={cn(
-                    "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/15",
-                    status === "error"
-                      ? "border-red-500/28 focus:border-red-500/45"
-                      : "border-white/[0.09] focus:border-accent/35",
-                  )}
-                />
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="h-9 shrink-0 rounded-full border border-white/[0.12] bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/42 transition-all duration-200 hover:border-white/[0.22] hover:text-white/68 disabled:opacity-40"
-                >
-                  {status === "loading" ? "···" : "Join"}
-                </button>
-              </form>
-              {status === "error" && (
-                <p className="mt-2 text-[10px] text-red-400/55">
-                  Enter a valid email address.
-                </p>
-              )}
-              {status !== "error" && (
-                <p className="mt-2 text-[10px] text-white/13">
-                  Occasional updates only.
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      {/* ── Bottom bar: small logo + copyright ─────────────────────── */}
+      <div className="flex items-center justify-between border-t border-white/[0.04] py-5">
+        {/* Signature mark — small, left-anchored */}
+        {resolvedLogoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={resolvedLogoUrl}
+            alt={artistName}
+            style={{ maxWidth: `${Math.min(footerLogoWidth, 160)}px` }}
+            className="max-h-[40px] object-contain opacity-55"
+          />
+        ) : (
+          <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/18">
+            {artistName}
+          </span>
+        )}
 
-      {/* ── Copyright ─────────────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.04] py-5 text-center">
-        <p className="text-[10px] font-medium text-white/18">
+        {/* Copyright + attribution */}
+        <p className="text-[10px] text-white/18">
           {copyrightLine}
           {!isPro && (
             <>
