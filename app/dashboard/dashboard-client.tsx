@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, Disc3, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, Youtube } from "lucide-react"
+import { ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, Disc3, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -41,6 +41,7 @@ const navGroups: NavGroup[] = [
       { id: "profile", label: "Profile", icon: User },
       { id: "links",   label: "Links",   icon: Link2 },
       { id: "brand",   label: "Brand",   icon: Sparkles },
+      { id: "hero",    label: "Hero",    icon: Monitor  },
     ],
   },
   {
@@ -6190,6 +6191,28 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  function renderHero() {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Hero</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">
+            Configure the full-bleed hero section of your public profile.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
+          <div className="mx-auto max-w-sm">
+            <Monitor className="mx-auto h-8 w-8 text-muted-foreground/25" />
+            <p className="mt-3 text-[13px] font-semibold text-foreground/55">Hero editor coming soon</p>
+            <p className="mt-1 text-[12px] text-muted-foreground/40">
+              Full hero customization — image, logo, layout, gradients and CTA — will be managed here.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   function renderCustomDomain() {
     const isPro = artist.plan === "pro"
 
@@ -6505,6 +6528,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderCustomDomain()
       case "brand":
         return renderBrand()
+      case "hero":
+        return renderHero()
       case "footer":
         return renderFooterBranding()
       case "publish":
