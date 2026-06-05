@@ -1008,6 +1008,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           pressKitPdfEsSize: pressKitPdfEsSize || null,
           pressKitUseGalleryPhotos,
         },
+        footer: {
+          logoUrl: footerLogoUrl || null,
+          logoWidth: footerLogoWidth,
+          bookingEmail: footerBookingEmail || null,
+          contactEmail: footerContactEmail || null,
+          demosEmail: footerDemosEmail || null,
+          newsletterEnabled: footerNewsletterEnabled,
+          socialsEnabled: footerSocialsEnabled,
+          copyright: footerCopyright || null,
+        },
       }),
     })
 
@@ -1157,6 +1167,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       footerLogoUrl: footerLogoUrl || null,
       footerLogoWidth,
       footerBookingEmail: footerBookingEmail || null,
+      footerContactEmail: footerContactEmail || null,
+      footerDemosEmail: footerDemosEmail || null,
       footerNewsletterEnabled,
       footerSocialsEnabled,
       footerCopyright: footerCopyright || null,

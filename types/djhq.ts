@@ -473,6 +473,8 @@ export interface Artist {
   footerBookingEmail?: string | null
   footerNewsletterEnabled?: boolean
   footerSocialsEnabled?: boolean
+  footerContactEmail?: string | null
+  footerDemosEmail?: string | null
   footerCopyright?: string | null
   /** Record creation timestamp. */
   createdAt: ISODateString

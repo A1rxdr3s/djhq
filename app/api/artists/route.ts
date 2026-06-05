@@ -127,6 +127,8 @@ type SaveFooterPayload = {
   logoUrl?: string | null
   logoWidth?: number
   bookingEmail?: string | null
+  contactEmail?: string | null
+  demosEmail?: string | null
   newsletterEnabled?: boolean
   socialsEnabled?: boolean
   copyright?: string | null
@@ -467,6 +469,8 @@ export async function PATCH(request: Request) {
         footer_booking_email: payload.footer?.bookingEmail?.trim() || null,
         footer_newsletter_enabled: payload.footer?.newsletterEnabled ?? true,
         footer_socials_enabled: payload.footer?.socialsEnabled ?? true,
+        footer_contact_email: payload.footer?.contactEmail?.trim() || null,
+        footer_demos_email: payload.footer?.demosEmail?.trim() || null,
         footer_copyright: payload.footer?.copyright?.trim() || null,
       })
       .eq("id", artistId)
