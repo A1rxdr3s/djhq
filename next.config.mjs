@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      // /dashboard → /hq (permanent 308). Query parameters are preserved automatically
+      // by Next.js redirects, so /dashboard?section=profile → /hq?section=profile.
+      { source: "/dashboard", destination: "/hq", permanent: true },
+      // Catch any /dashboard/* sub-paths for forward compatibility.
+      { source: "/dashboard/:path*", destination: "/hq/:path*", permanent: true },
+    ]
+  },
+
   images: {
     remotePatterns: [
       {
