@@ -6074,7 +6074,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             )}
             {footerNewsletterEnabled && (
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/22">Stay Connected · newsletter</p>
+              <div className="w-full border-t border-white/[0.04] pt-4">
+                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-muted-foreground/20">Stay Connected</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/18">Music. Shows. Guest Lists.</p>
+                <div className="mx-auto mt-3 flex max-w-[200px] gap-1.5">
+                  <div className="h-7 flex-1 rounded-full border border-white/[0.07] bg-transparent" />
+                  <div className="h-7 w-12 rounded-full border border-white/[0.10] bg-transparent" />
+                </div>
+              </div>
             )}
             <p className="text-[9px] text-muted-foreground/18">{copyrightLine}</p>
           </div>

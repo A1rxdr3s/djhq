@@ -101,6 +101,14 @@ type ArtistRow = {
   hero_content_width: string | null
   artist_accent_theme: string | null
   is_published: boolean
+  footer_logo_url: string | null
+  footer_logo_width: number | null
+  footer_booking_email: string | null
+  footer_contact_email: string | null
+  footer_demos_email: string | null
+  footer_newsletter_enabled: boolean | null
+  footer_socials_enabled: boolean | null
+  footer_copyright: string | null
   created_at: string
   updated_at: string
 }
@@ -553,6 +561,14 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       heroContentWidth: (artistRow.hero_content_width || "standard") as "compact" | "standard" | "wide",
       accentTheme: (artistRow.artist_accent_theme || "matrix") as "matrix" | "electric_blue" | "signal_red",
       isPublished: artistRow.is_published,
+      footerLogoUrl: artistRow.footer_logo_url ?? null,
+      footerLogoWidth: artistRow.footer_logo_width ?? 220,
+      footerBookingEmail: artistRow.footer_booking_email ?? null,
+      footerContactEmail: artistRow.footer_contact_email ?? null,
+      footerDemosEmail: artistRow.footer_demos_email ?? null,
+      footerNewsletterEnabled: artistRow.footer_newsletter_enabled ?? true,
+      footerSocialsEnabled: artistRow.footer_socials_enabled ?? true,
+      footerCopyright: artistRow.footer_copyright ?? null,
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
     }
