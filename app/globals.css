@@ -112,7 +112,7 @@
    Uses warm paper neutrals rather than pure white — closer to Notion / Linear. */
 .djhq-dashboard {
   color-scheme: light;
-  --background:       oklch(0.967 0.004 80);   /* #F5F4F1 warm paper          */
+  --background:       oklch(0.983 0.002 80);   /* #FAFAF9 clean paper         */
   --foreground:       oklch(0.10  0     0);    /* #111 near-black              */
   --card:             oklch(1     0     0);    /* #FFF white card              */
   --card-foreground:  oklch(0.10  0     0);
@@ -131,7 +131,7 @@
   --border:           oklch(0.91  0.003 80);   /* #E7E7E7 warm light border    */
   --input:            oklch(1     0     0);
   --ring:             oklch(0.75  0.18  160);
-  --sidebar:          oklch(0.96  0.004 80);   /* sidebar slightly darker paper */
+  --sidebar:          oklch(0.978 0.002 80);   /* sidebar slightly darker paper */
   --sidebar-foreground: oklch(0.10 0    0);
   --sidebar-primary:  oklch(0.75  0.18  160);
   --sidebar-primary-foreground: oklch(0.08 0  0);
@@ -162,21 +162,21 @@
 /* Pull the body/html background to warm paper when dashboard is present */
 html:has(.djhq-dashboard),
 body:has(.djhq-dashboard) {
-  background-color: oklch(0.967 0.004 80);
+  background-color: oklch(0.983 0.002 80);
   color: oklch(0.10 0 0);
 }
 
 /* Structural backgrounds — override any inlined utility values */
-.djhq-dashboard { background-color: oklch(0.967 0.004 80); color: oklch(0.10 0 0); }
-.djhq-dashboard header  { background-color: rgba(245,244,241,0.96); color: oklch(0.10 0 0); }
-.djhq-dashboard aside   { background-color: oklch(0.962 0.004 80); }
+.djhq-dashboard { background-color: oklch(0.983 0.002 80); color: oklch(0.10 0 0); }
+.djhq-dashboard header  { background-color: rgba(250,250,249,0.96); color: oklch(0.10 0 0); }
+.djhq-dashboard aside   { background-color: oklch(0.978 0.002 80); }
 
 /* Foreground / muted text — direct color, no token ambiguity */
 .djhq-dashboard .text-foreground    { color: oklch(0.10 0 0); }
 .djhq-dashboard .text-muted-foreground { color: oklch(0.44 0 0); }
 
 /* Cards — semi-transparent variants were nearly invisible on light bg */
-.djhq-dashboard .bg-card    { background-color: #ffffff; }
+.djhq-dashboard .bg-card    { background-color: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,.03), 0 8px 24px rgba(0,0,0,.03); }
 .djhq-dashboard .bg-card\/30,
 .djhq-dashboard .bg-card\/35,
 .djhq-dashboard .bg-card\/40,
@@ -194,7 +194,7 @@ body:has(.djhq-dashboard) {
 .djhq-dashboard .bg-secondary\/70 { background-color: rgba(235,234,230,0.80); }
 
 /* Background */
-.djhq-dashboard .bg-background { background-color: oklch(0.967 0.004 80); }
+.djhq-dashboard .bg-background { background-color: oklch(0.983 0.002 80); }
 
 /* Border */
 .djhq-dashboard .border-border { border-color: oklch(0.91 0.003 80); }

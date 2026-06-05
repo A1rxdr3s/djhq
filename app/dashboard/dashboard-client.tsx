@@ -1958,14 +1958,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* ── Artist identity strip ────────────────────────────────── */}
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight text-foreground">{artist.artistName}</h1>
+          <h1 className="text-[32px] font-extrabold tracking-[-0.02em] text-foreground">{artist.artistName}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             {statusItems.map(({ label, value, ok, section }) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => setActiveSection(section)}
-                className="flex items-center gap-1.5 text-[12px] transition-colors hover:text-foreground"
+                className="flex items-center gap-1.5 text-[12px] text-muted-foreground/50 transition-colors hover:text-foreground/75"
               >
                 <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-accent" : "bg-muted-foreground/30"}`} />
                 <span className="text-muted-foreground/60">{label}</span>
@@ -1993,7 +1993,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && setActiveSection("shows")}
           >
-            <div className="flex items-center gap-5 p-5 sm:p-6">
+            <div className="flex items-center gap-6 p-6 sm:p-7">
               {/* Date tile */}
               <div className="flex h-[66px] w-[52px] shrink-0 flex-col items-center justify-center rounded-xl bg-accent/[0.06] ring-1 ring-accent/20">
                 <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-accent/70">{MONTH_A[Number(nextShow.date.substring(5,7))-1]}</span>
@@ -2005,7 +2005,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent/60">Next Show</span>
                   <span className="rounded-full bg-accent/[0.07] px-2 py-px text-[10px] font-bold text-accent/70">{countdown}</span>
                 </div>
-                <p className="mt-1 truncate text-[20px] font-bold tracking-tight text-foreground">
+                <p className="mt-1 truncate text-[22px] font-bold tracking-[-0.01em] text-foreground">
                   {nextShow.eventName || nextShow.venue || "TBD"}
                 </p>
                 <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
@@ -2053,8 +2053,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="grid gap-4 sm:grid-cols-2">
 
           {/* Quick actions */}
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.20em] text-muted-foreground/50">Quick actions</p>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Quick actions</p>
             <div className="space-y-1">
               {quickActions.map(({ label, icon: Icon, section }) => (
                 <button
@@ -2074,8 +2074,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
 
           {/* Content health */}
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.20em] text-muted-foreground/50">Content</p>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Content</p>
             <div className="space-y-3">
               {/* Catalog numbers */}
               <div className="grid grid-cols-2 gap-2">
@@ -6258,7 +6258,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Logo slots */}
         <div>
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.20em] text-muted-foreground/50">Logo Assets</p>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Logo Assets</p>
           <div className="space-y-3">
             <LogoSlot
               title="Hero Logo"
@@ -6627,7 +6627,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
       {/* ── Top bar ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/96 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-[1360px] items-center gap-3 px-5 sm:px-8">
+        <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-3 px-5 sm:px-8">
           <button
             type="button"
             onClick={() => setActiveSection("home")}
@@ -6679,10 +6679,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       </header>
 
       {/* ── Body ────────────────────────────────────────────── */}
-      <div className="mx-auto flex max-w-[1360px]">
+      <div className="mx-auto flex max-w-[1440px]">
 
         {/* Sidebar */}
-        <aside className="hidden w-[220px] shrink-0 border-r border-border lg:block">
+        <aside className="hidden w-[196px] shrink-0 border-r border-border lg:block">
           <nav className="sticky top-14 flex h-[calc(100vh-56px)] flex-col overflow-y-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="space-y-0.5 px-3">
               <button type="button" aria-pressed={activeSection==="home"} onClick={()=>setActiveSection("home")}
@@ -6713,7 +6713,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </aside>
 
         {/* Content */}
-        <div className="min-w-0 flex-1 px-5 py-6 sm:px-8 sm:py-8">
+        <div className="min-w-0 flex-1 px-6 py-8 sm:px-10 sm:py-10">
           {/* Mobile nav chips */}
           <div className="-mx-5 mb-5 flex gap-1.5 overflow-x-auto border-b border-border px-5 pb-4 [scrollbar-width:none] sm:-mx-8 sm:px-8 lg:hidden [&::-webkit-scrollbar]:hidden">
             <button type="button" aria-pressed={activeSection==="home"} onClick={()=>setActiveSection("home")}
