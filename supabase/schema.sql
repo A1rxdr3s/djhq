@@ -327,12 +327,18 @@ create table if not exists public.brand_assets (
   status         text        not null default 'uploaded',
   preview_url    text        not null,
   has_solid_bg   boolean     not null default false,
+  variant        text        not null default 'original',
+  source_page    integer     null,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now(),
   constraint brand_assets_asset_type_check check (
     asset_type in ('logo','wordmark','monogram','favicon','unknown')
   )
 );
+
+-- Migration 043 columns (idempotent)
+alter table public.brand_assets add column if not exists variant     text    not null default 'original';
+alter table public.brand_assets add column if not exists source_page integer null;
 
 -- ── Triggers ─────────────────────────────────────────────────────────────────
 

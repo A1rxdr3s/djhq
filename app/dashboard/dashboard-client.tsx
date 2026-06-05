@@ -53,6 +53,8 @@ type BrandAsset = {
   status: string
   previewUrl: string
   hasSolidBg: boolean
+  variant: string
+  sourcePage: number | null
   createdAt: string
 }
 
@@ -163,6 +165,103 @@ function detectCandidateBounds(
   }
 
   return candidates.slice(0, 8)
+}
+
+/** Re-trim a crop to its tightest non-white bounding box, then apply 10% padding */
+function normalizeCrop(src: HTMLCanvasElement): HTMLCanvasElement {
+  const ctx = src.getContext("2d")!
+  const { width: w, height: h } = src
+  const data = ctx.getImageData(0, 0, w, h).data
+  let minX = w, maxX = 0, minY = h, maxY = 0
+  for (let py = 0; py < h; py++) {
+    for (let px = 0; px < w; px++) {
+      const i = (py * w + px) * 4
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3]
+      if (a > 30 && !(r > 240 && g > 240 && b > 240)) {
+        if (px < minX) minX = px; if (px > maxX) maxX = px
+        if (py < minY) minY = py; if (py > maxY) maxY = py
+      }
+    }
+  }
+  if (maxX <= minX || maxY <= minY) return src
+  const cw = maxX - minX, ch = maxY - minY
+  const padX = Math.max(8, Math.round(cw * 0.10))
+  const padY = Math.max(8, Math.round(ch * 0.10))
+  const x0 = Math.max(0, minX - padX), y0 = Math.max(0, minY - padY)
+  const x1 = Math.min(w, maxX + padX + 1), y1 = Math.min(h, maxY + padY + 1)
+  const nc = document.createElement("canvas")
+  nc.width = x1 - x0; nc.height = y1 - y0
+  const nCtx = nc.getContext("2d")!
+  nCtx.fillStyle = "#ffffff"
+  nCtx.fillRect(0, 0, nc.width, nc.height)
+  nCtx.drawImage(src, x0, y0, nc.width, nc.height, 0, 0, nc.width, nc.height)
+  return nc
+}
+
+/** Map pixel analysis → asset_type DB value */
+function classifyAssetType(
+  w: number, h: number, fgPx: number,
+): BrandAsset["assetType"] {
+  const ratio = w / h
+  const density = fgPx / (w * h)
+  if (ratio > 2.8) return "wordmark"
+  if (density < 0.20 && ratio > 0.7 && ratio < 1.5) return "monogram"
+  return "logo"
+}
+
+/** Map pixel analysis → friendly display name (stored in asset.name) */
+function displayTypeName(assetType: BrandAsset["assetType"], w: number, h: number): string {
+  if (assetType === "wordmark") return "Wordmark"
+  if (assetType === "monogram") return "Monogram"
+  const ratio = w / h
+  if (ratio > 1.8) return "Horizontal Logo"
+  if (ratio < 0.7) return "Stacked Logo"
+  return "Primary Logo"
+}
+
+/** Detect color variant by sampling foreground pixels */
+function detectVariant(data: Uint8ClampedArray): string {
+  let sumR = 0, sumG = 0, sumB = 0, count = 0
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3]
+    if (a > 30 && !(r > 235 && g > 235 && b > 235)) {
+      sumR += r; sumG += g; sumB += b; count++
+    }
+  }
+  if (count === 0) return "original"
+  const r = sumR / count, g = sumG / count, b = sumB / count
+  const brightness = (r + g + b) / 3
+  const chroma = Math.max(r, g, b) - Math.min(r, g, b)
+  if (brightness < 65 && chroma < 35)  return "black"
+  if (brightness > 195 && chroma < 35) return "white"
+  if (r > 140 && g > 100 && b < 90 && r > b + 55) return "gold"
+  if (brightness > 115 && brightness < 190 && chroma < 40) return "silver"
+  return "original"
+}
+
+/** 8×8 perceptual hash → 64-element float array */
+function phash(data: Uint8ClampedArray, w: number, h: number): Float32Array {
+  const out = new Float32Array(64)
+  for (let gy = 0; gy < 8; gy++) {
+    for (let gx = 0; gx < 8; gx++) {
+      const px = Math.floor(gx * w / 8), py = Math.floor(gy * h / 8)
+      const i = (py * w + px) * 4
+      out[gy * 8 + gx] = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
+    }
+  }
+  return out
+}
+
+/** Mean absolute difference between two phashes — < 18 means likely duplicates */
+function phashDist(a: Float32Array, b: Float32Array): number {
+  let d = 0
+  for (let i = 0; i < 64; i++) d += Math.abs(a[i] - b[i])
+  return d / 64
+}
+
+/** Extract base type from an asset name (strips trailing number suffix) */
+function assetGroupKey(name: string | null): string {
+  return (name ?? "Unknown").replace(/\s+\d+$/, "")
 }
 
 const navGroups: NavGroup[] = [
@@ -1016,6 +1115,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             status:       x.status         as string,
             previewUrl:   x.preview_url    as string,
             hasSolidBg:   x.has_solid_bg   as boolean,
+            variant:      (x.variant       as string | undefined) ?? "original",
+            sourcePage:   (x.source_page   as number | null | undefined) ?? null,
             createdAt:    x.created_at     as string,
           })))
           setBrandLoadStatus("loaded")
@@ -5562,12 +5663,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderBrand() {
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
+    // ─── Local helpers ────────────────────────────────────────────────────────
     const SOURCE_EXTS = new Set(["svg","png","jpg","jpeg","webp","pdf","ai","eps","zip","rar"])
     const PDF_EXTS    = new Set(["pdf"])
     const MAX_BYTES   = 50 * 1024 * 1024
     const MAX_PAGES   = 5
-    const RENDER_SCALE = 1.8
 
     function getExt(name: string) { return name.split(".").pop()?.toLowerCase() ?? "" }
     function extLabel(ext: string): string {
@@ -5594,11 +5694,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     function formatDate(iso: string): string {
       return new Date(iso).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })
     }
+    function variantLabel(v: string): string {
+      return ({ black:"Black", white:"White", gold:"Gold", silver:"Silver", original:"Original" } as Record<string,string>)[v] ?? "Original"
+    }
+    function variantDot(v: string): string {
+      return ({ black:"bg-[#111]", white:"bg-white border border-border", gold:"bg-[#c9a84c]", silver:"bg-[#a8a8a8]", original:"bg-accent/50" } as Record<string,string>)[v] ?? "bg-accent/50"
+    }
 
-    // ─── PDF processing ───────────────────────────────────────────────────────
+    // ─── PDF processing pipeline ──────────────────────────────────────────────
     async function processPdfSourceFile(sourceFile: BrandSourceFile) {
       const fid = sourceFile.id
       setBrandProcessingIds((prev) => new Set([...prev, fid]))
+      setBrandProcessingLog((prev) => ({ ...prev, [fid]: { steps: [], done: false } }))
 
       function addStep(label: string, ok: boolean) {
         setBrandProcessingLog((prev) => {
@@ -5619,31 +5726,43 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         })
       }
 
-      setBrandProcessingLog((prev) => ({ ...prev, [fid]: { steps: [], done: false } }))
       const newAssets: BrandAsset[] = []
 
       try {
+        // ── Phase 0: Load PDF renderer ─────────────────────────────────────────
         addStep("Loading PDF renderer", true)
         const pdfjs = await import("pdfjs-dist")
         pdfjs.GlobalWorkerOptions.workerSrc =
           `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+        const { supabase: client } = await import("@/lib/supabase/client")
 
         const pdf = await pdfjs.getDocument({ url: sourceFile.fileUrl }).promise
         const totalPages = Math.min(pdf.numPages, MAX_PAGES)
-        addStep(`Opened PDF — ${pdf.numPages} page${pdf.numPages === 1 ? "" : "s"}`, true)
+        addStep(`Opened PDF — ${pdf.numPages} page${pdf.numPages === 1 ? "" : "s"} detected`, true)
 
-        const { supabase: client } = await import("@/lib/supabase/client")
+        // ── Phase 1: Render pages + collect candidates ─────────────────────────
+        type Pending = {
+          canvas: HTMLCanvasElement
+          data: Uint8ClampedArray
+          w: number; h: number
+          fgCount: number
+          assetType: BrandAsset["assetType"]
+          variant: string
+          hash: Float32Array
+          pageNum: number
+          candidateIdx: number
+          isDuplicate: boolean
+          displayName: string
+        }
+        const pending: Pending[] = []
         let renderedPages = 0
-        let totalCandidates = 0
 
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-          // ── Render page ───────────────────────────────────────────────────
           try {
             const page = await pdf.getPage(pageNum)
             const [, , w, h] = page.view
-            const scale = Math.min(RENDER_SCALE, 1400 / Math.max(w, h))
+            const scale = Math.min(1.8, 1400 / Math.max(w, h))
             const viewport = page.getViewport({ scale })
-
             const canvas = document.createElement("canvas")
             canvas.width  = Math.floor(viewport.width)
             canvas.height = Math.floor(viewport.height)
@@ -5652,7 +5771,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             await page.render({ canvas, canvasContext: ctx, viewport }).promise
 
-            // Upload full-page render as preview
+            // Full-page preview upload
             const pageBlob = await new Promise<Blob | null>(res => canvas.toBlob(res, "image/png", 0.88))
             if (pageBlob) {
               const pagePath = `artists/${artist.id}/generated/${Date.now()}-page-${pageNum}.png`
@@ -5668,101 +5787,178 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     name: totalPages === 1 ? baseName : `${baseName} — Page ${pageNum}`,
                     assetType: "logo", previewUrl: pgUrl.publicUrl,
                     status: "preview_only", hasSolidBg: true,
+                    variant: "original", sourcePage: pageNum,
                   }),
                 })
                 if (pgResp.ok) {
-                  const { asset } = await pgResp.json() as { asset?: Record<string, unknown> }
+                  const { asset } = await pgResp.json() as { asset?: Record<string,unknown> }
                   if (asset) {
                     renderedPages++
                     newAssets.push({
                       id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
                       name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
                       status: asset.status as string, previewUrl: asset.preview_url as string,
-                      hasSolidBg: asset.has_solid_bg as boolean, createdAt: asset.created_at as string,
+                      hasSolidBg: asset.has_solid_bg as boolean,
+                      variant: (asset.variant as string|undefined) ?? "original",
+                      sourcePage: (asset.source_page as number|null|undefined) ?? null,
+                      createdAt: asset.created_at as string,
                     })
-                    addStep(`Page ${pageNum}: rendered and saved as preview`, true)
+                    addStep(`Page ${pageNum}: rendered as full-page preview`, true)
                   }
                 }
               }
             }
 
-            // ── Detect logo candidates ────────────────────────────────────────
-            addStep(`Page ${pageNum}: scanning for individual logo regions…`, true)
-            try {
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-              const bounds = detectCandidateBounds(imageData.data, canvas.width, canvas.height)
+            // Detect candidate regions
+            addStep(`Page ${pageNum}: scanning for logo regions…`, true)
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            const bounds = detectCandidateBounds(imageData.data, canvas.width, canvas.height)
 
-              if (bounds.length === 0) {
-                addStep(`Page ${pageNum}: no separate logo regions detected`, false)
-              } else {
-                addStep(`Page ${pageNum}: found ${bounds.length} region${bounds.length !== 1 ? "s" : ""} — cropping…`, true)
-                let extracted = 0
-
-                for (let ci = 0; ci < bounds.length; ci++) {
-                  const b = bounds[ci]
-                  const cropCanvas = document.createElement("canvas")
-                  cropCanvas.width = b.w; cropCanvas.height = b.h
-                  const cropCtx = cropCanvas.getContext("2d")!
-                  cropCtx.drawImage(canvas, b.x, b.y, b.w, b.h, 0, 0, b.w, b.h)
-
-                  const cropBlob = await new Promise<Blob | null>(res => cropCanvas.toBlob(res, "image/png", 0.92))
-                  if (!cropBlob) continue
-
-                  const cropPath = `artists/${artist.id}/generated/${Date.now()}-p${pageNum}-c${ci+1}.png`
-                  const { error: cUpErr } = await client.storage.from("brand-sources")
-                    .upload(cropPath, cropBlob, { contentType: "image/png", upsert: true })
-                  if (cUpErr) continue
-
-                  const { data: cUrl } = client.storage.from("brand-sources").getPublicUrl(cropPath)
-                  const baseName = sourceFile.filename.replace(/\.pdf$/i, "")
-                  const cResp = await fetch("/api/artists/brand-create-asset", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      artistId: artist.id, sourceFileId: fid,
-                      name: totalPages === 1
-                        ? `${baseName} — Candidate ${ci + 1}`
-                        : `${baseName} — Page ${pageNum}, Candidate ${ci + 1}`,
-                      assetType: "logo", previewUrl: cUrl.publicUrl,
-                      status: "logo_candidate",
-                      hasSolidBg: false,
-                    }),
-                  })
-                  if (cResp.ok) {
-                    const { asset } = await cResp.json() as { asset?: Record<string, unknown> }
-                    if (asset) {
-                      extracted++
-                      totalCandidates++
-                      newAssets.push({
-                        id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
-                        name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
-                        status: asset.status as string, previewUrl: asset.preview_url as string,
-                        hasSolidBg: asset.has_solid_bg as boolean, createdAt: asset.created_at as string,
-                      })
-                    }
-                  }
+            if (bounds.length === 0) {
+              addStep(`Page ${pageNum}: no distinct logo regions found`, false)
+            } else {
+              addStep(`Page ${pageNum}: ${bounds.length} region${bounds.length !== 1 ? "s" : ""} detected — analyzing…`, true)
+              for (let ci = 0; ci < bounds.length; ci++) {
+                const b = bounds[ci]
+                // Crop from page canvas
+                const cropCanvas = document.createElement("canvas")
+                cropCanvas.width = b.w; cropCanvas.height = b.h
+                const cropCtx = cropCanvas.getContext("2d")!
+                cropCtx.drawImage(canvas, b.x, b.y, b.w, b.h, 0, 0, b.w, b.h)
+                // Normalize: retrim whitespace + consistent padding
+                const normCanvas = normalizeCrop(cropCanvas)
+                const nw = normCanvas.width, nh = normCanvas.height
+                const normCtx = normCanvas.getContext("2d")!
+                const normData = normCtx.getImageData(0, 0, nw, nh).data
+                // Analyze
+                let fgCount = 0
+                for (let i = 0; i < normData.length; i += 4) {
+                  const r = normData[i], g = normData[i+1], bv = normData[i+2], a = normData[i+3]
+                  if (a > 30 && !(r > 235 && g > 235 && bv > 235)) fgCount++
                 }
-
-                if (extracted > 0) {
-                  addStep(`Page ${pageNum}: extracted ${extracted} logo candidate${extracted !== 1 ? "s" : ""}`, true)
-                } else {
-                  addStep(`Page ${pageNum}: regions detected but crop upload failed`, false)
-                }
+                const assetType = classifyAssetType(nw, nh, fgCount)
+                const variant   = detectVariant(normData)
+                const hash      = phash(normData, nw, nh)
+                pending.push({
+                  canvas: normCanvas, data: normData, w: nw, h: nh,
+                  fgCount, assetType, variant, hash,
+                  pageNum, candidateIdx: ci + 1,
+                  isDuplicate: false, displayName: "",
+                })
               }
-            } catch (candErr) {
-              addStep(`Page ${pageNum}: candidate scan failed — ${candErr instanceof Error ? candErr.message : "error"}`, false)
             }
-
           } catch (pageErr) {
             addStep(`Page ${pageNum}: render failed — ${pageErr instanceof Error ? pageErr.message : "error"}`, false)
           }
         }
 
         if (renderedPages === 0) {
-          setError("No pages could be rendered. The PDF may be encrypted or contain only non-renderable objects.")
-        } else {
-          addStep(`${renderedPages} page render${renderedPages !== 1 ? "s" : ""} + ${totalCandidates} candidate${totalCandidates !== 1 ? "s" : ""} generated`, true)
-          markDone()
+          setError("No pages could be rendered. The PDF may be encrypted or unsupported.")
+          return
         }
+
+        if (pending.length === 0) {
+          addStep("No logo regions detected across any page", false)
+          markDone()
+          if (newAssets.length) setBrandAssets((prev) => [...newAssets, ...prev])
+          return
+        }
+
+        // ── Phase 2: Deduplicate ───────────────────────────────────────────────
+        addStep(`${pending.length} candidate${pending.length !== 1 ? "s" : ""} collected — deduplicating…`, true)
+        let dupCount = 0
+        for (let i = 0; i < pending.length; i++) {
+          if (pending[i].isDuplicate) continue
+          for (let j = i + 1; j < pending.length; j++) {
+            if (pending[j].isDuplicate) continue
+            const a = pending[i], b = pending[j]
+            const ratioA = a.w / a.h, ratioB = b.w / b.h
+            const ratioDiff = Math.abs(ratioA - ratioB) / Math.max(ratioA, ratioB)
+            const dist = phashDist(a.hash, b.hash)
+            if (ratioDiff < 0.08 && dist < 18) {
+              // Keep the one with more foreground pixels (higher quality)
+              if (a.fgCount >= b.fgCount) { pending[j].isDuplicate = true }
+              else                         { pending[i].isDuplicate = true }
+              dupCount++
+            }
+          }
+        }
+        const survivors = pending.filter((c) => !c.isDuplicate)
+        if (dupCount > 0) {
+          addStep(`${dupCount} duplicate${dupCount !== 1 ? "s" : ""} removed — ${survivors.length} unique asset${survivors.length !== 1 ? "s" : ""}`, true)
+        } else {
+          addStep(`All ${survivors.length} candidate${survivors.length !== 1 ? "s" : ""} are unique`, true)
+        }
+
+        // ── Phase 3: Classify + name ───────────────────────────────────────────
+        // Group survivors by display type to assign sequential numbers
+        const typeCount: Record<string, number> = {}
+        const typeIdx:   Record<string, number> = {}
+        for (const c of survivors) {
+          const typeName = displayTypeName(c.assetType, c.w, c.h)
+          typeCount[typeName] = (typeCount[typeName] ?? 0) + 1
+        }
+        for (const c of survivors) {
+          const typeName = displayTypeName(c.assetType, c.w, c.h)
+          typeIdx[typeName] = (typeIdx[typeName] ?? 0) + 1
+          c.displayName = typeCount[typeName] === 1
+            ? typeName
+            : `${typeName} ${typeIdx[typeName]}`
+        }
+
+        // ── Phase 4: Upload + register ─────────────────────────────────────────
+        addStep(`Uploading ${survivors.length} asset${survivors.length !== 1 ? "s" : ""}…`, true)
+        let uploadedCount = 0
+
+        for (const c of survivors) {
+          try {
+            const blob = await new Promise<Blob | null>(res => c.canvas.toBlob(res, "image/png", 0.92))
+            if (!blob) continue
+            const cropPath = `artists/${artist.id}/generated/${Date.now()}-${c.assetType}-p${c.pageNum}-c${c.candidateIdx}.png`
+            const { error: upErr } = await client.storage.from("brand-sources")
+              .upload(cropPath, blob, { contentType: "image/png", upsert: true })
+            if (upErr) { addStep(`${c.displayName}: upload failed`, false); continue }
+
+            const { data: cUrl } = client.storage.from("brand-sources").getPublicUrl(cropPath)
+            const cResp = await fetch("/api/artists/brand-create-asset", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                artistId: artist.id, sourceFileId: fid,
+                name: c.displayName,
+                assetType: c.assetType,
+                previewUrl: cUrl.publicUrl,
+                status: "logo_candidate",
+                hasSolidBg: false,
+                variant: c.variant,
+                sourcePage: c.pageNum,
+              }),
+            })
+            if (!cResp.ok) { addStep(`${c.displayName}: registration failed`, false); continue }
+
+            const { asset } = await cResp.json() as { asset?: Record<string,unknown> }
+            if (asset) {
+              uploadedCount++
+              newAssets.push({
+                id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
+                name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
+                status: asset.status as string, previewUrl: asset.preview_url as string,
+                hasSolidBg: asset.has_solid_bg as boolean,
+                variant: (asset.variant as string|undefined) ?? c.variant,
+                sourcePage: (asset.source_page as number|null|undefined) ?? c.pageNum,
+                createdAt: asset.created_at as string,
+              })
+              addStep(`${c.displayName} (${variantLabel(c.variant)}) — saved`, true)
+            }
+          } catch (upEx) {
+            addStep(`${c.displayName}: ${upEx instanceof Error ? upEx.message : "error"}`, false)
+          }
+        }
+
+        addStep(
+          `${renderedPages} page render${renderedPages !== 1 ? "s" : ""} + ${uploadedCount} logo asset${uploadedCount !== 1 ? "s" : ""} generated`,
+          true,
+        )
+        markDone()
         if (newAssets.length) setBrandAssets((prev) => [...newAssets, ...prev])
 
       } catch (err) {
@@ -5774,7 +5970,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     // ─── Upload handler ───────────────────────────────────────────────────────
     async function uploadSourceFiles(files: File[]) {
-      const queue = files.map((f) => ({ file: f, status: "pending" as const, error: undefined as string | undefined }))
+      const queue = files.map((f) => ({ file: f, status: "pending" as const, error: undefined as string|undefined }))
       setBrandUploadQueue(queue)
       setBrandUploading(true)
       const newSF: BrandSourceFile[] = []
@@ -5852,60 +6048,57 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const pageRenders    = brandAssets.filter((a) => a.status === "preview_only")
     const logoCandidates = brandAssets.filter((a) => a.status === "logo_candidate")
 
-    // ─── Shared asset card ────────────────────────────────────────────────────
-    function AssetCard({ asset, isCandidate }: { asset: BrandAsset; isCandidate: boolean }) {
+    // Group logo candidates by base type name
+    const typeGroups = logoCandidates.reduce<Record<string, BrandAsset[]>>((acc, a) => {
+      const key = assetGroupKey(a.name)
+      ;(acc[key] ??= []).push(a)
+      return acc
+    }, {})
+
+    // ─── Asset card ───────────────────────────────────────────────────────────
+    function LogoCard({ asset }: { asset: BrandAsset }) {
       return (
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          {/* Dual preview */}
+          {/* Preview: dark + light */}
           <div className="grid grid-cols-2 divide-x divide-border">
-            <div className="flex h-28 items-center justify-center bg-[#111] p-3">
+            <div className="relative flex h-32 items-center justify-center bg-[#0e0e0e] p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
             </div>
-            <div className="flex h-28 items-center justify-center bg-white p-3">
+            <div className="relative flex h-32 items-center justify-center bg-white p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
             </div>
           </div>
-          <div className="p-3.5">
-            <p className="truncate text-[13px] font-semibold text-foreground/80">{asset.name ?? "Untitled"}</p>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {asset.status === "preview_only"  && <span className="rounded border border-amber-500/20 bg-amber-500/[0.06] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-amber-500/65">Preview only</span>}
-              {asset.status === "logo_candidate" && <span className="rounded border border-accent/20 bg-accent/[0.06] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-accent/65">Logo candidate</span>}
+          {/* Info */}
+          <div className="p-3.5 space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <p className="truncate text-[13px] font-semibold text-foreground/80">{asset.name ?? "Untitled"}</p>
+              <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[10px] text-muted-foreground/20 hover:text-destructive/60">Remove</button>
             </div>
-            {/* CSS filter variants */}
-            <div className="mt-3 flex items-end gap-2">
-              {[
-                { label: "Original", filter: "none",                     bg: "bg-secondary/60" },
-                { label: "White",    filter: "brightness(0) invert(1)", bg: "bg-[#222]" },
-                { label: "Black",    filter: "brightness(0)",            bg: "bg-secondary/60" },
-              ].map(({ label, filter, bg }) => (
-                <div key={label} className="flex flex-col items-center gap-1">
-                  <div className={`flex h-8 w-10 items-center justify-center rounded border border-border ${bg}`}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={asset.previewUrl} alt={label} className="max-h-6 max-w-full object-contain" style={{ filter }} />
-                  </div>
-                  <span className="text-[8px] text-muted-foreground/32">{label}</span>
-                </div>
-              ))}
-              <div className="ml-auto">
-                <button type="button" onClick={() => deleteAsset(asset.id)} className="text-[10px] text-muted-foreground/22 hover:text-destructive/65">Remove</button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Variant chip */}
+              <span className="flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold text-foreground/55">
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${variantDot(asset.variant)}`} />
+                {variantLabel(asset.variant)}
+              </span>
+              {/* Source page */}
+              {asset.sourcePage != null && (
+                <span className="rounded border border-border px-1.5 py-px text-[9px] text-muted-foreground/35">pg {asset.sourcePage}</span>
+              )}
+            </div>
+            {/* Assign controls (future) */}
+            <div className="border-t border-border pt-2.5">
+              <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/25">Assign to</p>
+              <div className="flex flex-wrap gap-1.5">
+                {["Hero Logo","Footer Logo","Favicon"].map((label) => (
+                  <button key={label} type="button" disabled title="Coming soon"
+                    className="cursor-not-allowed rounded border border-border bg-secondary px-2 py-0.5 text-[9px] font-semibold text-muted-foreground/28 opacity-55">
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
-            {/* Logo candidate: future-ready assign controls */}
-            {isCandidate && (
-              <div className="mt-3 border-t border-border pt-3">
-                <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.20em] text-muted-foreground/28">Assign to</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {["Hero Logo","Footer Logo","Favicon"].map((label) => (
-                    <button key={label} type="button" disabled title="Coming soon"
-                      className="cursor-not-allowed rounded border border-border bg-secondary px-2 py-0.5 text-[9px] font-semibold text-muted-foreground/30 opacity-60">
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )
@@ -5917,14 +6110,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         <div>
           <h2 className="text-base font-semibold text-foreground">Brand</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Upload source files and manage generated brand assets.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Upload source files to generate a brand asset library.</p>
         </div>
 
         {/* ── Brand Sources ──────────────────────────────────────────────── */}
         <section className="space-y-4">
           <div>
             <h3 className="text-[13px] font-semibold text-foreground/80">Brand Sources</h3>
-            <p className="mt-0.5 text-[12px] text-muted-foreground/50">PDFs are automatically rendered into page previews and individual logo candidates.</p>
+            <p className="mt-0.5 text-[12px] text-muted-foreground/50">
+              PDFs are rendered page-by-page. Logo regions are detected, normalized, deduplicated, and classified automatically.
+            </p>
           </div>
 
           {/* Upload area */}
@@ -5935,7 +6130,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
             <div>
               <p className="text-[14px] font-semibold text-foreground/70">{brandDragActive ? "Drop to upload" : "Drop brand files here"}</p>
-              <p className="mt-1 text-[12px] text-muted-foreground/45">PDFs extract logo candidates automatically</p>
+              <p className="mt-1 text-[12px] text-muted-foreground/45">PDFs extract and classify logo candidates automatically</p>
             </div>
             <div className="flex flex-wrap justify-center gap-1.5">
               {["PDF","AI","EPS","ZIP","RAR","SVG","PNG","JPG"].map((f) => (
@@ -5979,7 +6174,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           {brandLoadStatus === "loading" && <p className="text-[12px] text-muted-foreground/35">Loading…</p>}
 
-          {/* Source files */}
+          {/* Source files list */}
           {brandSourceFiles.length > 0 && (
             <div className="rounded-xl border border-border bg-card shadow-sm">
               <div className="border-b border-border px-5 py-3">
@@ -6015,113 +6210,137 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <section className="space-y-3">
             <div>
               <h3 className="text-[13px] font-semibold text-foreground/80">Processing Queue</h3>
-              <p className="mt-0.5 text-[12px] text-muted-foreground/50">Real-time status of PDF processing jobs.</p>
+              <p className="mt-0.5 text-[12px] text-muted-foreground/50">Real-time status for PDF processing jobs.</p>
             </div>
-            <div className="space-y-3">
-              {Object.entries(brandProcessingLog).map(([fileId, log]) => {
-                const file = brandSourceFiles.find((f) => f.id === fileId)
-                const isActive = brandProcessingIds.has(fileId)
-                return (
-                  <div key={fileId} className={`rounded-xl border bg-card p-4 shadow-sm ${log.error ? "border-red-500/20" : log.done ? "border-accent/15" : "border-border"}`}>
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[13px] font-semibold text-foreground/80">{file?.filename ?? "Unknown file"}</p>
-                        <div className="mt-1 flex items-center gap-2">
-                          {isActive  && <span className="flex items-center gap-1 text-[11px] text-accent/65"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" /> Processing…</span>}
-                          {!isActive && log.done && !log.error && <span className="text-[11px] text-accent/70">✓ Completed</span>}
-                          {!isActive && log.error && <span className="text-[11px] text-red-500/70">✗ Failed</span>}
-                        </div>
+            {Object.entries(brandProcessingLog).map(([fileId, log]) => {
+              const file = brandSourceFiles.find((f) => f.id === fileId)
+              const isActive = brandProcessingIds.has(fileId)
+              return (
+                <div key={fileId} className={`rounded-xl border bg-card p-4 shadow-sm ${log.error ? "border-red-500/20" : log.done ? "border-accent/15" : "border-border"}`}>
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[13px] font-semibold text-foreground/80">{file?.filename ?? "Unknown file"}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        {isActive   && <span className="flex items-center gap-1 text-[11px] text-accent/65"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" /> Processing…</span>}
+                        {!isActive && log.done && !log.error && <span className="text-[11px] text-accent/70">✓ Completed</span>}
+                        {!isActive && log.error && <span className="text-[11px] text-red-500/70">✗ Failed</span>}
                       </div>
-                      <button type="button" onClick={() => setBrandProcessingLog((prev) => { const n={...prev}; delete n[fileId]; return n })} className="shrink-0 text-[10px] text-muted-foreground/25 hover:text-muted-foreground/55">Dismiss</button>
                     </div>
-                    <div className="space-y-1">
-                      {log.steps.map((step, i) => (
-                        <div key={i} className="flex items-start gap-2 text-[12px]">
-                          <span className={`mt-px shrink-0 ${step.ok ? "text-accent/70" : "text-red-500/65"}`}>{step.ok ? "✓" : "✗"}</span>
-                          <span className={step.ok ? "text-foreground/60" : "text-red-500/60"}>{step.label}</span>
-                        </div>
-                      ))}
-                      {isActive && <div className="text-[12px] text-muted-foreground/35 animate-pulse">···</div>}
-                    </div>
-                    {log.error && (
-                      <div className="mt-3 rounded-lg border border-red-500/15 bg-red-500/[0.04] px-3 py-2">
-                        <p className="text-[11px] font-semibold text-red-500/65">Error</p>
-                        <p className="mt-0.5 text-[11px] text-red-500/55">{log.error}</p>
-                      </div>
-                    )}
+                    <button type="button" onClick={() => setBrandProcessingLog((prev) => { const n={...prev}; delete n[fileId]; return n })} className="shrink-0 text-[10px] text-muted-foreground/25 hover:text-muted-foreground/55">Dismiss</button>
                   </div>
-                )
-              })}
-            </div>
+                  <div className="space-y-1">
+                    {log.steps.map((step, i) => (
+                      <div key={i} className="flex items-start gap-2 text-[12px]">
+                        <span className={`mt-px shrink-0 ${step.ok ? "text-accent/70" : "text-muted-foreground/35"}`}>{step.ok ? "✓" : "·"}</span>
+                        <span className={step.ok ? "text-foreground/60" : "text-muted-foreground/45"}>{step.label}</span>
+                      </div>
+                    ))}
+                    {isActive && <div className="text-[12px] text-muted-foreground/30 animate-pulse">···</div>}
+                  </div>
+                  {log.error && (
+                    <div className="mt-3 rounded-lg border border-red-500/15 bg-red-500/[0.04] px-3 py-2">
+                      <p className="text-[11px] font-semibold text-red-500/65">Error</p>
+                      <p className="mt-0.5 text-[11px] text-red-500/55">{log.error}</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </section>
         )}
 
-        {/* ── Brand Assets ────────────────────────────────────────────────── */}
-        <section className="space-y-5">
-          <div>
-            <h3 className="text-[13px] font-semibold text-foreground/80">Brand Assets</h3>
-            <p className="mt-0.5 text-[12px] text-muted-foreground/50">Generated from your brand sources.</p>
+        {/* ── Brand Asset Library ─────────────────────────────────────────── */}
+        <section className="space-y-6">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <h3 className="text-[13px] font-semibold text-foreground/80">Brand Asset Library</h3>
+              <p className="mt-0.5 text-[12px] text-muted-foreground/50">Generated from your brand sources.</p>
+            </div>
+            {logoCandidates.length > 0 && (
+              <span className="text-[11px] text-muted-foreground/38">{logoCandidates.length} logo asset{logoCandidates.length !== 1 ? "s" : ""}</span>
+            )}
           </div>
 
           {brandProcessingIds.size > 0 && (
             <div className="flex items-center gap-2 rounded-xl border border-accent/15 bg-accent/[0.04] px-4 py-3">
               <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
-              <span className="text-[12px] text-accent/70">Processing PDF — rendering pages and extracting logo regions…</span>
+              <span className="text-[12px] text-accent/70">Rendering PDF and extracting logo assets…</span>
             </div>
           )}
 
-          {/* Logo candidates */}
-          {logoCandidates.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/38">Logo Candidates ({logoCandidates.length})</p>
-                <span className="rounded border border-accent/20 bg-accent/[0.06] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-accent/60">Extracted</span>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {logoCandidates.map((asset) => (
-                  <AssetCard key={asset.id} asset={asset} isCandidate={true} />
-                ))}
-              </div>
+          {/* Logo assets grouped by type */}
+          {Object.entries(typeGroups).length > 0 && (
+            <div className="space-y-6">
+              {Object.entries(typeGroups).map(([typeName, assets]) => (
+                <div key={typeName} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/45">{typeName}</p>
+                    {assets.length > 1 && (
+                      <span className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] text-muted-foreground/40">{assets.length}</span>
+                    )}
+                    {/* Show variant summary chips */}
+                    <div className="flex items-center gap-1 ml-1">
+                      {assets.map((a) => (
+                        <span key={a.id} className={`flex h-2.5 w-2.5 rounded-full ${variantDot(a.variant)}`} title={variantLabel(a.variant)} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {assets.map((asset) => <LogoCard key={asset.id} asset={asset} />)}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Page renders */}
-          {pageRenders.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/38">Page Renders ({pageRenders.length})</p>
-                <span className="rounded border border-amber-500/20 bg-amber-500/[0.06] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-amber-500/60">Preview only</span>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pageRenders.map((asset) => (
-                  <AssetCard key={asset.id} asset={asset} isCandidate={false} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* No-candidates message when there are page renders but no candidates */}
+          {/* No candidates after pages rendered */}
           {pageRenders.length > 0 && logoCandidates.length === 0 && !brandProcessingIds.size && (
             <div className="rounded-xl border border-dashed border-border bg-card/50 px-6 py-6 text-center">
-              <p className="text-[13px] font-semibold text-foreground/45">No individual logo candidates detected</p>
-              <p className="mt-1 max-w-sm mx-auto text-[12px] text-muted-foreground/35">
-                The PDF was rendered successfully, but automatic logo extraction could not identify
-                separate logo regions. Try re-processing or upload individual SVG/PNG logo files directly.
+              <p className="text-[13px] font-semibold text-foreground/45">No individual logos detected</p>
+              <p className="mx-auto mt-1 max-w-sm text-[12px] text-muted-foreground/35">
+                The PDF was rendered successfully, but automatic logo extraction could not identify separate logo regions.
+                Upload individual SVG or PNG logo files directly.
               </p>
             </div>
           )}
 
-          {/* Empty state */}
+          {/* Truly empty */}
           {brandAssets.length === 0 && !brandProcessingIds.size && (
             <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card/50 px-6 py-8 text-center">
               <Sparkles className="h-6 w-6 text-muted-foreground/22" />
               <p className="text-[13px] font-semibold text-foreground/45">No brand assets yet</p>
               <p className="max-w-xs text-[12px] text-muted-foreground/35">
-                Upload a PDF — pages are rendered and logo regions are extracted automatically.
+                Upload a PDF — pages are rendered, logo regions detected and classified automatically.
               </p>
             </div>
           )}
         </section>
+
+        {/* ── Page Renders (secondary) ───────────────────────────────────── */}
+        {pageRenders.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13px] font-semibold text-foreground/50">Page Renders</h3>
+              <span className="rounded border border-amber-500/20 bg-amber-500/[0.06] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-amber-500/55">Preview only</span>
+              <span className="text-[11px] text-muted-foreground/30">{pageRenders.length} page{pageRenders.length !== 1 ? "s" : ""}</span>
+            </div>
+            <p className="text-[12px] text-muted-foreground/38">Full-page renders from your PDF sources. Not logo assets.</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {pageRenders.map((asset) => (
+                <div key={asset.id} className="overflow-hidden rounded-xl border border-border bg-card opacity-75 shadow-sm transition-opacity hover:opacity-100">
+                  <div className="flex h-36 items-center justify-center bg-white p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+                  </div>
+                  <div className="flex items-center justify-between px-3.5 py-2.5">
+                    <p className="truncate text-[11px] text-foreground/45">{asset.name ?? "Page"}</p>
+                    <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[10px] text-muted-foreground/20 hover:text-destructive/60">Remove</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
       </div>
     )

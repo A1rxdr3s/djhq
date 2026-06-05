@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false }),
     supabase
       .from("brand_assets")
-      .select("id, source_file_id, name, asset_type, status, preview_url, has_solid_bg, created_at")
+      .select("id, source_file_id, name, asset_type, status, preview_url, has_solid_bg, variant, source_page, created_at")
       .eq("artist_id", artistId)
       .order("created_at", { ascending: false }),
   ])

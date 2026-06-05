@@ -16,6 +16,8 @@ type RequestBody = {
   previewUrl: string
   status?: string
   hasSolidBg?: boolean
+  variant?: string
+  sourcePage?: number | null
 }
 
 export async function POST(request: Request) {
@@ -35,6 +37,8 @@ export async function POST(request: Request) {
     previewUrl,
     status = "preview_only",
     hasSolidBg = false,
+    variant = "original",
+    sourcePage = null,
   } = body
 
   if (!artistId || !name || !previewUrl) {
@@ -63,8 +67,10 @@ export async function POST(request: Request) {
       status,
       preview_url:    previewUrl,
       has_solid_bg:   hasSolidBg,
+      variant,
+      source_page:    sourcePage,
     })
-    .select("id, source_file_id, name, asset_type, status, preview_url, has_solid_bg, created_at")
+    .select("id, source_file_id, name, asset_type, status, preview_url, has_solid_bg, variant, source_page, created_at")
     .single()
 
   if (error) {
