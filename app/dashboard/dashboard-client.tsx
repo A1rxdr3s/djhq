@@ -56,6 +56,114 @@ type BrandAsset = {
   createdAt: string
 }
 
+/**
+ * detectCandidateBounds — pure pixel analysis, no external deps.
+ *
+ * Assumes a white (or near-white) page background.
+ * Finds distinct foreground clusters using row/column projections and
+ * returns bounding boxes of likely logo regions.
+ */
+function detectCandidateBounds(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+): Array<{ x: number; y: number; w: number; h: number }> {
+  // ── Build foreground mask ───────────────────────────────────────────────────
+  // Foreground = visible AND not near-white (R,G,B all > 235)
+  const fg = new Uint8Array(width * height)
+  let totalFg = 0
+  for (let y = 0; y < height; y++) {
+    const pxRow = y * width * 4
+    const fgRow = y * width
+    for (let x = 0; x < width; x++) {
+      const i = pxRow + x * 4
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3]
+      if (a > 30 && !(r > 235 && g > 235 && b > 235)) { fg[fgRow + x] = 1; totalFg++ }
+    }
+  }
+  if (totalFg === 0) return []
+
+  const ROW_GAP = Math.max(8, Math.floor(height * 0.025))
+  const COL_GAP = Math.max(8, Math.floor(width  * 0.025))
+  const MIN_AREA = width * height * 0.001          // ≥ 0.1% of page
+  const PAD = Math.max(10, Math.floor(Math.min(width, height) * 0.015))
+
+  // ── Row projection ──────────────────────────────────────────────────────────
+  const rowFg = new Int32Array(height)
+  for (let y = 0; y < height; y++) {
+    const base = y * width
+    for (let x = 0; x < width; x++) rowFg[y] += fg[base + x]
+  }
+  const rowActive = new Uint8Array(height)
+  for (let y = 0; y < height; y++) {
+    for (let dy = -ROW_GAP; dy <= ROW_GAP; dy++) {
+      const yy = y + dy
+      if (yy >= 0 && yy < height && rowFg[yy] > 0) { rowActive[y] = 1; break }
+    }
+  }
+
+  // ── Horizontal bands ────────────────────────────────────────────────────────
+  const bands: Array<{ y0: number; y1: number }> = []
+  let inBand = false, bandStart = 0
+  for (let y = 0; y <= height; y++) {
+    const a = y < height && rowActive[y]
+    if (a && !inBand)  { inBand = true;  bandStart = y }
+    if (!a && inBand)  { inBand = false; if (y - bandStart > ROW_GAP) bands.push({ y0: bandStart, y1: y }) }
+  }
+
+  const candidates: Array<{ x: number; y: number; w: number; h: number }> = []
+
+  for (const { y0, y1 } of bands) {
+    // ── Column projection within band ─────────────────────────────────────────
+    const colFg = new Int32Array(width)
+    for (let y = y0; y < y1; y++) {
+      const base = y * width
+      for (let x = 0; x < width; x++) colFg[x] += fg[base + x]
+    }
+    const colActive = new Uint8Array(width)
+    for (let x = 0; x < width; x++) {
+      for (let dx = -COL_GAP; dx <= COL_GAP; dx++) {
+        const xx = x + dx
+        if (xx >= 0 && xx < width && colFg[xx] > 0) { colActive[x] = 1; break }
+      }
+    }
+
+    let inGroup = false, groupStart = 0
+    for (let x = 0; x <= width; x++) {
+      const a = x < width && colActive[x]
+      if (a && !inGroup) { inGroup = true; groupStart = x }
+      if (!a && inGroup) {
+        inGroup = false
+        // Precise bounds within this cell
+        let minX = width, maxX = 0, minY = height, maxY = 0
+        for (let cy = y0; cy < y1; cy++) {
+          const base = cy * width
+          for (let cx = groupStart; cx < x; cx++) {
+            if (fg[base + cx]) {
+              if (cx < minX) minX = cx; if (cx > maxX) maxX = cx
+              if (cy < minY) minY = cy; if (cy > maxY) maxY = cy
+            }
+          }
+        }
+        if (maxX > minX && maxY > minY) {
+          const area = (maxX - minX) * (maxY - minY)
+          // Skip if too small or covers almost the entire page (just the bg)
+          if (area > MIN_AREA && area / (width * height) < 0.82) {
+            const x0 = Math.max(0, minX - PAD)
+            const y0c = Math.max(0, minY - PAD)
+            candidates.push({
+              x: x0, y: y0c,
+              w: Math.min(width,  maxX + PAD + 1) - x0,
+              h: Math.min(height, maxY + PAD + 1) - y0c,
+            })
+          }
+        }
+      }
+    }
+  }
+
+  return candidates.slice(0, 8)
+}
 
 const navGroups: NavGroup[] = [
   {
