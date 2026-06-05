@@ -176,10 +176,10 @@ export function SelectedReleasesCarousel({ releases }: Props) {
               </div>
 
               {/* Metadata */}
-              <div className="mt-3 min-w-0">
+              <div className="mt-2 min-w-0">
                 {/* Type / version badges */}
                 {badges.length > 0 && (
-                  <div className="mb-2 flex flex-wrap gap-1.5">
+                  <div className="mb-1.5 flex flex-wrap gap-1">
                     {badges.map((badge) => (
                       <span
                         key={badge}
@@ -195,13 +195,13 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                   {release.title}
                 </h3>
 
-                <p className="mt-0.5 text-[13px] text-white/55 line-clamp-1">{release.credits ?? ""}</p>
+                <p className="mt-px text-[12px] text-white/50 line-clamp-1">{release.credits ?? ""}</p>
 
-                <p className="mt-2 line-clamp-1 text-[10px] uppercase tracking-[0.18em] text-white/35">
+                <p className="mt-1 line-clamp-1 text-[10px] uppercase tracking-[0.18em] text-white/32">
                   {release.label}
                 </p>
                 {releaseYear && (
-                  <p className="mt-1 text-[11px] tracking-[0.12em] text-white/25">
+                  <p className="text-[10px] tracking-[0.10em] text-white/22">
                     {releaseYear}
                   </p>
                 )}
