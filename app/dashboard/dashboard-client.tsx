@@ -1908,7 +1908,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       .filter((g) => g.date >= today)
       .sort((a, b)  => a.date.localeCompare(b.date))
     const nextShow     = upcomingAll[0] ?? null
-    const scheduleRest = upcomingAll.slice(1, 4)
     const upcomingCount = upcomingAll.length
 
     const hasActiveDomain = customDomains.some((d) => d.status === "active")
@@ -1917,7 +1916,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const hasHeroImage    = !!artist.heroImageUrl && !artist.heroImageUrl.includes("placeholder")
     const hasFooterConfig = !!(footerLogoUrl.trim() || footerBookingEmail.trim())
 
-    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
     const MONTH_A = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
 
     const countdown = nextShow ? (() => {
@@ -1928,255 +1926,138 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       return `${diff} days`
     })() : null
 
-    const daysAgo = (iso: string | null | undefined): number | null => {
-      if (!iso) return null
-      const d = new Date(iso.substring(0, 10)).getTime()
-      return Math.max(0, Math.floor((nowMs - d) / 86400000))
-    }
-    const latestRelease    = artist.releases[0] ?? null
-    const latestSet        = artist.djSets[0] ?? null
-    const releaseFreshness = daysAgo(latestRelease?.releaseDate)
-    const setFreshness     = daysAgo(latestSet?.setDate)
-
-    // Completion checklist — drives the Profile Completion card
+    // Setup checklist
     const completionItems = [
-      { label: "Profile published",    done: artist.isPublished,     section: "publish"   },
-      { label: "Custom domain",         done: hasActiveDomain,        section: "domain"    },
-      { label: "Booking configured",   done: hasBooking,             section: "booking"   },
-      { label: "Press kit enabled",    done: hasPressKit,            section: "press-kit" },
-      { label: "Hero image set",       done: hasHeroImage,           section: "profile"   },
-      { label: "Footer configured",    done: hasFooterConfig,        section: "footer"    },
+      { label: "Profile published",  done: artist.isPublished,  section: "publish"   },
+      { label: "Custom domain",      done: hasActiveDomain,     section: "domain"    },
+      { label: "Booking configured", done: hasBooking,          section: "booking"   },
+      { label: "Press kit enabled",  done: hasPressKit,         section: "press-kit" },
+      { label: "Hero image set",     done: hasHeroImage,        section: "profile"   },
+      { label: "Footer configured",  done: hasFooterConfig,     section: "footer"    },
     ]
     const completionDone = completionItems.filter((c) => c.done).length
     const completionPct  = Math.round((completionDone / completionItems.length) * 100)
     const isComplete     = completionDone === completionItems.length
 
-    // Status pills for the header strip
-    const statusItems = [
-      { label: "Profile",   value: artist.isPublished ? "Live" : "Draft",   ok: artist.isPublished,   section: "publish" },
-      { label: "Domain",    value: hasActiveDomain ? "Connected" : "—",       ok: hasActiveDomain,      section: "domain" },
-      { label: "Press Kit", value: hasPressKit ? "Published" : "Off",         ok: hasPressKit,          section: "press-kit" },
-      { label: "Booking",   value: hasBooking ? "Active" : "—",               ok: hasBooking,           section: "booking" },
-    ]
-
     // Quick actions
     const quickActions = [
-      { label: "Add Release",   icon: Disc3,      section: "releases", sub: "Track, EP or album"   },
-      { label: "Add Show",      icon: Calendar,   section: "shows",    sub: "Schedule a performance" },
-      { label: "Upload Set",    icon: Headphones, section: "sets",     sub: "Publish a recorded mix" },
-      { label: "Add Video",     icon: Play,       section: "media",    sub: "YouTube or Vimeo embed" },
-      { label: "Upload Photos", icon: Camera,     section: "gallery",  sub: "Gallery or press photos" },
+      { label: "Add Release",   icon: Disc3,      section: "releases" },
+      { label: "Add Show",      icon: Calendar,   section: "shows"    },
+      { label: "Upload Set",    icon: Headphones, section: "sets"     },
+      { label: "Add Video",     icon: Play,       section: "media"    },
+      { label: "Upload Photos", icon: Camera,     section: "gallery"  },
     ]
 
-    return (
-      <div className="space-y-5">
+    // Shared card class
+    const card = "flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm"
+    const label = "mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45"
 
-        {/* ── Identity row ─────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-6 pb-1">
-          <div>
-            <h1 className="text-[32px] font-extrabold tracking-[-0.02em] text-foreground leading-none">
-              {artist.artistName}
-            </h1>
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              {statusItems.map(({ label, value, ok, section }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="flex items-center gap-1.5 text-[12px] text-muted-foreground/50 transition-colors hover:text-foreground/70"
-                >
-                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ok ? "bg-accent" : "bg-muted-foreground/25"}`} />
-                  <span className="text-muted-foreground/55">{label}</span>
-                  <span className={`font-semibold ${ok ? "text-foreground/70" : "text-muted-foreground/38"}`}>{value}</span>
-                </button>
-              ))}
-              <a href={publicProfileUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[12px] text-muted-foreground/35 transition-colors hover:text-foreground/60">
-                <ExternalLink className="h-3 w-3" />View profile
-              </a>
-            </div>
-          </div>
-          {/* Completion badge */}
-          <div className="shrink-0 text-right">
-            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold ${
-              isComplete
-                ? "border-accent/20 bg-accent/[0.07] text-accent"
-                : "border-border bg-secondary text-muted-foreground/55"
-            }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${isComplete ? "bg-accent" : "bg-muted-foreground/30"}`} />
-              {completionPct}% complete
-            </span>
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+        {/* Card 1 — Quick Actions */}
+        <div className={card}>
+          <p className={label}>Quick Actions</p>
+          <div className="flex flex-col gap-0.5">
+            {quickActions.map(({ label: lbl, icon: Icon, section }) => (
+              <button key={lbl} type="button" onClick={() => setActiveSection(section)}
+                className="group flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-secondary">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary group-hover:bg-background">
+                  <Icon className="h-[14px] w-[14px] text-muted-foreground/55" />
+                </div>
+                <span className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground">{lbl}</span>
+                <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/18 opacity-0 transition-opacity group-hover:opacity-100" />
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* ── Next show — full width ───────────────────────────────────── */}
-        {nextShow ? (
-          <div
-            className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm cursor-pointer hover:shadow-md transition-shadow duration-200"
-            onClick={() => setActiveSection("shows")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && setActiveSection("shows")}
-          >
-            <div className="flex items-center gap-6 p-6 sm:p-7">
-              <div className="flex h-[66px] w-[52px] shrink-0 flex-col items-center justify-center rounded-xl bg-accent/[0.06] ring-1 ring-accent/20">
-                <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-accent/70">{MONTH_A[Number(nextShow.date.substring(5,7))-1]}</span>
-                <span className="text-[26px] font-black leading-none tabular-nums text-foreground">{Number(nextShow.date.substring(8,10))}</span>
+        {/* Card 2 — Setup */}
+        <div className={card}>
+          <div className="mb-4 flex items-center justify-between">
+            <p className={label.replace("mb-4 ", "")}>Setup</p>
+            <span className={`text-[11px] font-bold tabular-nums ${isComplete ? "text-accent" : "text-muted-foreground/40"}`}>
+              {completionDone}/{completionItems.length}
+            </span>
+          </div>
+          <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-secondary">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${isComplete ? "bg-accent" : "bg-accent/55"}`}
+              style={{ width: `${completionPct}%` }}
+            />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            {completionItems.map(({ label: lbl, done, section }) => (
+              <button key={lbl} type="button" onClick={() => setActiveSection(section)}
+                className="group flex items-center gap-3 rounded-lg px-2 py-[7px] text-left transition-colors hover:bg-secondary">
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                  done ? "border-accent/30 bg-accent/[0.10]" : "border-border bg-transparent group-hover:border-muted-foreground/30"
+                }`}>
+                  {done && <Check className="h-2.5 w-2.5 text-accent" />}
+                </span>
+                <span className={`flex-1 text-[12px] font-medium ${done ? "text-foreground/50" : "text-foreground/75"}`}>{lbl}</span>
+                {!done && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/18 opacity-0 transition-opacity group-hover:opacity-100" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Card 3 — Content */}
+        <div className={card}>
+          <p className={label}>Content</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { lbl: "Releases", val: artist.releases.length,     sec: "releases" },
+              { lbl: "Shows",    val: upcomingCount,               sec: "shows"    },
+              { lbl: "Sets",     val: artist.djSets.length,        sec: "sets"     },
+              { lbl: "Photos",   val: artist.galleryImages.length, sec: "gallery"  },
+            ].map(({ lbl, val, sec }) => (
+              <button key={lbl} type="button" onClick={() => setActiveSection(sec)}
+                className="group rounded-xl border border-border bg-secondary/40 p-3.5 text-left transition-colors hover:bg-secondary">
+                <span className="block text-[24px] font-bold tabular-nums leading-none text-foreground/80 group-hover:text-foreground">{val}</span>
+                <span className="mt-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">{lbl}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Card 4 — Next */}
+        <div className={card}>
+          <p className={label}>Next</p>
+          {nextShow ? (
+            <button type="button" onClick={() => setActiveSection("shows")}
+              className="group flex flex-col gap-3 text-left">
+              <div className="flex h-[56px] w-[44px] flex-col items-center justify-center rounded-xl bg-accent/[0.07] ring-1 ring-accent/20">
+                <span className="text-[7px] font-bold uppercase tracking-[0.20em] text-accent/65">{MONTH_A[Number(nextShow.date.substring(5,7))-1]}</span>
+                <span className="text-[22px] font-black leading-none tabular-nums text-foreground">{Number(nextShow.date.substring(8,10))}</span>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent/60">Next Show</span>
-                  <span className="rounded-full bg-accent/[0.07] px-2 py-px text-[10px] font-bold text-accent/70">{countdown}</span>
-                </div>
-                <p className="mt-1 truncate text-[22px] font-bold tracking-[-0.01em] text-foreground">
+              <div>
+                {countdown && (
+                  <span className="mb-1 inline-block rounded-full bg-accent/[0.07] px-2 py-px text-[10px] font-bold text-accent/70">{countdown}</span>
+                )}
+                <p className="truncate text-[15px] font-bold tracking-[-0.01em] text-foreground group-hover:text-foreground/80">
                   {nextShow.eventName || nextShow.venue || "TBD"}
                 </p>
-                <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+                <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
                   {[nextShow.eventName && nextShow.venue ? nextShow.venue : null, nextShow.city, nextShow.country].filter(Boolean).join(" · ")}
                 </p>
               </div>
-              <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/30" />
-            </div>
-            {scheduleRest.length > 0 && (
-              <div className="border-t border-border px-7 py-3">
-                <div className="flex flex-wrap gap-5">
-                  {scheduleRest.map((g) => (
-                    <span key={g.id} className="text-[12px] text-muted-foreground">
-                      <span className="font-mono text-muted-foreground/55">{MONTHS[Number(g.date.substring(5,7))-1]} {Number(g.date.substring(8,10))}</span>
-                      {" — "}
-                      <span className="font-medium text-foreground/70">{g.eventName || g.venue || "TBD"}</span>
-                    </span>
-                  ))}
-                  {upcomingCount > 4 && (
-                    <span className="text-[12px] text-accent/70">+{upcomingCount - 4} more</span>
-                  )}
-                </div>
+              <div className="mt-auto flex items-center gap-1 text-[11px] font-medium text-accent/60 group-hover:text-accent/80 transition-colors">
+                Manage shows <ArrowRight className="h-3 w-3" />
               </div>
-            )}
-          </div>
-        ) : (
-          <button type="button" onClick={() => setActiveSection("shows")}
-            className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-6 text-left hover:border-accent/30 hover:bg-accent/[0.02] transition-colors duration-200">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
-              <Calendar className="h-5 w-5 text-muted-foreground/40" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground/75">No upcoming shows</p>
-              <p className="text-[13px] text-muted-foreground">Add your next performance</p>
-            </div>
-            <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground/30" />
-          </button>
-        )}
-
-        {/* ── Command center — 3 columns ──────────────────────────────── */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-
-          {/* Column A — Quick actions */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Quick Actions</p>
-            <div className="space-y-0.5">
-              {quickActions.map(({ label, icon: Icon, section, sub }) => (
-                <button key={label} type="button" onClick={() => setActiveSection(section)}
-                  className="group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-secondary">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary group-hover:bg-background">
-                    <Icon className="h-[14px] w-[14px] text-muted-foreground/55" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground">{label}</p>
-                  </div>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/20 opacity-0 transition-opacity group-hover:opacity-100" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Column B — Catalog metrics */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Catalog</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: "Releases", value: artist.releases.length,     section: "releases" },
-                { label: "Shows",    value: upcomingCount,               section: "shows"    },
-                { label: "Sets",     value: artist.djSets.length,        section: "sets"     },
-                { label: "Photos",   value: artist.galleryImages.length, section: "gallery"  },
-              ].map(({ label, value, section }) => (
-                <button key={label} type="button" onClick={() => setActiveSection(section)}
-                  className="group rounded-xl border border-border bg-secondary/40 p-3.5 text-left hover:bg-secondary transition-colors">
-                  <span className="block text-[24px] font-bold tabular-nums leading-none text-foreground/85 group-hover:text-foreground">{value}</span>
-                  <span className="mt-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">{label}</span>
-                </button>
-              ))}
-            </div>
-            {/* Recent activity strip */}
-            {(latestRelease || latestSet) && (
-              <div className="mt-4 space-y-1.5 border-t border-border pt-4">
-                {latestRelease && (
-                  <button type="button" onClick={() => setActiveSection("releases")}
-                    className="group flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left hover:bg-secondary transition-colors">
-                    {latestRelease.artworkUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={latestRelease.artworkUrl} alt="" className="h-8 w-8 rounded-md object-cover" />
-                    ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary"><Disc3 className="h-3.5 w-3.5 text-muted-foreground/40" /></div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12px] font-semibold text-foreground/75 group-hover:text-foreground">{latestRelease.title}</p>
-                      <p className="text-[10px] text-muted-foreground/45">{releaseFreshness === 0 ? "Today" : releaseFreshness === 1 ? "Yesterday" : releaseFreshness !== null ? `${releaseFreshness}d ago` : ""}</p>
-                    </div>
-                  </button>
-                )}
-                {latestSet && (
-                  <button type="button" onClick={() => setActiveSection("sets")}
-                    className="group flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left hover:bg-secondary transition-colors">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary"><Headphones className="h-3.5 w-3.5 text-muted-foreground/40" /></div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12px] font-semibold text-foreground/75 group-hover:text-foreground">{latestSet.title}</p>
-                      <p className="text-[10px] text-muted-foreground/45">{setFreshness === 0 ? "Today" : setFreshness === 1 ? "Yesterday" : setFreshness !== null ? `${setFreshness}d ago` : ""}</p>
-                    </div>
-                  </button>
-                )}
+            </button>
+          ) : (
+            <button type="button" onClick={() => setActiveSection("shows")}
+              className="group flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border py-6 text-center transition-colors hover:border-accent/30 hover:bg-accent/[0.02]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary">
+                <Calendar className="h-5 w-5 text-muted-foreground/40" />
               </div>
-            )}
-          </div>
-
-          {/* Column C — Profile completion */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:col-span-2 xl:col-span-1">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Setup</p>
-              <span className={`text-[11px] font-bold tabular-nums ${isComplete ? "text-accent" : "text-muted-foreground/45"}`}>
-                {completionDone}/{completionItems.length}
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-secondary">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${isComplete ? "bg-accent" : "bg-accent/60"}`}
-                style={{ width: `${completionPct}%` }}
-              />
-            </div>
-            {/* Checklist */}
-            <div className="space-y-0.5">
-              {completionItems.map(({ label, done, section }) => (
-                <button key={label} type="button" onClick={() => setActiveSection(section)}
-                  className="group flex w-full items-center gap-3 rounded-lg px-2 py-[7px] text-left transition-colors hover:bg-secondary">
-                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                    done
-                      ? "border-accent/30 bg-accent/[0.10]"
-                      : "border-border bg-transparent group-hover:border-muted-foreground/30"
-                  }`}>
-                    {done && <Check className="h-2.5 w-2.5 text-accent" />}
-                  </span>
-                  <span className={`flex-1 text-[12px] font-medium ${done ? "text-foreground/55" : "text-foreground/75"}`}>
-                    {label}
-                  </span>
-                  {!done && (
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/20 opacity-0 transition-opacity group-hover:opacity-100" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
+              <div>
+                <p className="text-[13px] font-semibold text-foreground/65">No upcoming shows</p>
+                <p className="mt-0.5 text-[12px] text-muted-foreground/50">Add your first</p>
+              </div>
+            </button>
+          )}
         </div>
 
       </div>
