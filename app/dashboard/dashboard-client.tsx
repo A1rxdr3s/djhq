@@ -1900,13 +1900,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderHome() {
-    const todayObj = new Date()
-    const today    = todayObj.toISOString().slice(0, 10)
-    const nowMs    = new Date(today).getTime()
+    const todayObj  = new Date()
+    const today     = todayObj.toISOString().slice(0, 10)
+    const nowMs     = new Date(today).getTime()
 
-    const upcomingAll = [...artist.upcomingGigs]
+    const upcomingAll  = [...artist.upcomingGigs]
       .filter((g) => g.date >= today)
-      .sort((a, b) => a.date.localeCompare(b.date))
+      .sort((a, b)  => a.date.localeCompare(b.date))
     const nextShow     = upcomingAll[0] ?? null
     const scheduleRest = upcomingAll.slice(1, 4)
     const upcomingCount = upcomingAll.length
@@ -1914,12 +1914,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const hasActiveDomain = customDomains.some((d) => d.status === "active")
     const hasBooking      = !!artist.bookingInfo.email.trim()
     const hasPressKit     = pressKitEnabled
+    const hasHeroImage    = !!artist.heroImageUrl && !artist.heroImageUrl.includes("placeholder")
+    const hasFooterConfig = !!(footerLogoUrl.trim() || footerBookingEmail.trim())
 
     const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
     const MONTH_A = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
 
     const countdown = nextShow ? (() => {
-      const d = new Date(nextShow.date.substring(0, 10) + "T00:00:00")
+      const d    = new Date(nextShow.date.substring(0, 10) + "T00:00:00")
       const diff = Math.round((d.getTime() - nowMs) / 86400000)
       if (diff === 0) return "Today"
       if (diff === 1) return "Tomorrow"
@@ -1936,7 +1938,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const releaseFreshness = daysAgo(latestRelease?.releaseDate)
     const setFreshness     = daysAgo(latestSet?.setDate)
 
-    // Status items
+    // Completion checklist — drives the Profile Completion card
+    const completionItems = [
+      { label: "Profile published",    done: artist.isPublished,     section: "publish"   },
+      { label: "Custom domain",         done: hasActiveDomain,        section: "domain"    },
+      { label: "Booking configured",   done: hasBooking,             section: "booking"   },
+      { label: "Press kit enabled",    done: hasPressKit,            section: "press-kit" },
+      { label: "Hero image set",       done: hasHeroImage,           section: "profile"   },
+      { label: "Footer configured",    done: hasFooterConfig,        section: "footer"    },
+    ]
+    const completionDone = completionItems.filter((c) => c.done).length
+    const completionPct  = Math.round((completionDone / completionItems.length) * 100)
+    const isComplete     = completionDone === completionItems.length
+
+    // Status pills for the header strip
     const statusItems = [
       { label: "Profile",   value: artist.isPublished ? "Live" : "Draft",   ok: artist.isPublished,   section: "publish" },
       { label: "Domain",    value: hasActiveDomain ? "Connected" : "—",       ok: hasActiveDomain,      section: "domain" },
@@ -1946,45 +1961,55 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     // Quick actions
     const quickActions = [
-      { label: "Add Release",    icon: Disc3,      section: "releases" },
-      { label: "Add Show",       icon: Calendar,   section: "shows"    },
-      { label: "Upload Set",     icon: Headphones, section: "sets"     },
-      { label: "Add Video",      icon: Play,       section: "media"    },
-      { label: "Upload Photos",  icon: Camera,     section: "gallery"  },
+      { label: "Add Release",   icon: Disc3,      section: "releases", sub: "Track, EP or album"   },
+      { label: "Add Show",      icon: Calendar,   section: "shows",    sub: "Schedule a performance" },
+      { label: "Upload Set",    icon: Headphones, section: "sets",     sub: "Publish a recorded mix" },
+      { label: "Add Video",     icon: Play,       section: "media",    sub: "YouTube or Vimeo embed" },
+      { label: "Upload Photos", icon: Camera,     section: "gallery",  sub: "Gallery or press photos" },
     ]
 
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-5">
 
-        {/* ── Artist identity strip ────────────────────────────────── */}
-        <div>
-          <h1 className="text-[32px] font-extrabold tracking-[-0.02em] text-foreground">{artist.artistName}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            {statusItems.map(({ label, value, ok, section }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setActiveSection(section)}
-                className="flex items-center gap-1.5 text-[12px] text-muted-foreground/50 transition-colors hover:text-foreground/75"
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-accent" : "bg-muted-foreground/30"}`} />
-                <span className="text-muted-foreground/60">{label}</span>
-                <span className={`font-medium ${ok ? "text-foreground/75" : "text-muted-foreground/45"}`}>{value}</span>
-              </button>
-            ))}
-            <a
-              href={publicProfileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[12px] text-muted-foreground/40 transition-colors hover:text-foreground/70"
-            >
-              <ExternalLink className="h-3 w-3" />
-              View profile
-            </a>
+        {/* ── Identity row ─────────────────────────────────────────────── */}
+        <div className="flex items-start justify-between gap-6 pb-1">
+          <div>
+            <h1 className="text-[32px] font-extrabold tracking-[-0.02em] text-foreground leading-none">
+              {artist.artistName}
+            </h1>
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              {statusItems.map(({ label, value, ok, section }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="flex items-center gap-1.5 text-[12px] text-muted-foreground/50 transition-colors hover:text-foreground/70"
+                >
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ok ? "bg-accent" : "bg-muted-foreground/25"}`} />
+                  <span className="text-muted-foreground/55">{label}</span>
+                  <span className={`font-semibold ${ok ? "text-foreground/70" : "text-muted-foreground/38"}`}>{value}</span>
+                </button>
+              ))}
+              <a href={publicProfileUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[12px] text-muted-foreground/35 transition-colors hover:text-foreground/60">
+                <ExternalLink className="h-3 w-3" />View profile
+              </a>
+            </div>
+          </div>
+          {/* Completion badge */}
+          <div className="shrink-0 text-right">
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold ${
+              isComplete
+                ? "border-accent/20 bg-accent/[0.07] text-accent"
+                : "border-border bg-secondary text-muted-foreground/55"
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isComplete ? "bg-accent" : "bg-muted-foreground/30"}`} />
+              {completionPct}% complete
+            </span>
           </div>
         </div>
 
-        {/* ── Next show ─────────────────────────────────────────────── */}
+        {/* ── Next show — full width ───────────────────────────────────── */}
         {nextShow ? (
           <div
             className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm cursor-pointer hover:shadow-md transition-shadow duration-200"
@@ -1994,12 +2019,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             onKeyDown={(e) => e.key === "Enter" && setActiveSection("shows")}
           >
             <div className="flex items-center gap-6 p-6 sm:p-7">
-              {/* Date tile */}
               <div className="flex h-[66px] w-[52px] shrink-0 flex-col items-center justify-center rounded-xl bg-accent/[0.06] ring-1 ring-accent/20">
                 <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-accent/70">{MONTH_A[Number(nextShow.date.substring(5,7))-1]}</span>
                 <span className="text-[26px] font-black leading-none tabular-nums text-foreground">{Number(nextShow.date.substring(8,10))}</span>
               </div>
-              {/* Info */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent/60">Next Show</span>
@@ -2014,13 +2037,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
               <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/30" />
             </div>
-            {/* Schedule preview */}
             {scheduleRest.length > 0 && (
-              <div className="border-t border-border px-6 py-3">
+              <div className="border-t border-border px-7 py-3">
                 <div className="flex flex-wrap gap-5">
                   {scheduleRest.map((g) => (
                     <span key={g.id} className="text-[12px] text-muted-foreground">
-                      <span className="font-mono text-muted-foreground/60">{MONTHS[Number(g.date.substring(5,7))-1]} {Number(g.date.substring(8,10))}</span>
+                      <span className="font-mono text-muted-foreground/55">{MONTHS[Number(g.date.substring(5,7))-1]} {Number(g.date.substring(8,10))}</span>
                       {" — "}
                       <span className="font-medium text-foreground/70">{g.eventName || g.venue || "TBD"}</span>
                     </span>
@@ -2033,11 +2055,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             )}
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setActiveSection("shows")}
-            className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-5 text-left hover:border-accent/30 hover:bg-accent/[0.02] transition-colors duration-200"
-          >
+          <button type="button" onClick={() => setActiveSection("shows")}
+            className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-6 text-left hover:border-accent/30 hover:bg-accent/[0.02] transition-colors duration-200">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
               <Calendar className="h-5 w-5 text-muted-foreground/40" />
             </div>
@@ -2049,81 +2068,115 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </button>
         )}
 
-        {/* ── Quick actions + Content health ────────────────────────── */}
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* ── Command center — 3 columns ──────────────────────────────── */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
-          {/* Quick actions */}
+          {/* Column A — Quick actions */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Quick actions</p>
-            <div className="space-y-1">
-              {quickActions.map(({ label, icon: Icon, section }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-secondary"
-                >
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Quick Actions</p>
+            <div className="space-y-0.5">
+              {quickActions.map(({ label, icon: Icon, section, sub }) => (
+                <button key={label} type="button" onClick={() => setActiveSection(section)}
+                  className="group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-secondary">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary group-hover:bg-background">
-                    <Icon className="h-[14px] w-[14px] text-muted-foreground/60" />
+                    <Icon className="h-[14px] w-[14px] text-muted-foreground/55" />
                   </div>
-                  <span className="text-[13px] font-medium text-foreground/75 group-hover:text-foreground">{label}</span>
-                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/25 opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground">{label}</p>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/20 opacity-0 transition-opacity group-hover:opacity-100" />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Content health */}
+          {/* Column B — Catalog metrics */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Content</p>
-            <div className="space-y-3">
-              {/* Catalog numbers */}
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: "Releases", value: artist.releases.length,     section: "releases" },
-                  { label: "Shows",    value: upcomingCount,               section: "shows"    },
-                  { label: "Sets",     value: artist.djSets.length,        section: "sets"     },
-                  { label: "Photos",   value: artist.galleryImages.length, section: "gallery"  },
-                ].map(({ label, value, section }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setActiveSection(section)}
-                    className="group rounded-lg border border-border bg-secondary/50 p-3 text-left hover:bg-secondary transition-colors"
-                  >
-                    <span className="block text-[22px] font-bold tabular-nums leading-none text-foreground/80 group-hover:text-foreground">{value}</span>
-                    <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/55">{label}</span>
-                  </button>
-                ))}
-              </div>
-              {/* Latest content freshness */}
-              <div className="space-y-1.5 border-t border-border pt-3">
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Catalog</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Releases", value: artist.releases.length,     section: "releases" },
+                { label: "Shows",    value: upcomingCount,               section: "shows"    },
+                { label: "Sets",     value: artist.djSets.length,        section: "sets"     },
+                { label: "Photos",   value: artist.galleryImages.length, section: "gallery"  },
+              ].map(({ label, value, section }) => (
+                <button key={label} type="button" onClick={() => setActiveSection(section)}
+                  className="group rounded-xl border border-border bg-secondary/40 p-3.5 text-left hover:bg-secondary transition-colors">
+                  <span className="block text-[24px] font-bold tabular-nums leading-none text-foreground/85 group-hover:text-foreground">{value}</span>
+                  <span className="mt-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">{label}</span>
+                </button>
+              ))}
+            </div>
+            {/* Recent activity strip */}
+            {(latestRelease || latestSet) && (
+              <div className="mt-4 space-y-1.5 border-t border-border pt-4">
                 {latestRelease && (
-                  <button type="button" onClick={() => setActiveSection("releases")} className="group flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left hover:bg-secondary transition-colors">
+                  <button type="button" onClick={() => setActiveSection("releases")}
+                    className="group flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left hover:bg-secondary transition-colors">
                     {latestRelease.artworkUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={latestRelease.artworkUrl} alt="" className="h-8 w-8 rounded-md object-cover" />
                     ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary"><Disc3 className="h-4 w-4 text-muted-foreground/40" /></div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary"><Disc3 className="h-3.5 w-3.5 text-muted-foreground/40" /></div>
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[12px] font-semibold text-foreground/75 group-hover:text-foreground">{latestRelease.title}</p>
-                      <p className="text-[11px] text-muted-foreground/50">{releaseFreshness === 0 ? "Today" : releaseFreshness === 1 ? "Yesterday" : releaseFreshness !== null ? `${releaseFreshness}d ago` : ""}</p>
+                      <p className="text-[10px] text-muted-foreground/45">{releaseFreshness === 0 ? "Today" : releaseFreshness === 1 ? "Yesterday" : releaseFreshness !== null ? `${releaseFreshness}d ago` : ""}</p>
                     </div>
                   </button>
                 )}
                 {latestSet && (
-                  <button type="button" onClick={() => setActiveSection("sets")} className="group flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left hover:bg-secondary transition-colors">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary"><Headphones className="h-4 w-4 text-muted-foreground/40" /></div>
+                  <button type="button" onClick={() => setActiveSection("sets")}
+                    className="group flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left hover:bg-secondary transition-colors">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary"><Headphones className="h-3.5 w-3.5 text-muted-foreground/40" /></div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[12px] font-semibold text-foreground/75 group-hover:text-foreground">{latestSet.title}</p>
-                      <p className="text-[11px] text-muted-foreground/50">{setFreshness === 0 ? "Today" : setFreshness === 1 ? "Yesterday" : setFreshness !== null ? `${setFreshness}d ago` : ""}</p>
+                      <p className="text-[10px] text-muted-foreground/45">{setFreshness === 0 ? "Today" : setFreshness === 1 ? "Yesterday" : setFreshness !== null ? `${setFreshness}d ago` : ""}</p>
                     </div>
                   </button>
                 )}
               </div>
+            )}
+          </div>
+
+          {/* Column C — Profile completion */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:col-span-2 xl:col-span-1">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Setup</p>
+              <span className={`text-[11px] font-bold tabular-nums ${isComplete ? "text-accent" : "text-muted-foreground/45"}`}>
+                {completionDone}/{completionItems.length}
+              </span>
+            </div>
+            {/* Progress bar */}
+            <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-secondary">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${isComplete ? "bg-accent" : "bg-accent/60"}`}
+                style={{ width: `${completionPct}%` }}
+              />
+            </div>
+            {/* Checklist */}
+            <div className="space-y-0.5">
+              {completionItems.map(({ label, done, section }) => (
+                <button key={label} type="button" onClick={() => setActiveSection(section)}
+                  className="group flex w-full items-center gap-3 rounded-lg px-2 py-[7px] text-left transition-colors hover:bg-secondary">
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                    done
+                      ? "border-accent/30 bg-accent/[0.10]"
+                      : "border-border bg-transparent group-hover:border-muted-foreground/30"
+                  }`}>
+                    {done && <Check className="h-2.5 w-2.5 text-accent" />}
+                  </span>
+                  <span className={`flex-1 text-[12px] font-medium ${done ? "text-foreground/55" : "text-foreground/75"}`}>
+                    {label}
+                  </span>
+                  {!done && (
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/20 opacity-0 transition-opacity group-hover:opacity-100" />
+                  )}
+                </button>
+              ))}
             </div>
           </div>
+
         </div>
 
       </div>
