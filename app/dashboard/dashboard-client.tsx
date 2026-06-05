@@ -264,6 +264,59 @@ function assetGroupKey(name: string | null): string {
   return (name ?? "Unknown").replace(/\s+\d+$/, "")
 }
 
+/**
+ * Remove white background from a normalized crop and recolor all logo pixels.
+ *
+ * Alpha is derived from the minimum RGB channel — the most conservative and
+ * cleanest estimator for logos on pure-white backgrounds. Anti-aliased edge
+ * pixels receive proportional alpha so curves and thin strokes look correct.
+ *
+ * mode "original"  — un-premultiplies the white composite to recover true hue.
+ * mode "black"     — (0, 0, 0, alpha) — dark-on-anything use.
+ * mode "white"     — (255, 255, 255, alpha) — light-on-dark use.
+ *
+ * Returns a new canvas. The source canvas is never modified.
+ */
+function recolorToVariant(
+  src: HTMLCanvasElement,
+  mode: "original" | "black" | "white",
+): HTMLCanvasElement {
+  const { width: w, height: h } = src
+  const srcCtx = src.getContext("2d")!
+  const d = srcCtx.getImageData(0, 0, w, h).data
+  const dst = document.createElement("canvas")
+  dst.width = w; dst.height = h
+  const dstCtx = dst.getContext("2d")!
+  const img = dstCtx.createImageData(w, h)
+  const out = img.data
+
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2], srcA = d[i + 3]
+    if (srcA < 10) { out[i + 3] = 0; continue }
+    // Alpha from minimum channel: min=0 → opaque logo; min=255 → transparent bg
+    const minC = Math.min(r, g, b)
+    const alpha = 1.0 - minC / 255.0
+    const outA = Math.round(alpha * 255)
+    if (outA < 5) { out[i + 3] = 0; continue }
+    if (mode === "black") {
+      out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = outA
+    } else if (mode === "white") {
+      out[i] = 255; out[i + 1] = 255; out[i + 2] = 255; out[i + 3] = outA
+    } else {
+      // Un-premultiply: pixel = alpha*logo + (1-alpha)*255 → logo = (pixel - bg) / alpha
+      const a = Math.max(alpha, 0.001)
+      const bg = (1 - alpha) * 255
+      out[i]     = Math.min(255, Math.max(0, Math.round((r - bg) / a)))
+      out[i + 1] = Math.min(255, Math.max(0, Math.round((g - bg) / a)))
+      out[i + 2] = Math.min(255, Math.max(0, Math.round((b - bg) / a)))
+      out[i + 3] = outA
+    }
+  }
+
+  dstCtx.putImageData(img, 0, 0)
+  return dst
+}
+
 const navGroups: NavGroup[] = [
   {
     label: "Workspace",
@@ -1017,6 +1070,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [brandSolidBgIds, setBrandSolidBgIds] = useState<Set<string>>(new Set())
   const [brandProcessingIds, setBrandProcessingIds] = useState<Set<string>>(new Set())
   const [brandProcessingLog, setBrandProcessingLog] = useState<Record<string, { steps: {label:string; ok:boolean}[]; error?:string; done:boolean }>>({})
+  const [brandSelectedVariants, setBrandSelectedVariants] = useState<Record<string, string>>({})
   const [pkExpandedIds, setPkExpandedIds] = useState<Set<string>>(new Set())
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
@@ -5668,6 +5722,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const PDF_EXTS    = new Set(["pdf"])
     const MAX_BYTES   = 50 * 1024 * 1024
     const MAX_PAGES   = 5
+    const VARIANT_MODES: Array<{ mode: "original"|"black"|"white"; label: string }> = [
+      { mode: "original", label: "Original" },
+      { mode: "black",    label: "Black"    },
+      { mode: "white",    label: "White"    },
+    ]
 
     function getExt(name: string) { return name.split(".").pop()?.toLowerCase() ?? "" }
     function extLabel(ext: string): string {
@@ -5695,10 +5754,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       return new Date(iso).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })
     }
     function variantLabel(v: string): string {
-      return ({ black:"Black", white:"White", gold:"Gold", silver:"Silver", original:"Original" } as Record<string,string>)[v] ?? "Original"
+      return ({ original:"Original", black:"Black", white:"White" } as Record<string,string>)[v] ?? v
     }
     function variantDot(v: string): string {
-      return ({ black:"bg-[#111]", white:"bg-white border border-border", gold:"bg-[#c9a84c]", silver:"bg-[#a8a8a8]", original:"bg-accent/50" } as Record<string,string>)[v] ?? "bg-accent/50"
+      return ({
+        original: "bg-accent/40",
+        black:    "bg-[#111]",
+        white:    "bg-white border border-border",
+      } as Record<string,string>)[v] ?? "bg-muted-foreground/30"
     }
 
     // ─── PDF processing pipeline ──────────────────────────────────────────────
@@ -5729,7 +5792,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       const newAssets: BrandAsset[] = []
 
       try {
-        // ── Phase 0: Load PDF renderer ─────────────────────────────────────────
+        // ── Phase 0: Load renderer ─────────────────────────────────────────────
         addStep("Loading PDF renderer", true)
         const pdfjs = await import("pdfjs-dist")
         pdfjs.GlobalWorkerOptions.workerSrc =
@@ -5741,20 +5804,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         addStep(`Opened PDF — ${pdf.numPages} page${pdf.numPages === 1 ? "" : "s"} detected`, true)
 
         // ── Phase 1: Render pages + collect candidates ─────────────────────────
-        type Pending = {
-          canvas: HTMLCanvasElement
-          data: Uint8ClampedArray
-          w: number; h: number
-          fgCount: number
-          assetType: BrandAsset["assetType"]
-          variant: string
-          hash: Float32Array
-          pageNum: number
+        type PendingCandidate = {
+          canvas:       HTMLCanvasElement   // normalized crop (white bg)
+          data:         Uint8ClampedArray
+          w:            number
+          h:            number
+          fgCount:      number
+          assetType:    BrandAsset["assetType"]
+          hash:         Float32Array
+          pageNum:      number
           candidateIdx: number
-          isDuplicate: boolean
-          displayName: string
+          isDuplicate:  boolean
+          displayName:  string
         }
-        const pending: Pending[] = []
+        const pending: PendingCandidate[] = []
         let renderedPages = 0
 
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -5809,7 +5872,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               }
             }
 
-            // Detect candidate regions
+            // Detect logo regions + normalize + analyze
             addStep(`Page ${pageNum}: scanning for logo regions…`, true)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
             const bounds = detectCandidateBounds(imageData.data, canvas.width, canvas.height)
@@ -5817,31 +5880,27 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             if (bounds.length === 0) {
               addStep(`Page ${pageNum}: no distinct logo regions found`, false)
             } else {
-              addStep(`Page ${pageNum}: ${bounds.length} region${bounds.length !== 1 ? "s" : ""} detected — analyzing…`, true)
+              addStep(`Page ${pageNum}: ${bounds.length} region${bounds.length !== 1 ? "s" : ""} detected — normalizing…`, true)
               for (let ci = 0; ci < bounds.length; ci++) {
                 const b = bounds[ci]
-                // Crop from page canvas
                 const cropCanvas = document.createElement("canvas")
                 cropCanvas.width = b.w; cropCanvas.height = b.h
                 const cropCtx = cropCanvas.getContext("2d")!
                 cropCtx.drawImage(canvas, b.x, b.y, b.w, b.h, 0, 0, b.w, b.h)
-                // Normalize: retrim whitespace + consistent padding
                 const normCanvas = normalizeCrop(cropCanvas)
                 const nw = normCanvas.width, nh = normCanvas.height
                 const normCtx = normCanvas.getContext("2d")!
                 const normData = normCtx.getImageData(0, 0, nw, nh).data
-                // Analyze
                 let fgCount = 0
                 for (let i = 0; i < normData.length; i += 4) {
                   const r = normData[i], g = normData[i+1], bv = normData[i+2], a = normData[i+3]
                   if (a > 30 && !(r > 235 && g > 235 && bv > 235)) fgCount++
                 }
-                const assetType = classifyAssetType(nw, nh, fgCount)
-                const variant   = detectVariant(normData)
-                const hash      = phash(normData, nw, nh)
                 pending.push({
                   canvas: normCanvas, data: normData, w: nw, h: nh,
-                  fgCount, assetType, variant, hash,
+                  fgCount,
+                  assetType: classifyAssetType(nw, nh, fgCount),
+                  hash:      phash(normData, nw, nh),
                   pageNum, candidateIdx: ci + 1,
                   isDuplicate: false, displayName: "",
                 })
@@ -5856,7 +5915,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           setError("No pages could be rendered. The PDF may be encrypted or unsupported.")
           return
         }
-
         if (pending.length === 0) {
           addStep("No logo regions detected across any page", false)
           markDone()
@@ -5876,86 +5934,87 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             const ratioDiff = Math.abs(ratioA - ratioB) / Math.max(ratioA, ratioB)
             const dist = phashDist(a.hash, b.hash)
             if (ratioDiff < 0.08 && dist < 18) {
-              // Keep the one with more foreground pixels (higher quality)
-              if (a.fgCount >= b.fgCount) { pending[j].isDuplicate = true }
-              else                         { pending[i].isDuplicate = true }
+              if (a.fgCount >= b.fgCount) pending[j].isDuplicate = true
+              else                         pending[i].isDuplicate = true
               dupCount++
             }
           }
         }
         const survivors = pending.filter((c) => !c.isDuplicate)
         if (dupCount > 0) {
-          addStep(`${dupCount} duplicate${dupCount !== 1 ? "s" : ""} removed — ${survivors.length} unique asset${survivors.length !== 1 ? "s" : ""}`, true)
+          addStep(`${dupCount} duplicate${dupCount !== 1 ? "s" : ""} removed — ${survivors.length} unique logo${survivors.length !== 1 ? "s" : ""}`, true)
         } else {
           addStep(`All ${survivors.length} candidate${survivors.length !== 1 ? "s" : ""} are unique`, true)
         }
 
         // ── Phase 3: Classify + name ───────────────────────────────────────────
-        // Group survivors by display type to assign sequential numbers
         const typeCount: Record<string, number> = {}
         const typeIdx:   Record<string, number> = {}
         for (const c of survivors) {
-          const typeName = displayTypeName(c.assetType, c.w, c.h)
-          typeCount[typeName] = (typeCount[typeName] ?? 0) + 1
+          const t = displayTypeName(c.assetType, c.w, c.h)
+          typeCount[t] = (typeCount[t] ?? 0) + 1
         }
         for (const c of survivors) {
-          const typeName = displayTypeName(c.assetType, c.w, c.h)
-          typeIdx[typeName] = (typeIdx[typeName] ?? 0) + 1
-          c.displayName = typeCount[typeName] === 1
-            ? typeName
-            : `${typeName} ${typeIdx[typeName]}`
+          const t = displayTypeName(c.assetType, c.w, c.h)
+          typeIdx[t]  = (typeIdx[t] ?? 0) + 1
+          c.displayName = typeCount[t] === 1 ? t : `${t} ${typeIdx[t]}`
         }
 
-        // ── Phase 4: Upload + register ─────────────────────────────────────────
-        addStep(`Uploading ${survivors.length} asset${survivors.length !== 1 ? "s" : ""}…`, true)
-        let uploadedCount = 0
+        // ── Phase 4: Generate 3 variants + upload ──────────────────────────────
+        addStep(`Generating variants for ${survivors.length} logo${survivors.length !== 1 ? "s" : ""} (${survivors.length * 3} files)…`, true)
+        let logoCount = 0
 
         for (const c of survivors) {
-          try {
-            const blob = await new Promise<Blob | null>(res => c.canvas.toBlob(res, "image/png", 0.92))
-            if (!blob) continue
-            const cropPath = `artists/${artist.id}/generated/${Date.now()}-${c.assetType}-p${c.pageNum}-c${c.candidateIdx}.png`
-            const { error: upErr } = await client.storage.from("brand-sources")
-              .upload(cropPath, blob, { contentType: "image/png", upsert: true })
-            if (upErr) { addStep(`${c.displayName}: upload failed`, false); continue }
-
-            const { data: cUrl } = client.storage.from("brand-sources").getPublicUrl(cropPath)
-            const cResp = await fetch("/api/artists/brand-create-asset", {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                artistId: artist.id, sourceFileId: fid,
-                name: c.displayName,
-                assetType: c.assetType,
-                previewUrl: cUrl.publicUrl,
-                status: "logo_candidate",
-                hasSolidBg: false,
-                variant: c.variant,
-                sourcePage: c.pageNum,
-              }),
-            })
-            if (!cResp.ok) { addStep(`${c.displayName}: registration failed`, false); continue }
-
-            const { asset } = await cResp.json() as { asset?: Record<string,unknown> }
-            if (asset) {
-              uploadedCount++
-              newAssets.push({
-                id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
-                name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
-                status: asset.status as string, previewUrl: asset.preview_url as string,
-                hasSolidBg: asset.has_solid_bg as boolean,
-                variant: (asset.variant as string|undefined) ?? c.variant,
-                sourcePage: (asset.source_page as number|null|undefined) ?? c.pageNum,
-                createdAt: asset.created_at as string,
+          let uploaded = 0
+          for (const { mode } of VARIANT_MODES) {
+            try {
+              const varCanvas = recolorToVariant(c.canvas, mode)
+              const blob = await new Promise<Blob | null>(res => varCanvas.toBlob(res, "image/png", 0.92))
+              if (!blob) continue
+              const filePath = `artists/${artist.id}/generated/${Date.now()}-${c.assetType}-p${c.pageNum}-c${c.candidateIdx}-${mode}.png`
+              const { error: upErr } = await client.storage.from("brand-sources")
+                .upload(filePath, blob, { contentType: "image/png", upsert: true })
+              if (upErr) continue
+              const { data: fUrl } = client.storage.from("brand-sources").getPublicUrl(filePath)
+              const resp = await fetch("/api/artists/brand-create-asset", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  artistId: artist.id, sourceFileId: fid,
+                  name: c.displayName,
+                  assetType: c.assetType,
+                  previewUrl: fUrl.publicUrl,
+                  status: "logo_candidate",
+                  hasSolidBg: false,
+                  variant: mode,
+                  sourcePage: c.pageNum,
+                }),
               })
-              addStep(`${c.displayName} (${variantLabel(c.variant)}) — saved`, true)
-            }
-          } catch (upEx) {
-            addStep(`${c.displayName}: ${upEx instanceof Error ? upEx.message : "error"}`, false)
+              if (!resp.ok) continue
+              const { asset } = await resp.json() as { asset?: Record<string,unknown> }
+              if (asset) {
+                uploaded++
+                newAssets.push({
+                  id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
+                  name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
+                  status: asset.status as string, previewUrl: asset.preview_url as string,
+                  hasSolidBg: asset.has_solid_bg as boolean,
+                  variant: (asset.variant as string|undefined) ?? mode,
+                  sourcePage: (asset.source_page as number|null|undefined) ?? c.pageNum,
+                  createdAt: asset.created_at as string,
+                })
+              }
+            } catch { /* skip failed variant */ }
+          }
+          if (uploaded > 0) {
+            logoCount++
+            addStep(`${c.displayName}: ${uploaded} variant${uploaded !== 1 ? "s" : ""} saved`, true)
+          } else {
+            addStep(`${c.displayName}: upload failed`, false)
           }
         }
 
         addStep(
-          `${renderedPages} page render${renderedPages !== 1 ? "s" : ""} + ${uploadedCount} logo asset${uploadedCount !== 1 ? "s" : ""} generated`,
+          `${renderedPages} page render${renderedPages !== 1 ? "s" : ""} + ${logoCount} logo${logoCount !== 1 ? "s" : ""} (${logoCount * 3} variants) generated`,
           true,
         )
         markDone()
@@ -6048,54 +6107,94 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const pageRenders    = brandAssets.filter((a) => a.status === "preview_only")
     const logoCandidates = brandAssets.filter((a) => a.status === "logo_candidate")
 
-    // Group logo candidates by base type name
-    const typeGroups = logoCandidates.reduce<Record<string, BrandAsset[]>>((acc, a) => {
-      const key = assetGroupKey(a.name)
-      ;(acc[key] ??= []).push(a)
-      return acc
-    }, {})
+    // Group by exact name first (all 3 variants of the same logo share a name)
+    const byName: Record<string, BrandAsset[]> = {}
+    for (const a of logoCandidates) {
+      const key = a.name ?? "Untitled"
+      ;(byName[key] ??= []).push(a)
+    }
+    // Sort variants within each name: original → black → white
+    const VARIANT_ORDER = ["original", "black", "white"]
+    for (const key of Object.keys(byName)) {
+      byName[key].sort((a, b) => {
+        return (VARIANT_ORDER.indexOf(a.variant) + 1 || 99) - (VARIANT_ORDER.indexOf(b.variant) + 1 || 99)
+      })
+    }
+    // Then group by type (strip trailing number) → ordered list of instances per type
+    const typeGroups: Record<string, Array<{ name: string; variants: BrandAsset[] }>> = {}
+    for (const [name, variants] of Object.entries(byName)) {
+      const typeKey = assetGroupKey(name)
+      ;(typeGroups[typeKey] ??= []).push({ name, variants })
+    }
 
-    // ─── Asset card ───────────────────────────────────────────────────────────
-    function LogoCard({ asset }: { asset: BrandAsset }) {
+    // ─── LogoInstanceCard — one card per logo, variant tabs inside ────────────
+    function LogoInstanceCard({ name: cardName, variants }: { name: string; variants: BrandAsset[] }) {
+      const selectedId  = brandSelectedVariants[cardName] ?? variants[0]?.id ?? ""
+      const selected    = variants.find((a) => a.id === selectedId) ?? variants[0]
+      if (!selected) return null
+
+      function pickVariant(id: string) {
+        setBrandSelectedVariants((prev) => ({ ...prev, [cardName]: id }))
+      }
+
       return (
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          {/* Preview: dark + light */}
+          {/* Variant tab strip */}
+          <div className="flex items-center gap-0.5 border-b border-border bg-secondary/20 px-2.5 py-2">
+            {variants.map((a) => (
+              <button key={a.id} type="button" onClick={() => pickVariant(a.id)}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-all ${
+                  a.id === selected.id
+                    ? "bg-background text-foreground/75 shadow-[0_1px_3px_rgba(0,0,0,0.07)]"
+                    : "text-muted-foreground/38 hover:text-foreground/55 hover:bg-background/50"
+                }`}>
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ring-[0.5px] ring-inset ring-border/20 ${variantDot(a.variant)}`} />
+                {variantLabel(a.variant)}
+              </button>
+            ))}
+            <button type="button" onClick={() => variants.forEach((a) => deleteAsset(a.id))}
+              className="ml-auto text-[9px] text-muted-foreground/18 hover:text-destructive/55 px-1.5 py-1 rounded">
+              Remove
+            </button>
+          </div>
+          {/* Preview: dark bg + checkerboard (shows transparency) */}
           <div className="grid grid-cols-2 divide-x divide-border">
-            <div className="relative flex h-32 items-center justify-center bg-[#0e0e0e] p-4">
+            {/* Dark background — white logo variant shows best here */}
+            <div className="flex h-28 items-center justify-center bg-[#0d0d0d] p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+              <img src={selected.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
             </div>
-            <div className="relative flex h-32 items-center justify-center bg-white p-4">
+            {/* Checkerboard — transparency proof, shows all variants clearly */}
+            <div className="flex h-28 items-center justify-center p-4"
+              style={{ background: "repeating-conic-gradient(#dbdbdb 0% 25%, #f5f5f5 0% 50%) 0 0 / 10px 10px" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+              <img src={selected.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
             </div>
           </div>
-          {/* Info */}
-          <div className="p-3.5 space-y-2.5">
-            <div className="flex items-start justify-between gap-2">
-              <p className="truncate text-[13px] font-semibold text-foreground/80">{asset.name ?? "Untitled"}</p>
-              <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[10px] text-muted-foreground/20 hover:text-destructive/60">Remove</button>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {/* Variant chip */}
-              <span className="flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold text-foreground/55">
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${variantDot(asset.variant)}`} />
-                {variantLabel(asset.variant)}
-              </span>
-              {/* Source page */}
-              {asset.sourcePage != null && (
-                <span className="rounded border border-border px-1.5 py-px text-[9px] text-muted-foreground/35">pg {asset.sourcePage}</span>
+          {/* Meta + assignment */}
+          <div className="p-3.5 space-y-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="truncate text-[13px] font-semibold text-foreground/80">{cardName}</p>
+              {selected.sourcePage != null && (
+                <span className="shrink-0 text-[10px] text-muted-foreground/28">pg {selected.sourcePage}</span>
               )}
             </div>
-            {/* Assign controls (future) */}
-            <div className="border-t border-border pt-2.5">
-              <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/25">Assign to</p>
-              <div className="flex flex-wrap gap-1.5">
-                {["Hero Logo","Footer Logo","Favicon"].map((label) => (
-                  <button key={label} type="button" disabled title="Coming soon"
-                    className="cursor-not-allowed rounded border border-border bg-secondary px-2 py-0.5 text-[9px] font-semibold text-muted-foreground/28 opacity-55">
-                    {label}
-                  </button>
+            {/* Assignment controls */}
+            <div className="border-t border-border pt-3">
+              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/25">Assign to</p>
+              <div className="space-y-1.5">
+                {(["Hero Logo", "Footer Logo", "Favicon"] as const).map((label) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <span className="w-16 shrink-0 text-[10px] text-muted-foreground/32">{label}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {variants.map((a) => (
+                        <button key={a.id} type="button" disabled title="Coming soon"
+                          className="cursor-not-allowed rounded border border-border bg-secondary px-1.5 py-px text-[9px] text-muted-foreground/25 opacity-55">
+                          {variantLabel(a.variant)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -6110,7 +6209,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         <div>
           <h2 className="text-base font-semibold text-foreground">Brand</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Upload source files to generate a brand asset library.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Upload source files to generate a production-ready brand asset library.</p>
         </div>
 
         {/* ── Brand Sources ──────────────────────────────────────────────── */}
@@ -6118,7 +6217,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div>
             <h3 className="text-[13px] font-semibold text-foreground/80">Brand Sources</h3>
             <p className="mt-0.5 text-[12px] text-muted-foreground/50">
-              PDFs are rendered page-by-page. Logo regions are detected, normalized, deduplicated, and classified automatically.
+              PDFs are rendered page-by-page. Logos are detected, deduplicated, classified, and output as three transparent PNG variants: Original, Black, and White.
             </p>
           </div>
 
@@ -6130,7 +6229,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
             <div>
               <p className="text-[14px] font-semibold text-foreground/70">{brandDragActive ? "Drop to upload" : "Drop brand files here"}</p>
-              <p className="mt-1 text-[12px] text-muted-foreground/45">PDFs extract and classify logo candidates automatically</p>
+              <p className="mt-1 text-[12px] text-muted-foreground/45">PDFs generate Original, Black, and White transparent PNG variants automatically</p>
             </div>
             <div className="flex flex-wrap justify-center gap-1.5">
               {["PDF","AI","EPS","ZIP","RAR","SVG","PNG","JPG"].map((f) => (
@@ -6231,11 +6330,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <div className="space-y-1">
                     {log.steps.map((step, i) => (
                       <div key={i} className="flex items-start gap-2 text-[12px]">
-                        <span className={`mt-px shrink-0 ${step.ok ? "text-accent/70" : "text-muted-foreground/35"}`}>{step.ok ? "✓" : "·"}</span>
-                        <span className={step.ok ? "text-foreground/60" : "text-muted-foreground/45"}>{step.label}</span>
+                        <span className={`mt-px shrink-0 ${step.ok ? "text-accent/65" : "text-muted-foreground/30"}`}>{step.ok ? "✓" : "·"}</span>
+                        <span className={step.ok ? "text-foreground/60" : "text-muted-foreground/40"}>{step.label}</span>
                       </div>
                     ))}
-                    {isActive && <div className="text-[12px] text-muted-foreground/30 animate-pulse">···</div>}
+                    {isActive && <div className="text-[12px] text-muted-foreground/28 animate-pulse">···</div>}
                   </div>
                   {log.error && (
                     <div className="mt-3 rounded-lg border border-red-500/15 bg-red-500/[0.04] px-3 py-2">
@@ -6254,46 +6353,51 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="flex items-baseline justify-between">
             <div>
               <h3 className="text-[13px] font-semibold text-foreground/80">Brand Asset Library</h3>
-              <p className="mt-0.5 text-[12px] text-muted-foreground/50">Generated from your brand sources.</p>
+              <p className="mt-0.5 text-[12px] text-muted-foreground/50">Extracted logos with Original, Black, and White variants.</p>
             </div>
             {logoCandidates.length > 0 && (
-              <span className="text-[11px] text-muted-foreground/38">{logoCandidates.length} logo asset{logoCandidates.length !== 1 ? "s" : ""}</span>
+              <span className="text-[11px] text-muted-foreground/35">
+                {Object.keys(byName).length} logo{Object.keys(byName).length !== 1 ? "s" : ""} · {logoCandidates.length} file{logoCandidates.length !== 1 ? "s" : ""}
+              </span>
             )}
           </div>
 
           {brandProcessingIds.size > 0 && (
             <div className="flex items-center gap-2 rounded-xl border border-accent/15 bg-accent/[0.04] px-4 py-3">
               <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
-              <span className="text-[12px] text-accent/70">Rendering PDF and extracting logo assets…</span>
+              <span className="text-[12px] text-accent/70">Rendering pages, detecting logo regions, generating variants…</span>
             </div>
           )}
 
-          {/* Logo assets grouped by type */}
+          {/* Grouped by type → instances per type → variants inside card */}
           {Object.entries(typeGroups).length > 0 && (
-            <div className="space-y-6">
-              {Object.entries(typeGroups).map(([typeName, assets]) => (
+            <div className="space-y-7">
+              {Object.entries(typeGroups).map(([typeName, instances]) => (
                 <div key={typeName} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/45">{typeName}</p>
-                    {assets.length > 1 && (
-                      <span className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] text-muted-foreground/40">{assets.length}</span>
+                  <div className="flex items-center gap-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/40">{typeName}</p>
+                    {instances.length > 1 && (
+                      <span className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] text-muted-foreground/40">{instances.length}</span>
                     )}
-                    {/* Show variant summary chips */}
-                    <div className="flex items-center gap-1 ml-1">
-                      {assets.map((a) => (
-                        <span key={a.id} className={`flex h-2.5 w-2.5 rounded-full ${variantDot(a.variant)}`} title={variantLabel(a.variant)} />
+                    {/* Variant dots */}
+                    <div className="flex items-center gap-0.5 ml-0.5">
+                      {VARIANT_MODES.map(({ mode }) => (
+                        <span key={mode} className={`flex h-2 w-2 rounded-full ring-[0.5px] ring-border/20 ${variantDot(mode)}`} title={variantLabel(mode)} />
                       ))}
                     </div>
+                    <span className="text-[9px] text-muted-foreground/28">3 variants</span>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {assets.map((asset) => <LogoCard key={asset.id} asset={asset} />)}
+                    {instances.map(({ name: instanceName, variants }) => (
+                      <LogoInstanceCard key={instanceName} name={instanceName} variants={variants} />
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* No candidates after pages rendered */}
+          {/* No candidates after pages were rendered */}
           {pageRenders.length > 0 && logoCandidates.length === 0 && !brandProcessingIds.size && (
             <div className="rounded-xl border border-dashed border-border bg-card/50 px-6 py-6 text-center">
               <p className="text-[13px] font-semibold text-foreground/45">No individual logos detected</p>
@@ -6304,36 +6408,36 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           )}
 
-          {/* Truly empty */}
+          {/* Truly empty state */}
           {brandAssets.length === 0 && !brandProcessingIds.size && (
             <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card/50 px-6 py-8 text-center">
               <Sparkles className="h-6 w-6 text-muted-foreground/22" />
               <p className="text-[13px] font-semibold text-foreground/45">No brand assets yet</p>
               <p className="max-w-xs text-[12px] text-muted-foreground/35">
-                Upload a PDF — pages are rendered, logo regions detected and classified automatically.
+                Upload a PDF — logos are detected, deduplicated, classified, and output as Original, Black, and White transparent PNGs.
               </p>
             </div>
           )}
         </section>
 
-        {/* ── Page Renders (secondary) ───────────────────────────────────── */}
+        {/* ── Page Renders (secondary, below) ────────────────────────────── */}
         {pageRenders.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-[13px] font-semibold text-foreground/50">Page Renders</h3>
-              <span className="rounded border border-amber-500/20 bg-amber-500/[0.06] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-amber-500/55">Preview only</span>
-              <span className="text-[11px] text-muted-foreground/30">{pageRenders.length} page{pageRenders.length !== 1 ? "s" : ""}</span>
+              <h3 className="text-[13px] font-semibold text-foreground/45">Page Renders</h3>
+              <span className="rounded border border-amber-500/18 bg-amber-500/[0.05] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-amber-500/50">Preview only</span>
+              <span className="text-[11px] text-muted-foreground/28">{pageRenders.length} page{pageRenders.length !== 1 ? "s" : ""}</span>
             </div>
-            <p className="text-[12px] text-muted-foreground/38">Full-page renders from your PDF sources. Not logo assets.</p>
+            <p className="text-[12px] text-muted-foreground/35">Full-page renders from PDF sources. Not logo assets.</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {pageRenders.map((asset) => (
-                <div key={asset.id} className="overflow-hidden rounded-xl border border-border bg-card opacity-75 shadow-sm transition-opacity hover:opacity-100">
+                <div key={asset.id} className="overflow-hidden rounded-xl border border-border bg-card opacity-60 shadow-sm transition-opacity hover:opacity-90">
                   <div className="flex h-36 items-center justify-center bg-white p-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
                   </div>
                   <div className="flex items-center justify-between px-3.5 py-2.5">
-                    <p className="truncate text-[11px] text-foreground/45">{asset.name ?? "Page"}</p>
+                    <p className="truncate text-[11px] text-foreground/40">{asset.name ?? "Page"}</p>
                     <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[10px] text-muted-foreground/20 hover:text-destructive/60">Remove</button>
                   </div>
                 </div>
