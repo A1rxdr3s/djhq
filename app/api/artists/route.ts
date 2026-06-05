@@ -674,7 +674,10 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("[artists PATCH]", error)
-    return NextResponse.json({ error: "Unable to save artist changes." }, { status: 500 })
+    const message = error instanceof Error ? error.message : String(error)
+    const code    = (error as { code?: string }).code ?? null
+    console.error("[artists PATCH]", { message, code, error })
+    // Return the real error message so clients can distinguish DB issues from logic bugs.
+    return NextResponse.json({ error: message || "Unable to save artist changes.", code }, { status: 500 })
   }
 }
