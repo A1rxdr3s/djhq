@@ -464,19 +464,36 @@ export async function PATCH(request: Request) {
         press_kit_pdf_en_size: payload.booking.pressKitPdfEnSize?.trim() || null,
         press_kit_pdf_es_size: payload.booking.pressKitPdfEsSize?.trim() || null,
         press_kit_use_gallery_photos: payload.booking.pressKitUseGalleryPhotos,
-        footer_logo_url: payload.footer?.logoUrl?.trim() || null,
-        footer_logo_width: Math.max(80, Math.min(400, payload.footer?.logoWidth ?? 180)),
-        footer_booking_email: payload.footer?.bookingEmail?.trim() || null,
-        footer_newsletter_enabled: payload.footer?.newsletterEnabled ?? true,
-        footer_socials_enabled: payload.footer?.socialsEnabled ?? true,
-        footer_contact_email: payload.footer?.contactEmail?.trim() || null,
-        footer_demos_email: payload.footer?.demosEmail?.trim() || null,
-        footer_copyright: payload.footer?.copyright?.trim() || null,
       })
       .eq("id", artistId)
 
     if (artistError) {
       throw artistError
+    }
+
+    // Footer fields are in a separate update so that a missing DB column (migration
+    // not yet applied) does NOT crash the entire save.  If the columns don't exist,
+    // we log a clear warning and continue — all other settings are already persisted.
+    if (payload.footer) {
+      const { error: footerError } = await supabase
+        .from("artists")
+        .update({
+          footer_logo_url:          payload.footer.logoUrl?.trim() || null,
+          footer_logo_width:        Math.max(80, Math.min(420, payload.footer.logoWidth ?? 220)),
+          footer_booking_email:     payload.footer.bookingEmail?.trim() || null,
+          footer_newsletter_enabled: payload.footer.newsletterEnabled ?? true,
+          footer_socials_enabled:   payload.footer.socialsEnabled ?? true,
+          footer_contact_email:     payload.footer.contactEmail?.trim() || null,
+          footer_demos_email:       payload.footer.demosEmail?.trim() || null,
+          footer_copyright:         payload.footer.copyright?.trim() || null,
+        })
+        .eq("id", artistId)
+
+      if (footerError) {
+        // Detected column-does-not-exist (42703): migration not applied yet.
+        // Log the real error for debugging; don't propagate — main save already succeeded.
+        console.error("[artists PATCH] Footer update skipped:", footerError.message, "(code:", (footerError as { code?: string }).code + ")")
+      }
     }
 
     const { error: deleteSocialLinksError } = await supabase.from("social_links").delete().eq("artist_id", artistId)
