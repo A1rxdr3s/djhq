@@ -154,6 +154,60 @@
   }
 }
 
+/* ── Dashboard light-theme enforcement ───────────────────────────────────────
+   These rules guarantee the light theme renders correctly regardless of whether
+   the CSS variable cascade propagates through @theme inline compiled utilities.
+   They sit outside @layer so they win specificity against layered utilities. */
+
+/* Pull the body/html background to warm paper when dashboard is present */
+html:has(.djhq-dashboard),
+body:has(.djhq-dashboard) {
+  background-color: oklch(0.967 0.004 80);
+  color: oklch(0.10 0 0);
+}
+
+/* Structural backgrounds — override any inlined utility values */
+.djhq-dashboard { background-color: oklch(0.967 0.004 80); color: oklch(0.10 0 0); }
+.djhq-dashboard header  { background-color: rgba(245,244,241,0.96); color: oklch(0.10 0 0); }
+.djhq-dashboard aside   { background-color: oklch(0.962 0.004 80); }
+
+/* Foreground / muted text — direct color, no token ambiguity */
+.djhq-dashboard .text-foreground    { color: oklch(0.10 0 0); }
+.djhq-dashboard .text-muted-foreground { color: oklch(0.44 0 0); }
+
+/* Cards — semi-transparent variants were nearly invisible on light bg */
+.djhq-dashboard .bg-card    { background-color: #ffffff; }
+.djhq-dashboard .bg-card\/30,
+.djhq-dashboard .bg-card\/35,
+.djhq-dashboard .bg-card\/40,
+.djhq-dashboard .bg-card\/50 { background-color: #ffffff; }
+
+/* Secondary / muted surfaces */
+.djhq-dashboard .bg-secondary     { background-color: oklch(0.94 0.003 80); }
+.djhq-dashboard .bg-secondary\/10 { background-color: rgba(235,234,230,0.10); }
+.djhq-dashboard .bg-secondary\/15 { background-color: rgba(235,234,230,0.15); }
+.djhq-dashboard .bg-secondary\/20 { background-color: rgba(235,234,230,0.20); }
+.djhq-dashboard .bg-secondary\/30 { background-color: rgba(235,234,230,0.30); }
+.djhq-dashboard .bg-secondary\/40 { background-color: rgba(235,234,230,0.40); }
+.djhq-dashboard .bg-secondary\/50 { background-color: rgba(235,234,230,0.55); }
+.djhq-dashboard .bg-secondary\/60 { background-color: rgba(235,234,230,0.65); }
+.djhq-dashboard .bg-secondary\/70 { background-color: rgba(235,234,230,0.80); }
+
+/* Background */
+.djhq-dashboard .bg-background { background-color: oklch(0.967 0.004 80); }
+
+/* Border */
+.djhq-dashboard .border-border { border-color: oklch(0.91 0.003 80); }
+.djhq-dashboard .border-border\/30 { border-color: rgba(226,225,223,0.30); }
+.djhq-dashboard .border-border\/40 { border-color: rgba(226,225,223,0.40); }
+.djhq-dashboard .border-border\/60 { border-color: rgba(226,225,223,0.60); }
+.djhq-dashboard .border-border\/70 { border-color: rgba(226,225,223,0.70); }
+
+/* Scrollbar — light theme */
+.djhq-dashboard ::-webkit-scrollbar-track { background: oklch(0.96 0.003 80); }
+.djhq-dashboard ::-webkit-scrollbar-thumb { background: oklch(0.82 0.003 80); }
+.djhq-dashboard ::-webkit-scrollbar-thumb:hover { background: oklch(0.72 0.003 80); }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: oklch(0.08 0 0); }
