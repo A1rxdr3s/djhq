@@ -5380,97 +5380,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderBrand() {
-    const previewLogo = heroLogoUrl.trim() || null
-    const previewFooterLogo = footerLogoUrl.trim() || null
-    const previewFavicon = faviconUrl.trim() || null
-
-    function LogoSlot({
-      title, description, url, onUpload, onClear, accept = "image/png,image/svg+xml,image/webp",
-    }: {
-      title: string
-      description: string
-      url: string | null
-      onUpload?: () => void
-      onClear?: () => void
-      accept?: string
-    }) {
-      return (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-          <div className="mb-3 flex items-start justify-between">
-            <div>
-              <p className="text-[13px] font-semibold text-foreground">{title}</p>
-              <p className="mt-0.5 text-[12px] text-muted-foreground">{description}</p>
-            </div>
-            {url && onClear && (
-              <button type="button" onClick={onClear} className="text-[11px] text-muted-foreground/40 hover:text-destructive/70 transition-colors">Remove</button>
-            )}
-          </div>
-          {url ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex h-24 items-center justify-center rounded-lg bg-[#111] p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={title} className="max-h-full max-w-full object-contain" />
-              </div>
-              <div className="flex h-24 items-center justify-center rounded-lg bg-white border border-border p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={title} className="max-h-full max-w-full object-contain" />
-              </div>
-            </div>
-          ) : (
-            <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border bg-secondary/50 text-[12px] text-muted-foreground">
-              No logo uploaded
-            </div>
-          )}
-          <p className="mt-2 text-[11px] text-muted-foreground/40">Transparent PNG or SVG recommended.</p>
-        </div>
-      )
-    }
-
     return (
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Brand</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            Manage your visual identity assets. Assign logos to different parts of your site.
-          </p>
+          <h2 className="text-base font-semibold text-foreground">Brand</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">Build and manage your artist identity.</p>
         </div>
-
-        {/* Logo slots */}
-        <div>
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Logo Assets</p>
-          <div className="space-y-3">
-            <LogoSlot
-              title="Hero Logo"
-              description="Used in the hero section of your public profile."
-              url={previewLogo}
-              onClear={() => setHeroLogoUrl("")}
-            />
-            <LogoSlot
-              title="Footer Logo"
-              description="Signature mark shown in the footer. Wordmark or monogram recommended."
-              url={previewFooterLogo}
-              onClear={() => setFooterLogoUrl("")}
-            />
-            <LogoSlot
-              title="Favicon"
-              description="Browser tab icon. Square or circular mark."
-              url={previewFavicon}
-              onClear={() => setFaviconUrl("")}
-            />
-          </div>
-        </div>
-
-        {/* Upload guidance */}
-        <div className="rounded-xl border border-border bg-secondary/50 p-5">
-          <p className="text-[13px] font-semibold text-foreground">Upload from Profile settings</p>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            To upload new logos, go to <button type="button" onClick={() => setActiveSection("profile")} className="text-accent/80 hover:text-accent underline underline-offset-2 transition-colors">Profile</button> for the hero logo,
-            or <button type="button" onClick={() => setActiveSection("footer")} className="text-accent/80 hover:text-accent underline underline-offset-2 transition-colors">Footer</button> for the footer mark.
-          </p>
-          <div className="mt-3 space-y-1.5 text-[12px] text-muted-foreground/70">
-            <p>✓ Supported formats: SVG, PNG (transparent), WebP</p>
-            <p>✓ Logos are stored in your artist media library</p>
-            <p>✓ Each slot is independent — use different marks per context</p>
+        <div className="flex items-center justify-center rounded-xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
+          <div className="max-w-sm">
+            <Sparkles className="mx-auto h-8 w-8 text-muted-foreground/25" />
+            <p className="mt-3 text-[13px] font-semibold text-foreground/55">Brand editor coming soon</p>
+            <p className="mt-1 text-[12px] text-muted-foreground/40">
+              Logo management, color palette and brand guidelines will be managed here.
+            </p>
           </div>
         </div>
       </div>
