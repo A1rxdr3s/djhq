@@ -842,75 +842,100 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            {/* ── Upper-center artist identity ─────────────────────────────────
-                Positioned independently from the content card so the artist brand
-                mark reads as the dominant visual element — festival poster hierarchy.
-                Only shown in editorial/non-floating placement; floating placements
-                continue to use the existing hasFloatingLogo layer above. */}
-            {!isFloatingPlacement && (
-              <div
-                className="absolute inset-x-0 top-[22%] z-10 flex items-start justify-center px-4 sm:top-[26%]"
-                style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}
-              >
-                <HeroIdentity
-                  artistName={artist.artistName}
-                  heroLogoUrl={artist.heroLogoUrl}
-                  heroIdentityMode={artist.heroIdentityMode ?? "text"}
-                  heroTextStyle={heroTextStyle}
-                  heroLogoScale={logoScale}
-                  heroLogoLayout={logoLayout}
-                  heroLogoAlignment={logoAlignment}
-                  heroLogoOffsetX={logoOffsetX}
-                  heroLogoOffsetY={logoOffsetY}
-                  heroLogoStyle={logoStyle}
-                  heroLogoReadability={logoReadability}
-                  isPro={isPro}
-                />
+            {/* ── Unified identity block: logo → tagline → CTAs ───────────────
+                All three elements read as one composition. For editorial placement,
+                they are stacked in a single centered column. For floating placement,
+                the logo layer is separate (above) and only tagline+CTAs sit here. */}
+            {!isFloatingPlacement ? (
+              /* Editorial: one unified centered column */
+              <div className="absolute inset-x-0 top-[24%] z-10 flex flex-col items-center px-4 text-center sm:top-[28%]">
+                {/* Logo with its own filter wrapper */}
+                <div style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}>
+                  <HeroIdentity
+                    artistName={artist.artistName}
+                    heroLogoUrl={artist.heroLogoUrl}
+                    heroIdentityMode={artist.heroIdentityMode ?? "text"}
+                    heroTextStyle={heroTextStyle}
+                    heroLogoScale={logoScale}
+                    heroLogoLayout={logoLayout}
+                    heroLogoAlignment={logoAlignment}
+                    heroLogoOffsetX={logoOffsetX}
+                    heroLogoOffsetY={logoOffsetY}
+                    heroLogoStyle={logoStyle}
+                    heroLogoReadability={logoReadability}
+                    isPro={isPro}
+                  />
+                </div>
+                {/* Tagline — directly below logo, part of the same unit */}
+                {displayHeroTagline && (
+                  <p
+                    className="mt-4 text-[13px] font-semibold uppercase tracking-[0.22em] text-white/78 sm:mt-5 sm:text-[14px]"
+                    style={{ textShadow: "0 1px 10px rgba(0,0,0,0.50)" }}
+                  >
+                    {displayHeroTagline}
+                  </p>
+                )}
+                {/* CTAs — directly below tagline */}
+                {(artist.bookingInfo.email.trim() || hasPressKit) ? (
+                  <div className="mt-5 flex items-center gap-3 sm:mt-6">
+                    {artist.bookingInfo.email.trim() ? (
+                      <div className="transition-transform duration-150 hover:-translate-y-0.5">
+                        <BookingInquiryModal
+                          artistHandle={artist.handle}
+                          artistName={artist.artistName}
+                          pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
+                        />
+                      </div>
+                    ) : null}
+                    {hasPressKit && safePressKitHref ? (
+                      <a
+                        href={safePressKitHref}
+                        {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
+                        className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:h-12 sm:px-8"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Press Kit
+                      </a>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              /* Floating logo placement: logo is separate, tagline + CTAs centered below */
+              <div className="absolute inset-x-0 bottom-[14%] z-10 flex flex-col items-center px-4 text-center sm:bottom-[16%]">
+                {displayHeroTagline && (
+                  <p
+                    className="mb-5 text-[13px] font-semibold uppercase tracking-[0.22em] text-white/78 sm:text-[14px]"
+                    style={{ textShadow: "0 1px 10px rgba(0,0,0,0.50)" }}
+                  >
+                    {displayHeroTagline}
+                  </p>
+                )}
+                {(artist.bookingInfo.email.trim() || hasPressKit) ? (
+                  <div className="flex items-center gap-3">
+                    {artist.bookingInfo.email.trim() ? (
+                      <div className="transition-transform duration-150 hover:-translate-y-0.5">
+                        <BookingInquiryModal
+                          artistHandle={artist.handle}
+                          artistName={artist.artistName}
+                          pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
+                        />
+                      </div>
+                    ) : null}
+                    {hasPressKit && safePressKitHref ? (
+                      <a
+                        href={safePressKitHref}
+                        {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
+                        className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:h-12 sm:px-8"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Press Kit
+                      </a>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             )}
-
-            {/* Brand cluster — tagline + CTAs, left-anchored
-                Logo at center is the identity; tagline is the statement; CTAs are the action */}
-            <div className="absolute bottom-[12%] left-0 z-10 px-6 sm:bottom-[14%] sm:px-10 lg:px-12">
-
-              {/* Tagline — the only text statement below the logo */}
-              {displayHeroTagline && (
-                <p
-                  className="mb-5 max-w-[380px] text-[13px] font-semibold uppercase tracking-[0.22em] text-white/80 sm:mb-6 sm:text-[14px]"
-                  style={{ textShadow: "0 1px 10px rgba(0,0,0,0.50)" }}
-                >
-                  {displayHeroTagline}
-                </p>
-              )}
-
-              {/* CTAs */}
-              {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                <div className="flex items-center gap-3">
-                  {artist.bookingInfo.email.trim() ? (
-                    <div className="transition-transform duration-150 hover:-translate-y-0.5">
-                      <BookingInquiryModal
-                        artistHandle={artist.handle}
-                        artistName={artist.artistName}
-                        pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
-                      />
-                    </div>
-                  ) : null}
-                  {hasPressKit && safePressKitHref ? (
-                    <a
-                      href={safePressKitHref}
-                      {...(!isSafeInternalPath(safePressKitHref) && {
-                        target: "_blank",
-                        rel: "noopener noreferrer",
-                      })}
-                      className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:h-12 sm:px-8"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Press Kit
-                    </a>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
         </div>
       </section>
 
