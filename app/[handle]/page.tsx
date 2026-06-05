@@ -847,37 +847,65 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 they are stacked in a single centered column. For floating placement,
                 the logo layer is separate (above) and only tagline+CTAs sit here. */}
             {!isFloatingPlacement ? (
-              /* Editorial: one unified centered column */
+              /* Editorial: one unified centered column — logo → eyebrow+tagline → CTAs */
               <div className="absolute inset-x-0 top-[24%] z-10 flex flex-col items-center px-4 text-center sm:top-[28%]">
-                {/* Logo with its own filter wrapper */}
-                <div style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}>
-                  <HeroIdentity
-                    artistName={artist.artistName}
-                    heroLogoUrl={artist.heroLogoUrl}
-                    heroIdentityMode={artist.heroIdentityMode ?? "text"}
-                    heroTextStyle={heroTextStyle}
-                    heroLogoScale={logoScale}
-                    heroLogoLayout={logoLayout}
-                    heroLogoAlignment={logoAlignment}
-                    heroLogoOffsetX={logoOffsetX}
-                    heroLogoOffsetY={logoOffsetY}
-                    heroLogoStyle={logoStyle}
-                    heroLogoReadability={logoReadability}
-                    isPro={isPro}
+
+                {/* Logo with atmospheric depth layer behind it */}
+                <div className="relative">
+                  {/* Radial gradient that lifts the logo from the scene — barely perceptible */}
+                  <div
+                    className="pointer-events-none absolute -inset-8 sm:-inset-12"
+                    aria-hidden
+                    style={{ background: "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,0.28) 0%, transparent 68%)" }}
                   />
+                  <div className="relative" style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}>
+                    <HeroIdentity
+                      artistName={artist.artistName}
+                      heroLogoUrl={artist.heroLogoUrl}
+                      heroIdentityMode={artist.heroIdentityMode ?? "text"}
+                      heroTextStyle={heroTextStyle}
+                      heroLogoScale={logoScale}
+                      heroLogoLayout={logoLayout}
+                      heroLogoAlignment={logoAlignment}
+                      heroLogoOffsetX={logoOffsetX}
+                      heroLogoOffsetY={logoOffsetY}
+                      heroLogoStyle={logoStyle}
+                      heroLogoReadability={logoReadability}
+                      isPro={isPro}
+                    />
+                  </div>
                 </div>
-                {/* Tagline — directly below logo, part of the same unit */}
-                {displayHeroTagline && (
-                  <p
-                    className="mt-4 text-[13px] font-semibold uppercase tracking-[0.22em] text-white/78 sm:mt-5 sm:text-[14px]"
-                    style={{ textShadow: "0 1px 10px rgba(0,0,0,0.50)" }}
-                  >
-                    {displayHeroTagline}
-                  </p>
+
+                {/* Eyebrow + Tagline — tight pair, reads as one statement */}
+                {(artist.genres.length > 0 || displayHeroTagline) && (
+                  <div className="mt-5 sm:mt-6">
+                    {/* Editorial eyebrow — genre context, very low weight */}
+                    {artist.genres.length > 0 && (
+                      <p
+                        className="text-[9px] font-medium uppercase tracking-[0.30em] text-white/32 sm:text-[10px]"
+                        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.40)" }}
+                      >
+                        {artist.genres.slice(0, 2).join(" · ")}
+                      </p>
+                    )}
+                    {/* Tagline — artist statement, directly below eyebrow */}
+                    {displayHeroTagline && (
+                      <p
+                        className={cn(
+                          "text-[13px] font-semibold uppercase tracking-[0.26em] text-white/86 sm:text-[14px]",
+                          artist.genres.length > 0 ? "mt-1.5" : "",
+                        )}
+                        style={{ textShadow: "0 1px 10px rgba(0,0,0,0.52)" }}
+                      >
+                        {displayHeroTagline}
+                      </p>
+                    )}
+                  </div>
                 )}
-                {/* CTAs — directly below tagline */}
+
+                {/* CTAs — directly below tagline, slightly tighter gap */}
                 {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                  <div className="mt-5 flex items-center gap-3 sm:mt-6">
+                  <div className="mt-4 flex items-center gap-3 sm:mt-5">
                     {artist.bookingInfo.email.trim() ? (
                       <div className="transition-transform duration-150 hover:-translate-y-0.5">
                         <BookingInquiryModal
@@ -891,7 +919,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <a
                         href={safePressKitHref}
                         {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                        className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:h-12 sm:px-8"
+                        className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/50 bg-white/[0.08] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/95 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/65 hover:bg-white/[0.14] sm:h-12 sm:px-8"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Press Kit
