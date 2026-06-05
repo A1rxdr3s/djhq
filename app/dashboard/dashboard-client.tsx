@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowRight, Calendar, Camera, Check, ChevronDown, Disc3, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Star, Trash2, User, Wrench, Youtube } from "lucide-react"
+import { ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, Disc3, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -36,29 +36,30 @@ type NavGroup = { label: string; items: NavItem[] }
 
 const navGroups: NavGroup[] = [
   {
-    label: "Artist",
+    label: "Workspace",
     items: [
       { id: "profile", label: "Profile", icon: User },
-      { id: "links", label: "Links", icon: Link2 },
-      { id: "gallery", label: "Gallery", icon: ImageIcon },
+      { id: "links",   label: "Links",   icon: Link2 },
+      { id: "brand",   label: "Brand",   icon: Sparkles },
     ],
   },
   {
     label: "Content",
     items: [
       { id: "releases", label: "Releases", icon: Disc3 },
-      { id: "shows", label: "Shows", icon: Calendar },
-      { id: "sets", label: "Sets", icon: Headphones },
-      { id: "media", label: "Videos", icon: Play },
+      { id: "shows",    label: "Shows",    icon: Calendar },
+      { id: "sets",     label: "Sets",     icon: Headphones },
+      { id: "media",    label: "Videos",   icon: Play },
+      { id: "gallery",  label: "Gallery",  icon: ImageIcon },
     ],
   },
   {
     label: "Business",
     items: [
-      { id: "booking", label: "Booking", icon: Mail },
+      { id: "booking",   label: "Booking",   icon: Mail },
       { id: "press-kit", label: "Press Kit", icon: FileText },
-      { id: "domain", label: "Domain", icon: Globe },
-      { id: "footer", label: "Footer", icon: PanelBottom },
+      { id: "domain",    label: "Domain",    icon: Globe },
+      { id: "footer",    label: "Footer",    icon: PanelBottom },
     ],
   },
   {
@@ -1995,7 +1996,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[4px] text-[10px] font-semibold ${
                 artist.isPublished
                   ? "border-accent/22 bg-accent/[0.08] text-accent"
-                  : "border-white/[0.07] bg-white/[0.03] text-muted-foreground/42"
+                  : "border-border bg-secondary text-muted-foreground/42"
               }`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/28"}`} />
                 {artist.isPublished ? "Live" : "Draft"}
@@ -2011,7 +2012,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <button
               type="button"
               onClick={() => setActiveSection("shows")}
-              className="group mt-3 flex w-full items-center gap-5 rounded-xl border-l-[3px] border-accent/45 bg-white/[0.018] px-6 py-5 text-left transition-all duration-150 hover:bg-white/[0.03]"
+              className="group mt-3 flex w-full items-center gap-5 rounded-xl border-l-[3px] border-accent/45 bg-secondary px-6 py-5 text-left transition-all duration-150 hover:bg-secondary"
             >
               <div className="flex h-[58px] w-[46px] shrink-0 flex-col items-center justify-center rounded-xl border border-accent/22 bg-accent/[0.06]">
                 <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-accent/60">{MONTH_ABBR[Number(nextShow.date.substring(5, 7)) - 1]}</span>
@@ -2034,7 +2035,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </span>
             </button>
           ) : (
-            <div className="mt-3 rounded-xl border border-dashed border-white/[0.08] px-6 py-5">
+            <div className="mt-3 rounded-xl border border-dashed border-border px-6 py-5">
               <p className="text-[14px] text-muted-foreground/35">No upcoming shows</p>
               <button type="button" onClick={() => setActiveSection("shows")} className="mt-1.5 text-[12px] font-medium text-accent/55 transition-colors hover:text-accent">
                 Add Show →
@@ -2053,7 +2054,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     key={g.id}
                     type="button"
                     onClick={() => setActiveSection("shows")}
-                    className="group flex w-full items-center gap-3 py-[7px] pl-[26px] text-left transition-colors hover:bg-white/[0.012]"
+                    className="group flex w-full items-center gap-3 py-[7px] pl-[26px] text-left transition-colors hover:bg-secondary"
                   >
                     <span className="w-[50px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground/30">
                       {MONTHS_SHORT[Number(mm) - 1]} {Number(dd)}
@@ -2081,7 +2082,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
 
           {/* ── Presence ──────────────────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.07] bg-card/35 transition-colors duration-150 hover:border-white/[0.10]">
+          <div className="rounded-xl border border-border bg-card/35 transition-colors duration-150 hover:border-border">
             <div className="px-5 pb-3.5 pt-5">
               <span className="mb-3.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Presence</span>
               <div className="space-y-3">
@@ -2102,7 +2103,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             {/* Latest content */}
             {(latestRelease || latestSet) && (
-              <div className="border-t border-white/[0.05] px-5 py-4">
+              <div className="border-t border-border px-5 py-4">
                 <span className="mb-3 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/25">Latest</span>
                 <div className="space-y-3">
                   {latestRelease && (
@@ -2146,7 +2147,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             {/* Freshness — replaces Setup when all set */}
             {isAllSet && freshness.length > 0 && (
-              <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5 transition-colors duration-150 hover:border-white/[0.10]">
+              <div className="rounded-xl border border-border bg-card/35 p-5 transition-colors duration-150 hover:border-border">
                 <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Freshness</span>
                 <div className="space-y-2">
                   {freshness.map(({ label, age, section }) => (
@@ -2163,18 +2164,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             {/* Setup — only when incomplete */}
             {!isAllSet && (
-              <div className="rounded-xl border border-white/[0.07] bg-card/35 p-5 transition-colors duration-150 hover:border-white/[0.10]">
+              <div className="rounded-xl border border-border bg-card/35 p-5 transition-colors duration-150 hover:border-border">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/30">Setup</span>
                   <span className="font-mono text-[11px] font-bold tabular-nums text-muted-foreground/28">{readinessDone}/{readinessItems.length}</span>
                 </div>
-                <div className="mb-3.5 h-[2px] overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="mb-3.5 h-[2px] overflow-hidden rounded-full bg-secondary">
                   <div className="h-full rounded-full bg-accent/55 transition-all duration-700" style={{ width: `${readinessPct}%` }} />
                 </div>
                 <div className="space-y-px">
                   {readinessItems.map(({ label, done, section, action }) => (
-                    <button key={label} type="button" onClick={() => setActiveSection(section)} className="group flex w-full items-center gap-2.5 rounded-md px-1 py-[5px] text-left transition-colors hover:bg-white/[0.02]">
-                      <span className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${done ? "border-accent/30 bg-accent/[0.12]" : "border-white/[0.10]"}`}>
+                    <button key={label} type="button" onClick={() => setActiveSection(section)} className="group flex w-full items-center gap-2.5 rounded-md px-1 py-[5px] text-left transition-colors hover:bg-secondary">
+                      <span className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${done ? "border-accent/30 bg-accent/[0.12]" : "border-border"}`}>
                         {done && <Check className="h-2 w-2 text-accent" />}
                       </span>
                       <span className={`flex-1 text-[12px] ${done ? "text-foreground/48" : "text-muted-foreground/40"}`}>{label}</span>
@@ -2190,7 +2191,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <button
                 type="button"
                 onClick={() => setActiveSection(suggestion.section)}
-                className="group flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-card/35 px-5 py-3.5 text-left transition-all duration-150 hover:border-accent/18 hover:bg-accent/[0.02]"
+                className="group flex w-full items-center justify-between rounded-xl border border-border bg-card/35 px-5 py-3.5 text-left transition-all duration-150 hover:border-accent/18 hover:bg-accent/[0.02]"
               >
                 <span className="text-[12px] font-semibold text-foreground/62 transition-colors group-hover:text-foreground/80">{suggestion.label}</span>
                 <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/18 transition-all group-hover:translate-x-0.5 group-hover:text-accent/60" />
@@ -2227,7 +2228,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Basic artist info */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+        <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
           <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Artist</p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
@@ -2245,7 +2246,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/45">Hero Studio</p>
-            <span className="h-px flex-1 bg-white/[0.05]" />
+            <span className="h-px flex-1 bg-secondary" />
           </div>
 
           {/* Two-column layout: preview+presets left, panels right */}
@@ -2255,7 +2256,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="space-y-4">
 
               {/* Preview frame */}
-              <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#080808]">
+              <div className="overflow-hidden rounded-2xl border border-border bg-[#080808]">
                 <div
                   ref={previewContainerRef}
                   className="relative aspect-[16/7] overflow-hidden"
@@ -2327,8 +2328,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
                       <div className={cn(
                         "relative",
-                        heroContentSurface === "soft" && "rounded-[1.5rem] border border-white/[0.04] bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
-                        heroContentSurface === "strong" && "rounded-[1.5rem] border border-white/[0.06] bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
+                        heroContentSurface === "soft" && "rounded-[1.5rem] border border-border bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
+                        heroContentSurface === "strong" && "rounded-[1.5rem] border border-border bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",
                       )}>
                         {heroContentSurface !== "none" && (
                           <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />
@@ -2410,7 +2411,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* Composition presets — below preview as compact shortcuts */}
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
+              <div className="rounded-xl border border-border bg-secondary p-4">
                 <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
                   Composition Presets
                 </p>
@@ -2433,7 +2434,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       }}
                       className={cn(
                         "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-100",
-                        "border-white/[0.06] bg-white/[0.015] hover:border-white/[0.10] hover:bg-white/[0.03]",
+                        "border-border bg-secondary hover:border-border hover:bg-secondary",
                         !isPro && "pointer-events-none opacity-40",
                       )}
                     >
@@ -2452,7 +2453,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="space-y-4">
 
               {/* A. Hero Image */}
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <div className="rounded-2xl border border-border bg-secondary p-5">
                 <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Image</p>
                 <p className="mb-4 text-[10px] text-muted-foreground/40">Photograph or artwork behind the hero.</p>
                 <div className="space-y-4">
@@ -2482,10 +2483,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Image composition sliders — UI-only preview, not saved to profile */}
-                  <div className="space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
+                  <div className="space-y-3 rounded-xl border border-border bg-secondary p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Image Composition</p>
-                      <span className="rounded border border-white/[0.04] bg-white/[0.02] px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.10em] text-muted-foreground/30">Preview only</span>
+                      <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.10em] text-muted-foreground/30">Preview only</span>
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
@@ -2495,7 +2496,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <input
                         type="range" min={0} max={100} step={1} value={heroImageX}
                         onChange={(e) => setHeroImageX(Number(e.target.value))}
-                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70"
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -2506,7 +2507,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <input
                         type="range" min={0} max={100} step={1} value={heroImageY}
                         onChange={(e) => setHeroImageY(Number(e.target.value))}
-                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70"
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -2517,7 +2518,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <input
                         type="range" min={100} max={140} step={1} value={heroImageZoom}
                         onChange={(e) => setHeroImageZoom(Number(e.target.value))}
-                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70"
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70"
                       />
                     </div>
                     <p className="text-[10px] text-muted-foreground/30">
@@ -2528,21 +2529,21 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* B. Hero Identity */}
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <div className="rounded-2xl border border-border bg-secondary p-5">
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Identity</p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground/40">Logo and name in the public hero.</p>
                   </div>
                   {!isPro && (
-                    <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
+                    <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
                   )}
                 </div>
                 <div className="space-y-5">
                   {/* Identity mode */}
                   <div className="space-y-2">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Identity Mode</p>
-                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["text", "logo", "both"] as const).map((mode) => (
                         <button
                           key={mode} type="button"
@@ -2550,7 +2551,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroIdentityMode === mode ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroIdentityMode === mode ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2562,9 +2563,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Typography style */}
-                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-2 border-t border-border pt-4">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Typography Style</p>
-                    <div className="flex flex-wrap gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["default", "condensed", "cinematic", "editorial"] as const).map((style) => (
                         <button
                           key={style} type="button"
@@ -2572,7 +2573,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroTextStyle === style ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroTextStyle === style ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2585,11 +2586,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* Custom Logo */}
                   {isPro && (
-                    <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                    <div className="space-y-2 border-t border-border pt-4">
                       <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Logo</p>
                       {heroLogoUrl ? (
-                        <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-                          <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/[0.08] bg-[#0a0a0a]">
+                        <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3">
+                          <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-[#0a0a0a]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={heroLogoUrl} alt="Hero logo" className="max-h-8 max-w-full object-contain" />
                           </div>
@@ -2608,9 +2609,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   )}
 
                   {/* Logo Placement */}
-                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-2 border-t border-border pt-4">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Placement</p>
-                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {([
                         { value: "editorial", label: "Editorial" },
                         { value: "top_center", label: "Top Center" },
@@ -2623,7 +2624,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroLogoPlacement === value ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroLogoPlacement === value ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2635,9 +2636,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Logo Layout */}
-                  <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
+                  <div className={cn("space-y-2 border-t border-border pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Layout</p>
-                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {([
                         { value: "replace_text", label: "Replace" },
                         { value: "above_text", label: "Above" },
@@ -2651,7 +2652,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroLogoLayout === value ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroLogoLayout === value ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2663,9 +2664,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Logo Alignment */}
-                  <div className={cn("space-y-2 border-t border-white/[0.04] pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
+                  <div className={cn("space-y-2 border-t border-border pt-4 transition-opacity duration-150", isFloating && "pointer-events-none opacity-30")}>
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Alignment</p>
-                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["left", "center", "right"] as const).map((alignment) => (
                         <button
                           key={alignment} type="button"
@@ -2673,7 +2674,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroLogoAlignment === alignment ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroLogoAlignment === alignment ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2684,7 +2685,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Logo Size */}
-                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-2 border-t border-border pt-4">
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Size</p>
                       <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoScale}px</span>
@@ -2693,13 +2694,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       type="range" min={40} max={240} step={5} value={heroLogoScale}
                       onChange={(e) => isPro && setHeroLogoScale(Number(e.target.value))}
                       disabled={!isPro}
-                      className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
                     />
                     <p className="text-[10px] text-muted-foreground/35">Controls visual logo width. Layout spacing stays fixed.</p>
                   </div>
 
                   {/* Logo Offset */}
-                  <div className="space-y-3 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-3 border-t border-border pt-4">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Position Offset</p>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
@@ -2710,7 +2711,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         type="range" min={-100} max={100} step={1} value={heroLogoOffsetX}
                         onChange={(e) => isPro && setHeroLogoOffsetX(Number(e.target.value))}
                         disabled={!isPro}
-                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -2722,7 +2723,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         type="range" min={-100} max={100} step={1} value={heroLogoOffsetY}
                         onChange={(e) => isPro && setHeroLogoOffsetY(Number(e.target.value))}
                         disabled={!isPro}
-                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
                       />
                     </div>
                     <p className="text-[10px] text-muted-foreground/35">Fine-tune logo position without affecting layout or spacing.</p>
@@ -2731,7 +2732,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* C. Hero Copy */}
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <div className="rounded-2xl border border-border bg-secondary p-5">
                 <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Copy</p>
                 <p className="mb-4 text-[10px] text-muted-foreground/40">Text content shown in the hero section.</p>
                 <div className="space-y-4">
@@ -2762,14 +2763,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* D. Hero Style */}
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <div className="rounded-2xl border border-border bg-secondary p-5">
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Style</p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground/40">Visual treatment and color theme.</p>
                   </div>
                   {!isPro && (
-                    <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
+                    <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
                   )}
                 </div>
                 <div className="space-y-5">
@@ -2784,7 +2785,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            accentTheme === theme.value ? "border-white/[0.14] bg-white/[0.07] text-foreground/80" : "border-transparent text-muted-foreground/30 hover:text-muted-foreground/50",
+                            accentTheme === theme.value ? "border-border bg-secondary text-foreground/80" : "border-transparent text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2797,9 +2798,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Logo Visual Style */}
-                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-2 border-t border-border pt-4">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Visual Style</p>
-                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["solid", "soft", "cinematic"] as const).map((style) => (
                         <button
                           key={style} type="button"
@@ -2807,7 +2808,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroLogoStyle === style ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroLogoStyle === style ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2819,9 +2820,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Logo Readability */}
-                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-2 border-t border-border pt-4">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Readability</p>
-                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["none", "subtle", "strong"] as const).map((level) => (
                         <button
                           key={level} type="button"
@@ -2829,7 +2830,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroLogoReadability === level ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroLogoReadability === level ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2841,9 +2842,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Content Surface */}
-                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-2 border-t border-border pt-4">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Content Surface</p>
-                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["none", "soft", "strong"] as const).map((level) => (
                         <button
                           key={level} type="button"
@@ -2851,7 +2852,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroContentSurface === level ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroContentSurface === level ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2863,9 +2864,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Content Width */}
-                  <div className="space-y-2 border-t border-white/[0.04] pt-4">
+                  <div className="space-y-2 border-t border-border pt-4">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Content Width</p>
-                    <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["compact", "standard", "wide"] as const).map((w) => (
                         <button
                           key={w} type="button"
@@ -2873,7 +2874,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           disabled={!isPro}
                           className={cn(
                             "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            heroContentWidth === w ? "bg-white/[0.07] text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            heroContentWidth === w ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50",
                             !isPro && "pointer-events-none",
                           )}
                         >
@@ -2891,7 +2892,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* DJHQ Branding */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+        <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5">
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
@@ -2904,7 +2905,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </p>
             </div>
             {artist.plan === "pro" ? (
-              <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+              <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
                 {(["show", "hide"] as const).map((opt) => {
                   const isActive = opt === "show" ? showHeaderBranding : !showHeaderBranding
                   return (
@@ -2915,7 +2916,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       className={cn(
                         "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                         isActive
-                          ? "bg-white/[0.07] text-foreground/75"
+                          ? "bg-secondary text-foreground/75"
                           : "text-muted-foreground/30 hover:text-muted-foreground/50",
                       )}
                     >
@@ -2925,7 +2926,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 })}
               </div>
             ) : (
-              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
+              <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
                 Pro only
               </span>
             )}
@@ -2933,7 +2934,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Browser Identity */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+        <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
@@ -2944,7 +2945,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </p>
             </div>
             {artist.plan !== "pro" && (
-              <span className="shrink-0 rounded-md border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
+              <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">
                 Pro only
               </span>
             )}
@@ -2974,9 +2975,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 className={artist.plan !== "pro" ? "opacity-40 cursor-not-allowed" : ""}
               />
               {/* Live browser tab preview */}
-              <div className="overflow-hidden rounded-lg border border-white/[0.06] bg-[#1a1a1a]">
+              <div className="overflow-hidden rounded-lg border border-border bg-[#1a1a1a]">
                 <div className="flex h-9 items-end gap-0 px-2 pt-2">
-                  <div className="flex h-8 min-w-0 max-w-[240px] shrink items-center gap-2 rounded-t-lg border border-b-0 border-white/[0.12] bg-[#242424] px-2.5">
+                  <div className="flex h-8 min-w-0 max-w-[240px] shrink items-center gap-2 rounded-t-lg border border-b-0 border-border bg-[#242424] px-2.5">
                     <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-[#0a0a0a]">
                       {faviconUrl && artist.plan === "pro" ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -2999,7 +3000,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <span className="text-sm leading-none">+</span>
                   </div>
                 </div>
-                <div className="flex h-7 items-center gap-2 border-t border-white/[0.06] bg-[#141414] px-3">
+                <div className="flex h-7 items-center gap-2 border-t border-border bg-[#141414] px-3">
                   <div className="flex shrink-0 gap-1">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#333]" />
                     <span className="h-2.5 w-2.5 rounded-full bg-[#333]" />
@@ -3021,13 +3022,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             {/* Custom Favicon */}
             {artist.plan === "pro" && (
-              <div className="space-y-2 border-t border-white/[0.04] pt-4">
+              <div className="space-y-2 border-t border-border pt-4">
                 <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                   Custom Favicon
                 </p>
                 {faviconUrl ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/[0.08] bg-[#0a0a0a]">
+                  <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-[#0a0a0a]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={faviconUrl} alt="Current favicon" className="h-8 w-8 object-contain" />
                     </div>
@@ -3082,12 +3083,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       const url = linkUrls[id] ?? ""
 
       return (
-        <div key={id} className="border-b border-white/[0.04] last:border-0">
+        <div key={id} className="border-b border-border last:border-0">
           {/* Collapsed row */}
           <button
             type="button"
             onClick={() => setExpandedLinkId(isExpanded ? null : id)}
-            className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-white/[0.025]"
+            className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-secondary"
           >
             <Icon className={`h-3.5 w-3.5 shrink-0 ${isConnected ? "text-accent/55" : "text-muted-foreground/28"}`} />
             <span className={`flex-1 text-sm font-medium ${isConnected ? "text-foreground/82" : "text-muted-foreground/48"}`}>
@@ -3108,7 +3109,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           {/* Expanded editor */}
           {isExpanded && (
-            <div className="border-t border-white/[0.04] bg-white/[0.015] px-4 pb-4 pt-3">
+            <div className="border-t border-border bg-secondary px-4 pb-4 pt-3">
               <label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
                 URL
               </label>
@@ -3117,7 +3118,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 value={url}
                 onChange={(e) => setLinkUrls((prev) => ({ ...prev, [id]: e.target.value }))}
                 placeholder={placeholder}
-                className="h-9 border-white/[0.06] bg-white/[0.03] text-sm placeholder:text-muted-foreground/22 focus:border-accent/30"
+                className="h-9 border-border bg-secondary text-sm placeholder:text-muted-foreground/22 focus:border-accent/30"
               />
               <div className="mt-3 flex items-center gap-2">
                 <Button
@@ -3157,7 +3158,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Summary card */}
-        <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-card/40 px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 px-4 py-3">
           <div>
             <p className="text-sm font-medium text-foreground/75">Connected Platforms</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground/40">
@@ -3176,7 +3177,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
               Connected
             </p>
-            <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/40">
+            <div className="overflow-hidden rounded-xl border border-border bg-card/40">
               {connected.map((p) => (
                 <PlatformRow key={p.id} {...p} isConnected={true} />
               ))}
@@ -3190,7 +3191,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
               Available
             </p>
-            <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/30">
+            <div className="overflow-hidden rounded-xl border border-border bg-card/30">
               {available.map((p) => (
                 <PlatformRow key={p.id} {...p} isConnected={false} />
               ))}
@@ -3291,8 +3292,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     onClick={() => setExpandedLinkId(isOpen ? null : id)}
                     className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
                       isOpen
-                        ? "border-white/[0.14] bg-white/[0.05] text-foreground/70"
-                        : "border-dashed border-white/[0.09] bg-white/[0.02] text-muted-foreground/42 hover:border-white/[0.18] hover:bg-white/[0.04] hover:text-foreground/60"
+                        ? "border-border bg-secondary text-foreground/70"
+                        : "border-dashed border-border bg-secondary text-muted-foreground/42 hover:border-border hover:bg-secondary hover:text-foreground/60"
                     }`}
                     style={{ minWidth: "140px" }}
                   >
@@ -3308,7 +3309,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Inline editor — appears below chips when any is selected */}
         {expandedPlatform && (
-          <div className="rounded-xl border border-white/[0.08] bg-card/50 p-4">
+          <div className="rounded-xl border border-border bg-card/50 p-4">
             <div className="mb-3 flex items-center gap-2">
               <expandedPlatform.Icon className="h-4 w-4 text-accent/55" />
               <p className="text-sm font-semibold text-foreground/80">{expandedPlatform.label}</p>
@@ -3326,7 +3327,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 setLinkUrls((prev) => ({ ...prev, [expandedLinkId!]: e.target.value }))
               }
               placeholder={expandedPlatform.placeholder}
-              className="h-9 border-white/[0.06] bg-white/[0.03] text-sm placeholder:text-muted-foreground/22 focus:border-accent/30"
+              className="h-9 border-border bg-secondary text-sm placeholder:text-muted-foreground/22 focus:border-accent/30"
             />
             <div className="mt-3 flex items-center gap-3">
               <Button
@@ -3409,7 +3410,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             type="button"
             onClick={handleAddRelease}
             disabled={busy}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground disabled:opacity-40"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Release
@@ -3418,7 +3419,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Empty state */}
         {releases.length === 0 && (
-          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <Music className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
             <p className="text-sm font-medium text-foreground/55">No releases yet.</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
@@ -3428,7 +3429,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               type="button"
               onClick={handleAddRelease}
               disabled={busy}
-              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground disabled:opacity-40"
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Release
@@ -3478,7 +3479,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       ? "border-accent/30 ring-1 ring-accent/15"
                       : release.isFeatured
                         ? "border-accent/18"
-                        : "border-white/[0.06] hover:border-white/[0.10]",
+                        : "border-border hover:border-border",
                   )}
                 >
                   {/* Artwork */}
@@ -3542,7 +3543,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center border-t border-white/[0.04] px-2 py-1">
+                  <div className="flex items-center border-t border-border px-2 py-1">
                     {/* Feature star */}
                     <button
                       type="button"
@@ -3602,7 +3603,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* Inline destructive actions — shown when ⋯ is open */}
                   {isMenuOpen && (
-                    <div className="flex items-center justify-between border-t border-white/[0.04] bg-destructive/[0.03] px-3 py-2">
+                    <div className="flex items-center justify-between border-t border-border bg-destructive/[0.03] px-3 py-2">
                       <span className="text-[11px] text-muted-foreground/45">Delete this release?</span>
                       <div className="flex items-center gap-2">
                         <button
@@ -3685,7 +3686,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   value={expandedRelease.releaseDate}
                   onChange={(v) => updateRelease(expandedIdx, { releaseDate: v })}
                   allowClear
-                  triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
+                  triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3"
                 />
               </div>
               <div className="space-y-1.5">
@@ -3748,7 +3749,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </div>
                 <p className="text-[10px] text-muted-foreground/30">Fallback link when no platform-specific URLs are set.</p>
               </div>
-              <div className="border-t border-white/[0.04] pt-3 md:col-span-2">
+              <div className="border-t border-border pt-3 md:col-span-2">
                 <button
                   type="button"
                   onClick={() => setReleasePlatformLinksOpen((v) => !v)}
@@ -3815,18 +3816,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         ref={menuRef}
         className={cn(
           "absolute top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-xl",
-          "border border-white/[0.09] bg-[#111520] shadow-2xl shadow-black/60",
+          "border border-border bg-[#111520] shadow-2xl shadow-black/60",
           align === "right" ? "right-0" : "left-0",
         )}
       >
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onEdit() }}
-          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-foreground/80 transition-colors duration-100 hover:bg-white/[0.06]"
+          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-foreground/80 transition-colors duration-100 hover:bg-secondary"
         >
           Edit
         </button>
-        <div className="mx-3 h-px bg-white/[0.05]" />
+        <div className="mx-3 h-px bg-secondary" />
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete() }}
@@ -3909,7 +3910,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           onClick={(e) => { if (e.target === e.currentTarget) setDeletingGig(null) }}
         >
           <div
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0e1117] shadow-2xl shadow-black/60"
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-[#0e1117] shadow-2xl shadow-black/60"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 pt-6 pb-5">
@@ -3926,11 +3927,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 ? This action cannot be undone.
               </p>
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-white/[0.06] px-6 py-4">
+            <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
               <button
                 type="button"
                 onClick={() => setDeletingGig(null)}
-                className="h-9 rounded-lg border border-white/[0.07] bg-transparent px-4 text-[13px] font-medium text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/70"
+                className="h-9 rounded-lg border border-border bg-transparent px-4 text-[13px] font-medium text-muted-foreground/60 transition-colors duration-150 hover:border-border hover:text-foreground/70"
               >
                 Cancel
               </button>
@@ -3940,7 +3941,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   handleDeleteGig(deletingGig.id)
                   setDeletingGig(null)
                 }}
-                className="h-9 rounded-lg bg-red-500/[0.85] px-4 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-red-500"
+                className="h-9 rounded-lg bg-red-500/[0.85] px-4 text-[13px] font-semibold text-foreground transition-colors duration-150 hover:bg-red-500"
               >
                 Delete Show
               </button>
@@ -3961,7 +3962,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <button
             type="button"
             onClick={handleAddGig}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Show
@@ -3970,7 +3971,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* ── Career stats ────────────────────────────────────────────────── */}
         {totalShows > 0 && (
-          <div className="flex flex-wrap items-center gap-5 border-b border-white/[0.04] pb-5">
+          <div className="flex flex-wrap items-center gap-5 border-b border-border pb-5">
             <div className="text-center">
               <p className="text-xl font-bold tabular-nums text-foreground/80">{totalShows}</p>
               <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Shows</p>
@@ -3998,7 +3999,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* ── Empty state ──────────────────────────────────────────────────── */}
         {upcomingGigs.length === 0 && (
-          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <p className="text-sm font-medium text-foreground/55">No shows yet.</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
               Start building your artist history by adding your first show.
@@ -4006,7 +4007,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <button
               type="button"
               onClick={handleAddGig}
-              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground"
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Show
@@ -4021,7 +4022,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50">
                 Upcoming
               </span>
-              <span className="h-px flex-1 bg-white/[0.06]" />
+              <span className="h-px flex-1 bg-secondary" />
               <span className="text-[10px] tabular-nums text-muted-foreground/28">{upcoming.length}</span>
             </div>
 
@@ -4039,11 +4040,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       "group flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
                       isOpen
                         ? "border-accent/28 ring-1 ring-accent/12"
-                        : "border-white/[0.06] hover:-translate-y-px hover:border-white/[0.14] hover:[box-shadow:0_4px_16px_rgba(0,0,0,0.30)]",
+                        : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_4px_16px_rgba(0,0,0,0.30)]",
                     )}>
                       {/* Date block */}
                       {dp ? (
-                        <div className="flex w-[68px] shrink-0 flex-col items-center justify-center bg-white/[0.025] px-3 py-4 text-center">
+                        <div className="flex w-[68px] shrink-0 flex-col items-center justify-center bg-secondary px-3 py-4 text-center">
                           <span className="text-[1.7rem] font-black leading-none tabular-nums text-foreground/80">
                             {dp.day}
                           </span>
@@ -4053,13 +4054,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           <span className="mt-0.5 text-[8px] text-muted-foreground/28">{dp.year}</span>
                         </div>
                       ) : (
-                        <div className="flex w-[68px] shrink-0 items-center justify-center bg-white/[0.02] text-muted-foreground/20">
+                        <div className="flex w-[68px] shrink-0 items-center justify-center bg-secondary text-muted-foreground/20">
                           <span className="text-sm font-bold">—</span>
                         </div>
                       )}
 
                       {/* Thin separator */}
-                      <div className="w-px shrink-0 bg-white/[0.04]" />
+                      <div className="w-px shrink-0 bg-secondary" />
 
                       {/* Event content */}
                       <div className="min-w-0 flex-1 px-4 py-3">
@@ -4076,7 +4077,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         {gig.paymentStatus && (
                           <span className={cn(
                             "mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                            PAY_CLASS[gig.paymentStatus] ?? "bg-white/[0.06] text-muted-foreground/40",
+                            PAY_CLASS[gig.paymentStatus] ?? "bg-secondary text-muted-foreground/40",
                           )}>
                             {gig.paymentStatus}
                           </span>
@@ -4088,7 +4089,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/35 transition-colors duration-150 hover:bg-white/[0.06] hover:text-foreground/60"
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/35 transition-colors duration-150 hover:bg-secondary hover:text-foreground/60"
                           aria-label="Show actions"
                         >
                           <MoreVertical className="h-3.5 w-3.5" />
@@ -4121,7 +4122,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 Past Shows
               </span>
               <span className="tabular-nums text-[10px] text-muted-foreground/22">{past.length}</span>
-              <span className="h-px flex-1 bg-white/[0.04]" />
+              <span className="h-px flex-1 bg-secondary" />
               <ChevronDown className={cn(
                 "h-3 w-3 text-muted-foreground/22 transition-transform duration-200",
                 pastGigsExpanded && "rotate-180",
@@ -4144,14 +4145,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <div key={year}>
                           {/* Year header — intentional, readable */}
                           <div className="mb-2.5 flex items-center gap-2.5">
-                            <span className="h-px w-3 shrink-0 bg-white/[0.06]" />
+                            <span className="h-px w-3 shrink-0 bg-secondary" />
                             <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/42">
                               {year}
                             </span>
                             <span className="text-[10px] text-muted-foreground/22">
                               · {yearGigs.length} show{yearGigs.length !== 1 ? "s" : ""}
                             </span>
-                            <span className="h-px flex-1 bg-white/[0.06]" />
+                            <span className="h-px flex-1 bg-secondary" />
                           </div>
 
                           {/* Past show archived cards — same structure as Upcoming, reduced emphasis */}
@@ -4167,8 +4168,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                   <div className={cn(
                                     "flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
                                     isOpen
-                                      ? "border-white/[0.10]"
-                                      : "border-white/[0.04] hover:-translate-y-px hover:border-white/[0.09] hover:[box-shadow:0_2px_12px_rgba(0,0,0,0.22)]",
+                                      ? "border-border"
+                                      : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_2px_12px_rgba(0,0,0,0.22)]",
                                   )}>
                                     {/* Date block — muted, no tint */}
                                     {dp ? (
@@ -4187,7 +4188,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                     )}
 
                                     {/* Thin separator */}
-                                    <div className="w-px shrink-0 bg-white/[0.03]" />
+                                    <div className="w-px shrink-0 bg-secondary" />
 
                                     {/* Event content */}
                                     <div className="min-w-0 flex-1 px-3 py-2.5">
@@ -4202,7 +4203,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                       )}
                                       {/* Status — very muted for past shows */}
                                       {gig.paymentStatus && (
-                                        <span className="mt-1 inline-flex rounded-full bg-white/[0.04] px-1.5 py-px text-[8px] font-medium uppercase tracking-wider text-muted-foreground/30">
+                                        <span className="mt-1 inline-flex rounded-full bg-secondary px-1.5 py-px text-[8px] font-medium uppercase tracking-wider text-muted-foreground/30">
                                           {gig.paymentStatus}
                                         </span>
                                       )}
@@ -4213,7 +4214,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                       <button
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
-                                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/20 transition-colors duration-150 hover:bg-white/[0.05] hover:text-foreground/45"
+                                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/20 transition-colors duration-150 hover:bg-secondary hover:text-foreground/45"
                                         aria-label="Show actions"
                                       >
                                         <MoreVertical className="h-3 w-3" />
@@ -4333,7 +4334,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             type="button"
             onClick={handleAddDjSet}
             disabled={busy}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground disabled:opacity-40"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Set
@@ -4342,7 +4343,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Empty state */}
         {djSets.length === 0 && (
-          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <Headphones className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
             <p className="text-sm font-medium text-foreground/55">No sets yet.</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
@@ -4352,7 +4353,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               type="button"
               onClick={handleAddDjSet}
               disabled={busy}
-              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground disabled:opacity-40"
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Set
@@ -4388,7 +4389,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       ? "border-accent/30 ring-1 ring-accent/15"
                       : isFeatured
                         ? "border-accent/18"
-                        : "border-white/[0.06] hover:border-white/[0.10]",
+                        : "border-border hover:border-border",
                   )}
                 >
                   {/* Cover image — landscape ratio for density */}
@@ -4448,7 +4449,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Actions — Star, Edit, ⋯ (no View) */}
-                  <div className="flex items-center border-t border-white/[0.04] px-2 py-1">
+                  <div className="flex items-center border-t border-border px-2 py-1">
                     <button
                       type="button"
                       onClick={() => handleSetFeaturedDjSet(index)}
@@ -4488,7 +4489,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* Inline delete confirmation */}
                   {isMenuOpen && (
-                    <div className="flex items-center justify-between border-t border-white/[0.04] bg-destructive/[0.03] px-3 py-2">
+                    <div className="flex items-center justify-between border-t border-border bg-destructive/[0.03] px-3 py-2">
                       <span className="text-[11px] text-muted-foreground/45">Delete this set?</span>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -4563,7 +4564,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {/* Performance type */}
               <div className="space-y-1.5">
                 <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Type</p>
-                <div className="flex flex-wrap gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5 w-fit">
+                <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                   {performanceTypes.map((type) => (
                     <button
                       key={type}
@@ -4573,7 +4574,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       className={cn(
                         "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                         expandedSet.performanceType === type
-                          ? "bg-white/[0.07] text-foreground/75"
+                          ? "bg-secondary text-foreground/75"
                           : "text-muted-foreground/30 hover:text-muted-foreground/50",
                       )}
                     >
@@ -4646,7 +4647,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     value={expandedSet.setDate ?? ""}
                     onChange={(v) => updateSet(expandedSetIdx, { setDate: v })}
                     allowClear
-                    triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3"
+                    triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -4708,7 +4709,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* Published toggle */}
-              <div className="flex items-center gap-3 border-t border-white/[0.04] pt-3">
+              <div className="flex items-center gap-3 border-t border-border pt-3">
                 <label className="relative inline-flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
@@ -4718,7 +4719,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   />
                   <span className={cn(
                     "flex h-4 w-7 items-center rounded-full p-0.5 transition-colors duration-150",
-                    expandedSet.isPublished ? "bg-accent/70" : "bg-white/[0.08]",
+                    expandedSet.isPublished ? "bg-accent/70" : "bg-secondary",
                   )}>
                     <span className={cn(
                       "h-3 w-3 rounded-full bg-white/80 transition-transform duration-150",
@@ -4730,7 +4731,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* Advanced: Title Override */}
-              <div className="border-t border-white/[0.04] pt-3">
+              <div className="border-t border-border pt-3">
                 <button
                   type="button"
                   onClick={() => toggleAdvanced(expandedSet.id)}
@@ -4817,7 +4818,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             type="button"
             onClick={handleAddVideo}
             disabled={busy}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground disabled:opacity-40"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Video
@@ -4826,7 +4827,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Empty state */}
         {videos.length === 0 && (
-          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <Play className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
             <p className="text-sm font-medium text-foreground/55">No videos yet.</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
@@ -4836,7 +4837,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               type="button"
               onClick={handleAddVideo}
               disabled={busy}
-              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground disabled:opacity-40"
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Video
@@ -4873,7 +4874,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       ? "border-accent/30 ring-1 ring-accent/15"
                       : isFeatured
                         ? "border-accent/18"
-                        : "border-white/[0.06] hover:border-white/[0.10]",
+                        : "border-border hover:border-border",
                     !video.isPublished && "opacity-60",
                   )}
                 >
@@ -4902,8 +4903,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         onClick={(e) => e.stopPropagation()}
                         className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/28 group-hover:opacity-100"
                       >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.18] backdrop-blur-[2px] transition-transform duration-150 group-hover:scale-105">
-                          <Play className="h-4 w-4 translate-x-px fill-white text-white" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary backdrop-blur-[2px] transition-transform duration-150 group-hover:scale-105">
+                          <Play className="h-4 w-4 translate-x-px fill-white text-foreground" />
                         </div>
                       </a>
                     )}
@@ -4947,7 +4948,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
 
                   {/* Actions — Watch first, Edit second */}
-                  <div className="flex items-center border-t border-white/[0.04] px-2 py-1">
+                  <div className="flex items-center border-t border-border px-2 py-1">
                     {/* Feature star */}
                     <button
                       type="button"
@@ -5003,7 +5004,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* Inline delete confirmation */}
                   {isMenuOpen && (
-                    <div className="flex items-center justify-between border-t border-white/[0.04] bg-destructive/[0.03] px-3 py-2">
+                    <div className="flex items-center justify-between border-t border-border bg-destructive/[0.03] px-3 py-2">
                       <span className="text-[11px] text-muted-foreground/45">Delete this video?</span>
                       <div className="flex items-center gap-1.5">
                         <button type="button" onClick={() => setVideoMenuOpenId(null)} className="rounded px-2 py-0.5 text-[11px] text-muted-foreground/40 hover:text-foreground/60">
@@ -5107,7 +5108,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Date</label>
-                  <DatePicker value={expandedVideo.videoDate ?? ""} onChange={(v) => updateVideo(expandedVideoIdx, { videoDate: v })} allowClear triggerClassName="h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025] px-3" />
+                  <DatePicker value={expandedVideo.videoDate ?? ""} onChange={(v) => updateVideo(expandedVideoIdx, { videoDate: v })} allowClear triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3" />
                 </div>
               </div>
 
@@ -5142,7 +5143,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* Custom Cover */}
-              <div className={`space-y-2 rounded-lg border border-white/[0.05] p-3 ${artist.plan !== "pro" ? "opacity-50" : ""}`}>
+              <div className={`space-y-2 rounded-lg border border-border p-3 ${artist.plan !== "pro" ? "opacity-50" : ""}`}>
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60">Custom Cover</p>
                   {artist.plan !== "pro" && (
@@ -5171,7 +5172,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* Published toggle */}
-              <div className="flex items-center gap-2 border-t border-white/[0.04] pt-3">
+              <div className="flex items-center gap-2 border-t border-border pt-3">
                 <input
                   id={`video-published-${expandedVideoIdx}`}
                   type="checkbox"
@@ -5247,7 +5248,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             type="button"
             disabled={busy}
             onClick={() => galleryFileInputRef.current?.click()}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-white/[0.14] hover:text-foreground disabled:opacity-40"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             Upload Photos
@@ -5271,9 +5272,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   onDrop={(e) => { e.preventDefault(); if (galleryDragIndex !== null) handleGalleryDrop(galleryDragIndex, index) }}
                   onDragEnd={() => { setGalleryDragIndex(null); setGalleryDragOverIndex(null) }}
                   className={`group relative aspect-square cursor-grab overflow-hidden rounded-lg border select-none transition-all duration-150 active:cursor-grabbing ${
-                    isDraggingThis ? "scale-95 opacity-40 border-white/[0.04]" :
+                    isDraggingThis ? "scale-95 opacity-40 border-border" :
                     isDragTarget   ? "scale-[1.04] border-accent/40 ring-1 ring-accent/25" :
-                                     "border-white/[0.06]"
+                                     "border-border"
                   }`}
                 >
                   <Image
@@ -5291,7 +5292,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex h-6 items-center gap-1 rounded-md bg-white/12 px-2.5 text-[10px] font-medium text-white/85 hover:bg-white/22 hover:text-white"
+                      className="inline-flex h-6 items-center gap-1 rounded-md bg-white/12 px-2.5 text-[10px] font-medium text-white/85 hover:bg-white/22 hover:text-foreground"
                     >
                       <ExternalLink className="h-2.5 w-2.5" />
                       View
@@ -5314,7 +5315,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Empty state */}
         {photoCount === 0 && !galleryImageFile && (
-          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <p className="text-sm font-medium text-foreground/55">No photos uploaded yet.</p>
             <p className="mt-1.5 max-w-xs mx-auto text-[12px] leading-[1.6] text-muted-foreground/35">
               Add artist photos, live shots and press images for your profile and press kit.
@@ -5323,7 +5324,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               type="button"
               disabled={busy}
               onClick={() => galleryFileInputRef.current?.click()}
-              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-white/[0.18] hover:text-foreground disabled:opacity-40"
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
               Upload Photos
@@ -5336,7 +5337,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Upload confirmation */}
         {galleryImageFile && (
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+          <div className="rounded-xl border border-border bg-card/30 p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="truncate text-sm font-medium text-foreground/80">{galleryImageFile.name}</p>
               <button
@@ -5423,7 +5424,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Booking contact */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+        <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
           <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-1.5">
               <label htmlFor="bookingEmail" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
@@ -5504,7 +5505,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* ── 1. Public EPK ──────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/40 p-4">
+        <div className="rounded-xl border border-border bg-card/40 p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2.5">
@@ -5512,7 +5513,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                   pressKitEnabled
                     ? "bg-accent/10 text-accent/80"
-                    : "bg-white/[0.04] text-muted-foreground/40",
+                    : "bg-secondary text-muted-foreground/40",
                 )}>
                   <span className={cn("h-1.5 w-1.5 rounded-full", pressKitEnabled ? "bg-accent" : "bg-muted-foreground/30")} />
                   {pressKitEnabled ? "Live" : "Hidden"}
@@ -5548,11 +5549,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           {/* EPK settings (collapsed by default) */}
           {isOpen("epk-settings") && (
-            <div className="mt-4 space-y-4 border-t border-white/[0.04] pt-4">
+            <div className="mt-4 space-y-4 border-t border-border pt-4">
               {/* Status toggle */}
               <div className="flex items-center justify-between gap-4">
                 <p className="text-[11px] text-muted-foreground/50">Visibility</p>
-                <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+                <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
                   <button type="button" onClick={() => setPressKitEnabled(true)} aria-pressed={pressKitEnabled}
                     className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                       pressKitEnabled ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
@@ -5560,7 +5561,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </button>
                   <button type="button" onClick={() => setPressKitEnabled(false)} aria-pressed={!pressKitEnabled}
                     className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                      !pressKitEnabled ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
+                      !pressKitEnabled ? "bg-secondary text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
                     Hidden
                   </button>
                 </div>
@@ -5578,19 +5579,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Readiness */}
-        <div className="rounded-xl border border-white/[0.05] bg-white/[0.01] px-4 py-3">
+        <div className="rounded-xl border border-border bg-secondary px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/38">Press Kit Readiness</p>
             <span className="text-[11px] tabular-nums text-muted-foreground/38">{configuredCount} / {readinessItems.length}</span>
           </div>
-          <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.05]">
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-secondary">
             <div className={cn("h-full rounded-full transition-all duration-700", configuredCount === readinessItems.length ? "bg-accent/60" : "bg-accent/35")}
               style={{ width: `${Math.round((configuredCount / readinessItems.length) * 100)}%` }} />
           </div>
           <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
             {readinessItems.map(({ label, ok }) => (
               <div key={label} className="flex items-center gap-1.5">
-                {ok ? <Check className="h-3 w-3 shrink-0 text-accent/55" /> : <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/[0.08]" />}
+                {ok ? <Check className="h-3 w-3 shrink-0 text-accent/55" /> : <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-secondary" />}
                 <span className={cn("text-[10px]", ok ? "text-foreground/50" : "text-muted-foreground/28")}>{label}</span>
               </div>
             ))}
@@ -5606,7 +5607,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="grid gap-3 sm:grid-cols-2">
               {/* ENG card */}
               <div className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
-                pressKitPdfEnUrl.trim() ? "border-white/[0.06] bg-white/[0.02]" : "border-dashed border-white/[0.06] bg-white/[0.01]")}>
+                pressKitPdfEnUrl.trim() ? "border-border bg-secondary" : "border-dashed border-border bg-secondary")}>
                 <div className="flex items-center gap-3 p-4">
                   {/* UK flag */}
                   <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#012169] ring-1 ring-white/[0.10]">
@@ -5638,7 +5639,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 </div>
                 {isOpen("en") && (
-                  <div className="space-y-2 border-t border-white/[0.04] px-4 pb-4 pt-3">
+                  <div className="space-y-2 border-t border-border px-4 pb-4 pt-3">
                     <Input value={pressKitPdfEnUrl} onChange={(e) => setPressKitPdfEnUrl(e.target.value)} placeholder="https://…/epk-en.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
                     <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder="File size, e.g. 4.2 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
                   </div>
@@ -5647,7 +5648,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
               {/* ESP card */}
               <div className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
-                pressKitPdfEsUrl.trim() ? "border-white/[0.06] bg-white/[0.02]" : "border-dashed border-white/[0.06] bg-white/[0.01]")}>
+                pressKitPdfEsUrl.trim() ? "border-border bg-secondary" : "border-dashed border-border bg-secondary")}>
                 <div className="flex items-center gap-3 p-4">
                   {/* Spain flag */}
                   <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a] ring-1 ring-white/[0.10]">
@@ -5676,7 +5677,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 </div>
                 {isOpen("es") && (
-                  <div className="space-y-2 border-t border-white/[0.04] px-4 pb-4 pt-3">
+                  <div className="space-y-2 border-t border-border px-4 pb-4 pt-3">
                     <Input value={pressKitPdfEsUrl} onChange={(e) => setPressKitPdfEsUrl(e.target.value)} placeholder="https://…/epk-es.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
                     <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder="File size, e.g. 3.8 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
                   </div>
@@ -5697,13 +5698,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 { id: "rider",  label: "Technical Rider",     desc: "Stage requirements",     value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl, badge: null },
               ].map(({ id, label, desc, value, setter, badge }) => (
                 <div key={id} className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
-                  value.trim() ? "border-white/[0.06] bg-white/[0.02]" : "border-dashed border-white/[0.05] bg-white/[0.01]")}>
+                  value.trim() ? "border-border bg-secondary" : "border-dashed border-border bg-secondary")}>
                   <div className="p-4">
                     {/* Icon row */}
                     <div className="flex items-start justify-between">
                       {folderIconMap[id]}
                       {badge && (
-                        <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.14em] text-white/25">
+                        <span className="rounded-full border border-border bg-secondary px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.14em] text-white/25">
                           {badge}
                         </span>
                       )}
@@ -5730,7 +5731,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </button>
                   </div>
                   {isOpen(id) && (
-                    <div className="border-t border-white/[0.04] px-4 pb-4 pt-3">
+                    <div className="border-t border-border px-4 pb-4 pt-3">
                       <Input value={value} onChange={(e) => setter(e.target.value)}
                         placeholder="https://drive.google.com/drive/folders/…"
                         className="h-8 text-xs" disabled={!pressKitEnabled} />
@@ -5742,7 +5743,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
 
           {/* ── 4. Press Photos Preview ────────────────────────────────── */}
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-4">
+          <div className="rounded-xl border border-border bg-card/40 p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-foreground">Press Photos Preview</p>
@@ -5750,7 +5751,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   Controls the preview grid on your public EPK. High-resolution photos remain available from the Press Photos folder.
                 </p>
               </div>
-              <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.015] p-0.5">
+              <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
                 <button type="button" onClick={() => setPressKitUseGalleryPhotos(true)} aria-pressed={pressKitUseGalleryPhotos} disabled={!pressKitEnabled}
                   className={cn("rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                     pressKitUseGalleryPhotos ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
@@ -5758,7 +5759,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </button>
                 <button type="button" onClick={() => setPressKitUseGalleryPhotos(false)} aria-pressed={!pressKitUseGalleryPhotos} disabled={!pressKitEnabled}
                   className={cn("rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                    !pressKitUseGalleryPhotos ? "bg-white/[0.06] text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
+                    !pressKitUseGalleryPhotos ? "bg-secondary text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
                   Hide
                 </button>
               </div>
@@ -5766,7 +5767,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
 
           {/* ── 5. Advanced Settings ───────────────────────────────────── */}
-          <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/40 transition-colors duration-150 hover:border-white/[0.09]">
+          <div className="overflow-hidden rounded-xl border border-border bg-card/40 transition-colors duration-150 hover:border-border">
             <button type="button" onClick={() => setPressKitAdvancedOpen((v) => !v)}
               className="flex w-full items-center justify-between px-5 py-4">
               <div>
@@ -5776,7 +5777,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <ChevronDown className={cn("h-4 w-4 text-muted-foreground/35 transition-transform duration-200", pressKitAdvancedOpen && "rotate-180")} />
             </button>
             {pressKitAdvancedOpen && (
-              <div className="space-y-5 border-t border-white/[0.05] px-5 pb-5 pt-4">
+              <div className="space-y-5 border-t border-border px-5 pb-5 pt-4">
                 {/* Legacy URL */}
                 <div className="space-y-1.5">
                   <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Legacy Download URL</label>
@@ -5790,7 +5791,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {pressKitAssets.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {pressKitAssets.map((asset, i) => (
-                        <span key={i} className="flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-foreground/60">
+                        <span key={i} className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/60">
                           {asset}
                           <button type="button" onClick={() => handleRemoveAsset(i)} aria-label={`Remove ${asset}`}
                             className="leading-none text-muted-foreground/30 hover:text-foreground/60">×</button>
@@ -5802,10 +5803,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <input type="text" value={newAssetInput} onChange={(e) => setNewAssetInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddAsset() } }}
                       placeholder="Add asset… e.g. Press photos" disabled={!pressKitEnabled} aria-label="New asset name"
-                      className={cn("h-9 min-w-0 flex-1 rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground/30 outline-none transition-colors duration-150 focus:border-white/[0.14] focus:bg-white/[0.04] disabled:cursor-not-allowed")}
+                      className={cn("h-9 min-w-0 flex-1 rounded-lg border border-border bg-secondary px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground/30 outline-none transition-colors duration-150 focus:border-border focus:bg-secondary disabled:cursor-not-allowed")}
                     />
                     <button type="button" onClick={handleAddAsset} disabled={!pressKitEnabled || !newAssetInput.trim()} aria-label="Add asset"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.025] text-muted-foreground/40 hover:border-white/[0.12] hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25">
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground/40 hover:border-border hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25">
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -5825,13 +5826,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <h2 className="text-base font-semibold text-foreground">Publish</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">Control whether your profile is visible to the public.</p>
         </div>
-        <div className="space-y-5 rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09] sm:p-6">
+        <div className="space-y-5 rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
           <div className="flex items-center gap-3">
             <span
               className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
                 artist.isPublished
                   ? "border-accent/20 bg-accent/10 text-accent"
-                  : "border-white/[0.06] bg-secondary/40 text-muted-foreground"
+                  : "border-border bg-secondary/40 text-muted-foreground"
               }`}
             >
               <span
@@ -6075,9 +6076,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Live preview — dark + light backgrounds */}
-        <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/30">
-          <p className="border-b border-white/[0.05] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/28">Preview</p>
-          <div className="grid grid-cols-2 divide-x divide-white/[0.05]">
+        <div className="overflow-hidden rounded-xl border border-border bg-card/30">
+          <p className="border-b border-border px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/28">Preview</p>
+          <div className="grid grid-cols-2 divide-x divide-border">
             {/* Dark background preview (actual footer background) */}
             <div className="flex flex-col items-center gap-3 bg-[#0d0d0d] px-5 py-6 text-center">
               <p className="text-[9px] uppercase tracking-[0.20em] text-white/20">Dark</p>
@@ -6107,11 +6108,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </div>
               )}
               {footerNewsletterEnabled && (
-                <div className="mt-1 w-full space-y-1.5 border-t border-white/[0.05] pt-3">
+                <div className="mt-1 w-full space-y-1.5 border-t border-border pt-3">
                   <p className="text-[8px] uppercase tracking-[0.20em] text-white/20">Stay Connected</p>
                   <div className="mx-auto flex max-w-[140px] gap-1">
-                    <div className="h-5 flex-1 rounded-full border border-white/[0.08]" />
-                    <div className="h-5 w-10 rounded-full border border-white/[0.10]" />
+                    <div className="h-5 flex-1 rounded-full border border-border" />
+                    <div className="h-5 w-10 rounded-full border border-border" />
                   </div>
                 </div>
               )}
@@ -6132,13 +6133,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               )}
             </div>
           </div>
-          <div className="border-t border-white/[0.05] px-4 py-3 text-[9px] text-muted-foreground/22">
+          <div className="border-t border-border px-4 py-3 text-[9px] text-muted-foreground/22">
             {copyrightLine}
           </div>
         </div>
 
         {/* Footer Logo Upload */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+        <div className="rounded-xl border border-border bg-card/30 p-5">
           <label className="mb-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
             Footer Logo
           </label>
@@ -6193,11 +6194,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Logo rendering mode */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+        <div className="rounded-xl border border-border bg-card/30 p-5">
           <label className="mb-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
             Logo Rendering Mode
           </label>
-          <div className="flex overflow-hidden rounded-lg border border-white/[0.08]">
+          <div className="flex overflow-hidden rounded-lg border border-border">
             {(["auto", "dark", "light"] as const).map((mode) => (
               <button
                 key={mode}
@@ -6221,7 +6222,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Footer Logo Width */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+        <div className="rounded-xl border border-border bg-card/30 p-5">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">Logo Width</label>
             <span className="font-mono text-[12px] text-foreground/55">{footerLogoWidth}px</span>
@@ -6231,7 +6232,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Contact Emails */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+        <div className="rounded-xl border border-border bg-card/30 p-5">
           <label className="mb-3.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
             Contact Emails
           </label>
@@ -6250,7 +6251,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         </div>
 
         {/* Footer Copyright */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+        <div className="rounded-xl border border-border bg-card/30 p-5">
           <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">Copyright</label>
           <Input value={footerCopyright} onChange={(e) => setFooterCopyright(e.target.value)} placeholder={`© ${year} ${artist.artistName}`} className="text-[13px]" />
           <p className="mt-2 text-[11px] text-muted-foreground/40">Optional. Defaults to &ldquo;© {year} {artist.artistName}&rdquo;.</p>
@@ -6262,7 +6263,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             { label: "Show social icons",    value: footerSocialsEnabled,    set: setFooterSocialsEnabled    },
             { label: "Show newsletter form", value: footerNewsletterEnabled, set: setFooterNewsletterEnabled },
           ].map(({ label, value, set }) => (
-            <div key={label} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-card/30 px-5 py-3.5">
+            <div key={label} className="flex items-center justify-between rounded-xl border border-border bg-card/30 px-5 py-3.5">
               <span className="text-[13px] text-foreground/75">{label}</span>
               <button type="button" role="switch" aria-checked={value} onClick={() => set(!value)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${value ? "bg-accent" : "bg-secondary/60"}`}>
@@ -6281,9 +6282,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const statusBadge = (status: string) => {
       const styles: Record<string, string> = {
         active:    "border-accent/20 bg-accent/10 text-accent",
-        verified:  "border-white/[0.08] bg-secondary/40 text-muted-foreground",
-        pending:   "border-white/[0.08] bg-secondary/40 text-muted-foreground",
-        verifying: "border-white/[0.08] bg-secondary/40 text-muted-foreground/60",
+        verified:  "border-border bg-secondary/40 text-muted-foreground",
+        pending:   "border-border bg-secondary/40 text-muted-foreground",
+        verifying: "border-border bg-secondary/40 text-muted-foreground/60",
         error:     "border-destructive/20 bg-destructive/10 text-destructive/80",
         suspended: "border-destructive/20 bg-destructive/10 text-destructive/80",
       }
@@ -6304,9 +6305,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
 
     const dnsTable = (rows: { label: string; value: string }[]) => (
-      <div className="mt-3 overflow-hidden rounded-lg border border-white/[0.05] bg-white/[0.02]">
+      <div className="mt-3 overflow-hidden rounded-lg border border-border bg-secondary">
         {rows.map(({ label, value }) => (
-          <div key={label} className="flex items-start gap-4 border-b border-white/[0.04] px-3 py-2 last:border-0">
+          <div key={label} className="flex items-start gap-4 border-b border-border px-3 py-2 last:border-0">
             <span className="w-12 shrink-0 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">{label}</span>
             <span className="break-all font-mono text-xs text-foreground/75">{value}</span>
           </div>
@@ -6321,7 +6322,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
             <p className="mt-1 text-sm text-muted-foreground/60">Connect an apex domain you own to your DJHQ profile.</p>
           </div>
-          <div className="rounded-xl border border-white/[0.06] bg-card/30 p-6">
+          <div className="rounded-xl border border-border bg-card/30 p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Pro feature</p>
             <h3 className="mt-2 text-sm font-semibold text-foreground">Available on Pro</h3>
             <p className="mt-2 text-sm text-muted-foreground/60">
@@ -6351,7 +6352,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Add domain form — only shown when no domain exists */}
         {!activeDomain && (
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09]">
+          <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border">
             <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Add domain</p>
             <div className="flex gap-2">
               <Input
@@ -6382,7 +6383,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Domain status card */}
         {activeDomain && (
-          <div className="rounded-xl border border-white/[0.06] bg-card/40 p-5 transition-colors duration-150 hover:border-white/[0.09]">
+          <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <Globe className="h-4 w-4 shrink-0 text-muted-foreground/40" />
@@ -6552,7 +6553,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         )}
 
         {/* Canonical URL note */}
-        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-4">
+        <div className="rounded-xl border border-border bg-card/30 p-4">
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Note</p>
           <p className="mt-1 text-xs text-muted-foreground/50">
             Your canonical DJHQ URL{" "}
@@ -6588,6 +6589,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderPressKit()
       case "domain":        // renamed from "custom-domain"
         return renderCustomDomain()
+      case "brand":
+        return renderBrand()
       case "footer":
         return renderFooterBranding()
       case "publish":
@@ -6604,7 +6607,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.035] blur-[120px]" />
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-white/[0.05] bg-background/92 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/92 backdrop-blur-xl">
         <div className="mx-auto flex h-[52px] max-w-7xl items-center gap-2 px-4 sm:px-6">
           {/* Left: brand + artist context */}
           <button
@@ -6617,7 +6620,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
             <span className="text-[13px] font-bold tracking-tight text-foreground">{brand.name}</span>
           </button>
-          <span className="select-none text-[13px] text-white/[0.14]">/</span>
+          <span className="select-none text-[13px] text-foreground/90">/</span>
           <p className="min-w-0 truncate text-[13px] font-medium text-muted-foreground/60">{artist.artistName}</p>
 
           <div className="flex-1" />
@@ -6629,7 +6632,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-[11px] font-semibold sm:inline-flex ${
                 artist.isPublished
                   ? "border-accent/22 bg-accent/[0.08] text-accent"
-                  : "border-white/[0.07] bg-white/[0.02] text-muted-foreground/45"
+                  : "border-border bg-secondary text-muted-foreground/45"
               }`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/28"}`} />
@@ -6641,7 +6644,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               asChild
               variant="ghost"
               size="sm"
-              className="hidden h-8 gap-1.5 rounded-lg border border-white/[0.09] bg-white/[0.02] px-2.5 text-[12px] text-muted-foreground/60 transition-colors duration-150 hover:border-white/[0.16] hover:bg-white/[0.045] hover:text-foreground/90 sm:inline-flex"
+              className="hidden h-8 gap-1.5 rounded-lg border border-border bg-secondary px-2.5 text-[12px] text-muted-foreground/60 transition-colors duration-150 hover:border-border hover:bg-secondary hover:text-foreground/90 sm:inline-flex"
             >
               <Link href={publicProfileUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -6663,7 +6666,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </Button>
 
             {/* Visual separator — demarcates primary action from secondary cluster */}
-            <div className="mx-0.5 hidden h-[18px] w-px bg-white/[0.09] sm:block" />
+            <div className="mx-0.5 hidden h-[18px] w-px bg-secondary sm:block" />
 
             {/* Save — primary action */}
             <Button
@@ -6699,7 +6702,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         </div>
         {(saveMessage || statusMessage) ? (
-          <div className="border-t border-white/[0.04] px-4 py-1.5 sm:px-6">
+          <div className="border-t border-border px-4 py-1.5 sm:px-6">
             <p className={`text-[11px] ${saveMessage && !saveMessage.startsWith("Changes") && !saveMessage.startsWith("Release") && !saveMessage.startsWith("DJ set") && !saveMessage.startsWith("Video") && !saveMessage.startsWith("Gallery") ? "text-destructive/65" : "text-muted-foreground/50"}`}>
               {saveMessage || statusMessage}
             </p>
@@ -6716,7 +6719,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] transition-colors duration-100 ${
                 activeSection === "home"
                   ? "bg-accent/[0.12] font-semibold text-accent"
-                  : "bg-white/[0.04] text-muted-foreground/58 hover:bg-white/[0.06] hover:text-foreground/80"
+                  : "bg-secondary text-muted-foreground/58 hover:bg-secondary hover:text-foreground/80"
               }`}
             >
               Home
@@ -6730,7 +6733,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] transition-colors duration-100 ${
                 activeSection === item.id
                   ? "bg-accent/[0.12] font-semibold text-accent"
-                  : "bg-white/[0.04] text-muted-foreground/58 hover:bg-white/[0.06] hover:text-foreground/80"
+                  : "bg-secondary text-muted-foreground/58 hover:bg-secondary hover:text-foreground/80"
               }`}
             >
               {item.label}
@@ -6749,7 +6752,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 className={`relative flex w-full items-center gap-2.5 rounded-lg px-3 py-[7px] text-left text-[13px] transition-all duration-100 ${
                   activeSection === "home"
                     ? "bg-accent/[0.08] font-semibold text-foreground"
-                    : "text-muted-foreground/55 hover:bg-white/[0.04] hover:text-foreground/85"
+                    : "text-muted-foreground/55 hover:bg-secondary hover:text-foreground/85"
                 }`}
               >
                 {activeSection === "home" && (
@@ -6758,7 +6761,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <Layers className={`h-[14px] w-[14px] shrink-0 ${activeSection === "home" ? "text-accent/80" : "text-muted-foreground/30"}`} />
                 Home
               </button>
-              <div className="h-px bg-white/[0.04]" />
+              <div className="h-px bg-secondary" />
               {navGroups.map((group) => (
                 <div key={group.label}>
                   <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.26em] text-muted-foreground/28">
@@ -6776,7 +6779,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         className={`relative flex w-full items-center gap-2.5 rounded-lg px-3 py-[7px] text-left text-[13px] transition-all duration-100 ${
                           activeSection === item.id
                             ? "bg-accent/[0.08] font-semibold text-foreground"
-                            : "text-muted-foreground/55 hover:bg-white/[0.04] hover:text-foreground/85"
+                            : "text-muted-foreground/55 hover:bg-secondary hover:text-foreground/85"
                         }`}
                       >
                         {activeSection === item.id && (

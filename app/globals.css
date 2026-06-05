@@ -107,6 +107,40 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ── Dashboard light theme ───────────────────────────────────────────────────
+   Scoped to .djhq-dashboard so the public artist profile (dark) is unaffected.
+   Uses warm paper neutrals rather than pure white — closer to Notion / Linear. */
+.djhq-dashboard {
+  color-scheme: light;
+  --background:       oklch(0.967 0.004 80);   /* #F5F4F1 warm paper          */
+  --foreground:       oklch(0.10  0     0);    /* #111 near-black              */
+  --card:             oklch(1     0     0);    /* #FFF white card              */
+  --card-foreground:  oklch(0.10  0     0);
+  --popover:          oklch(1     0     0);
+  --popover-foreground: oklch(0.10 0    0);
+  --primary:          oklch(0.75  0.18  160);  /* DJHQ green                   */
+  --primary-foreground: oklch(0.08 0    0);
+  --secondary:        oklch(0.94  0.003 80);   /* warm light gray              */
+  --secondary-foreground: oklch(0.10 0  0);
+  --muted:            oklch(0.95  0.003 80);   /* subtle warm gray             */
+  --muted-foreground: oklch(0.44  0     0);    /* #666                         */
+  --accent:           oklch(0.75  0.18  160);  /* keep DJHQ green              */
+  --accent-foreground: oklch(0.08 0     0);
+  --destructive:      oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.97 0   0);
+  --border:           oklch(0.91  0.003 80);   /* #E7E7E7 warm light border    */
+  --input:            oklch(1     0     0);
+  --ring:             oklch(0.75  0.18  160);
+  --sidebar:          oklch(0.96  0.004 80);   /* sidebar slightly darker paper */
+  --sidebar-foreground: oklch(0.10 0    0);
+  --sidebar-primary:  oklch(0.75  0.18  160);
+  --sidebar-primary-foreground: oklch(0.08 0  0);
+  --sidebar-accent:   oklch(0.94  0.003 80);
+  --sidebar-accent-foreground: oklch(0.10 0   0);
+  --sidebar-border:   oklch(0.91  0.003 80);
+  --sidebar-ring:     oklch(0.75  0.18  160);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
