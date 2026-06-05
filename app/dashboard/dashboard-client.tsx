@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useLayoutEffect } from "react"
+import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
@@ -33,6 +33,29 @@ const APP_DISPLAY_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.app")
 
 type NavItem = { id: string; label: string; icon: React.ComponentType<{ className?: string }> }
 type NavGroup = { label: string; items: NavItem[] }
+
+type BrandSourceFile = {
+  id: string
+  filename: string
+  fileType: string
+  fileExt: string
+  fileUrl: string
+  fileSize: number | null
+  status: "uploaded" | "processing" | "processed" | "failed" | "stored_only"
+  createdAt: string
+}
+
+type BrandAsset = {
+  id: string
+  sourceFileId: string | null
+  name: string | null
+  assetType: "logo" | "wordmark" | "monogram" | "favicon" | "unknown"
+  status: string
+  previewUrl: string
+  hasSolidBg: boolean
+  createdAt: string
+}
+
 
 const navGroups: NavGroup[] = [
   {
@@ -776,6 +799,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [footerNewsletterEnabled, setFooterNewsletterEnabled] = useState(initialArtist.footerNewsletterEnabled ?? true)
   const [footerSocialsEnabled, setFooterSocialsEnabled] = useState(initialArtist.footerSocialsEnabled ?? true)
   const [footerCopyright, setFooterCopyright] = useState(initialArtist.footerCopyright ?? "")
+
+  // ── Brand section state ────────────────────────────────────────────
+  const [brandSourceFiles, setBrandSourceFiles] = useState<BrandSourceFile[]>([])
+  const [brandAssets, setBrandAssets] = useState<BrandAsset[]>([])
+  const [brandLoadStatus, setBrandLoadStatus] = useState<"idle"|"loading"|"loaded"|"error">("idle")
+  const [brandDragActive, setBrandDragActive] = useState(false)
+  const [brandUploading, setBrandUploading] = useState(false)
+  const [brandUploadQueue, setBrandUploadQueue] = useState<{ file: File; status: "pending"|"uploading"|"done"|"error"; error?: string }[]>([])
+  const [brandSolidBgIds, setBrandSolidBgIds] = useState<Set<string>>(new Set())
   const [pkExpandedIds, setPkExpandedIds] = useState<Set<string>>(new Set())
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
@@ -843,6 +875,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
+
+  // Load brand data when the Brand section is opened for the first time.
+  // setTimeout(0) defers the initial setState call out of the synchronous
+  // effect body, satisfying the React Compiler's cascade-render check.
+  useEffect(() => {
+    if (activeSection !== "brand" || brandLoadStatus !== "idle") return
+    const tid = setTimeout(() => {
+      setBrandLoadStatus("loading")
+      fetch(`/api/artists/brand-assets?artistId=${encodeURIComponent(artist.id)}`)
+        .then((r) => r.json())
+        .then((data: { sourceFiles?: unknown[]; assets?: unknown[] }) => {
+          const sf = (data.sourceFiles ?? []) as Array<Record<string, unknown>>
+          const a  = (data.assets    ?? []) as Array<Record<string, unknown>>
+          setBrandSourceFiles(sf.map((f) => ({
+            id:        f.id        as string,
+            filename:  f.filename  as string,
+            fileType:  f.file_type as string,
+            fileExt:   f.file_ext  as string,
+            fileUrl:   f.file_url  as string,
+            fileSize:  f.file_size as number | null,
+            status:    f.status    as BrandSourceFile["status"],
+            createdAt: f.created_at as string,
+          })))
+          setBrandAssets(a.map((x) => ({
+            id:           x.id             as string,
+            sourceFileId: x.source_file_id as string | null,
+            name:         x.name           as string | null,
+            assetType:    x.asset_type     as BrandAsset["assetType"],
+            status:       x.status         as string,
+            previewUrl:   x.preview_url    as string,
+            hasSolidBg:   x.has_solid_bg   as boolean,
+            createdAt:    x.created_at     as string,
+          })))
+          setBrandLoadStatus("loaded")
+        })
+        .catch(() => setBrandLoadStatus("error"))
+    }, 0)
+    return () => clearTimeout(tid)
+  }, [activeSection, brandLoadStatus, artist.id])
 
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
@@ -5380,21 +5451,295 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderBrand() {
+
+    // ── File validation ─────────────────────────────────────────────────────
+    const PROCESSABLE_EXTS = new Set(["svg","png","jpg","jpeg","webp"])
+    const STORED_ONLY_EXTS = new Set(["pdf","ai","eps","zip","rar"])
+    const ALL_EXTS = new Set([...PROCESSABLE_EXTS, ...STORED_ONLY_EXTS])
+    const MAX_SIZE = 50 * 1024 * 1024  // 50 MB
+
+    function getExt(filename: string): string {
+      return filename.split(".").pop()?.toLowerCase() ?? ""
+    }
+    function validateFile(file: File): string | null {
+      const ext = getExt(file.name)
+      if (!ALL_EXTS.has(ext)) return `Unsupported format: .${ext}`
+      if (file.size > MAX_SIZE) return `File too large (max 50 MB)`
+      return null
+    }
+
+    // ── Background detection (canvas) ────────────────────────────────────────
+    function detectSolidBg(url: string, assetId: string) {
+      const img = new window.Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas")
+          canvas.width = Math.min(img.naturalWidth, 64)
+          canvas.height = Math.min(img.naturalHeight, 64)
+          const ctx = canvas.getContext("2d")
+          if (!ctx) return
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          const corners = [
+            ctx.getImageData(0, 0, 1, 1).data,
+            ctx.getImageData(canvas.width - 1, 0, 1, 1).data,
+            ctx.getImageData(0, canvas.height - 1, 1, 1).data,
+            ctx.getImageData(canvas.width - 1, canvas.height - 1, 1, 1).data,
+          ]
+          const solidBlack = corners.every(([r, g, b, a]) => a === 255 && r < 30 && g < 30 && b < 30)
+          if (solidBlack) {
+            setBrandSolidBgIds((prev) => new Set([...prev, assetId]))
+          }
+        } catch { /* CORS or canvas security — skip */ }
+      }
+      img.src = url
+    }
+
+    // ── Upload handler ───────────────────────────────────────────────────────
+    async function uploadFiles(files: File[]) {
+      const queue = files.map((f) => ({ file: f, status: "pending" as const }))
+      setBrandUploadQueue(queue)
+      setBrandUploading(true)
+
+      const newSourceFiles: BrandSourceFile[] = []
+      const newAssets: BrandAsset[] = []
+
+      for (let i = 0; i < queue.length; i++) {
+        const { file } = queue[i]
+        const ext = getExt(file.name)
+        const err = validateFile(file)
+
+        setBrandUploadQueue((prev) => {
+          const copy = [...prev]
+          copy[i] = { ...copy[i], status: err ? "error" : "uploading", error: err ?? undefined }
+          return copy
+        })
+        if (err) continue
+
+        try {
+          // 1. Get signed URL
+          const params = new URLSearchParams({ artistId: artist.id, fileExt: ext, filename: file.name })
+          const signedResp = await fetch(`/api/artists/brand-upload?${params}`)
+          const signed = await signedResp.json() as { signedUrl?: string; token?: string; filePath?: string; error?: string }
+          if (!signedResp.ok || !signed.signedUrl || !signed.token || !signed.filePath) throw new Error(signed.error ?? "Upload URL failed")
+
+          // 2. Upload to Supabase Storage
+          const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+          const { error: upErr } = await supabaseClient.storage.from("artist-gallery").uploadToSignedUrl(signed.filePath, signed.token, file, { contentType: file.type })
+          if (upErr) throw new Error(upErr.message)
+
+          // 3. Get public URL
+          const { data: urlData } = supabaseClient.storage.from("artist-gallery").getPublicUrl(signed.filePath)
+          const fileUrl = urlData.publicUrl
+
+          // 4. Register with API
+          const regResp = await fetch("/api/artists/brand-assets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ artistId: artist.id, filename: file.name, fileType: file.type || `application/${ext}`, fileExt: ext, fileUrl, fileSize: file.size }),
+          })
+          const reg = await regResp.json() as { sourceFile?: Record<string, unknown>; asset?: Record<string, unknown>; error?: string }
+          if (!regResp.ok) throw new Error(reg.error ?? "Registration failed")
+
+          if (reg.sourceFile) {
+            const sf = reg.sourceFile
+            newSourceFiles.push({ id: sf.id as string, filename: sf.filename as string, fileType: sf.file_type as string, fileExt: sf.file_ext as string, fileUrl: sf.file_url as string, fileSize: sf.file_size as number|null, status: sf.status as BrandSourceFile["status"], createdAt: sf.created_at as string })
+          }
+          if (reg.asset) {
+            const a = reg.asset
+            const asset: BrandAsset = { id: a.id as string, sourceFileId: a.source_file_id as string|null, name: a.name as string|null, assetType: a.asset_type as BrandAsset["assetType"], status: a.status as string, previewUrl: a.preview_url as string, hasSolidBg: a.has_solid_bg as boolean, createdAt: a.created_at as string }
+            newAssets.push(asset)
+            // Run bg detection after a short delay (let image load)
+            setTimeout(() => detectSolidBg(asset.previewUrl, asset.id), 500)
+          }
+
+          setBrandUploadQueue((prev) => { const copy = [...prev]; copy[i] = { ...copy[i], status: "done" }; return copy })
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Upload failed"
+          setBrandUploadQueue((prev) => { const copy = [...prev]; copy[i] = { ...copy[i], status: "error", error: msg }; return copy })
+        }
+      }
+
+      if (newSourceFiles.length) setBrandSourceFiles((prev) => [...newSourceFiles, ...prev])
+      if (newAssets.length) setBrandAssets((prev) => [...newAssets, ...prev])
+      setBrandUploading(false)
+    }
+
+    // ── Delete handler ───────────────────────────────────────────────────────
+    async function deleteSourceFile(id: string) {
+      await fetch(`/api/artists/brand-assets?id=${encodeURIComponent(id)}`, { method: "DELETE" })
+      setBrandSourceFiles((prev) => prev.filter((f) => f.id !== id))
+      setBrandAssets((prev) => prev.filter((a) => a.sourceFileId !== id))
+    }
+
+    // ── Status badge ─────────────────────────────────────────────────────────
+    function StatusBadge({ status }: { status: string }) {
+      const map: Record<string, { label: string; cls: string }> = {
+        processed:  { label: "Processed",  cls: "border-accent/20 bg-accent/[0.06] text-accent/70" },
+        stored_only:{ label: "Stored only",cls: "border-border bg-secondary/60 text-muted-foreground/45" },
+        processing: { label: "Processing", cls: "border-amber-500/25 bg-amber-500/[0.06] text-amber-500/70" },
+        uploaded:   { label: "Uploaded",   cls: "border-border bg-secondary/60 text-muted-foreground/45" },
+        failed:     { label: "Failed",     cls: "border-red-500/25 bg-red-500/[0.06] text-red-500/70" },
+      }
+      const cfg = map[status] ?? map.uploaded
+      return <span className={`rounded-full border px-2 py-px text-[9px] font-semibold uppercase tracking-wider ${cfg.cls}`}>{cfg.label}</span>
+    }
+
+    // ── Drag handlers ────────────────────────────────────────────────────────
+    function onDragOver(e: React.DragEvent) { e.preventDefault(); setBrandDragActive(true) }
+    function onDragLeave() { setBrandDragActive(false) }
+    function onDrop(e: React.DragEvent) {
+      e.preventDefault(); setBrandDragActive(false)
+      const files = Array.from(e.dataTransfer.files)
+      if (files.length) { setBrandUploadQueue([]); uploadFiles(files) }
+    }
+    function onFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+      const files = Array.from(e.target.files ?? [])
+      if (files.length) { setBrandUploadQueue([]); uploadFiles(files) }
+      e.target.value = ""
+    }
+
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground">Brand</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Build and manage your artist identity.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Upload and manage artist visual identity assets.</p>
         </div>
-        <div className="flex items-center justify-center rounded-xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
-          <div className="max-w-sm">
-            <Sparkles className="mx-auto h-8 w-8 text-muted-foreground/25" />
-            <p className="mt-3 text-[13px] font-semibold text-foreground/55">Brand editor coming soon</p>
-            <p className="mt-1 text-[12px] text-muted-foreground/40">
-              Logo management, color palette and brand guidelines will be managed here.
+
+        {/* ── Upload area ──────────────────────────────────────────────── */}
+        <div
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          className={`relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors duration-150 ${brandDragActive ? "border-accent/40 bg-accent/[0.03]" : "border-border bg-card hover:border-accent/20 hover:bg-accent/[0.015]"}`}
+        >
+          <Sparkles className={`h-7 w-7 ${brandDragActive ? "text-accent/60" : "text-muted-foreground/25"}`} />
+          <div>
+            <p className="text-[14px] font-semibold text-foreground/70">
+              {brandDragActive ? "Drop to upload" : "Upload brand assets"}
+            </p>
+            <p className="mt-1 text-[12px] text-muted-foreground/45">
+              Logo packages, PDFs, Illustrator files, SVGs, PNGs or ZIP folders
             </p>
           </div>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {["SVG","PNG","JPG","PDF","AI","EPS","ZIP"].map((fmt) => (
+              <span key={fmt} className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/40">{fmt}</span>
+            ))}
+          </div>
+          <label className={`cursor-pointer rounded-lg border border-border bg-secondary px-4 py-2 text-[12px] font-medium text-foreground/65 transition-colors hover:bg-secondary hover:text-foreground/85 ${brandUploading ? "pointer-events-none opacity-50" : ""}`}>
+            {brandUploading ? "Uploading…" : "Choose files"}
+            <input type="file" multiple accept=".svg,.png,.jpg,.jpeg,.webp,.pdf,.ai,.eps,.zip,.rar" onChange={onFileInput} className="sr-only" />
+          </label>
+          <p className="text-[10px] text-muted-foreground/30">Max 50 MB per file</p>
         </div>
+
+        {/* ── Upload progress ──────────────────────────────────────────── */}
+        {brandUploadQueue.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/40">Upload Progress</p>
+            <div className="space-y-2">
+              {brandUploadQueue.map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="min-w-0 flex-1 truncate text-[12px] text-foreground/65">{item.file.name}</span>
+                  {item.status === "uploading" && <span className="shrink-0 text-[10px] text-accent/60 animate-pulse">Uploading…</span>}
+                  {item.status === "done"      && <span className="shrink-0 text-[10px] text-accent/70">✓ Done</span>}
+                  {item.status === "error"     && <span className="shrink-0 text-[10px] text-red-500/60" title={item.error}>Failed</span>}
+                  {item.status === "pending"   && <span className="shrink-0 text-[10px] text-muted-foreground/35">Waiting</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Loading state ────────────────────────────────────────────── */}
+        {brandLoadStatus === "loading" && (
+          <p className="text-[13px] text-muted-foreground/40">Loading brand assets…</p>
+        )}
+
+        {/* ── Asset Library ────────────────────────────────────────────── */}
+        {brandAssets.length > 0 && (
+          <div>
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/40">Logo Assets ({brandAssets.length})</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {brandAssets.map((asset) => {
+                const isSolidBg = brandSolidBgIds.has(asset.id) || asset.hasSolidBg
+                return (
+                  <div key={asset.id} className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    {/* Dual preview */}
+                    <div className="grid grid-cols-2">
+                      <div className="flex h-24 items-center justify-center bg-[#111] p-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={asset.previewUrl} alt={asset.name ?? ""} className="max-h-full max-w-full object-contain" />
+                      </div>
+                      <div className="flex h-24 items-center justify-center bg-white border-l border-border p-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={asset.previewUrl} alt={asset.name ?? ""} className="max-h-full max-w-full object-contain" />
+                      </div>
+                    </div>
+                    {/* Meta */}
+                    <div className="p-3.5">
+                      <p className="truncate text-[13px] font-semibold text-foreground/80">{asset.name ?? "Untitled"}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/45">{asset.assetType}</span>
+                      </div>
+                      {/* CSS filter variant previews */}
+                      <div className="mt-3 flex gap-1.5">
+                        {[
+                          { label: "Original", filter: "none" },
+                          { label: "White",    filter: "brightness(0) invert(1)" },
+                          { label: "Black",    filter: "brightness(0)" },
+                        ].map(({ label, filter }) => (
+                          <div key={label} className="flex flex-col items-center gap-1">
+                            <div className={`flex h-7 w-9 items-center justify-center rounded border border-border ${filter !== "none" && filter.includes("invert") ? "bg-[#222]" : "bg-secondary"}`}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={asset.previewUrl} alt={label} className="max-h-5 max-w-full object-contain" style={{ filter }} />
+                            </div>
+                            <span className="text-[8px] text-muted-foreground/35">{label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Solid bg warning */}
+                      {isSolidBg && (
+                        <p className="mt-2.5 text-[10px] text-amber-500/70">
+                          ⚠ Solid background detected. Transparent PNG or SVG recommended.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Source Files ─────────────────────────────────────────────── */}
+        {brandSourceFiles.length > 0 && (
+          <div>
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/40">Source Files ({brandSourceFiles.length})</p>
+            <div className="rounded-xl border border-border bg-card shadow-sm divide-y divide-border">
+              {brandSourceFiles.map((f) => (
+                <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="rounded border border-border bg-secondary px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-muted-foreground/40">{f.fileExt}</span>
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground/70">{f.filename}</span>
+                  <StatusBadge status={f.status} />
+                  <button type="button" onClick={() => deleteSourceFile(f.id)} className="shrink-0 text-[10px] text-muted-foreground/30 transition-colors hover:text-destructive/70">Remove</button>
+                </div>
+              ))}
+            </div>
+            {/* Stored-only explanation */}
+            {brandSourceFiles.some((f) => f.status === "stored_only") && (
+              <div className="mt-3 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-[11px] text-muted-foreground/50">
+                <strong className="font-semibold text-foreground/45">Stored only</strong> — PDF, AI, EPS, ZIP and RAR files are stored as source files. Use SVG, PNG or JPG for automatic logo previews.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Empty state ──────────────────────────────────────────────── */}
+        {brandLoadStatus === "loaded" && brandSourceFiles.length === 0 && (
+          <p className="text-center text-[13px] text-muted-foreground/35">No brand assets uploaded yet.</p>
+        )}
       </div>
     )
   }

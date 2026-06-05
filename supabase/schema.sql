@@ -301,6 +301,39 @@ create table if not exists public.venues (
   created_at  timestamptz not null default now()
 );
 
+-- Brand asset tables (migration 041)
+create table if not exists public.brand_source_files (
+  id          uuid        primary key default gen_random_uuid(),
+  artist_id   uuid        not null references public.artists(id) on delete cascade,
+  filename    text        not null,
+  file_type   text        not null,
+  file_ext    text        not null,
+  file_url    text        not null,
+  file_size   bigint,
+  status      text        not null default 'uploaded',
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  constraint brand_source_files_status_check check (
+    status in ('uploaded','processing','processed','failed','stored_only')
+  )
+);
+
+create table if not exists public.brand_assets (
+  id             uuid        primary key default gen_random_uuid(),
+  artist_id      uuid        not null references public.artists(id) on delete cascade,
+  source_file_id uuid        references public.brand_source_files(id) on delete set null,
+  name           text,
+  asset_type     text        not null default 'unknown',
+  status         text        not null default 'uploaded',
+  preview_url    text        not null,
+  has_solid_bg   boolean     not null default false,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  constraint brand_assets_asset_type_check check (
+    asset_type in ('logo','wordmark','monogram','favicon','unknown')
+  )
+);
+
 -- ── Triggers ─────────────────────────────────────────────────────────────────
 
 create or replace trigger set_artists_updated_at
@@ -335,24 +368,37 @@ create or replace trigger set_custom_domains_updated_at
   before update on public.custom_domains
   for each row execute function public.set_updated_at();
 
+create or replace trigger set_brand_source_files_updated_at
+  before update on public.brand_source_files
+  for each row execute function public.set_updated_at();
+
+create or replace trigger set_brand_assets_updated_at
+  before update on public.brand_assets
+  for each row execute function public.set_updated_at();
+
 -- ── Indexes ──────────────────────────────────────────────────────────────────
 
-create index if not exists artists_handle_idx       on public.artists (handle);
-create index if not exists artists_owner_idx        on public.artists (owner_user_id);
-create index if not exists social_links_artist_idx  on public.social_links (artist_id);
-create index if not exists releases_artist_idx      on public.releases (artist_id);
-create index if not exists gigs_artist_idx          on public.gigs (artist_id);
-create index if not exists dj_sets_artist_idx       on public.dj_sets (artist_id);
-create index if not exists videos_artist_idx        on public.videos (artist_id);
-create index if not exists gallery_images_artist_idx on public.gallery_images (artist_id);
-create index if not exists custom_domains_artist_idx on public.custom_domains (artist_id);
-create index if not exists venues_name_idx          on public.venues (name);
+create index if not exists artists_handle_idx          on public.artists (handle);
+create index if not exists artists_owner_idx           on public.artists (owner_user_id);
+create index if not exists social_links_artist_idx     on public.social_links (artist_id);
+create index if not exists releases_artist_idx         on public.releases (artist_id);
+create index if not exists gigs_artist_idx             on public.gigs (artist_id);
+create index if not exists dj_sets_artist_idx          on public.dj_sets (artist_id);
+create index if not exists videos_artist_idx           on public.videos (artist_id);
+create index if not exists gallery_images_artist_idx   on public.gallery_images (artist_id);
+create index if not exists custom_domains_artist_idx   on public.custom_domains (artist_id);
+create index if not exists venues_name_idx             on public.venues (name);
+create index if not exists brand_source_files_artist_idx on public.brand_source_files (artist_id);
+create index if not exists brand_assets_artist_idx     on public.brand_assets (artist_id);
+create index if not exists brand_assets_source_idx     on public.brand_assets (source_file_id);
 
 -- ── Row Level Security ───────────────────────────────────────────────────────
 -- Enable RLS on all tables
 
-alter table public.artists       enable row level security;
-alter table public.social_links  enable row level security;
+alter table public.artists             enable row level security;
+alter table public.social_links        enable row level security;
+alter table public.brand_source_files  enable row level security;
+alter table public.brand_assets        enable row level security;
 alter table public.releases      enable row level security;
 alter table public.gigs          enable row level security;
 alter table public.dj_sets       enable row level security;
@@ -441,6 +487,16 @@ create policy "gallery_images_owner_all"
 drop policy if exists "custom_domains_owner_all"  on public.custom_domains;
 create policy "custom_domains_owner_all"
   on public.custom_domains for all
+  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
+
+drop policy if exists "brand_source_files_owner_all" on public.brand_source_files;
+create policy "brand_source_files_owner_all"
+  on public.brand_source_files for all
+  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
+
+drop policy if exists "brand_assets_owner_all" on public.brand_assets;
+create policy "brand_assets_owner_all"
+  on public.brand_assets for all
   using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
 
 -- ── Storage Buckets ──────────────────────────────────────────────────────────
