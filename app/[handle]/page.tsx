@@ -1465,6 +1465,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             footerLogoUrl={artist.footerLogoUrl}
             footerLogoWidth={artist.footerLogoWidth}
             footerBookingEmail={artist.footerBookingEmail}
+            footerContactEmail={artist.footerContactEmail}
+            footerDemosEmail={artist.footerDemosEmail}
             footerNewsletterEnabled={artist.footerNewsletterEnabled}
             footerSocialsEnabled={artist.footerSocialsEnabled}
             footerCopyright={artist.footerCopyright}

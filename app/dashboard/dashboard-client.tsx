@@ -761,8 +761,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [pressKitUseGalleryPhotos, setPressKitUseGalleryPhotos] = useState(initialArtist.pressKit.useGalleryPhotos ?? true)
   const [pressKitAdvancedOpen, setPressKitAdvancedOpen] = useState(false)
   const [footerLogoUrl, setFooterLogoUrl] = useState(initialArtist.footerLogoUrl ?? "")
-  const [footerLogoWidth, setFooterLogoWidth] = useState(initialArtist.footerLogoWidth ?? 180)
+  const [footerLogoWidth, setFooterLogoWidth] = useState(initialArtist.footerLogoWidth ?? 220)
+  const [footerLogoFile, setFooterLogoFile] = useState<File | null>(null)
+  const [isUploadingFooterLogo, setIsUploadingFooterLogo] = useState(false)
   const [footerBookingEmail, setFooterBookingEmail] = useState(initialArtist.footerBookingEmail ?? "")
+  const [footerContactEmail, setFooterContactEmail] = useState(initialArtist.footerContactEmail ?? "")
+  const [footerDemosEmail, setFooterDemosEmail] = useState(initialArtist.footerDemosEmail ?? "")
   const [footerNewsletterEnabled, setFooterNewsletterEnabled] = useState(initialArtist.footerNewsletterEnabled ?? true)
   const [footerSocialsEnabled, setFooterSocialsEnabled] = useState(initialArtist.footerSocialsEnabled ?? true)
   const [footerCopyright, setFooterCopyright] = useState(initialArtist.footerCopyright ?? "")
@@ -1781,6 +1785,39 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setSaveMessage(message)
     } finally {
       setIsUploadingHeroLogo(false)
+    }
+  }
+
+  async function handleUploadFooterLogo() {
+    if (!footerLogoFile) {
+      setSaveMessage("Select a file to upload.")
+      return
+    }
+    setIsUploadingFooterLogo(true)
+    setSaveMessage("")
+    try {
+      const extMap: Record<string, string> = { "image/png": "png", "image/svg+xml": "svg", "image/webp": "webp" }
+      const fileExt = extMap[footerLogoFile.type] ?? "png"
+      const params = new URLSearchParams({ artistId: artist.id, fileExt })
+      const signedUrlResponse = await fetch(`/api/artists/footer-branding?${params.toString()}`)
+      const signedUrlResult = await parseJsonResponse<{ error?: string; signedUrl?: string; token?: string; filePath?: string }>(signedUrlResponse)
+      if (!signedUrlResponse.ok || !signedUrlResult.signedUrl || !signedUrlResult.token || !signedUrlResult.filePath) {
+        throw new Error(signedUrlResult.error ?? "Unable to get upload URL.")
+      }
+      const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+      const { error: uploadError } = await supabaseClient.storage
+        .from("artist-gallery")
+        .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, footerLogoFile, { contentType: footerLogoFile.type })
+      if (uploadError) throw new Error(uploadError.message)
+      const { data: urlData } = supabaseClient.storage.from("artist-gallery").getPublicUrl(signedUrlResult.filePath)
+      setFooterLogoUrl(urlData.publicUrl)
+      setFooterLogoFile(null)
+      setSaveMessage("Footer logo uploaded. Save to apply.")
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : ""
+      setSaveMessage(raw || "Unable to upload footer logo.")
+    } finally {
+      setIsUploadingFooterLogo(false)
     }
   }
 
@@ -5984,117 +6021,139 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   function renderFooterBranding() {
     const year = new Date().getFullYear()
-    const effectiveCopyright = footerCopyright.trim() || `© ${year} ${artist.artistName}`
+    const copyrightLine = footerCopyright.trim() || `© ${year} ${artist.artistName}`
     const previewLogoUrl = footerLogoUrl.trim() || artist.heroLogoUrl || null
-    const previewBookingEmail = footerBookingEmail.trim() || artist.bookingInfo.email
+    const activeSocialLinks = PLATFORM_CONFIG.filter(({ id }) => linkUrls[id]?.trim())
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div>
           <h2 className="text-base font-semibold text-foreground">Footer</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">
-            Configure the visual identity and content of your profile footer.
+            Configure the visual identity shown at the bottom of your artist profile.
           </p>
         </div>
 
         {/* Live preview */}
-        <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/30 p-5">
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/30">Preview</p>
-          <div className="flex flex-col items-center gap-4 py-4 text-center">
+        <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/30">
+          <p className="border-b border-white/[0.05] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/28">Preview</p>
+          <div className="flex flex-col items-center gap-4 px-6 py-8 text-center">
             {previewLogoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={previewLogoUrl}
-                alt={artist.artistName}
-                style={{ maxWidth: `${footerLogoWidth}px` }}
-                className="max-h-[80px] object-contain opacity-80"
-              />
+              <img src={previewLogoUrl} alt={artist.artistName} style={{ maxWidth: `${footerLogoWidth}px` }} className="max-h-[80px] object-contain opacity-80" />
             ) : (
-              <p className="text-[1.2rem] font-black tracking-[-0.02em] text-foreground/70">{artist.artistName}</p>
+              <p className="text-[1.1rem] font-black tracking-[-0.02em] text-foreground/65">{artist.artistName}</p>
             )}
-            {footerSocialsEnabled && (
-              <p className="text-[11px] text-muted-foreground/35">Social icons row</p>
+            {footerSocialsEnabled && activeSocialLinks.length > 0 && (
+              <div className="flex items-center gap-4">
+                {activeSocialLinks.slice(0, 5).map(({ id, Icon }) => (
+                  <Icon key={id} className="h-4 w-4 text-muted-foreground/30" />
+                ))}
+              </div>
             )}
-            {previewBookingEmail && (
-              <p className="text-[12px] text-muted-foreground/45">{previewBookingEmail}</p>
+            {(footerBookingEmail || footerContactEmail || footerDemosEmail) && (
+              <div className="flex flex-wrap items-start justify-center gap-5">
+                {footerBookingEmail && (
+                  <div className="text-center">
+                    <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-muted-foreground/22">Booking</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/38">{footerBookingEmail}</p>
+                  </div>
+                )}
+                {footerContactEmail && (
+                  <div className="text-center">
+                    <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-muted-foreground/22">Contact</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/38">{footerContactEmail}</p>
+                  </div>
+                )}
+                {footerDemosEmail && (
+                  <div className="text-center">
+                    <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-muted-foreground/22">Demos</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/38">{footerDemosEmail}</p>
+                  </div>
+                )}
+              </div>
             )}
             {footerNewsletterEnabled && (
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/28">Stay Connected · newsletter form</p>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/22">Stay Connected · newsletter</p>
             )}
-            <p className="text-[10px] text-muted-foreground/22">{effectiveCopyright}</p>
+            <p className="text-[9px] text-muted-foreground/18">{copyrightLine}</p>
           </div>
         </div>
 
-        {/* Footer Logo URL */}
+        {/* Footer Logo Upload */}
         <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-            Footer Logo URL
+          <label className="mb-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+            Footer Logo
           </label>
-          <Input
-            type="url"
-            value={footerLogoUrl}
-            onChange={(e) => setFooterLogoUrl(e.target.value)}
-            placeholder="https://your-logo-url.com/logo.svg"
-            className="font-mono text-[13px]"
-          />
+          {footerLogoUrl && (
+            <div className="mb-4 flex items-center gap-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={footerLogoUrl} alt="Footer logo" className="max-h-[60px] max-w-[160px] rounded-lg object-contain" />
+              <button
+                type="button"
+                onClick={() => setFooterLogoUrl("")}
+                className="text-[11px] text-muted-foreground/40 transition-colors hover:text-destructive/70"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <Input
+              type="file"
+              accept="image/png,image/svg+xml,image/webp"
+              onChange={(e) => setFooterLogoFile(e.target.files?.[0] ?? null)}
+              className="text-[12px]"
+            />
+            <Button
+              type="button"
+              onClick={handleUploadFooterLogo}
+              disabled={!footerLogoFile || isUploadingFooterLogo || isSaving}
+              className="shrink-0 bg-secondary text-foreground hover:bg-secondary/80"
+            >
+              {isUploadingFooterLogo ? "Uploading…" : "Upload"}
+            </Button>
+          </div>
           <p className="mt-2 text-[11px] text-muted-foreground/40">
-            Paste the URL of your footer logo (monogram or symbol). Leave empty to use your hero logo.
+            PNG, SVG or WebP. Use a monogram or symbol mark. If empty, falls back to hero logo.
           </p>
         </div>
 
         {/* Footer Logo Width */}
         <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-              Logo Width
-            </label>
-            <span className="font-mono text-[12px] text-foreground/60">{footerLogoWidth}px</span>
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">Logo Width</label>
+            <span className="font-mono text-[12px] text-foreground/55">{footerLogoWidth}px</span>
           </div>
-          <input
-            type="range"
-            min={80}
-            max={400}
-            step={10}
-            value={footerLogoWidth}
-            onChange={(e) => setFooterLogoWidth(Number(e.target.value))}
-            className="mt-3 w-full accent-accent"
-          />
-          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground/28">
-            <span>80px</span><span>400px</span>
-          </div>
+          <input type="range" min={80} max={420} step={10} value={footerLogoWidth} onChange={(e) => setFooterLogoWidth(Number(e.target.value))} className="mt-3 w-full accent-accent" />
+          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground/28"><span>80px</span><span>420px</span></div>
         </div>
 
-        {/* Footer Booking Email */}
+        {/* Contact Emails */}
         <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-            Footer Booking Email
+          <label className="mb-3.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+            Contact Emails
           </label>
-          <Input
-            type="email"
-            value={footerBookingEmail}
-            onChange={(e) => setFooterBookingEmail(e.target.value)}
-            placeholder={artist.bookingInfo.email || "booking@example.com"}
-            className="text-[13px]"
-          />
-          <p className="mt-2 text-[11px] text-muted-foreground/40">
-            Optional. Overrides your main booking email in the footer only.
-          </p>
+          <div className="space-y-4">
+            {[
+              { label: "Booking",  value: footerBookingEmail,  set: setFooterBookingEmail,  placeholder: "booking@" + artist.handle + ".music" },
+              { label: "Contact",  value: footerContactEmail,  set: setFooterContactEmail,  placeholder: "hello@" + artist.handle + ".music"   },
+              { label: "Demos",    value: footerDemosEmail,    set: setFooterDemosEmail,    placeholder: "demos@" + artist.handle + ".music"    },
+            ].map(({ label, value, set, placeholder }) => (
+              <div key={label}>
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">{label}</label>
+                <Input type="email" value={value} onChange={(e) => set(e.target.value)} placeholder={placeholder} className="text-[13px]" />
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] text-muted-foreground/38">Each email that is set will appear in the footer as a distinct contact channel.</p>
         </div>
 
         {/* Footer Copyright */}
         <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-            Copyright Line
-          </label>
-          <Input
-            value={footerCopyright}
-            onChange={(e) => setFooterCopyright(e.target.value)}
-            placeholder={`© ${year} ${artist.artistName}`}
-            className="text-[13px]"
-          />
-          <p className="mt-2 text-[11px] text-muted-foreground/40">
-            Optional. Defaults to &ldquo;© {year} {artist.artistName}&rdquo;.
-          </p>
+          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">Copyright</label>
+          <Input value={footerCopyright} onChange={(e) => setFooterCopyright(e.target.value)} placeholder={`© ${year} ${artist.artistName}`} className="text-[13px]" />
+          <p className="mt-2 text-[11px] text-muted-foreground/40">Optional. Defaults to &ldquo;© {year} {artist.artistName}&rdquo;.</p>
         </div>
 
         {/* Toggles */}
@@ -6105,15 +6164,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           ].map(({ label, value, set }) => (
             <div key={label} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-card/30 px-5 py-3.5">
               <span className="text-[13px] text-foreground/75">{label}</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={value}
-                onClick={() => set(!value)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
-                  value ? "bg-accent" : "bg-secondary/60"
-                }`}
-              >
+              <button type="button" role="switch" aria-checked={value} onClick={() => set(!value)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${value ? "bg-accent" : "bg-secondary/60"}`}>
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${value ? "translate-x-4" : "translate-x-0.5"}`} />
               </button>
             </div>

@@ -34,10 +34,11 @@ type Props = {
   artistHandle?: string
   heroLogoUrl?: string | null
   heroIdentityMode?: string
-  // Footer-specific branding fields
   footerLogoUrl?: string | null
   footerLogoWidth?: number
   footerBookingEmail?: string | null
+  footerContactEmail?: string | null
+  footerDemosEmail?: string | null
   footerNewsletterEnabled?: boolean
   footerSocialsEnabled?: boolean
   footerCopyright?: string | null
@@ -51,8 +52,10 @@ export function ProfileClosing({
   heroLogoUrl,
   heroIdentityMode,
   footerLogoUrl,
-  footerLogoWidth = 180,
+  footerLogoWidth = 220,
   footerBookingEmail,
+  footerContactEmail,
+  footerDemosEmail,
   footerNewsletterEnabled = true,
   footerSocialsEnabled = true,
   footerCopyright,
@@ -73,16 +76,24 @@ export function ProfileClosing({
 
   const year = new Date().getFullYear()
 
-  // Resolve which logo to show: footer-specific → hero logo → artist name text
+  // Logo resolution: footer-specific → hero logo → artist name text
   const resolvedLogoUrl = footerLogoUrl?.trim() || (
     (heroIdentityMode === "logo" || heroIdentityMode === "both")
       ? heroLogoUrl?.trim() || null
       : null
   )
-  // Resolve booking email: footer-specific overrides main
-  const resolvedBookingEmail = footerBookingEmail?.trim() || bookingEmail
-  const hasBooking = !!resolvedBookingEmail
-  // Copyright line
+
+  // Contact emails — only show those that are set
+  const contactEmails: { label: string; email: string }[] = [
+    footerBookingEmail?.trim() ? { label: "Booking", email: footerBookingEmail.trim() } : null,
+    footerContactEmail?.trim() ? { label: "Contact", email: footerContactEmail.trim() } : null,
+    footerDemosEmail?.trim()   ? { label: "Demos",   email: footerDemosEmail.trim() }   : null,
+    // Fallback to main booking email if no footer emails are set
+    !footerBookingEmail?.trim() && !footerContactEmail?.trim() && !footerDemosEmail?.trim() && bookingEmail
+      ? { label: "Booking", email: bookingEmail }
+      : null,
+  ].filter(Boolean) as { label: string; email: string }[]
+
   const copyrightLine = footerCopyright?.trim() || `© ${year} ${artistName}`
 
   const iconLinks = socialLinks
@@ -102,8 +113,10 @@ export function ProfileClosing({
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
-      {/* ── Priority 1: Logo ────────────────────────────────────────── */}
-      <div className="flex flex-col items-center px-6 pt-14 text-center sm:pt-20 lg:pt-24">
+      {/* ── Identity block: logo → social → contacts ─────────────── */}
+      <div className="flex flex-col items-center px-6 pb-10 pt-14 text-center sm:pb-14 sm:pt-20 lg:pt-24">
+
+        {/* 1. Logo */}
         {resolvedLogoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -118,9 +131,9 @@ export function ProfileClosing({
           </p>
         )}
 
-        {/* Priority 2: Social icons */}
+        {/* 2. Social icons — icon-only, larger, centered */}
         {footerSocialsEnabled && iconLinks.length > 0 && (
-          <div className="mt-8 flex items-center justify-center gap-5 sm:mt-10 sm:gap-7">
+          <div className="mt-8 flex items-center justify-center gap-6 sm:mt-10 sm:gap-8">
             {iconLinks.map(({ platform, url, label, href, Icon }) => (
               <a
                 key={`foot-${platform}-${url}`}
@@ -129,7 +142,7 @@ export function ProfileClosing({
                 title={label}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/38 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/90"
+                className="text-white/35 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
               >
                 <Icon className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px]" />
               </a>
@@ -137,21 +150,34 @@ export function ProfileClosing({
           </div>
         )}
 
-        {/* Priority 3: Booking email */}
-        {hasBooking && (
-          <a
-            href={resolveSafeHref(`mailto:${resolvedBookingEmail}`) ?? "#"}
-            className="mt-7 text-[13px] font-medium text-white/38 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/72 sm:mt-8 sm:text-[14px]"
-          >
-            {resolvedBookingEmail}
-          </a>
+        {/* 3. Contact emails — premium multi-channel block */}
+        {contactEmails.length > 0 && (
+          <div className={cn(
+            "mt-7 sm:mt-9",
+            contactEmails.length > 1
+              ? "flex flex-wrap items-start justify-center gap-x-8 gap-y-5 sm:gap-x-12"
+              : "",
+          )}>
+            {contactEmails.map(({ label, email: addr }) => (
+              <div key={label} className="text-center">
+                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/22">
+                  {label}
+                </p>
+                <a
+                  href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
+                  className="mt-1 block text-[12px] font-medium text-white/42 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white/75 sm:text-[13px]"
+                >
+                  {addr}
+                </a>
+              </div>
+            ))}
+          </div>
         )}
 
-        {/* Bottom spacing before newsletter */}
-        <div className="h-10 sm:h-14" />
+        <div className="h-8 sm:h-12" />
       </div>
 
-      {/* ── Priority 4: Newsletter — compact, secondary ─────────────── */}
+      {/* ── Newsletter — secondary, compact ─────────────────────────── */}
       {footerNewsletterEnabled && (
         <div className="border-t border-white/[0.04] px-6 py-7 text-center sm:py-9">
           {status === "success" ? (
@@ -188,7 +214,7 @@ export function ProfileClosing({
                 <button
                   type="submit"
                   disabled={status === "loading"}
-                  className="h-8 shrink-0 rounded-full border border-white/[0.12] bg-transparent px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45 transition-all duration-200 hover:border-white/25 hover:text-white/70 disabled:opacity-40"
+                  className="h-8 shrink-0 rounded-full border border-white/[0.12] bg-transparent px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40 transition-all duration-200 hover:border-white/22 hover:text-white/65 disabled:opacity-40"
                 >
                   {status === "loading" ? "···" : "Join"}
                 </button>
