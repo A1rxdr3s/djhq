@@ -35,6 +35,7 @@ type Props = {
   heroLogoUrl?: string | null
   heroIdentityMode?: string
   footerLogoUrl?: string | null
+  footerLogoMode?: "auto" | "light" | "dark"
   footerLogoWidth?: number
   footerBookingEmail?: string | null
   footerContactEmail?: string | null
@@ -54,6 +55,7 @@ export function ProfileClosing({
   heroLogoUrl,
   heroIdentityMode,
   footerLogoUrl,
+  footerLogoMode = "auto",
   footerLogoWidth = 120,
   footerBookingEmail,
   footerContactEmail,
@@ -84,6 +86,10 @@ export function ProfileClosing({
     ((heroIdentityMode === "logo" || heroIdentityMode === "both") && heroLogoUrl?.trim()
       ? heroLogoUrl.trim()
       : null)
+
+  // CSS filter: only "light" mode inverts to white (useful for dark/black logos)
+  const logoFilter: string | undefined =
+    footerLogoMode === "light" ? "brightness(0) invert(1)" : undefined
 
   // Contact entries — render only those with a value
   const contacts: { label: string; email: string }[] = [
@@ -257,7 +263,7 @@ export function ProfileClosing({
                 <img
                   src={resolvedLogoUrl}
                   alt={artistName}
-                  style={{ maxWidth: `${Math.min(footerLogoWidth, 180)}px` }}
+                  style={{ maxWidth: `${Math.min(footerLogoWidth, 180)}px`, filter: logoFilter }}
                   className="max-h-[52px] object-contain opacity-82"
                 />
               </div>

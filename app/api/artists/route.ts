@@ -125,6 +125,7 @@ type SaveBookingPayload = {
 
 type SaveFooterPayload = {
   logoUrl?: string | null
+  logoMode?: string
   logoWidth?: number
   bookingEmail?: string | null
   contactEmail?: string | null
@@ -479,6 +480,7 @@ export async function PATCH(request: Request) {
         .from("artists")
         .update({
           footer_logo_url:          payload.footer.logoUrl?.trim() || null,
+          footer_logo_mode:         ['auto','light','dark'].includes(payload.footer.logoMode ?? '') ? payload.footer.logoMode! : 'auto',
           footer_logo_width:        Math.max(80, Math.min(420, payload.footer.logoWidth ?? 220)),
           footer_booking_email:     payload.footer.bookingEmail?.trim() || null,
           footer_newsletter_enabled: payload.footer.newsletterEnabled ?? true,

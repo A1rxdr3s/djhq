@@ -469,6 +469,7 @@ export interface Artist {
   accentTheme?: ArtistAccentTheme
   /** Footer branding — artist-configurable identity shown in the site footer. */
   footerLogoUrl?: string | null
+  footerLogoMode?: "auto" | "light" | "dark"
   footerLogoWidth?: number
   footerBookingEmail?: string | null
   footerNewsletterEnabled?: boolean

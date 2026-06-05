@@ -763,6 +763,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [footerLogoUrl, setFooterLogoUrl] = useState(initialArtist.footerLogoUrl ?? "")
   const [footerLogoWidth, setFooterLogoWidth] = useState(initialArtist.footerLogoWidth ?? 220)
   const [footerLogoFile, setFooterLogoFile] = useState<File | null>(null)
+  const [footerLogoMode, setFooterLogoMode] = useState<"auto" | "light" | "dark">(
+    (initialArtist.footerLogoMode ?? "auto") as "auto" | "light" | "dark"
+  )
+  const [footerLogoHasBg, setFooterLogoHasBg] = useState(false)
   const [isUploadingFooterLogo, setIsUploadingFooterLogo] = useState(false)
   const [footerBookingEmail, setFooterBookingEmail] = useState(initialArtist.footerBookingEmail ?? "")
   const [footerContactEmail, setFooterContactEmail] = useState(initialArtist.footerContactEmail ?? "")
@@ -889,6 +893,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     pressKitPublicUrl !== (artist.pressKit.publicUrl ?? "")
   const isFooterDirty =
     footerLogoUrl !== (artist.footerLogoUrl ?? "") ||
+    footerLogoMode !== (artist.footerLogoMode ?? "auto") ||
     footerLogoWidth !== (artist.footerLogoWidth ?? 180) ||
     footerBookingEmail !== (artist.footerBookingEmail ?? "") ||
     footerNewsletterEnabled !== (artist.footerNewsletterEnabled ?? true) ||
@@ -1014,6 +1019,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         },
         footer: {
           logoUrl: footerLogoUrl || null,
+          logoMode: footerLogoMode,
           logoWidth: footerLogoWidth,
           bookingEmail: footerBookingEmail || null,
           contactEmail: footerContactEmail || null,
@@ -1169,6 +1175,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         useGalleryPhotos: pressKitUseGalleryPhotos,
       },
       footerLogoUrl: footerLogoUrl || null,
+      footerLogoMode: footerLogoMode,
       footerLogoWidth,
       footerBookingEmail: footerBookingEmail || null,
       footerContactEmail: footerContactEmail || null,
@@ -6025,6 +6032,39 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const previewLogoUrl = footerLogoUrl.trim() || artist.heroLogoUrl || null
     const activeSocialLinks = PLATFORM_CONFIG.filter(({ id }) => linkUrls[id]?.trim())
 
+    // CSS filter applied to the logo based on mode
+    const logoFilter =
+      footerLogoMode === "light" ? "brightness(0) invert(1)" : undefined
+
+    // Canvas-based opaque-background detection
+    function detectLogoBg(url: string) {
+      const img = new window.Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas")
+          canvas.width  = Math.min(img.naturalWidth,  64)
+          canvas.height = Math.min(img.naturalHeight, 64)
+          const ctx = canvas.getContext("2d")
+          if (!ctx) return
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          const corners = [
+            ctx.getImageData(0, 0, 1, 1).data,
+            ctx.getImageData(canvas.width - 1, 0, 1, 1).data,
+            ctx.getImageData(0, canvas.height - 1, 1, 1).data,
+            ctx.getImageData(canvas.width - 1, canvas.height - 1, 1, 1).data,
+          ]
+          // All 4 corners: fully opaque (alpha 255) AND very dark (r<30,g<30,b<30)
+          const solidBlack = corners.every(([r, g, b, a]) => a === 255 && r < 30 && g < 30 && b < 30)
+          setFooterLogoHasBg(solidBlack)
+        } catch {
+          // CORS or canvas security error — skip detection
+        }
+      }
+      img.onerror = () => { /* ignore */ }
+      img.src = url
+    }
+
     return (
       <div className="space-y-5">
         <div>
@@ -6034,56 +6074,66 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </p>
         </div>
 
-        {/* Live preview */}
+        {/* Live preview — dark + light backgrounds */}
         <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-card/30">
           <p className="border-b border-white/[0.05] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/28">Preview</p>
-          <div className="flex flex-col items-center gap-4 px-6 py-8 text-center">
-            {previewLogoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewLogoUrl} alt={artist.artistName} style={{ maxWidth: `${footerLogoWidth}px` }} className="max-h-[80px] object-contain opacity-80" />
-            ) : (
-              <p className="text-[1.1rem] font-black tracking-[-0.02em] text-foreground/65">{artist.artistName}</p>
-            )}
-            {footerSocialsEnabled && activeSocialLinks.length > 0 && (
-              <div className="flex items-center gap-4">
-                {activeSocialLinks.slice(0, 5).map(({ id, Icon }) => (
-                  <Icon key={id} className="h-4 w-4 text-muted-foreground/30" />
-                ))}
-              </div>
-            )}
-            {(footerBookingEmail || footerContactEmail || footerDemosEmail) && (
-              <div className="flex flex-wrap items-start justify-center gap-5">
-                {footerBookingEmail && (
-                  <div className="text-center">
-                    <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-muted-foreground/22">Booking</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/38">{footerBookingEmail}</p>
-                  </div>
-                )}
-                {footerContactEmail && (
-                  <div className="text-center">
-                    <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-muted-foreground/22">Contact</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/38">{footerContactEmail}</p>
-                  </div>
-                )}
-                {footerDemosEmail && (
-                  <div className="text-center">
-                    <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-muted-foreground/22">Demos</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/38">{footerDemosEmail}</p>
-                  </div>
-                )}
-              </div>
-            )}
-            {footerNewsletterEnabled && (
-              <div className="w-full border-t border-white/[0.04] pt-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-muted-foreground/20">Stay Connected</p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground/18">Music. Shows. Guest Lists.</p>
-                <div className="mx-auto mt-3 flex max-w-[200px] gap-1.5">
-                  <div className="h-7 flex-1 rounded-full border border-white/[0.07] bg-transparent" />
-                  <div className="h-7 w-12 rounded-full border border-white/[0.10] bg-transparent" />
+          <div className="grid grid-cols-2 divide-x divide-white/[0.05]">
+            {/* Dark background preview (actual footer background) */}
+            <div className="flex flex-col items-center gap-3 bg-[#0d0d0d] px-5 py-6 text-center">
+              <p className="text-[9px] uppercase tracking-[0.20em] text-white/20">Dark</p>
+              {previewLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={previewLogoUrl}
+                  alt={artist.artistName}
+                  style={{ maxWidth: `${footerLogoWidth}px`, filter: logoFilter }}
+                  className="max-h-[56px] object-contain"
+                />
+              ) : (
+                <p className="text-[0.9rem] font-black tracking-[-0.02em] text-white/60">{artist.artistName}</p>
+              )}
+              {footerSocialsEnabled && activeSocialLinks.length > 0 && (
+                <div className="flex items-center gap-3">
+                  {activeSocialLinks.slice(0, 4).map(({ id, Icon }) => (
+                    <Icon key={id} className="h-4 w-4 text-white/35" />
+                  ))}
                 </div>
-              </div>
-            )}
-            <p className="text-[9px] text-muted-foreground/18">{copyrightLine}</p>
+              )}
+              {(footerBookingEmail || footerContactEmail || footerDemosEmail) && (
+                <div className="space-y-1 text-center">
+                  {[footerBookingEmail, footerContactEmail, footerDemosEmail].filter(Boolean).map((em, i) => (
+                    <p key={i} className="text-[10px] text-white/30">{em}</p>
+                  ))}
+                </div>
+              )}
+              {footerNewsletterEnabled && (
+                <div className="mt-1 w-full space-y-1.5 border-t border-white/[0.05] pt-3">
+                  <p className="text-[8px] uppercase tracking-[0.20em] text-white/20">Stay Connected</p>
+                  <div className="mx-auto flex max-w-[140px] gap-1">
+                    <div className="h-5 flex-1 rounded-full border border-white/[0.08]" />
+                    <div className="h-5 w-10 rounded-full border border-white/[0.10]" />
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Light background preview */}
+            <div className="flex flex-col items-center gap-3 bg-white px-5 py-6 text-center">
+              <p className="text-[9px] uppercase tracking-[0.20em] text-black/25">Light</p>
+              {previewLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={previewLogoUrl}
+                  alt={artist.artistName}
+                  style={{ maxWidth: `${footerLogoWidth}px`, filter: logoFilter }}
+                  className="max-h-[56px] object-contain"
+                />
+              ) : (
+                <p className="text-[0.9rem] font-black tracking-[-0.02em] text-black/60">{artist.artistName}</p>
+              )}
+            </div>
+          </div>
+          <div className="border-t border-white/[0.05] px-4 py-3 text-[9px] text-muted-foreground/22">
+            {copyrightLine}
           </div>
         </div>
 
@@ -6092,19 +6142,35 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <label className="mb-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
             Footer Logo
           </label>
+
+          {/* Existing logo preview */}
           {footerLogoUrl && (
             <div className="mb-4 flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={footerLogoUrl} alt="Footer logo" className="max-h-[60px] max-w-[160px] rounded-lg object-contain" />
+              <img
+                src={footerLogoUrl}
+                alt="Footer logo"
+                style={{ filter: logoFilter }}
+                className="max-h-[48px] max-w-[140px] rounded-lg object-contain"
+                onLoad={() => detectLogoBg(footerLogoUrl)}
+              />
               <button
                 type="button"
-                onClick={() => setFooterLogoUrl("")}
+                onClick={() => { setFooterLogoUrl(""); setFooterLogoHasBg(false) }}
                 className="text-[11px] text-muted-foreground/40 transition-colors hover:text-destructive/70"
               >
                 Remove
               </button>
             </div>
           )}
+
+          {/* Warnings */}
+          {footerLogoHasBg && (
+            <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2 text-[11px] text-amber-400/80">
+              This logo appears to contain a solid background. Transparent PNG or SVG is recommended.
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             <Input
               type="file"
@@ -6121,8 +6187,36 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {isUploadingFooterLogo ? "Uploading…" : "Upload"}
             </Button>
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground/40">
-            PNG, SVG or WebP. Use a monogram or symbol mark. If empty, falls back to hero logo.
+          <p className="mt-2 text-[11px] text-muted-foreground/38">
+            Transparent PNG or SVG recommended for best results. JPG with solid backgrounds will blend into the dark footer.
+          </p>
+        </div>
+
+        {/* Logo rendering mode */}
+        <div className="rounded-xl border border-white/[0.06] bg-card/30 p-5">
+          <label className="mb-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+            Logo Rendering Mode
+          </label>
+          <div className="flex overflow-hidden rounded-lg border border-white/[0.08]">
+            {(["auto", "dark", "light"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setFooterLogoMode(mode)}
+                className={`flex-1 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-100 ${
+                  footerLogoMode === mode
+                    ? "bg-accent/[0.12] text-accent"
+                    : "text-muted-foreground/40 hover:text-muted-foreground/65"
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground/38">
+            <strong className="font-semibold text-muted-foreground/55">Auto</strong> — no filter applied.{" "}
+            <strong className="font-semibold text-muted-foreground/55">Dark</strong> — original colors (logo designed for dark backgrounds).{" "}
+            <strong className="font-semibold text-muted-foreground/55">Light</strong> — inverts the logo to white, useful for black logos without transparency.
           </p>
         </div>
 
@@ -6153,7 +6247,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-muted-foreground/38">Each email that is set will appear in the footer as a distinct contact channel.</p>
         </div>
 
         {/* Footer Copyright */}

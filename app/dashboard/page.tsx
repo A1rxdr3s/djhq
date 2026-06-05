@@ -56,6 +56,7 @@ type ArtistRow = {
   artist_accent_theme: string
   is_published: boolean
   footer_logo_url: string | null
+  footer_logo_mode: string
   footer_logo_width: number
   footer_booking_email: string | null
   footer_newsletter_enabled: boolean
@@ -474,6 +475,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     accentTheme: (artistRow.artist_accent_theme || "matrix") as "matrix" | "electric_blue" | "signal_red",
     isPublished: artistRow.is_published,
     footerLogoUrl: artistRow.footer_logo_url ?? null,
+    footerLogoMode: (artistRow.footer_logo_mode || 'auto') as 'auto' | 'light' | 'dark',
     footerLogoWidth: artistRow.footer_logo_width ?? 220,
     footerBookingEmail: artistRow.footer_booking_email ?? null,
     footerNewsletterEnabled: artistRow.footer_newsletter_enabled ?? true,

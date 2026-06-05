@@ -102,6 +102,7 @@ type ArtistRow = {
   artist_accent_theme: string | null
   is_published: boolean
   footer_logo_url: string | null
+  footer_logo_mode: string | null
   footer_logo_width: number | null
   footer_booking_email: string | null
   footer_contact_email: string | null
@@ -562,6 +563,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       accentTheme: (artistRow.artist_accent_theme || "matrix") as "matrix" | "electric_blue" | "signal_red",
       isPublished: artistRow.is_published,
       footerLogoUrl: artistRow.footer_logo_url ?? null,
+      footerLogoMode: (artistRow.footer_logo_mode || 'auto') as 'auto' | 'light' | 'dark',
       footerLogoWidth: artistRow.footer_logo_width ?? 220,
       footerBookingEmail: artistRow.footer_booking_email ?? null,
       footerContactEmail: artistRow.footer_contact_email ?? null,
@@ -1514,6 +1516,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             heroLogoUrl={artist.heroLogoUrl}
             heroIdentityMode={artist.heroIdentityMode}
             footerLogoUrl={artist.footerLogoUrl}
+            footerLogoMode={artist.footerLogoMode}
             footerLogoWidth={artist.footerLogoWidth}
             footerBookingEmail={artist.footerBookingEmail}
             footerContactEmail={artist.footerContactEmail}
