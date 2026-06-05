@@ -698,7 +698,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const hasFloatingLogo = isFloatingPlacement && !!artist.heroLogoUrl?.trim() &&
     (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both")
   // Logo width formula — shared with HeroLogoElement for floating layer
-  const logoWidth = `min(80vw, ${Math.min(logoScale * 3, 720)}px)`
+  const logoWidth = `min(80vw, ${Math.min(Math.round(logoScale * 3.45), 828)}px)`
   // Floating logo transform: center the logo at its anchor point, then apply offsets
   const floatingTransform = logoPlacement === "top_center"
     ? `translate(calc(-50% + ${logoOffsetX}px), ${logoOffsetY}px)`
@@ -864,7 +864,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 the logo layer is separate (above) and only tagline+CTAs sit here. */}
             {!isFloatingPlacement ? (
               /* Editorial: logo → tagline → CTAs — three elements only */
-              <div className="absolute inset-x-0 top-[24%] z-10 flex flex-col items-center px-4 text-center sm:top-[28%]">
+              <div className="absolute inset-x-0 top-[30%] z-10 flex flex-col items-center px-4 text-center sm:top-[35%]">
 
                 {/* Logo with atmospheric depth layer */}
                 <div className="relative">
@@ -894,7 +894,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 {/* Tagline — artist statement, sole text element */}
                 {displayHeroTagline && (
                   <p
-                    className="mt-7 text-[13px] font-semibold uppercase tracking-[0.28em] text-white/88 sm:mt-8 sm:text-[14px]"
+                    className="mt-9 text-[15px] font-bold uppercase tracking-[0.22em] text-white/90 sm:mt-11 sm:text-[17px]"
                     style={{ textShadow: "0 1px 10px rgba(0,0,0,0.55)" }}
                   >
                     {displayHeroTagline}
@@ -903,7 +903,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* CTAs */}
                 {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                  <div className="mt-6 flex items-center gap-3 sm:mt-7">
+                  <div className="mt-7 flex items-center gap-3 sm:mt-9">
                     {artist.bookingInfo.email.trim() ? (
                       <div className="transition-transform duration-150 hover:-translate-y-0.5">
                         <BookingInquiryModal
