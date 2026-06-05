@@ -847,12 +847,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 they are stacked in a single centered column. For floating placement,
                 the logo layer is separate (above) and only tagline+CTAs sit here. */}
             {!isFloatingPlacement ? (
-              /* Editorial: one unified centered column — logo → eyebrow+tagline → CTAs */
+              /* Editorial: logo → tagline → CTAs — three elements only */
               <div className="absolute inset-x-0 top-[24%] z-10 flex flex-col items-center px-4 text-center sm:top-[28%]">
 
-                {/* Logo with atmospheric depth layer behind it */}
+                {/* Logo with atmospheric depth layer */}
                 <div className="relative">
-                  {/* Radial gradient that lifts the logo from the scene — barely perceptible */}
                   <div
                     className="pointer-events-none absolute -inset-8 sm:-inset-12"
                     aria-hidden
@@ -876,36 +875,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 </div>
 
-                {/* Eyebrow + Tagline — tight pair, reads as one statement */}
-                {(artist.genres.length > 0 || displayHeroTagline) && (
-                  <div className="mt-5 sm:mt-6">
-                    {/* Editorial eyebrow — genre context, very low weight */}
-                    {artist.genres.length > 0 && (
-                      <p
-                        className="text-[9px] font-medium uppercase tracking-[0.30em] text-white/32 sm:text-[10px]"
-                        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.40)" }}
-                      >
-                        {artist.genres.slice(0, 2).join(" · ")}
-                      </p>
-                    )}
-                    {/* Tagline — artist statement, directly below eyebrow */}
-                    {displayHeroTagline && (
-                      <p
-                        className={cn(
-                          "text-[13px] font-semibold uppercase tracking-[0.26em] text-white/86 sm:text-[14px]",
-                          artist.genres.length > 0 ? "mt-1.5" : "",
-                        )}
-                        style={{ textShadow: "0 1px 10px rgba(0,0,0,0.52)" }}
-                      >
-                        {displayHeroTagline}
-                      </p>
-                    )}
-                  </div>
+                {/* Tagline — artist statement, sole text element */}
+                {displayHeroTagline && (
+                  <p
+                    className="mt-7 text-[13px] font-semibold uppercase tracking-[0.28em] text-white/88 sm:mt-8 sm:text-[14px]"
+                    style={{ textShadow: "0 1px 10px rgba(0,0,0,0.55)" }}
+                  >
+                    {displayHeroTagline}
+                  </p>
                 )}
 
-                {/* CTAs — directly below tagline, slightly tighter gap */}
+                {/* CTAs */}
                 {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                  <div className="mt-4 flex items-center gap-3 sm:mt-5">
+                  <div className="mt-6 flex items-center gap-3 sm:mt-7">
                     {artist.bookingInfo.email.trim() ? (
                       <div className="transition-transform duration-150 hover:-translate-y-0.5">
                         <BookingInquiryModal
