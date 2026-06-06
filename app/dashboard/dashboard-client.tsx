@@ -1242,7 +1242,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   const isSaveDirty = isProfileDirty || isLinksDirty || isReleasesDirty || isGigsDirty || isDjSetsDirty || isVideosDirty || isBookingDirty || isPressKitDirty || isFooterDirty
 
-  async function persistArtistChanges(nextPublished: boolean, successMessage: string) {
+  async function persistArtistChanges(
+    nextPublished: boolean,
+    successMessage: string,
+    urlOverrides?: { heroLogoUrl?: string; faviconUrl?: string; footerLogoUrl?: string },
+  ) {
     const savedGenres = genres
       .split(",")
       .map((genre) => genre.trim())
@@ -1266,8 +1270,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroTagline,
           showHeaderBranding,
           browserTitle,
-          faviconUrl,
-          heroLogoUrl,
+          faviconUrl: urlOverrides?.faviconUrl ?? faviconUrl,
+          heroLogoUrl: urlOverrides?.heroLogoUrl ?? heroLogoUrl,
           heroIdentityMode,
           heroTextStyle,
           heroLogoScale,
@@ -1358,7 +1362,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           pressKitUseGalleryPhotos,
         },
         footer: {
-          logoUrl: footerLogoUrl || null,
+          logoUrl: (urlOverrides?.footerLogoUrl ?? footerLogoUrl) || null,
           logoMode: footerLogoMode,
           logoWidth: footerLogoWidth,
           bookingEmail: footerBookingEmail || null,
@@ -1387,8 +1391,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroTagline: heroTagline.trim() || undefined,
       showHeaderBranding,
       browserTitle: browserTitle.trim() || undefined,
-      faviconUrl: faviconUrl.trim() || undefined,
-      heroLogoUrl: heroLogoUrl.trim() || null,
+      faviconUrl: (urlOverrides?.faviconUrl ?? faviconUrl).trim() || undefined,
+      heroLogoUrl: (urlOverrides?.heroLogoUrl ?? heroLogoUrl).trim() || null,
       heroIdentityMode,
       heroTextStyle,
       heroLogoScale,
@@ -1514,7 +1518,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         pdfEsSize: pressKitPdfEsSize.trim() || undefined,
         useGalleryPhotos: pressKitUseGalleryPhotos,
       },
-      footerLogoUrl: footerLogoUrl || null,
+      footerLogoUrl: (urlOverrides?.footerLogoUrl ?? footerLogoUrl) || null,
       footerLogoMode: footerLogoMode,
       footerLogoWidth,
       footerBookingEmail: footerBookingEmail || null,
@@ -5766,6 +5770,69 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       } as Record<string,string>)[v] ?? "bg-muted-foreground/30"
     }
 
+    // ─── Assignment helpers ──────────────────────────────────────────────────
+    type AssignRole = "hero" | "footer" | "favicon"
+    const ASSIGN_ROLES: Array<{ role: AssignRole; label: string }> = [
+      { role: "hero",    label: "Hero Logo" },
+      { role: "footer",  label: "Footer Logo" },
+      { role: "favicon", label: "Favicon" },
+    ]
+
+    function getRoleUrl(role: AssignRole): string {
+      if (role === "hero") return heroLogoUrl
+      if (role === "footer") return footerLogoUrl
+      return faviconUrl
+    }
+
+    function getGroupRoles(variants: BrandAsset[]): string[] {
+      const roles: string[] = []
+      for (const v of variants) {
+        if (heroLogoUrl && v.previewUrl === heroLogoUrl && !roles.includes("Hero")) roles.push("Hero")
+        if (footerLogoUrl && v.previewUrl === footerLogoUrl && !roles.includes("Footer")) roles.push("Footer")
+        if (faviconUrl && v.previewUrl === faviconUrl && !roles.includes("Favicon")) roles.push("Favicon")
+      }
+      return roles
+    }
+
+    async function handleBrandAssign(previewUrl: string, role: AssignRole) {
+      const current = getRoleUrl(role)
+      const isAssigned = current === previewUrl
+      const newUrl = isAssigned ? "" : previewUrl
+
+      if (role === "hero") setHeroLogoUrl(newUrl)
+      if (role === "footer") setFooterLogoUrl(newUrl)
+      if (role === "favicon") setFaviconUrl(newUrl)
+
+      try {
+        const overrides: { heroLogoUrl?: string; faviconUrl?: string; footerLogoUrl?: string } = {}
+        if (role === "hero") overrides.heroLogoUrl = newUrl
+        if (role === "footer") overrides.footerLogoUrl = newUrl
+        if (role === "favicon") overrides.faviconUrl = newUrl
+        await persistArtistChanges(artist.isPublished, "Assignment updated.", overrides)
+      } catch {
+        if (role === "hero") setHeroLogoUrl(current)
+        if (role === "footer") setFooterLogoUrl(current)
+        if (role === "favicon") setFaviconUrl(current)
+      }
+    }
+
+    async function handleDownload(url: string, filename: string) {
+      try {
+        const resp = await fetch(url)
+        const blob = await resp.blob()
+        const blobUrl = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = blobUrl
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(blobUrl)
+      } catch {
+        window.open(url, "_blank")
+      }
+    }
+
     // ─── PDF processing pipeline ──────────────────────────────────────────────
     async function processPdfSourceFile(sourceFile: BrandSourceFile) {
       const fid = sourceFile.id
@@ -6118,7 +6185,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         (VARIANT_ORDER.indexOf(a.variant) + 1 || 99) - (VARIANT_ORDER.indexOf(b.variant) + 1 || 99),
       )
     }
-    // Letter suffix grouping
     const typeCounts: Record<string, number> = {}
     for (const name of Object.keys(byName)) typeCounts[assetGroupKey(name)] = (typeCounts[assetGroupKey(name)] ?? 0) + 1
     const typeSeq: Record<string, number> = {}
@@ -6144,25 +6210,52 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     const CHECKER = "repeating-conic-gradient(#e4e4e4 0% 25%, #f0f0f0 0% 50%) 0 0 / 12px 12px"
 
+    // Assignment summary for header
+    const assignedRoleSummary: Array<{ label: string; name: string }> = []
+    for (const { role, label } of ASSIGN_ROLES) {
+      const url = getRoleUrl(role)
+      if (!url) continue
+      const inst = allInstances.find(({ variants }) => variants.some((v) => v.previewUrl === url))
+      if (inst) assignedRoleSummary.push({ label, name: inst.displayName })
+    }
+    const unassignedCount = ASSIGN_ROLES.length - assignedRoleSummary.length
+
     // ─── Render ───────────────────────────────────────────────────────────────
     return (
       <div className="space-y-8">
 
-        {/* ── Header + summary ────────────────────────────────────────── */}
+        {/* ── Header ──────────────────────────────────────────────────── */}
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-foreground">Brand Kit</h2>
           {hasAssets ? (
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-muted-foreground/45">
-              <span>{logoCount} Logo{logoCount !== 1 ? "s" : ""}</span>
-              <span className="text-muted-foreground/15">·</span>
-              <span>{variantCount} Variant{variantCount !== 1 ? "s" : ""}</span>
-              <span className="text-muted-foreground/15">·</span>
-              <span>{brandSourceFiles.length} Source{brandSourceFiles.length !== 1 ? "s" : ""}</span>
-              {latestAssetDate && (
-                <>
-                  <span className="text-muted-foreground/15">·</span>
-                  <span>Updated {latestAssetDate}</span>
-                </>
+            <div className="mt-3 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-muted-foreground/45">
+                <span>{logoCount} Logo{logoCount !== 1 ? "s" : ""}</span>
+                <span className="text-muted-foreground/15">·</span>
+                <span>{variantCount} Variant{variantCount !== 1 ? "s" : ""}</span>
+                <span className="text-muted-foreground/15">·</span>
+                <span>{brandSourceFiles.length} Source{brandSourceFiles.length !== 1 ? "s" : ""}</span>
+                {latestAssetDate && (
+                  <>
+                    <span className="text-muted-foreground/15">·</span>
+                    <span>Updated {latestAssetDate}</span>
+                  </>
+                )}
+              </div>
+              {/* Assignment summary */}
+              {assignedRoleSummary.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
+                  {assignedRoleSummary.map(({ label, name }) => (
+                    <span key={label} className="flex items-center gap-1 text-accent/50">
+                      <Check className="h-3 w-3" />
+                      <span>{label}</span>
+                      <span className="text-muted-foreground/25">{name}</span>
+                    </span>
+                  ))}
+                  {unassignedCount > 0 && (
+                    <span className="text-muted-foreground/22">{unassignedCount} unassigned</span>
+                  )}
+                </div>
               )}
             </div>
           ) : (
@@ -6170,7 +6263,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           )}
         </div>
 
-        {/* ── Processing banner ────────────────────────────────────────── */}
+        {/* ── Processing ──────────────────────────────────────────────── */}
         {isProcessing && (
           <div className="flex items-center gap-3 rounded-xl bg-accent/[0.04] px-5 py-3.5">
             <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
@@ -6185,14 +6278,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {allInstances.map(({ displayName, cardKey, variants }) => {
                 const original = variants.find((v) => v.variant === "original") ?? variants[0]
                 if (!original) return null
+                const roles = getGroupRoles(variants)
                 return (
                   <div key={cardKey} className="overflow-hidden rounded-2xl bg-card">
-                    {/* Preview — checkerboard */}
                     <div className="flex h-36 items-center justify-center p-6" style={{ background: CHECKER }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={original.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
                     </div>
-                    {/* Info */}
                     <div className="px-4 pt-3 pb-4 space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -6201,7 +6293,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             {variants.length} variant{variants.length !== 1 ? "s" : ""}
                           </p>
                         </div>
-                        <span className="shrink-0 rounded-full bg-secondary/60 px-2.5 py-0.5 text-[10px] text-muted-foreground/30">Unassigned</span>
+                        {roles.length > 0 ? (
+                          <span className="shrink-0 flex items-center gap-1 rounded-full bg-accent/[0.06] px-2.5 py-0.5 text-[10px] text-accent/55">
+                            <Check className="h-2.5 w-2.5" />
+                            {roles.join(" · ")}
+                          </span>
+                        ) : (
+                          <span className="shrink-0 rounded-full bg-secondary/60 px-2.5 py-0.5 text-[10px] text-muted-foreground/30">Unassigned</span>
+                        )}
                       </div>
                       {/* Inline variant strip */}
                       <div className="flex gap-1.5">
@@ -6219,7 +6318,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           </div>
                         ))}
                       </div>
-                      {/* Assign CTA */}
                       <button type="button" onClick={() => setBrandDrawerAsset(cardKey)}
                         className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-secondary/50 py-2 text-[12px] font-semibold text-foreground/50 transition-colors hover:bg-secondary/80 hover:text-foreground/70">
                         Assign
@@ -6275,7 +6373,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </label>
             </div>
           )}
-          {/* Upload queue */}
           {brandUploadQueue.length > 0 && (
             <div className="rounded-xl bg-card/40 p-3">
               <div className="space-y-1">
@@ -6410,7 +6507,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 32, stiffness: 320 }}
                 className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[440px] flex-col bg-background shadow-2xl">
-                {/* Header */}
                 <div className="flex items-center justify-between px-7 py-5">
                   <div>
                     <p className="text-[16px] font-semibold tracking-tight text-foreground">{(() => {
@@ -6424,7 +6520,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <X className="h-4 w-4 text-muted-foreground/35" />
                   </button>
                 </div>
-                {/* Content */}
                 <div className="flex-1 overflow-y-auto">
                   {/* Variants */}
                   <div className="space-y-6 px-7 pb-6">
@@ -6435,10 +6530,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             <span className={`h-2.5 w-2.5 rounded-full ring-1 ring-inset ring-border/10 ${variantDot(asset.variant)}`} />
                             <span className="text-[13px] font-semibold text-foreground/65">{variantLabel(asset.variant)}</span>
                           </div>
-                          <a href={asset.previewUrl} download={`${drawerName} - ${variantLabel(asset.variant)}.png`}
+                          <button type="button"
+                            onClick={() => handleDownload(
+                              asset.previewUrl,
+                              `${(() => { const inst = allInstances.find((i) => i.cardKey === drawerName); return inst?.displayName ?? drawerName })() } - ${variantLabel(asset.variant)}.png`,
+                            )}
                             className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium text-accent/50 hover:bg-accent/[0.05] hover:text-accent/75">
                             <Download className="h-3 w-3" /> PNG
-                          </a>
+                          </button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex h-28 items-center justify-center rounded-xl p-5"
@@ -6454,17 +6553,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </div>
                     ))}
                   </div>
-                  {/* Use as */}
+                  {/* Assignments */}
                   <div className="border-t border-border/40 px-7 py-6">
                     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/25">Use as</p>
                     <div className="space-y-1.5">
-                      {(["Hero Logo","Footer Logo","Favicon","Press Kit","Social Avatar"] as const).map((label) => (
-                        <button key={label} type="button" disabled title="Coming soon"
-                          className="flex w-full cursor-not-allowed items-center justify-between rounded-xl bg-secondary/20 px-4 py-3 opacity-45">
-                          <span className="text-[13px] font-medium text-foreground/45">{label}</span>
-                          <span className="text-[10px] text-muted-foreground/18">Coming soon</span>
-                        </button>
-                      ))}
+                      {ASSIGN_ROLES.map(({ role, label }) => {
+                        const currentUrl = getRoleUrl(role)
+                        const matchedVariant = drawerInstance!.find((a) => a.previewUrl === currentUrl)
+                        const isAssigned = !!matchedVariant
+                        const defaultVariant = drawerInstance!.find((v) => v.variant === "original") ?? drawerInstance![0]
+                        return (
+                          <button key={role} type="button"
+                            onClick={() => handleBrandAssign(
+                              isAssigned ? matchedVariant!.previewUrl : defaultVariant.previewUrl,
+                              role,
+                            )}
+                            className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition-colors ${
+                              isAssigned
+                                ? "bg-accent/[0.06] ring-1 ring-accent/18"
+                                : "bg-secondary/20 hover:bg-secondary/40"
+                            }`}>
+                            <div className="flex items-center gap-2.5">
+                              <span className={`text-[13px] font-medium ${isAssigned ? "text-accent/65" : "text-foreground/45"}`}>
+                                {label}
+                              </span>
+                              {isAssigned && matchedVariant && (
+                                <span className="flex items-center gap-1 text-[10px] text-accent/35">
+                                  <span className={`h-1.5 w-1.5 rounded-full ${variantDot(matchedVariant.variant)}`} />
+                                  {variantLabel(matchedVariant.variant)}
+                                </span>
+                              )}
+                            </div>
+                            {isAssigned ? (
+                              <Check className="h-3.5 w-3.5 text-accent/50" />
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground/20">Assign</span>
+                            )}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                   {/* Details */}
