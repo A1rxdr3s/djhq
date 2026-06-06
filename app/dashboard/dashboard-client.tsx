@@ -6122,17 +6122,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         (VARIANT_ORDER.indexOf(a.variant) + 1 || 99) - (VARIANT_ORDER.indexOf(b.variant) + 1 || 99),
       )
     }
-    // Group by type
-    const typeGroups: Record<string, Array<{ name: string; variants: BrandAsset[] }>> = {}
+    // Group by type, use letter suffix (A, B) instead of numbers
+    const typeGroups: Record<string, Array<{ displayName: string; variants: BrandAsset[] }>> = {}
+    const typeCounts: Record<string, number> = {}
+    for (const name of Object.keys(byName)) { typeCounts[assetGroupKey(name)] = (typeCounts[assetGroupKey(name)] ?? 0) + 1 }
+    const typeSeq: Record<string, number> = {}
     for (const [name, variants] of Object.entries(byName)) {
       const typeKey = assetGroupKey(name)
-      ;(typeGroups[typeKey] ??= []).push({ name, variants })
+      typeSeq[typeKey] = (typeSeq[typeKey] ?? 0) + 1
+      const displayName = typeCounts[typeKey] === 1
+        ? typeKey
+        : `${typeKey} ${String.fromCharCode(64 + typeSeq[typeKey])}`
+      ;(typeGroups[typeKey] ??= []).push({ displayName, variants })
     }
-    const assetNames  = Object.keys(byName)
-    const logoCount   = assetNames.length
+    const logoCount    = Object.keys(byName).length
+    const variantCount = logoCandidates.length
     const isProcessing = brandProcessingIds.size > 0
 
-    // Drawer state
+    // Drawer
     const drawerName     = brandDrawerAsset
     const drawerInstance = drawerName ? byName[drawerName] : null
 
@@ -6140,274 +6147,261 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setBrandCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
     }
 
+    // Most recent asset date
+    const latestAssetDate = logoCandidates.length > 0
+      ? formatDate(logoCandidates.reduce((a, b) => a.createdAt > b.createdAt ? a : b).createdAt)
+      : null
+
     // ─── Render ───────────────────────────────────────────────────────────────
     return (
-      <div className="space-y-10">
+      <div className="space-y-8">
 
-        {/* ── Page header ─────────────────────────────────────────────── */}
+        {/* ── Page header + summary ───────────────────────────────────── */}
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">Brand</h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground/55">
-            {hasAssets
-              ? `${logoCount} logo${logoCount !== 1 ? "s" : ""} with Original, Black, and White transparent variants.`
-              : "Upload brand files to generate production-ready logo variants."}
-          </p>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">Brand Kit</h2>
+          {hasAssets ? (
+            <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px] text-muted-foreground/50">
+              <span>{logoCount} Logo{logoCount !== 1 ? "s" : ""}</span>
+              <span>{variantCount} Variant{variantCount !== 1 ? "s" : ""}</span>
+              <span>{brandSourceFiles.length} Source File{brandSourceFiles.length !== 1 ? "s" : ""}</span>
+              {latestAssetDate && <span>Updated {latestAssetDate}</span>}
+            </div>
+          ) : (
+            <p className="mt-1 text-[13px] text-muted-foreground/45">Upload brand files to generate production-ready logo variants.</p>
+          )}
         </div>
 
-        {/* ── Brand Kit (hero section) ────────────────────────────────── */}
-        {(hasAssets || isProcessing) && (
-          <section className="space-y-6">
-
-            {/* Active processing banner */}
-            {isProcessing && (
-              <div className="flex items-center gap-3 rounded-xl bg-accent/[0.04] px-5 py-4">
-                <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
-                <span className="text-[13px] text-accent/75">Extracting logos and generating variants…</span>
-              </div>
-            )}
-
-            {/* Logo grid — large cards */}
-            {Object.entries(typeGroups).length > 0 && (
-              <div className="space-y-8">
-                {Object.entries(typeGroups).map(([typeName, instances]) => (
-                  <div key={typeName} className="space-y-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/35">{typeName}</p>
-                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                      {instances.map(({ name: instanceName, variants }) => {
-                        const original = variants.find((v) => v.variant === "original") ?? variants[0]
-                        if (!original) return null
-                        return (
-                          <button key={instanceName} type="button"
-                            onClick={() => setBrandDrawerAsset(instanceName)}
-                            className="group relative overflow-hidden rounded-2xl bg-card text-left transition-all hover:shadow-[0_2px_20px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30">
-                            {/* Large preview */}
-                            <div className="flex h-44 items-center justify-center bg-[#0c0c0c] p-8 transition-colors group-hover:bg-[#111]">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={original.previewUrl} alt="" className="max-h-full max-w-full object-contain drop-shadow-sm" />
-                            </div>
-                            {/* Info */}
-                            <div className="px-5 py-4">
-                              <p className="text-[14px] font-semibold text-foreground/80">{instanceName}</p>
-                              <div className="mt-2 flex items-center gap-3">
-                                {/* Variant dots */}
-                                <div className="flex items-center gap-1">
-                                  {variants.map((a) => (
-                                    <span key={a.id} className={`h-2.5 w-2.5 rounded-full ring-1 ring-inset ring-border/15 ${variantDot(a.variant)}`} title={variantLabel(a.variant)} />
-                                  ))}
-                                </div>
-                                <span className="text-[11px] text-muted-foreground/35">{variants.length} variant{variants.length !== 1 ? "s" : ""}</span>
-                              </div>
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* No logos after render */}
-            {pageRenders.length > 0 && logoCandidates.length === 0 && !isProcessing && (
-              <div className="rounded-2xl bg-card/60 px-8 py-10 text-center">
-                <p className="text-[14px] font-semibold text-foreground/40">No individual logos detected</p>
-                <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground/35">
-                  The PDF was rendered successfully, but no separate logo regions could be extracted. Upload individual SVG or PNG logo files directly.
-                </p>
-              </div>
-            )}
-          </section>
+        {/* ── Active processing ───────────────────────────────────────── */}
+        {isProcessing && (
+          <div className="flex items-center gap-3 rounded-xl bg-accent/[0.04] px-5 py-4">
+            <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
+            <span className="text-[13px] text-accent/70">Extracting logos and generating variants…</span>
+          </div>
         )}
 
-        {/* ── Brand Sources ───────────────────────────────────────────── */}
-        <section className="space-y-4">
-          {/* Compact header — auto-collapse when assets exist */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-[13px] font-semibold text-foreground/70">Brand Sources</h3>
-              {!hasAssets && (
-                <p className="mt-0.5 text-[12px] text-muted-foreground/45">Upload PDFs to generate logo variants automatically.</p>
-              )}
-            </div>
-            {hasAssets && brandSourceFiles.length > 0 && (
-              <button type="button" onClick={() => toggleCollapse("sources")}
-                className="flex items-center gap-1 text-[11px] text-muted-foreground/35 hover:text-foreground/55">
-                {brandSourceFiles.length} file{brandSourceFiles.length !== 1 ? "s" : ""}
-                <ChevronDown className={`h-3 w-3 transition-transform ${brandCollapsed["sources"] ? "-rotate-90" : ""}`} />
-              </button>
-            )}
-          </div>
-
-          {/* Upload area — compact when assets exist */}
-          {(!hasAssets || !brandCollapsed["sources"]) && (
-            <>
-              <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
-                className={`flex items-center gap-5 rounded-2xl border-2 border-dashed transition-colors ${hasAssets ? "px-6 py-5" : "flex-col px-8 py-10 text-center"} ${brandDragActive ? "border-accent/50 bg-accent/[0.04]" : "border-border/60 bg-card/40 hover:border-accent/20"}`}>
-                {!hasAssets && (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary">
-                    <Sparkles className={`h-5 w-5 ${brandDragActive ? "text-accent" : "text-muted-foreground/30"}`} />
-                  </div>
+        {/* ── Brand Kit ───────────────────────────────────────────────── */}
+        {hasAssets && (
+          <section className="space-y-8">
+            {Object.entries(typeGroups).map(([typeName, instances]) => (
+              <div key={typeName} className="space-y-4">
+                {Object.keys(typeGroups).length > 1 && (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/30">{typeName}</p>
                 )}
-                <div className={hasAssets ? "flex-1" : ""}>
-                  <p className={`font-semibold text-foreground/65 ${hasAssets ? "text-[13px]" : "text-[14px]"}`}>
-                    {brandDragActive ? "Drop to upload" : hasAssets ? "Add more brand files" : "Drop brand files here"}
-                  </p>
-                  {!hasAssets && (
-                    <p className="mt-1 text-[12px] text-muted-foreground/40">Logos are detected, classified, and output as transparent PNGs</p>
-                  )}
-                </div>
-                {!hasAssets && (
-                  <div className="flex flex-wrap justify-center gap-1.5">
-                    {["PDF","AI","EPS","SVG","PNG","JPG"].map((f) => (
-                      <span key={f} className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${f==="PDF" ? "border-accent/18 bg-accent/[0.05] text-accent/55" : "border-border/60 bg-secondary/60 text-muted-foreground/30"}`}>{f}</span>
-                    ))}
-                  </div>
-                )}
-                <label className={`cursor-pointer rounded-lg border border-border bg-secondary px-5 py-2 text-[12px] font-semibold text-foreground/60 hover:text-foreground/80 ${brandUploading ? "pointer-events-none opacity-50" : ""}`}>
-                  {brandUploading ? "Uploading…" : "Choose files"}
-                  <input type="file" multiple accept=".ai,.eps,.pdf,.zip,.rar,.svg,.png,.jpg,.jpeg,.webp" onChange={onFileInput} className="sr-only" />
-                </label>
-              </div>
-
-              {/* Upload queue */}
-              {brandUploadQueue.length > 0 && (
-                <div className="rounded-xl bg-card/60 p-4">
-                  <div className="space-y-2">
-                    {brandUploadQueue.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <span className={`shrink-0 rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ${extColor(getExt(item.file.name))}`}>{extLabel(getExt(item.file.name))}</span>
-                        <span className="min-w-0 flex-1 truncate text-[12px] text-foreground/60">{item.file.name}</span>
-                        <span className="shrink-0 text-[11px]">
-                          {item.status==="uploading"&&<span className="text-accent/60">Uploading…</span>}
-                          {item.status==="done"     &&<span className="text-accent/70">✓</span>}
-                          {item.status==="error"    &&<span className="text-red-500/60" title={item.error}>Failed</span>}
-                          {item.status==="pending"  &&<span className="text-muted-foreground/25">—</span>}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {brandLoadStatus === "loading" && <p className="text-[12px] text-muted-foreground/30">Loading…</p>}
-
-              {/* Source files */}
-              {brandSourceFiles.length > 0 && (
-                <div className="space-y-1">
-                  {brandSourceFiles.map((f) => {
-                    const isPrx = brandProcessingIds.has(f.id)
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {instances.map(({ displayName, variants }) => {
+                    const original = variants.find((v) => v.variant === "original") ?? variants[0]
+                    if (!original) return null
+                    const cardName = original.name ?? displayName
                     return (
-                      <div key={f.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary/40">
-                        <span className={`shrink-0 rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ${extColor(f.fileExt)}`}>{extLabel(f.fileExt)}</span>
-                        <span className="min-w-0 flex-1 truncate text-[12px] text-foreground/65">{f.filename}</span>
-                        {isPrx && <span className="shrink-0 animate-pulse text-[10px] text-accent/55">Processing…</span>}
-                        {!isPrx && PDF_EXTS.has(f.fileExt) && (
-                          <button type="button" onClick={() => processPdfSourceFile(f)} className="shrink-0 text-[10px] text-accent/50 hover:text-accent/80">Re-process</button>
-                        )}
-                        <span className="shrink-0 text-[10px] text-muted-foreground/28">{formatBytes(f.fileSize)}</span>
-                        <button type="button" onClick={() => deleteSourceFile(f.id)} className="shrink-0 text-[10px] text-muted-foreground/18 hover:text-destructive/55">Remove</button>
+                      <div key={displayName}
+                        className="group overflow-hidden rounded-2xl bg-card transition-shadow hover:shadow-[0_2px_24px_rgba(0,0,0,0.06)]">
+                        {/* Logo preview — large dark surface */}
+                        <button type="button" onClick={() => setBrandDrawerAsset(cardName)}
+                          className="flex w-full h-52 items-center justify-center bg-[#0a0a0a] p-10 transition-colors group-hover:bg-[#0e0e0e] focus-visible:outline-none">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={original.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+                        </button>
+                        {/* Info */}
+                        <div className="px-5 pt-4 pb-5 space-y-4">
+                          <div>
+                            <p className="text-[15px] font-semibold text-foreground/85">{displayName}</p>
+                            <div className="mt-2 flex items-center gap-2.5">
+                              <div className="flex items-center gap-1">
+                                {variants.map((a) => (
+                                  <span key={a.id} className={`h-2 w-2 rounded-full ring-1 ring-inset ring-border/12 ${variantDot(a.variant)}`} />
+                                ))}
+                              </div>
+                              <span className="text-[11px] text-muted-foreground/30">{variants.length} Variant{variants.length !== 1 ? "s" : ""}</span>
+                            </div>
+                          </div>
+                          <button type="button" onClick={() => setBrandDrawerAsset(cardName)}
+                            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-secondary/60 py-2.5 text-[12px] font-semibold text-foreground/55 transition-colors hover:bg-secondary hover:text-foreground/75">
+                            View Asset
+                            <ChevronRight className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
                     )
                   })}
                 </div>
-              )}
-              {brandLoadStatus === "loaded" && brandSourceFiles.length === 0 && !hasAssets && (
-                <p className="py-4 text-center text-[13px] text-muted-foreground/30">No brand sources uploaded yet.</p>
-              )}
-            </>
-          )}
-        </section>
-
-        {/* ── Empty state ─────────────────────────────────────────────── */}
-        {brandAssets.length === 0 && !isProcessing && brandSourceFiles.length === 0 && brandLoadStatus === "loaded" && (
-          <div className="flex flex-col items-center gap-4 py-12 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/60">
-              <Sparkles className="h-7 w-7 text-muted-foreground/20" />
-            </div>
-            <div>
-              <p className="text-[15px] font-semibold text-foreground/40">No brand assets yet</p>
-              <p className="mx-auto mt-1.5 max-w-xs text-[13px] leading-relaxed text-muted-foreground/30">
-                Upload a PDF brand guide to generate production-ready logo variants automatically.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ── Processing History (collapsed) ──────────────────────────── */}
-        {Object.keys(brandProcessingLog).length > 0 && (
-          <section>
-            <button type="button" onClick={() => toggleCollapse("processing")}
-              className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-left hover:bg-secondary/30">
-              <div className="flex items-center gap-2">
-                <h3 className="text-[12px] font-semibold text-foreground/40">Processing History</h3>
-                {isProcessing && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />}
               </div>
-              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground/25 transition-transform ${brandCollapsed["processing"] !== false ? "-rotate-90" : ""}`} />
-            </button>
-            {(brandCollapsed["processing"] === false || isProcessing) && (
-              <div className="mt-2 space-y-2">
-                {Object.entries(brandProcessingLog).map(([fileId, log]) => {
-                  const file = brandSourceFiles.find((f) => f.id === fileId)
-                  const isActive = brandProcessingIds.has(fileId)
-                  return (
-                    <div key={fileId} className="rounded-xl bg-card/50 p-4">
-                      <div className="mb-2 flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[12px] font-medium text-foreground/60">{file?.filename ?? "Unknown file"}</p>
-                          {isActive  && <span className="flex items-center gap-1 text-[10px] text-accent/55"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" /> Processing</span>}
-                          {!isActive && log.done && !log.error && <span className="text-[10px] text-accent/55">Done</span>}
-                          {!isActive && log.error && <span className="text-[10px] text-red-500/55">Failed</span>}
-                        </div>
-                        <button type="button" onClick={() => setBrandProcessingLog((prev) => { const n={...prev}; delete n[fileId]; return n })} className="text-[10px] text-muted-foreground/20 hover:text-muted-foreground/45">Dismiss</button>
-                      </div>
-                      <div className="space-y-0.5">
-                        {log.steps.map((step, i) => (
-                          <div key={i} className="flex items-start gap-1.5 text-[11px]">
-                            <span className={`mt-px shrink-0 ${step.ok ? "text-accent/50" : "text-muted-foreground/25"}`}>{step.ok ? "✓" : "·"}</span>
-                            <span className={step.ok ? "text-foreground/45" : "text-muted-foreground/30"}>{step.label}</span>
-                          </div>
-                        ))}
-                        {isActive && <div className="text-[11px] text-muted-foreground/20 animate-pulse">···</div>}
-                      </div>
-                      {log.error && (
-                        <p className="mt-2 text-[11px] text-red-500/50">{log.error}</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            ))}
           </section>
         )}
 
-        {/* ── Source Pages (collapsed) ─────────────────────────────────── */}
-        {pageRenders.length > 0 && (
-          <section>
-            <button type="button" onClick={() => toggleCollapse("pages")}
-              className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-left hover:bg-secondary/30">
-              <div className="flex items-center gap-2">
-                <h3 className="text-[12px] font-semibold text-foreground/40">Source Pages</h3>
-                <span className="text-[10px] text-muted-foreground/25">{pageRenders.length}</span>
+        {/* ── No logos detected ────────────────────────────────────────── */}
+        {pageRenders.length > 0 && logoCandidates.length === 0 && !isProcessing && (
+          <div className="rounded-2xl bg-card/50 px-8 py-10 text-center">
+            <p className="text-[14px] font-semibold text-foreground/40">No individual logos detected</p>
+            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground/30">
+              The PDF was rendered but no separate logo regions could be extracted.
+              Upload individual SVG or PNG logo files directly.
+            </p>
+          </div>
+        )}
+
+        {/* ── Upload / Sources ────────────────────────────────────────── */}
+        <section className="space-y-3">
+          {hasAssets ? (
+            <>
+              {/* Compact upload row */}
+              <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+                className={`flex items-center gap-4 rounded-xl px-5 py-3.5 transition-colors ${brandDragActive ? "bg-accent/[0.04] ring-1 ring-accent/30" : "bg-secondary/30 hover:bg-secondary/50"}`}>
+                <Plus className="h-4 w-4 shrink-0 text-muted-foreground/30" />
+                <span className="flex-1 text-[13px] text-foreground/50">
+                  {brandDragActive ? "Drop to upload" : "Upload more files"}
+                </span>
+                <label className={`cursor-pointer rounded-lg bg-secondary px-4 py-1.5 text-[11px] font-semibold text-foreground/55 hover:text-foreground/75 ${brandUploading ? "pointer-events-none opacity-50" : ""}`}>
+                  {brandUploading ? "Uploading…" : "Browse"}
+                  <input type="file" multiple accept=".ai,.eps,.pdf,.zip,.rar,.svg,.png,.jpg,.jpeg,.webp" onChange={onFileInput} className="sr-only" />
+                </label>
               </div>
-              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground/25 transition-transform ${brandCollapsed["pages"] !== false ? "-rotate-90" : ""}`} />
-            </button>
-            {brandCollapsed["pages"] === false && (
-              <div className="mt-2">
-                <p className="mb-3 text-[11px] text-muted-foreground/30">Reference previews from uploaded files. These are not brand assets.</p>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {pageRenders.map((asset) => (
-                    <div key={asset.id} className="group overflow-hidden rounded-xl bg-card/40">
-                      <div className="flex h-32 items-center justify-center bg-white p-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
-                      </div>
-                      <div className="flex items-center justify-between px-3 py-2">
-                        <p className="truncate text-[10px] text-foreground/35">{asset.name ?? "Page"}</p>
-                        <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[10px] text-muted-foreground/15 opacity-0 group-hover:opacity-100 hover:text-destructive/55">Remove</button>
-                      </div>
+              {/* Source files — inline collapsed list */}
+              {brandSourceFiles.length > 0 && (
+                <div>
+                  <button type="button" onClick={() => toggleCollapse("sources")}
+                    className="flex items-center gap-1.5 rounded px-1 py-1 text-[11px] text-muted-foreground/30 hover:text-foreground/45">
+                    <ChevronDown className={`h-3 w-3 transition-transform ${brandCollapsed["sources"] ? "-rotate-90" : ""}`} />
+                    {brandSourceFiles.length} source file{brandSourceFiles.length !== 1 ? "s" : ""}
+                  </button>
+                  {!brandCollapsed["sources"] && (
+                    <div className="mt-1 space-y-0.5">
+                      {brandSourceFiles.map((f) => {
+                        const isPrx = brandProcessingIds.has(f.id)
+                        return (
+                          <div key={f.id} className="flex items-center gap-3 rounded-lg px-3 py-1.5 hover:bg-secondary/30">
+                            <span className={`shrink-0 rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-wider ${extColor(f.fileExt)}`}>{extLabel(f.fileExt)}</span>
+                            <span className="min-w-0 flex-1 truncate text-[11px] text-foreground/50">{f.filename}</span>
+                            {isPrx && <span className="shrink-0 animate-pulse text-[10px] text-accent/50">Processing…</span>}
+                            {!isPrx && PDF_EXTS.has(f.fileExt) && (
+                              <button type="button" onClick={() => processPdfSourceFile(f)} className="shrink-0 text-[10px] text-accent/45 hover:text-accent/75">Re-process</button>
+                            )}
+                            <button type="button" onClick={() => deleteSourceFile(f.id)} className="shrink-0 text-[10px] text-muted-foreground/15 hover:text-destructive/50">Remove</button>
+                          </div>
+                        )
+                      })}
                     </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Full empty-state upload */}
+              <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+                className={`flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed px-8 py-10 text-center transition-colors ${brandDragActive ? "border-accent/50 bg-accent/[0.04]" : "border-border/50 bg-card/30 hover:border-accent/18"}`}>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/50">
+                  <Sparkles className={`h-6 w-6 ${brandDragActive ? "text-accent" : "text-muted-foreground/22"}`} />
+                </div>
+                <div>
+                  <p className="text-[14px] font-semibold text-foreground/60">{brandDragActive ? "Drop to upload" : "Drop brand files here"}</p>
+                  <p className="mt-1 text-[12px] text-muted-foreground/35">Logos are detected, classified, and output as transparent PNGs</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {["PDF","AI","EPS","SVG","PNG","JPG"].map((f) => (
+                    <span key={f} className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${f==="PDF" ? "border-accent/15 bg-accent/[0.04] text-accent/45" : "border-border/50 bg-secondary/40 text-muted-foreground/25"}`}>{f}</span>
                   ))}
                 </div>
+                <label className={`cursor-pointer rounded-lg border border-border bg-secondary px-5 py-2 text-[12px] font-semibold text-foreground/55 hover:text-foreground/75 ${brandUploading ? "pointer-events-none opacity-50" : ""}`}>
+                  {brandUploading ? "Uploading…" : "Choose files"}
+                  <input type="file" multiple accept=".ai,.eps,.pdf,.zip,.rar,.svg,.png,.jpg,.jpeg,.webp" onChange={onFileInput} className="sr-only" />
+                </label>
+              </div>
+              {brandLoadStatus === "loading" && <p className="text-[12px] text-muted-foreground/25">Loading…</p>}
+              {brandLoadStatus === "loaded" && brandSourceFiles.length === 0 && (
+                <p className="py-2 text-center text-[12px] text-muted-foreground/25">No brand sources uploaded yet.</p>
+              )}
+            </>
+          )}
+
+          {/* Upload queue */}
+          {brandUploadQueue.length > 0 && (
+            <div className="rounded-xl bg-card/50 p-4">
+              <div className="space-y-1.5">
+                {brandUploadQueue.map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className={`shrink-0 rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-wider ${extColor(getExt(item.file.name))}`}>{extLabel(getExt(item.file.name))}</span>
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-foreground/55">{item.file.name}</span>
+                    <span className="shrink-0 text-[10px]">
+                      {item.status==="uploading"&&<span className="text-accent/55">Uploading…</span>}
+                      {item.status==="done"     &&<span className="text-accent/65">✓</span>}
+                      {item.status==="error"    &&<span className="text-red-500/55" title={item.error}>Failed</span>}
+                      {item.status==="pending"  &&<span className="text-muted-foreground/20">—</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ── Advanced (collapsed) ────────────────────────────────────── */}
+        {(Object.keys(brandProcessingLog).length > 0 || pageRenders.length > 0) && (
+          <section>
+            <button type="button" onClick={() => toggleCollapse("advanced")}
+              className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-left hover:bg-secondary/20">
+              <div className="flex items-center gap-2">
+                <h3 className="text-[11px] font-semibold text-foreground/30">Advanced</h3>
+                {isProcessing && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />}
+              </div>
+              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground/20 transition-transform ${brandCollapsed["advanced"] !== true ? "-rotate-90" : ""}`} />
+            </button>
+            {(brandCollapsed["advanced"] === true || isProcessing) && (
+              <div className="mt-3 space-y-6">
+                {/* Processing History */}
+                {Object.keys(brandProcessingLog).length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/25">Processing History</p>
+                    {Object.entries(brandProcessingLog).map(([fileId, log]) => {
+                      const file = brandSourceFiles.find((f) => f.id === fileId)
+                      const isActive = brandProcessingIds.has(fileId)
+                      return (
+                        <div key={fileId} className="rounded-lg bg-card/40 p-3">
+                          <div className="mb-1.5 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <p className="text-[11px] text-foreground/50">{file?.filename ?? "Unknown"}</p>
+                              {isActive  && <span className="flex items-center gap-1 text-[9px] text-accent/50"><span className="h-1 w-1 animate-pulse rounded-full bg-accent" /> Active</span>}
+                              {!isActive && log.done && !log.error && <span className="text-[9px] text-accent/45">Done</span>}
+                              {!isActive && log.error && <span className="text-[9px] text-red-500/45">Failed</span>}
+                            </div>
+                            <button type="button" onClick={() => setBrandProcessingLog((prev) => { const n={...prev}; delete n[fileId]; return n })} className="text-[9px] text-muted-foreground/15 hover:text-muted-foreground/40">Dismiss</button>
+                          </div>
+                          <div className="space-y-0.5">
+                            {log.steps.map((step, i) => (
+                              <div key={i} className="flex items-start gap-1.5 text-[10px]">
+                                <span className={`mt-px shrink-0 ${step.ok ? "text-accent/40" : "text-muted-foreground/20"}`}>{step.ok ? "✓" : "·"}</span>
+                                <span className={step.ok ? "text-foreground/35" : "text-muted-foreground/22"}>{step.label}</span>
+                              </div>
+                            ))}
+                            {isActive && <div className="text-[10px] text-muted-foreground/15 animate-pulse">···</div>}
+                          </div>
+                          {log.error && <p className="mt-1.5 text-[10px] text-red-500/40">{log.error}</p>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+                {/* Source Pages */}
+                {pageRenders.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/25">Source Pages</p>
+                    <p className="text-[10px] text-muted-foreground/22">Reference previews from uploaded files.</p>
+                    <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                      {pageRenders.map((asset) => (
+                        <div key={asset.id} className="group overflow-hidden rounded-lg bg-card/30">
+                          <div className="flex h-24 items-center justify-center bg-white p-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+                          </div>
+                          <div className="flex items-center justify-between px-2 py-1.5">
+                            <p className="truncate text-[9px] text-foreground/28">{asset.name ?? "Page"}</p>
+                            <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[9px] text-muted-foreground/12 opacity-0 group-hover:opacity-100 hover:text-destructive/45">Remove</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -6417,51 +6411,48 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <AnimatePresence>
           {drawerName && drawerInstance && (
             <>
-              {/* Backdrop */}
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 z-40 bg-black/25"
+                className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
                 onClick={() => setBrandDrawerAsset(null)} />
-              {/* Panel */}
               <motion.div
                 initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-border bg-background shadow-2xl">
+                transition={{ type: "spring", damping: 32, stiffness: 320 }}
+                className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[440px] flex-col bg-background shadow-2xl">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-border px-6 py-5">
+                <div className="flex items-center justify-between px-7 py-6">
                   <div>
-                    <p className="text-[15px] font-semibold text-foreground">{drawerName}</p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground/45">{drawerInstance.length} variant{drawerInstance.length !== 1 ? "s" : ""} available</p>
+                    <p className="text-[16px] font-semibold tracking-tight text-foreground">{drawerName}</p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground/40">{drawerInstance.length} variant{drawerInstance.length !== 1 ? "s" : ""}</p>
                   </div>
                   <button type="button" onClick={() => setBrandDrawerAsset(null)}
                     className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-secondary">
-                    <X className="h-4 w-4 text-muted-foreground/50" />
+                    <X className="h-4 w-4 text-muted-foreground/40" />
                   </button>
                 </div>
-                {/* Content */}
+                {/* Scrollable content */}
                 <div className="flex-1 overflow-y-auto">
                   {/* Variants */}
-                  <div className="space-y-6 px-6 py-6">
+                  <div className="space-y-8 px-7 pb-6">
                     {drawerInstance.map((asset) => (
                       <div key={asset.id} className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className={`h-2.5 w-2.5 rounded-full ring-1 ring-inset ring-border/15 ${variantDot(asset.variant)}`} />
-                            <span className="text-[13px] font-semibold text-foreground/75">{variantLabel(asset.variant)}</span>
+                          <div className="flex items-center gap-2.5">
+                            <span className={`h-3 w-3 rounded-full ring-1 ring-inset ring-border/12 ${variantDot(asset.variant)}`} />
+                            <span className="text-[14px] font-semibold text-foreground/70">{variantLabel(asset.variant)}</span>
                           </div>
                           <a href={asset.previewUrl} download={`${drawerName} - ${variantLabel(asset.variant)}.png`}
-                            className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium text-accent/60 hover:bg-accent/[0.06] hover:text-accent/85">
-                            <Download className="h-3 w-3" /> Download
+                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-accent/55 hover:bg-accent/[0.06] hover:text-accent/80">
+                            <Download className="h-3 w-3" /> Download PNG
                           </a>
                         </div>
-                        {/* Large preview — dark + checkerboard */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex h-28 items-center justify-center rounded-xl bg-[#0c0c0c] p-5">
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div className="flex h-32 items-center justify-center rounded-xl bg-[#0a0a0a] p-6">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
                           </div>
-                          <div className="flex h-28 items-center justify-center rounded-xl p-5"
-                            style={{ background: "repeating-conic-gradient(#dbdbdb 0% 25%, #f5f5f5 0% 50%) 0 0 / 10px 10px" }}>
+                          <div className="flex h-32 items-center justify-center rounded-xl p-6"
+                            style={{ background: "repeating-conic-gradient(#ddd 0% 25%, #f3f3f3 0% 50%) 0 0 / 10px 10px" }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
                           </div>
@@ -6469,52 +6460,52 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </div>
                     ))}
                   </div>
-                  {/* Meta */}
-                  <div className="border-t border-border px-6 py-5">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/30">Details</p>
-                    <div className="mt-3 space-y-2">
+                  {/* Use as */}
+                  <div className="border-t border-border/50 px-7 py-6">
+                    <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/28">Use as</p>
+                    <div className="space-y-2">
+                      {(["Hero","Footer","Favicon","Press Kit"] as const).map((label) => (
+                        <button key={label} type="button" disabled title="Coming soon"
+                          className="flex w-full cursor-not-allowed items-center justify-between rounded-xl bg-secondary/25 px-4 py-3.5 opacity-45">
+                          <span className="text-[13px] font-medium text-foreground/50">{label}</span>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20" />
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-[11px] text-muted-foreground/20">Assignment coming soon</p>
+                  </div>
+                  {/* Details */}
+                  <div className="border-t border-border/50 px-7 py-6">
+                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/28">Details</p>
+                    <div className="space-y-2">
                       {drawerInstance[0]?.assetType && (
                         <div className="flex items-center justify-between text-[12px]">
-                          <span className="text-muted-foreground/40">Type</span>
-                          <span className="text-foreground/60">{drawerName.replace(/\s+\d+$/, "")}</span>
+                          <span className="text-muted-foreground/35">Type</span>
+                          <span className="text-foreground/55">{(drawerName ?? "").replace(/\s+[A-Z]$/, "")}</span>
                         </div>
                       )}
                       {drawerInstance[0]?.sourcePage != null && (
                         <div className="flex items-center justify-between text-[12px]">
-                          <span className="text-muted-foreground/40">Source page</span>
-                          <span className="text-foreground/60">Page {drawerInstance[0].sourcePage}</span>
+                          <span className="text-muted-foreground/35">Source page</span>
+                          <span className="text-foreground/55">Page {drawerInstance[0].sourcePage}</span>
                         </div>
                       )}
                       {drawerInstance[0]?.sourceFileId && (() => {
                         const sf = brandSourceFiles.find((f) => f.id === drawerInstance[0].sourceFileId)
                         return sf ? (
                           <div className="flex items-center justify-between text-[12px]">
-                            <span className="text-muted-foreground/40">Source file</span>
-                            <span className="truncate max-w-[180px] text-foreground/60">{sf.filename}</span>
+                            <span className="text-muted-foreground/35">Source file</span>
+                            <span className="truncate max-w-[180px] text-foreground/55">{sf.filename}</span>
                           </div>
                         ) : null
                       })()}
                     </div>
                   </div>
-                  {/* Assignment */}
-                  <div className="border-t border-border px-6 py-5">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/30">Use as</p>
-                    <div className="mt-3 space-y-2">
-                      {(["Hero","Footer","Favicon","Press Kit"] as const).map((label) => (
-                        <button key={label} type="button" disabled title="Coming soon"
-                          className="flex w-full cursor-not-allowed items-center justify-between rounded-xl border border-border bg-secondary/30 px-4 py-3 opacity-50">
-                          <span className="text-[13px] font-medium text-foreground/50">{label}</span>
-                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/25" />
-                        </button>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-[11px] text-muted-foreground/25">Assignment coming soon</p>
-                  </div>
-                  {/* Danger zone */}
-                  <div className="border-t border-border px-6 py-5">
+                  {/* Remove */}
+                  <div className="border-t border-border/50 px-7 py-6">
                     <button type="button"
                       onClick={() => { drawerInstance.forEach((a) => deleteAsset(a.id)); setBrandDrawerAsset(null) }}
-                      className="flex items-center gap-2 text-[12px] text-destructive/45 hover:text-destructive/70">
+                      className="flex items-center gap-2 text-[12px] text-destructive/35 hover:text-destructive/60">
                       <Trash2 className="h-3.5 w-3.5" /> Remove all variants
                     </button>
                   </div>
