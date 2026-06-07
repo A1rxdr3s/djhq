@@ -266,16 +266,16 @@ function assetGroupKey(name: string | null): string {
 }
 
 /**
- * Remove white background and recolor logo pixels.
+ * Remove background and recolor logo pixels.
  *
- * Two-pass approach:
- * 1. Classify each pixel as background (near-white), edge (anti-aliased),
- *    or interior (solid logo body) using the minimum RGB channel.
- * 2. Interior pixels get full alpha 255. Edge pixels get proportional alpha
- *    for smooth anti-aliasing. Background pixels become transparent.
+ * 1. Estimate background color from the crop's border pixels.
+ * 2. Compute each pixel's Euclidean distance from that background.
+ * 3. Pixels far from background = solid interior (alpha 255).
+ *    Pixels near background = transparent.
+ *    Pixels in between = anti-aliased edge (proportional alpha).
  *
- * For black/white modes: interior = pure color at full opacity.
- * For original mode: un-premultiply to recover true hue.
+ * Black/white variants get pure monochrome fill at full opacity for the
+ * entire logo body. Only edge fringe pixels carry partial alpha.
  */
 function recolorToVariant(
   src: HTMLCanvasElement,
@@ -290,22 +290,40 @@ function recolorToVariant(
   const img = dstCtx.createImageData(w, h)
   const out = img.data
 
-  // Thresholds: pixels with minChannel below EDGE are solid interior,
-  // above BG are background, between is anti-aliased edge.
-  const EDGE_THRESH = 210
-  const BG_THRESH   = 245
+  // Estimate background color from border pixels (top/bottom rows, left/right cols)
+  let bgR = 0, bgG = 0, bgB = 0, bgCount = 0
+  for (let x = 0; x < w; x++) {
+    for (const y of [0, 1, h - 2, h - 1]) {
+      const i = (y * w + x) * 4
+      if (d[i + 3] > 200) { bgR += d[i]; bgG += d[i + 1]; bgB += d[i + 2]; bgCount++ }
+    }
+  }
+  for (let y = 2; y < h - 2; y++) {
+    for (const x of [0, 1, w - 2, w - 1]) {
+      const i = (y * w + x) * 4
+      if (d[i + 3] > 200) { bgR += d[i]; bgG += d[i + 1]; bgB += d[i + 2]; bgCount++ }
+    }
+  }
+  if (bgCount > 0) { bgR = Math.round(bgR / bgCount); bgG = Math.round(bgG / bgCount); bgB = Math.round(bgB / bgCount) }
+  else { bgR = 255; bgG = 255; bgB = 255 }
+
+  // Max possible distance from the detected background
+  const maxDist = Math.sqrt(bgR * bgR + bgG * bgG + bgB * bgB + (255 - bgR) * (255 - bgR) + (255 - bgG) * (255 - bgG) + (255 - bgB) * (255 - bgB))
+  // Thresholds as fraction of max distance — calibrated for typical PDF logo crops
+  const solidThresh = maxDist * 0.08
+  const bgThresh    = maxDist * 0.03
 
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i], g = d[i + 1], b = d[i + 2], srcA = d[i + 3]
     if (srcA < 10) { out[i + 3] = 0; continue }
-    const minC = Math.min(r, g, b)
 
-    if (minC >= BG_THRESH) {
+    const dr = r - bgR, dg = g - bgG, db = b - bgB
+    const dist = Math.sqrt(dr * dr + dg * dg + db * db)
+
+    if (dist <= bgThresh) {
+      // Background pixel
       out[i + 3] = 0
-      continue
-    }
-
-    if (minC <= EDGE_THRESH) {
+    } else if (dist >= solidThresh) {
       // Solid interior — full opacity
       if (mode === "black") {
         out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = 255
@@ -315,8 +333,8 @@ function recolorToVariant(
         out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = 255
       }
     } else {
-      // Anti-aliased edge — proportional alpha
-      const edgeAlpha = 1.0 - (minC - EDGE_THRESH) / (BG_THRESH - EDGE_THRESH)
+      // Edge — proportional alpha for anti-aliasing
+      const edgeAlpha = (dist - bgThresh) / (solidThresh - bgThresh)
       const outA = Math.round(edgeAlpha * 255)
       if (outA < 4) { out[i + 3] = 0; continue }
       if (mode === "black") {
@@ -6102,12 +6120,28 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         // ── Phase 4: Generate 3 variants + upload ──────────────────────────────
         addStep(`Generating variants for ${survivors.length} logo${survivors.length !== 1 ? "s" : ""} (${survivors.length * 3} files)…`, true)
         let logoCount = 0
+        const whiteVariantStats: Array<{ name: string; medianAlpha: number }> = []
 
         for (const c of survivors) {
           let uploaded = 0
           for (const { mode } of VARIANT_MODES) {
             try {
               const varCanvas = recolorToVariant(c.canvas, mode)
+
+              // Collect foreground alpha stats for white variants
+              if (mode === "white") {
+                const vCtx = varCanvas.getContext("2d")!
+                const vd = vCtx.getImageData(0, 0, varCanvas.width, varCanvas.height).data
+                const alphas: number[] = []
+                for (let vi = 3; vi < vd.length; vi += 4) {
+                  if (vd[vi] > 10) alphas.push(vd[vi])
+                }
+                if (alphas.length > 0) {
+                  alphas.sort((x, y) => x - y)
+                  whiteVariantStats.push({ name: c.displayName, medianAlpha: alphas[Math.floor(alphas.length / 2)] })
+                }
+              }
+
               const blob = await new Promise<Blob | null>(res => varCanvas.toBlob(res, "image/png", 0.92))
               if (!blob) continue
               const filePath = `artists/${artist.id}/generated/${Date.now()}-${c.assetType}-p${c.pageNum}-c${c.candidateIdx}-${mode}.png`
@@ -6149,6 +6183,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             addStep(`${c.displayName}: ${uploaded} variant${uploaded !== 1 ? "s" : ""} saved`, true)
           } else {
             addStep(`${c.displayName}: upload failed`, false)
+          }
+        }
+
+        // ── Phase 5: Variant consistency validation ─────────────────────────────
+        if (whiteVariantStats.length >= 2) {
+          const maxMedian = Math.max(...whiteVariantStats.map((s) => s.medianAlpha))
+          const warnings = whiteVariantStats.filter((s) => s.medianAlpha < maxMedian * 0.85)
+          if (warnings.length > 0) {
+            for (const w of warnings) {
+              addStep(`${w.name}: white variant density warning — median alpha ${w.medianAlpha} vs expected ${maxMedian}+`, false)
+            }
+          } else {
+            addStep(`Variant consistency check passed — all white variants within 15% density`, true)
           }
         }
 
