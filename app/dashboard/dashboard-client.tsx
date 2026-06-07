@@ -268,13 +268,14 @@ function assetGroupKey(name: string | null): string {
 /**
  * Remove white background and recolor logo pixels.
  *
- * Alpha is derived from luminance distance from white: a dark pixel is fully
- * opaque, a near-white pixel is nearly transparent. This removes the white
- * page background while preserving anti-aliased edges.
+ * Two-pass approach:
+ * 1. Classify each pixel as background (near-white), edge (anti-aliased),
+ *    or interior (solid logo body) using the minimum RGB channel.
+ * 2. Interior pixels get full alpha 255. Edge pixels get proportional alpha
+ *    for smooth anti-aliasing. Background pixels become transparent.
  *
- * mode "original"  — recovers true hue via un-premultiply from white.
- * mode "black"     — pure #000000 with derived alpha.
- * mode "white"     — pure #FFFFFF with derived alpha.
+ * For black/white modes: interior = pure color at full opacity.
+ * For original mode: un-premultiply to recover true hue.
  */
 function recolorToVariant(
   src: HTMLCanvasElement,
@@ -289,24 +290,42 @@ function recolorToVariant(
   const img = dstCtx.createImageData(w, h)
   const out = img.data
 
+  // Thresholds: pixels with minChannel below EDGE are solid interior,
+  // above BG are background, between is anti-aliased edge.
+  const EDGE_THRESH = 210
+  const BG_THRESH   = 245
+
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i], g = d[i + 1], b = d[i + 2], srcA = d[i + 3]
     if (srcA < 10) { out[i + 3] = 0; continue }
-    const lum = r * 0.299 + g * 0.587 + b * 0.114
-    const alpha = 1.0 - lum / 255.0
-    const outA = Math.round(Math.min(srcA, alpha * 255))
-    if (outA < 4) { out[i + 3] = 0; continue }
-    if (mode === "black") {
-      out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = outA
-    } else if (mode === "white") {
-      out[i] = 255; out[i + 1] = 255; out[i + 2] = 255; out[i + 3] = outA
+    const minC = Math.min(r, g, b)
+
+    if (minC >= BG_THRESH) {
+      out[i + 3] = 0
+      continue
+    }
+
+    if (minC <= EDGE_THRESH) {
+      // Solid interior — full opacity
+      if (mode === "black") {
+        out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = 255
+      } else if (mode === "white") {
+        out[i] = 255; out[i + 1] = 255; out[i + 2] = 255; out[i + 3] = 255
+      } else {
+        out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = 255
+      }
     } else {
-      const a = Math.max(alpha, 0.004)
-      const bg = (1 - alpha) * 255
-      out[i]     = Math.min(255, Math.max(0, Math.round((r - bg) / a)))
-      out[i + 1] = Math.min(255, Math.max(0, Math.round((g - bg) / a)))
-      out[i + 2] = Math.min(255, Math.max(0, Math.round((b - bg) / a)))
-      out[i + 3] = outA
+      // Anti-aliased edge — proportional alpha
+      const edgeAlpha = 1.0 - (minC - EDGE_THRESH) / (BG_THRESH - EDGE_THRESH)
+      const outA = Math.round(edgeAlpha * 255)
+      if (outA < 4) { out[i + 3] = 0; continue }
+      if (mode === "black") {
+        out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = outA
+      } else if (mode === "white") {
+        out[i] = 255; out[i + 1] = 255; out[i + 2] = 255; out[i + 3] = outA
+      } else {
+        out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = outA
+      }
     }
   }
 
