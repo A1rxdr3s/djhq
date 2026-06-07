@@ -239,24 +239,25 @@ function detectVariant(data: Uint8ClampedArray): string {
   return "original"
 }
 
-/** 8×8 perceptual hash → 64-element float array */
-function phash(data: Uint8ClampedArray, w: number, h: number): Float32Array {
+/** 8×8 shape hash — binary foreground mask, ignores color entirely */
+function shapeHash(data: Uint8ClampedArray, w: number, h: number): Float32Array {
   const out = new Float32Array(64)
   for (let gy = 0; gy < 8; gy++) {
     for (let gx = 0; gx < 8; gx++) {
       const px = Math.floor(gx * w / 8), py = Math.floor(gy * h / 8)
       const i = (py * w + px) * 4
-      out[gy * 8 + gx] = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3]
+      out[gy * 8 + gx] = (a > 30 && !(r > 235 && g > 235 && b > 235)) ? 1 : 0
     }
   }
   return out
 }
 
-/** Mean absolute difference between two phashes — < 18 means likely duplicates */
-function phashDist(a: Float32Array, b: Float32Array): number {
+/** Hamming distance between two shape hashes — < 8 means same silhouette */
+function shapeHashDist(a: Float32Array, b: Float32Array): number {
   let d = 0
-  for (let i = 0; i < 64; i++) d += Math.abs(a[i] - b[i])
-  return d / 64
+  for (let i = 0; i < 64; i++) if (a[i] !== b[i]) d++
+  return d
 }
 
 /** Extract base type from an asset name (strips trailing number suffix) */
@@ -265,17 +266,15 @@ function assetGroupKey(name: string | null): string {
 }
 
 /**
- * Remove white background from a normalized crop and recolor all logo pixels.
+ * Remove white background and recolor logo pixels.
  *
- * Alpha is derived from the minimum RGB channel — the most conservative and
- * cleanest estimator for logos on pure-white backgrounds. Anti-aliased edge
- * pixels receive proportional alpha so curves and thin strokes look correct.
+ * Alpha is derived from luminance distance from white: a dark pixel is fully
+ * opaque, a near-white pixel is nearly transparent. This removes the white
+ * page background while preserving anti-aliased edges.
  *
- * mode "original"  — un-premultiplies the white composite to recover true hue.
- * mode "black"     — (0, 0, 0, alpha) — dark-on-anything use.
- * mode "white"     — (255, 255, 255, alpha) — light-on-dark use.
- *
- * Returns a new canvas. The source canvas is never modified.
+ * mode "original"  — recovers true hue via un-premultiply from white.
+ * mode "black"     — pure #000000 with derived alpha.
+ * mode "white"     — pure #FFFFFF with derived alpha.
  */
 function recolorToVariant(
   src: HTMLCanvasElement,
@@ -293,18 +292,16 @@ function recolorToVariant(
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i], g = d[i + 1], b = d[i + 2], srcA = d[i + 3]
     if (srcA < 10) { out[i + 3] = 0; continue }
-    // Alpha from minimum channel: min=0 → opaque logo; min=255 → transparent bg
-    const minC = Math.min(r, g, b)
-    const alpha = 1.0 - minC / 255.0
-    const outA = Math.round(alpha * 255)
-    if (outA < 5) { out[i + 3] = 0; continue }
+    const lum = r * 0.299 + g * 0.587 + b * 0.114
+    const alpha = 1.0 - lum / 255.0
+    const outA = Math.round(Math.min(srcA, alpha * 255))
+    if (outA < 4) { out[i + 3] = 0; continue }
     if (mode === "black") {
       out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = outA
     } else if (mode === "white") {
       out[i] = 255; out[i + 1] = 255; out[i + 2] = 255; out[i + 3] = outA
     } else {
-      // Un-premultiply: pixel = alpha*logo + (1-alpha)*255 → logo = (pixel - bg) / alpha
-      const a = Math.max(alpha, 0.001)
+      const a = Math.max(alpha, 0.004)
       const bg = (1 - alpha) * 255
       out[i]     = Math.min(255, Math.max(0, Math.round((r - bg) / a)))
       out[i + 1] = Math.min(255, Math.max(0, Math.round((g - bg) / a)))
@@ -1073,6 +1070,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [brandSelectedVariants, setBrandSelectedVariants] = useState<Record<string, string>>({})
   const [brandDrawerAsset, setBrandDrawerAsset] = useState<string | null>(null)
   const [brandCollapsed, setBrandCollapsed] = useState<Record<string, boolean>>({})
+  type BrandAssignment = { id: string; assignmentType: string; brandAssetId: string; variant: string; variantUrl: string }
+  const [brandAssignments, setBrandAssignments] = useState<BrandAssignment[]>([])
   const [pkExpandedIds, setPkExpandedIds] = useState<Set<string>>(new Set())
   const [newAssetInput, setNewAssetInput] = useState("")
   const [pastGigsExpanded, setPastGigsExpanded] = useState(() => {
@@ -1178,6 +1177,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           setBrandLoadStatus("loaded")
         })
         .catch(() => setBrandLoadStatus("error"))
+      fetch(`/api/artists/brand-assignments?artistId=${encodeURIComponent(artist.id)}`)
+        .then((r) => r.json())
+        .then((data: { assignments?: Array<Record<string, unknown>> }) => {
+          setBrandAssignments((data.assignments ?? []).map((a) => ({
+            id:             a.id              as string,
+            assignmentType: a.assignment_type as string,
+            brandAssetId:   a.brand_asset_id  as string,
+            variant:        a.variant         as string,
+            variantUrl:     a.variant_url     as string,
+          })))
+        })
+        .catch(() => {})
     }, 0)
     return () => clearTimeout(tid)
   }, [activeSection, brandLoadStatus, artist.id])
@@ -5771,48 +5782,88 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
 
     // ─── Assignment helpers ──────────────────────────────────────────────────
-    type AssignRole = "hero" | "footer" | "favicon"
-    const ASSIGN_ROLES: Array<{ role: AssignRole; label: string }> = [
-      { role: "hero",    label: "Hero Logo" },
-      { role: "footer",  label: "Footer Logo" },
-      { role: "favicon", label: "Favicon" },
-    ]
+    const ASSIGN_TYPES = [
+      { type: "hero_logo",      label: "Hero Logo" },
+      { type: "footer_logo",    label: "Footer Logo" },
+      { type: "favicon",        label: "Favicon" },
+      { type: "press_kit_logo", label: "Press Kit Logo" },
+      { type: "social_avatar",  label: "Social Avatar" },
+    ] as const
 
-    function getRoleUrl(role: AssignRole): string {
-      if (role === "hero") return heroLogoUrl
-      if (role === "footer") return footerLogoUrl
-      return faviconUrl
+    function getAssignment(assignmentType: string) {
+      return brandAssignments.find((a) => a.assignmentType === assignmentType)
     }
 
-    function getGroupRoles(variants: BrandAsset[]): string[] {
-      const roles: string[] = []
-      for (const v of variants) {
-        if (heroLogoUrl && v.previewUrl === heroLogoUrl && !roles.includes("Hero")) roles.push("Hero")
-        if (footerLogoUrl && v.previewUrl === footerLogoUrl && !roles.includes("Footer")) roles.push("Footer")
-        if (faviconUrl && v.previewUrl === faviconUrl && !roles.includes("Favicon")) roles.push("Favicon")
+    function getGroupRoles(variants: BrandAsset[]): Array<{ label: string; variant: string }> {
+      const roles: Array<{ label: string; variant: string }> = []
+      const assetIds = new Set(variants.map((v) => v.id))
+      for (const a of brandAssignments) {
+        if (!assetIds.has(a.brandAssetId)) continue
+        const typeDef = ASSIGN_TYPES.find((t) => t.type === a.assignmentType)
+        if (typeDef) roles.push({ label: typeDef.label, variant: a.variant })
       }
       return roles
     }
 
-    async function handleBrandAssign(previewUrl: string, role: AssignRole) {
-      const current = getRoleUrl(role)
-      const isAssigned = current === previewUrl
-      const newUrl = isAssigned ? "" : previewUrl
+    async function handleBrandAssign(
+      asset: BrandAsset,
+      assignmentType: string,
+    ) {
+      const existing = getAssignment(assignmentType)
+      const isAssigned = existing && existing.brandAssetId === asset.id && existing.variant === asset.variant
 
-      if (role === "hero") setHeroLogoUrl(newUrl)
-      if (role === "footer") setFooterLogoUrl(newUrl)
-      if (role === "favicon") setFaviconUrl(newUrl)
-
-      try {
-        const overrides: { heroLogoUrl?: string; faviconUrl?: string; footerLogoUrl?: string } = {}
-        if (role === "hero") overrides.heroLogoUrl = newUrl
-        if (role === "footer") overrides.footerLogoUrl = newUrl
-        if (role === "favicon") overrides.faviconUrl = newUrl
-        await persistArtistChanges(artist.isPublished, "Assignment updated.", overrides)
-      } catch {
-        if (role === "hero") setHeroLogoUrl(current)
-        if (role === "footer") setFooterLogoUrl(current)
-        if (role === "favicon") setFaviconUrl(current)
+      if (isAssigned) {
+        setBrandAssignments((prev) => prev.filter((a) => a.assignmentType !== assignmentType))
+        try {
+          await fetch(`/api/artists/brand-assignments?artistId=${encodeURIComponent(artist.id)}&assignmentType=${encodeURIComponent(assignmentType)}`, { method: "DELETE" })
+        } catch {
+          setBrandAssignments((prev) => [...prev, existing])
+        }
+      } else {
+        const newAssignment: BrandAssignment = {
+          id: existing?.id ?? "",
+          assignmentType,
+          brandAssetId: asset.id,
+          variant: asset.variant,
+          variantUrl: asset.previewUrl,
+        }
+        setBrandAssignments((prev) => [
+          ...prev.filter((a) => a.assignmentType !== assignmentType),
+          newAssignment,
+        ])
+        try {
+          const resp = await fetch("/api/artists/brand-assignments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              artistId: artist.id,
+              assignmentType,
+              brandAssetId: asset.id,
+              variant: asset.variant,
+              variantUrl: asset.previewUrl,
+            }),
+          })
+          if (resp.ok) {
+            const { assignment } = await resp.json() as { assignment?: Record<string, unknown> }
+            if (assignment) {
+              setBrandAssignments((prev) => [
+                ...prev.filter((a) => a.assignmentType !== assignmentType),
+                {
+                  id:             assignment.id              as string,
+                  assignmentType: assignment.assignment_type as string,
+                  brandAssetId:   assignment.brand_asset_id  as string,
+                  variant:        assignment.variant         as string,
+                  variantUrl:     assignment.variant_url     as string,
+                },
+              ])
+            }
+          }
+        } catch {
+          setBrandAssignments((prev) => [
+            ...prev.filter((a) => a.assignmentType !== assignmentType),
+            ...(existing ? [existing] : []),
+          ])
+        }
       }
     }
 
@@ -5969,7 +6020,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   canvas: normCanvas, data: normData, w: nw, h: nh,
                   fgCount,
                   assetType: classifyAssetType(nw, nh, fgCount),
-                  hash:      phash(normData, nw, nh),
+                  hash:      shapeHash(normData, nw, nh),
                   pageNum, candidateIdx: ci + 1,
                   isDuplicate: false, displayName: "",
                 })
@@ -6001,8 +6052,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             const a = pending[i], b = pending[j]
             const ratioA = a.w / a.h, ratioB = b.w / b.h
             const ratioDiff = Math.abs(ratioA - ratioB) / Math.max(ratioA, ratioB)
-            const dist = phashDist(a.hash, b.hash)
-            if (ratioDiff < 0.08 && dist < 18) {
+            const dist = shapeHashDist(a.hash, b.hash)
+            if (ratioDiff < 0.12 && dist < 8) {
               if (a.fgCount >= b.fgCount) pending[j].isDuplicate = true
               else                         pending[i].isDuplicate = true
               dupCount++
@@ -6177,6 +6228,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const logoCandidates = brandAssets.filter((a) => a.status === "logo_candidate")
     const hasAssets      = logoCandidates.length > 0
 
+    // Group all variants by name (all 3 variants of the same logo share a name)
     const byName: Record<string, BrandAsset[]> = {}
     for (const a of logoCandidates) (byName[a.name ?? "Untitled"] ??= []).push(a)
     const VARIANT_ORDER = ["original", "black", "white"]
@@ -6185,6 +6237,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         (VARIANT_ORDER.indexOf(a.variant) + 1 || 99) - (VARIANT_ORDER.indexOf(b.variant) + 1 || 99),
       )
     }
+    // Build display instances with semantic names
     const typeCounts: Record<string, number> = {}
     for (const name of Object.keys(byName)) typeCounts[assetGroupKey(name)] = (typeCounts[assetGroupKey(name)] ?? 0) + 1
     const typeSeq: Record<string, number> = {}
@@ -6200,9 +6253,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const isProcessing = brandProcessingIds.size > 0
     const drawerName     = brandDrawerAsset
     const drawerInstance = drawerName ? byName[drawerName] : null
-    const latestAssetDate = logoCandidates.length > 0
-      ? formatDate(logoCandidates.reduce((a, b) => a.createdAt > b.createdAt ? a : b).createdAt)
-      : null
 
     function toggleCollapse(key: string) {
       setBrandCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -6210,15 +6260,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     const CHECKER = "repeating-conic-gradient(#e4e4e4 0% 25%, #f0f0f0 0% 50%) 0 0 / 12px 12px"
 
-    // Assignment summary for header
-    const assignedRoleSummary: Array<{ label: string; name: string }> = []
-    for (const { role, label } of ASSIGN_ROLES) {
-      const url = getRoleUrl(role)
-      if (!url) continue
-      const inst = allInstances.find(({ variants }) => variants.some((v) => v.previewUrl === url))
-      if (inst) assignedRoleSummary.push({ label, name: inst.displayName })
+    // Selected variant per card for preview switching
+    function getSelectedVariant(cardKey: string, variants: BrandAsset[]): BrandAsset {
+      const selId = brandSelectedVariants[cardKey]
+      return (selId ? variants.find((v) => v.id === selId) : undefined) ?? variants.find((v) => v.variant === "original") ?? variants[0]
     }
-    const unassignedCount = ASSIGN_ROLES.length - assignedRoleSummary.length
 
     // ─── Render ───────────────────────────────────────────────────────────────
     return (
@@ -6228,40 +6274,41 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-foreground">Brand Kit</h2>
           {hasAssets ? (
-            <div className="mt-3 space-y-1.5">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-muted-foreground/45">
-                <span>{logoCount} Logo{logoCount !== 1 ? "s" : ""}</span>
-                <span className="text-muted-foreground/15">·</span>
-                <span>{variantCount} Variant{variantCount !== 1 ? "s" : ""}</span>
-                <span className="text-muted-foreground/15">·</span>
-                <span>{brandSourceFiles.length} Source{brandSourceFiles.length !== 1 ? "s" : ""}</span>
-                {latestAssetDate && (
-                  <>
-                    <span className="text-muted-foreground/15">·</span>
-                    <span>Updated {latestAssetDate}</span>
-                  </>
-                )}
-              </div>
-              {/* Assignment summary */}
-              {assignedRoleSummary.length > 0 && (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
-                  {assignedRoleSummary.map(({ label, name }) => (
-                    <span key={label} className="flex items-center gap-1 text-accent/50">
-                      <Check className="h-3 w-3" />
-                      <span>{label}</span>
-                      <span className="text-muted-foreground/25">{name}</span>
-                    </span>
-                  ))}
-                  {unassignedCount > 0 && (
-                    <span className="text-muted-foreground/22">{unassignedCount} unassigned</span>
-                  )}
-                </div>
-              )}
-            </div>
+            <p className="mt-1.5 text-[12px] text-muted-foreground/40">
+              {logoCount} logo{logoCount !== 1 ? "s" : ""} · {variantCount} variant{variantCount !== 1 ? "s" : ""} · {brandSourceFiles.length} source{brandSourceFiles.length !== 1 ? "s" : ""}
+            </p>
           ) : (
             <p className="mt-1.5 text-[13px] text-muted-foreground/40">Upload brand files to generate production-ready logo variants.</p>
           )}
         </div>
+
+        {/* ── Assignment overview ──────────────────────────────────────── */}
+        {hasAssets && (
+          <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {ASSIGN_TYPES.map(({ type, label }) => {
+              const a = getAssignment(type)
+              const shortLabel = label.replace(" Logo", "")
+              if (!a) return (
+                <div key={type} className="flex flex-col items-center gap-2 rounded-xl bg-secondary/20 px-3 py-4 text-center">
+                  <div className="flex h-10 w-14 items-center justify-center rounded-lg bg-secondary/40">
+                    <span className="text-[10px] text-muted-foreground/18">—</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground/25">{shortLabel}</span>
+                </div>
+              )
+              return (
+                <div key={type} className="flex flex-col items-center gap-2 rounded-xl bg-accent/[0.04] ring-1 ring-accent/10 px-3 py-4 text-center">
+                  <div className="flex h-10 w-14 items-center justify-center rounded-lg p-1"
+                    style={{ background: a.variant === "white" ? "#0e0e0e" : a.variant === "black" ? "#f5f5f5" : CHECKER }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={a.variantUrl} alt="" className="max-h-full max-w-full object-contain" />
+                  </div>
+                  <span className="text-[10px] text-accent/50">{shortLabel}</span>
+                </div>
+              )
+            })}
+          </section>
+        )}
 
         {/* ── Processing ──────────────────────────────────────────────── */}
         {isProcessing && (
@@ -6274,54 +6321,72 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* ── Logo cards ──────────────────────────────────────────────── */}
         {hasAssets && (
           <section>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2">
               {allInstances.map(({ displayName, cardKey, variants }) => {
-                const original = variants.find((v) => v.variant === "original") ?? variants[0]
-                if (!original) return null
+                const selected = getSelectedVariant(cardKey, variants)
                 const roles = getGroupRoles(variants)
                 return (
                   <div key={cardKey} className="overflow-hidden rounded-2xl bg-card">
-                    <div className="flex h-36 items-center justify-center p-6" style={{ background: CHECKER }}>
+                    {/* Preview */}
+                    <div className="flex h-40 items-center justify-center p-8"
+                      style={{ background: selected.variant === "white" ? "#0e0e0e" : CHECKER }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={original.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+                      <img src={selected.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
                     </div>
-                    <div className="px-4 pt-3 pb-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-[14px] font-semibold text-foreground/80">{displayName}</p>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground/30">
-                            {variants.length} variant{variants.length !== 1 ? "s" : ""}
-                          </p>
+                    <div className="px-5 pt-4 pb-5 space-y-4">
+                      {/* Name + assignments */}
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[15px] font-semibold text-foreground/80">{displayName}</p>
+                          <button type="button" onClick={() => setBrandDrawerAsset(cardKey)}
+                            className="shrink-0 text-[10px] text-muted-foreground/25 hover:text-foreground/50">Details</button>
                         </div>
-                        {roles.length > 0 ? (
-                          <span className="shrink-0 flex items-center gap-1 rounded-full bg-accent/[0.06] px-2.5 py-0.5 text-[10px] text-accent/55">
-                            <Check className="h-2.5 w-2.5" />
-                            {roles.join(" · ")}
-                          </span>
-                        ) : (
-                          <span className="shrink-0 rounded-full bg-secondary/60 px-2.5 py-0.5 text-[10px] text-muted-foreground/30">Unassigned</span>
+                        {roles.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {roles.map((r, ri) => (
+                              <span key={ri} className="flex items-center gap-1 text-[10px] text-accent/50">
+                                <Check className="h-2.5 w-2.5" />
+                                {r.label.replace(" Logo", "")}
+                                <span className="text-muted-foreground/20">({variantLabel(r.variant)})</span>
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
-                      {/* Inline variant strip */}
-                      <div className="flex gap-1.5">
-                        {variants.map((a) => (
-                          <div key={a.id} className="flex-1 overflow-hidden rounded-lg" title={variantLabel(a.variant)}>
-                            <div className="flex h-12 items-center justify-center p-1.5"
-                              style={{ background: a.variant === "white" ? "#0e0e0e" : CHECKER }}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={a.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
-                            </div>
-                            <div className="flex items-center justify-center gap-1 py-1 bg-secondary/30">
-                              <span className={`h-1.5 w-1.5 rounded-full ${variantDot(a.variant)}`} />
-                              <span className="text-[9px] text-muted-foreground/30">{variantLabel(a.variant)}</span>
-                            </div>
-                          </div>
+                      {/* Variant selector */}
+                      <div className="flex items-center gap-0.5 rounded-lg bg-secondary/30 p-0.5">
+                        {variants.map((v) => (
+                          <button key={v.id} type="button"
+                            onClick={() => setBrandSelectedVariants((prev) => ({ ...prev, [cardKey]: v.id }))}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[11px] font-medium transition-all ${
+                              v.id === selected.id
+                                ? "bg-background text-foreground/70 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                                : "text-muted-foreground/30 hover:text-foreground/50"
+                            }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${variantDot(v.variant)}`} />
+                            {variantLabel(v.variant)}
+                          </button>
                         ))}
                       </div>
-                      <button type="button" onClick={() => setBrandDrawerAsset(cardKey)}
-                        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-secondary/50 py-2 text-[12px] font-semibold text-foreground/50 transition-colors hover:bg-secondary/80 hover:text-foreground/70">
-                        Assign
-                      </button>
+                      {/* Direct assignment buttons */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {ASSIGN_TYPES.map(({ type, label }) => {
+                          const existing = getAssignment(type)
+                          const isThis = existing?.brandAssetId === selected.id && existing?.variant === selected.variant
+                          return (
+                            <button key={type} type="button"
+                              onClick={() => handleBrandAssign(selected, type)}
+                              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-medium transition-colors ${
+                                isThis
+                                  ? "bg-accent/[0.08] text-accent/60 ring-1 ring-accent/15"
+                                  : "bg-secondary/40 text-muted-foreground/30 hover:bg-secondary/70 hover:text-foreground/50"
+                              }`}>
+                              {isThis && <Check className="h-2.5 w-2.5" />}
+                              {label.replace(" Logo", "")}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 )
@@ -6415,7 +6480,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <span className="min-w-0 flex-1 truncate text-[11px] text-foreground/45">{f.filename}</span>
                       {isPrx && <span className="shrink-0 animate-pulse text-[10px] text-accent/45">Processing…</span>}
                       {!isPrx && PDF_EXTS.has(f.fileExt) && (
-                        <button type="button" onClick={() => processPdfSourceFile(f)} className="shrink-0 text-[10px] text-accent/40 hover:text-accent/70">Re-process</button>
+                        <button type="button" onClick={() => processPdfSourceFile(f)} className="shrink-0 text-[10px] text-accent/40 hover:text-accent/70">Regenerate variants</button>
                       )}
                       <button type="button" onClick={() => deleteSourceFile(f.id)} className="shrink-0 text-[10px] text-muted-foreground/14 hover:text-destructive/45">Remove</button>
                     </div>
@@ -6521,10 +6586,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  {/* Variants */}
-                  <div className="space-y-6 px-7 pb-6">
+                  <div className="space-y-8 px-7 pb-6">
                     {drawerInstance.map((asset) => (
-                      <div key={asset.id} className="space-y-2.5">
+                      <div key={asset.id} className="space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className={`h-2.5 w-2.5 rounded-full ring-1 ring-inset ring-border/10 ${variantDot(asset.variant)}`} />
@@ -6533,7 +6597,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           <button type="button"
                             onClick={() => handleDownload(
                               asset.previewUrl,
-                              `${(() => { const inst = allInstances.find((i) => i.cardKey === drawerName); return inst?.displayName ?? drawerName })() } - ${variantLabel(asset.variant)}.png`,
+                              `${(() => { const inst = allInstances.find((i) => i.cardKey === drawerName); return inst?.displayName ?? drawerName })()}-${variantLabel(asset.variant)}.png`,
                             )}
                             className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium text-accent/50 hover:bg-accent/[0.05] hover:text-accent/75">
                             <Download className="h-3 w-3" /> PNG
@@ -6541,69 +6605,53 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex h-28 items-center justify-center rounded-xl p-5"
-                            style={{ background: CHECKER }}>
+                            style={{ background: asset.variant === "white" ? "#0a0a0a" : CHECKER }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
                           </div>
-                          <div className="flex h-28 items-center justify-center rounded-xl bg-[#0a0a0a] p-5">
+                          <div className="flex h-28 items-center justify-center rounded-xl p-5"
+                            style={{ background: asset.variant === "white" ? CHECKER : "#0a0a0a" }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={asset.previewUrl} alt="" className="max-h-full max-w-full object-contain" />
                           </div>
+                        </div>
+                        <div className="space-y-1">
+                          {ASSIGN_TYPES.map(({ type, label }) => {
+                            const existing = getAssignment(type)
+                            const isThis = existing?.brandAssetId === asset.id && existing?.variant === asset.variant
+                            const isOtherVariant = existing?.brandAssetId === asset.id && existing?.variant !== asset.variant
+                            return (
+                              <button key={type} type="button"
+                                onClick={() => handleBrandAssign(asset, type)}
+                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-[12px] transition-colors ${
+                                  isThis
+                                    ? "bg-accent/[0.07] ring-1 ring-accent/20"
+                                    : "hover:bg-secondary/40"
+                                }`}>
+                                <span className={isThis ? "font-medium text-accent/65" : "text-foreground/40"}>{label}</span>
+                                {isThis ? (
+                                  <span className="flex items-center gap-1 text-accent/55">
+                                    Assigned <Check className="h-3 w-3" />
+                                  </span>
+                                ) : isOtherVariant ? (
+                                  <span className="text-[10px] text-muted-foreground/25">
+                                    {variantLabel(existing!.variant)} assigned
+                                  </span>
+                                ) : existing ? (
+                                  <span className="text-[10px] text-muted-foreground/20">Replace</span>
+                                ) : (
+                                  <span className="text-[10px] text-muted-foreground/20">Assign</span>
+                                )}
+                              </button>
+                            )
+                          })}
                         </div>
                       </div>
                     ))}
                   </div>
-                  {/* Assignments */}
-                  <div className="border-t border-border/40 px-7 py-6">
-                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/25">Use as</p>
-                    <div className="space-y-1.5">
-                      {ASSIGN_ROLES.map(({ role, label }) => {
-                        const currentUrl = getRoleUrl(role)
-                        const matchedVariant = drawerInstance!.find((a) => a.previewUrl === currentUrl)
-                        const isAssigned = !!matchedVariant
-                        const defaultVariant = drawerInstance!.find((v) => v.variant === "original") ?? drawerInstance![0]
-                        return (
-                          <button key={role} type="button"
-                            onClick={() => handleBrandAssign(
-                              isAssigned ? matchedVariant!.previewUrl : defaultVariant.previewUrl,
-                              role,
-                            )}
-                            className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition-colors ${
-                              isAssigned
-                                ? "bg-accent/[0.06] ring-1 ring-accent/18"
-                                : "bg-secondary/20 hover:bg-secondary/40"
-                            }`}>
-                            <div className="flex items-center gap-2.5">
-                              <span className={`text-[13px] font-medium ${isAssigned ? "text-accent/65" : "text-foreground/45"}`}>
-                                {label}
-                              </span>
-                              {isAssigned && matchedVariant && (
-                                <span className="flex items-center gap-1 text-[10px] text-accent/35">
-                                  <span className={`h-1.5 w-1.5 rounded-full ${variantDot(matchedVariant.variant)}`} />
-                                  {variantLabel(matchedVariant.variant)}
-                                </span>
-                              )}
-                            </div>
-                            {isAssigned ? (
-                              <Check className="h-3.5 w-3.5 text-accent/50" />
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground/20">Assign</span>
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  {/* Details */}
                   <div className="border-t border-border/40 px-7 py-5">
                     <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/22">Details</p>
                     <div className="space-y-1.5">
-                      {drawerInstance[0]?.assetType && (
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-muted-foreground/30">Type</span>
-                          <span className="text-foreground/45">{(drawerName ?? "").replace(/\s+[A-Z]$/, "")}</span>
-                        </div>
-                      )}
                       {drawerInstance[0]?.sourcePage != null && (
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="text-muted-foreground/30">Source page</span>
@@ -6621,7 +6669,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       })()}
                     </div>
                   </div>
-                  {/* Remove */}
                   <div className="border-t border-border/40 px-7 py-5">
                     <button type="button"
                       onClick={() => { drawerInstance.forEach((a) => deleteAsset(a.id)); setBrandDrawerAsset(null) }}

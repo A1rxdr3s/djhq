@@ -340,6 +340,22 @@ create table if not exists public.brand_assets (
 alter table public.brand_assets add column if not exists variant     text    not null default 'original';
 alter table public.brand_assets add column if not exists source_page integer null;
 
+-- Brand asset assignments (migration 044)
+create table if not exists public.brand_asset_assignments (
+  id              uuid        primary key default gen_random_uuid(),
+  artist_id       uuid        not null references public.artists(id) on delete cascade,
+  assignment_type text        not null,
+  brand_asset_id  uuid        not null references public.brand_assets(id) on delete cascade,
+  variant         text        not null default 'original',
+  variant_url     text        not null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  constraint brand_asset_assignments_type_check check (
+    assignment_type in ('hero_logo','footer_logo','favicon','press_kit_logo','social_avatar')
+  ),
+  constraint brand_asset_assignments_unique unique (artist_id, assignment_type)
+);
+
 -- ── Triggers ─────────────────────────────────────────────────────────────────
 
 create or replace trigger set_artists_updated_at
@@ -382,6 +398,10 @@ create or replace trigger set_brand_assets_updated_at
   before update on public.brand_assets
   for each row execute function public.set_updated_at();
 
+create or replace trigger set_brand_asset_assignments_updated_at
+  before update on public.brand_asset_assignments
+  for each row execute function public.set_updated_at();
+
 -- ── Indexes ──────────────────────────────────────────────────────────────────
 
 create index if not exists artists_handle_idx          on public.artists (handle);
@@ -397,6 +417,7 @@ create index if not exists venues_name_idx             on public.venues (name);
 create index if not exists brand_source_files_artist_idx on public.brand_source_files (artist_id);
 create index if not exists brand_assets_artist_idx     on public.brand_assets (artist_id);
 create index if not exists brand_assets_source_idx     on public.brand_assets (source_file_id);
+create index if not exists brand_asset_assignments_artist_idx on public.brand_asset_assignments (artist_id);
 
 -- ── Row Level Security ───────────────────────────────────────────────────────
 -- Enable RLS on all tables
@@ -405,6 +426,7 @@ alter table public.artists             enable row level security;
 alter table public.social_links        enable row level security;
 alter table public.brand_source_files  enable row level security;
 alter table public.brand_assets        enable row level security;
+alter table public.brand_asset_assignments enable row level security;
 alter table public.releases      enable row level security;
 alter table public.gigs          enable row level security;
 alter table public.dj_sets       enable row level security;
@@ -504,6 +526,16 @@ drop policy if exists "brand_assets_owner_all" on public.brand_assets;
 create policy "brand_assets_owner_all"
   on public.brand_assets for all
   using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
+
+drop policy if exists "brand_asset_assignments_owner_all" on public.brand_asset_assignments;
+create policy "brand_asset_assignments_owner_all"
+  on public.brand_asset_assignments for all
+  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
+
+drop policy if exists "brand_asset_assignments_public_read" on public.brand_asset_assignments;
+create policy "brand_asset_assignments_public_read"
+  on public.brand_asset_assignments for select
+  using (exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
 
 -- ── Storage Buckets ──────────────────────────────────────────────────────────
 -- Buckets expected:
