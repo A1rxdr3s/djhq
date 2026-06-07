@@ -5960,9 +5960,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         const totalPages = Math.min(pdf.numPages, MAX_PAGES)
         addStep(`Opened PDF — ${pdf.numPages} page${pdf.numPages === 1 ? "" : "s"} detected`, true)
 
-        // ── Phase 1: Render pages + collect candidates ─────────────────────────
+        // ── Phase 1: Render pages at detection scale + collect candidates ──────
+        const DETECT_SCALE = 1.8
+        const HIRES_SCALE  = 4.5
         type PendingCandidate = {
-          canvas:       HTMLCanvasElement   // normalized crop (white bg)
+          canvas:       HTMLCanvasElement
           data:         Uint8ClampedArray
           w:            number
           h:            number
@@ -5973,6 +5975,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           candidateIdx: number
           isDuplicate:  boolean
           displayName:  string
+          // Proportional bounds relative to page (0–1) for hi-res re-crop
+          relX: number; relY: number; relW: number; relH: number
         }
         const pending: PendingCandidate[] = []
         let renderedPages = 0
@@ -5981,7 +5985,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           try {
             const page = await pdf.getPage(pageNum)
             const [, , w, h] = page.view
-            const scale = Math.min(1.8, 1400 / Math.max(w, h))
+            const scale = Math.min(DETECT_SCALE, 1400 / Math.max(w, h))
             const viewport = page.getViewport({ scale })
             const canvas = document.createElement("canvas")
             canvas.width  = Math.floor(viewport.width)
@@ -6029,7 +6033,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               }
             }
 
-            // Detect logo regions + normalize + analyze
+            // Detect logo regions at detection scale
             addStep(`Page ${pageNum}: scanning for logo regions…`, true)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
             const bounds = detectCandidateBounds(imageData.data, canvas.width, canvas.height)
@@ -6037,9 +6041,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             if (bounds.length === 0) {
               addStep(`Page ${pageNum}: no distinct logo regions found`, false)
             } else {
-              addStep(`Page ${pageNum}: ${bounds.length} region${bounds.length !== 1 ? "s" : ""} detected — normalizing…`, true)
+              addStep(`Page ${pageNum}: ${bounds.length} region${bounds.length !== 1 ? "s" : ""} detected — analyzing…`, true)
               for (let ci = 0; ci < bounds.length; ci++) {
                 const b = bounds[ci]
+                // Store proportional bounds for hi-res re-crop
+                const relX = b.x / canvas.width, relY = b.y / canvas.height
+                const relW = b.w / canvas.width, relH = b.h / canvas.height
+
                 const cropCanvas = document.createElement("canvas")
                 cropCanvas.width = b.w; cropCanvas.height = b.h
                 const cropCtx = cropCanvas.getContext("2d")!
@@ -6060,6 +6068,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   hash:      shapeHash(normData, nw, nh),
                   pageNum, candidateIdx: ci + 1,
                   isDuplicate: false, displayName: "",
+                  relX, relY, relW, relH,
                 })
               }
             }
@@ -6117,88 +6126,130 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           c.displayName = typeCount[t] === 1 ? t : `${t} ${typeIdx[t]}`
         }
 
-        // ── Phase 4: Generate 3 variants + upload ──────────────────────────────
-        addStep(`Generating variants for ${survivors.length} logo${survivors.length !== 1 ? "s" : ""} (${survivors.length * 3} files)…`, true)
+        // ── Phase 4: Hi-res re-render + generate variants ──────────────────────
+        addStep(`Re-rendering ${survivors.length} logo${survivors.length !== 1 ? "s" : ""} at production resolution…`, true)
         let logoCount = 0
         type VariantQA = { name: string; mode: string; medianAlpha: number; rgbPure: boolean }
         const variantQA: VariantQA[] = []
 
-        for (const c of survivors) {
-          let uploaded = 0
-          for (const { mode } of VARIANT_MODES) {
-            try {
-              const varCanvas = recolorToVariant(c.canvas, mode)
+        // Group survivors by page to avoid re-rendering the same page multiple times
+        const byPage: Record<number, typeof survivors> = {}
+        for (const c of survivors) (byPage[c.pageNum] ??= []).push(c)
 
-              // Pixel-level validation for white and black variants
-              if (mode === "white" || mode === "black") {
-                const vCtx = varCanvas.getContext("2d")!
-                const vd = vCtx.getImageData(0, 0, varCanvas.width, varCanvas.height).data
-                const bodyAlphas: number[] = []
-                let pureCount = 0, bodyCount = 0
-                const tR = mode === "white" ? 255 : 0
-                const tG = mode === "white" ? 255 : 0
-                const tB = mode === "white" ? 255 : 0
-                for (let vi = 0; vi < vd.length; vi += 4) {
-                  const a = vd[vi + 3]
-                  if (a < 20) continue
-                  if (a >= 200) {
-                    bodyCount++
-                    bodyAlphas.push(a)
-                    if (vd[vi] === tR && vd[vi + 1] === tG && vd[vi + 2] === tB) pureCount++
+        for (const [pageNumStr, pageSurvivors] of Object.entries(byPage)) {
+          const pn = Number(pageNumStr)
+          let hiresCanvas: HTMLCanvasElement | null = null
+          try {
+            const page = await pdf.getPage(pn)
+            const [, , w, h] = page.view
+            const hiScale = Math.min(HIRES_SCALE, 6000 / Math.max(w, h))
+            const hiViewport = page.getViewport({ scale: hiScale })
+            hiresCanvas = document.createElement("canvas")
+            hiresCanvas.width  = Math.floor(hiViewport.width)
+            hiresCanvas.height = Math.floor(hiViewport.height)
+            const hiCtx = hiresCanvas.getContext("2d")!
+            hiCtx.fillStyle = "#ffffff"
+            hiCtx.fillRect(0, 0, hiresCanvas.width, hiresCanvas.height)
+            await page.render({ canvas: hiresCanvas, canvasContext: hiCtx, viewport: hiViewport }).promise
+            addStep(`Page ${pn}: re-rendered at ${hiresCanvas.width}×${hiresCanvas.height}`, true)
+          } catch {
+            addStep(`Page ${pn}: hi-res render failed — using detection-scale crops`, false)
+          }
+
+          for (const c of pageSurvivors) {
+            // Get hi-res crop using proportional bounds
+            let prodCanvas: HTMLCanvasElement
+            if (hiresCanvas) {
+              const hx = Math.round(c.relX * hiresCanvas.width)
+              const hy = Math.round(c.relY * hiresCanvas.height)
+              const hw = Math.round(c.relW * hiresCanvas.width)
+              const hh = Math.round(c.relH * hiresCanvas.height)
+              const hiCrop = document.createElement("canvas")
+              hiCrop.width = hw; hiCrop.height = hh
+              const hiCropCtx = hiCrop.getContext("2d")!
+              hiCropCtx.drawImage(hiresCanvas, hx, hy, hw, hh, 0, 0, hw, hh)
+              prodCanvas = normalizeCrop(hiCrop)
+            } else {
+              prodCanvas = c.canvas
+            }
+
+            let uploaded = 0
+            for (const { mode } of VARIANT_MODES) {
+              try {
+                const varCanvas = recolorToVariant(prodCanvas, mode)
+
+                // Pixel-level validation for white and black
+                if (mode === "white" || mode === "black") {
+                  const vCtx = varCanvas.getContext("2d")!
+                  const vd = vCtx.getImageData(0, 0, varCanvas.width, varCanvas.height).data
+                  const bodyAlphas: number[] = []
+                  let pureCount = 0, bodyCount = 0
+                  const tR = mode === "white" ? 255 : 0
+                  const tG = mode === "white" ? 255 : 0
+                  const tB = mode === "white" ? 255 : 0
+                  for (let vi = 0; vi < vd.length; vi += 4) {
+                    const a = vd[vi + 3]
+                    if (a < 20) continue
+                    if (a >= 200) {
+                      bodyCount++
+                      bodyAlphas.push(a)
+                      if (vd[vi] === tR && vd[vi + 1] === tG && vd[vi + 2] === tB) pureCount++
+                    }
+                  }
+                  if (bodyAlphas.length > 0) {
+                    bodyAlphas.sort((x, y) => x - y)
+                    variantQA.push({
+                      name: c.displayName,
+                      mode,
+                      medianAlpha: bodyAlphas[Math.floor(bodyAlphas.length / 2)],
+                      rgbPure: bodyCount > 0 && pureCount / bodyCount >= 0.95,
+                    })
                   }
                 }
-                if (bodyAlphas.length > 0) {
-                  bodyAlphas.sort((x, y) => x - y)
-                  variantQA.push({
+
+                const blob = await new Promise<Blob | null>(res => varCanvas.toBlob(res, "image/png", 0.95))
+                if (!blob) continue
+                const filePath = `artists/${artist.id}/generated/${Date.now()}-${c.assetType}-p${c.pageNum}-c${c.candidateIdx}-${mode}.png`
+                const { error: upErr } = await client.storage.from("brand-sources")
+                  .upload(filePath, blob, { contentType: "image/png", upsert: true })
+                if (upErr) continue
+                const { data: fUrl } = client.storage.from("brand-sources").getPublicUrl(filePath)
+                const resp = await fetch("/api/artists/brand-create-asset", {
+                  method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    artistId: artist.id, sourceFileId: fid,
                     name: c.displayName,
-                    mode,
-                    medianAlpha: bodyAlphas[Math.floor(bodyAlphas.length / 2)],
-                    rgbPure: bodyCount > 0 && pureCount / bodyCount >= 0.95,
+                    assetType: c.assetType,
+                    previewUrl: fUrl.publicUrl,
+                    status: "logo_candidate",
+                    hasSolidBg: false,
+                    variant: mode,
+                    sourcePage: c.pageNum,
+                  }),
+                })
+                if (!resp.ok) continue
+                const { asset } = await resp.json() as { asset?: Record<string,unknown> }
+                if (asset) {
+                  uploaded++
+                  newAssets.push({
+                    id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
+                    name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
+                    status: asset.status as string, previewUrl: asset.preview_url as string,
+                    hasSolidBg: asset.has_solid_bg as boolean,
+                    variant: (asset.variant as string|undefined) ?? mode,
+                    sourcePage: (asset.source_page as number|null|undefined) ?? c.pageNum,
+                    createdAt: asset.created_at as string,
                   })
                 }
-              }
-
-              const blob = await new Promise<Blob | null>(res => varCanvas.toBlob(res, "image/png", 0.92))
-              if (!blob) continue
-              const filePath = `artists/${artist.id}/generated/${Date.now()}-${c.assetType}-p${c.pageNum}-c${c.candidateIdx}-${mode}.png`
-              const { error: upErr } = await client.storage.from("brand-sources")
-                .upload(filePath, blob, { contentType: "image/png", upsert: true })
-              if (upErr) continue
-              const { data: fUrl } = client.storage.from("brand-sources").getPublicUrl(filePath)
-              const resp = await fetch("/api/artists/brand-create-asset", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  artistId: artist.id, sourceFileId: fid,
-                  name: c.displayName,
-                  assetType: c.assetType,
-                  previewUrl: fUrl.publicUrl,
-                  status: "logo_candidate",
-                  hasSolidBg: false,
-                  variant: mode,
-                  sourcePage: c.pageNum,
-                }),
-              })
-              if (!resp.ok) continue
-              const { asset } = await resp.json() as { asset?: Record<string,unknown> }
-              if (asset) {
-                uploaded++
-                newAssets.push({
-                  id: asset.id as string, sourceFileId: asset.source_file_id as string|null,
-                  name: asset.name as string|null, assetType: asset.asset_type as BrandAsset["assetType"],
-                  status: asset.status as string, previewUrl: asset.preview_url as string,
-                  hasSolidBg: asset.has_solid_bg as boolean,
-                  variant: (asset.variant as string|undefined) ?? mode,
-                  sourcePage: (asset.source_page as number|null|undefined) ?? c.pageNum,
-                  createdAt: asset.created_at as string,
-                })
-              }
-            } catch { /* skip failed variant */ }
-          }
-          if (uploaded > 0) {
-            logoCount++
-            addStep(`${c.displayName}: ${uploaded} variant${uploaded !== 1 ? "s" : ""} saved`, true)
-          } else {
-            addStep(`${c.displayName}: upload failed`, false)
+              } catch { /* skip failed variant */ }
+            }
+            if (uploaded > 0) {
+              const hiW = prodCanvas.width
+              logoCount++
+              addStep(`${c.displayName}: ${uploaded} variant${uploaded !== 1 ? "s" : ""} saved (${hiW}px wide)`, true)
+            } else {
+              addStep(`${c.displayName}: upload failed`, false)
+            }
           }
         }
 
