@@ -269,13 +269,16 @@ function assetGroupKey(name: string | null): string {
  * Remove background and recolor logo pixels.
  *
  * 1. Estimate background color from the crop's border pixels.
- * 2. Compute each pixel's Euclidean distance from that background.
- * 3. Pixels far from background = solid interior (alpha 255).
- *    Pixels near background = transparent.
- *    Pixels in between = anti-aliased edge (proportional alpha).
+ * 2. Compute each pixel's Euclidean RGB distance from that background.
+ * 3. dist >= 20: solid foreground → full alpha 255, target color.
+ *    dist <= 8:  background → fully transparent.
+ *    8 < dist < 20: anti-aliased edge → proportional alpha.
  *
- * Black/white variants get pure monochrome fill at full opacity for the
- * entire logo body. Only edge fringe pixels carry partial alpha.
+ * The thresholds (8 and 20) are fixed in RGB-distance space. A beige pixel
+ * like (240, 225, 195) on a white (255,255,255) background has dist ≈ 65 —
+ * well above the solid threshold. Even a very light logo pixel at
+ * (250, 245, 230) has dist ≈ 27 — still solid. Only pixels within a narrow
+ * band of the background color get partial alpha for edge smoothing.
  */
 function recolorToVariant(
   src: HTMLCanvasElement,
@@ -290,41 +293,39 @@ function recolorToVariant(
   const img = dstCtx.createImageData(w, h)
   const out = img.data
 
-  // Estimate background color from border pixels (top/bottom rows, left/right cols)
-  let bgR = 0, bgG = 0, bgB = 0, bgCount = 0
+  // Estimate background from border pixels
+  let bgR = 0, bgG = 0, bgB = 0, bgN = 0
   for (let x = 0; x < w; x++) {
     for (const y of [0, 1, h - 2, h - 1]) {
+      if (y < 0 || y >= h) continue
       const i = (y * w + x) * 4
-      if (d[i + 3] > 200) { bgR += d[i]; bgG += d[i + 1]; bgB += d[i + 2]; bgCount++ }
+      if (d[i + 3] > 200) { bgR += d[i]; bgG += d[i + 1]; bgB += d[i + 2]; bgN++ }
     }
   }
   for (let y = 2; y < h - 2; y++) {
     for (const x of [0, 1, w - 2, w - 1]) {
+      if (x < 0 || x >= w) continue
       const i = (y * w + x) * 4
-      if (d[i + 3] > 200) { bgR += d[i]; bgG += d[i + 1]; bgB += d[i + 2]; bgCount++ }
+      if (d[i + 3] > 200) { bgR += d[i]; bgG += d[i + 1]; bgB += d[i + 2]; bgN++ }
     }
   }
-  if (bgCount > 0) { bgR = Math.round(bgR / bgCount); bgG = Math.round(bgG / bgCount); bgB = Math.round(bgB / bgCount) }
-  else { bgR = 255; bgG = 255; bgB = 255 }
+  const bR = bgN > 0 ? Math.round(bgR / bgN) : 255
+  const bG = bgN > 0 ? Math.round(bgG / bgN) : 255
+  const bB = bgN > 0 ? Math.round(bgB / bgN) : 255
 
-  // Max possible distance from the detected background
-  const maxDist = Math.sqrt(bgR * bgR + bgG * bgG + bgB * bgB + (255 - bgR) * (255 - bgR) + (255 - bgG) * (255 - bgG) + (255 - bgB) * (255 - bgB))
-  // Thresholds as fraction of max distance — calibrated for typical PDF logo crops
-  const solidThresh = maxDist * 0.08
-  const bgThresh    = maxDist * 0.03
+  const BG_DIST   = 8
+  const SOLID_DIST = 20
 
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i], g = d[i + 1], b = d[i + 2], srcA = d[i + 3]
     if (srcA < 10) { out[i + 3] = 0; continue }
 
-    const dr = r - bgR, dg = g - bgG, db = b - bgB
+    const dr = r - bR, dg = g - bG, db = b - bB
     const dist = Math.sqrt(dr * dr + dg * dg + db * db)
 
-    if (dist <= bgThresh) {
-      // Background pixel
+    if (dist <= BG_DIST) {
       out[i + 3] = 0
-    } else if (dist >= solidThresh) {
-      // Solid interior — full opacity
+    } else if (dist >= SOLID_DIST) {
       if (mode === "black") {
         out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = 255
       } else if (mode === "white") {
@@ -333,9 +334,8 @@ function recolorToVariant(
         out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = 255
       }
     } else {
-      // Edge — proportional alpha for anti-aliasing
-      const edgeAlpha = (dist - bgThresh) / (solidThresh - bgThresh)
-      const outA = Math.round(edgeAlpha * 255)
+      const t = (dist - BG_DIST) / (SOLID_DIST - BG_DIST)
+      const outA = Math.round(t * 255)
       if (outA < 4) { out[i + 3] = 0; continue }
       if (mode === "black") {
         out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; out[i + 3] = outA
@@ -6120,7 +6120,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         // ── Phase 4: Generate 3 variants + upload ──────────────────────────────
         addStep(`Generating variants for ${survivors.length} logo${survivors.length !== 1 ? "s" : ""} (${survivors.length * 3} files)…`, true)
         let logoCount = 0
-        const whiteVariantStats: Array<{ name: string; medianAlpha: number }> = []
+        type VariantQA = { name: string; mode: string; medianAlpha: number; rgbPure: boolean }
+        const variantQA: VariantQA[] = []
 
         for (const c of survivors) {
           let uploaded = 0
@@ -6128,17 +6129,32 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             try {
               const varCanvas = recolorToVariant(c.canvas, mode)
 
-              // Collect foreground alpha stats for white variants
-              if (mode === "white") {
+              // Pixel-level validation for white and black variants
+              if (mode === "white" || mode === "black") {
                 const vCtx = varCanvas.getContext("2d")!
                 const vd = vCtx.getImageData(0, 0, varCanvas.width, varCanvas.height).data
-                const alphas: number[] = []
-                for (let vi = 3; vi < vd.length; vi += 4) {
-                  if (vd[vi] > 10) alphas.push(vd[vi])
+                const bodyAlphas: number[] = []
+                let pureCount = 0, bodyCount = 0
+                const tR = mode === "white" ? 255 : 0
+                const tG = mode === "white" ? 255 : 0
+                const tB = mode === "white" ? 255 : 0
+                for (let vi = 0; vi < vd.length; vi += 4) {
+                  const a = vd[vi + 3]
+                  if (a < 20) continue
+                  if (a >= 200) {
+                    bodyCount++
+                    bodyAlphas.push(a)
+                    if (vd[vi] === tR && vd[vi + 1] === tG && vd[vi + 2] === tB) pureCount++
+                  }
                 }
-                if (alphas.length > 0) {
-                  alphas.sort((x, y) => x - y)
-                  whiteVariantStats.push({ name: c.displayName, medianAlpha: alphas[Math.floor(alphas.length / 2)] })
+                if (bodyAlphas.length > 0) {
+                  bodyAlphas.sort((x, y) => x - y)
+                  variantQA.push({
+                    name: c.displayName,
+                    mode,
+                    medianAlpha: bodyAlphas[Math.floor(bodyAlphas.length / 2)],
+                    rgbPure: bodyCount > 0 && pureCount / bodyCount >= 0.95,
+                  })
                 }
               }
 
@@ -6186,16 +6202,44 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           }
         }
 
-        // ── Phase 5: Variant consistency validation ─────────────────────────────
-        if (whiteVariantStats.length >= 2) {
-          const maxMedian = Math.max(...whiteVariantStats.map((s) => s.medianAlpha))
-          const warnings = whiteVariantStats.filter((s) => s.medianAlpha < maxMedian * 0.85)
-          if (warnings.length > 0) {
-            for (const w of warnings) {
-              addStep(`${w.name}: white variant density warning — median alpha ${w.medianAlpha} vs expected ${maxMedian}+`, false)
+        // ── Phase 5: Pixel-level variant validation ─────────────────────────────
+        if (variantQA.length > 0) {
+          let allPassed = true
+          // Per-variant RGB purity + alpha checks
+          for (const q of variantQA) {
+            if (!q.rgbPure) {
+              addStep(`${q.name} (${q.mode}): variant quality warning — RGB not pure`, false)
+              allPassed = false
             }
-          } else {
-            addStep(`Variant consistency check passed — all white variants within 15% density`, true)
+            if (q.medianAlpha < 245) {
+              addStep(`${q.name} (${q.mode}): variant quality warning — median body alpha ${q.medianAlpha} (expected 245+)`, false)
+              allPassed = false
+            }
+          }
+          // Cross-variant consistency for white
+          const whiteStats = variantQA.filter((q) => q.mode === "white")
+          if (whiteStats.length >= 2) {
+            const maxMedian = Math.max(...whiteStats.map((s) => s.medianAlpha))
+            for (const s of whiteStats) {
+              if (s.medianAlpha < maxMedian * 0.85) {
+                addStep(`${s.name}: white variant density warning — median alpha ${s.medianAlpha} vs best ${maxMedian}`, false)
+                allPassed = false
+              }
+            }
+          }
+          // Cross-variant consistency for black
+          const blackStats = variantQA.filter((q) => q.mode === "black")
+          if (blackStats.length >= 2) {
+            const maxMedian = Math.max(...blackStats.map((s) => s.medianAlpha))
+            for (const s of blackStats) {
+              if (s.medianAlpha < maxMedian * 0.85) {
+                addStep(`${s.name}: black variant density warning — median alpha ${s.medianAlpha} vs best ${maxMedian}`, false)
+                allPassed = false
+              }
+            }
+          }
+          if (allPassed) {
+            addStep(`Variant quality check passed — all body pixels pure, median alpha 245+`, true)
           }
         }
 
