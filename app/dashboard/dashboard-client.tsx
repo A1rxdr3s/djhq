@@ -1018,6 +1018,56 @@ type DashboardClientProps = {
   statusMessage?: string
 }
 
+// ── Gig three-dot actions dropdown ─────────────────────────────────────────
+// Defined at module level so React sees a stable component type across renders.
+function GigActionsDropdown({
+  onEdit,
+  onDelete,
+  onClose,
+  align = "right",
+}: {
+  onEdit: () => void
+  onDelete: () => void
+  onClose: () => void
+  align?: "right" | "left"
+}) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    function handlePointerDown(e: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose()
+    }
+    document.addEventListener("pointerdown", handlePointerDown)
+    return () => document.removeEventListener("pointerdown", handlePointerDown)
+  }, [onClose])
+  return (
+    <div
+      ref={menuRef}
+      className={cn(
+        "absolute top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-xl",
+        "border border-border bg-[#111520] shadow-2xl shadow-black/60",
+        align === "right" ? "right-0" : "left-0",
+      )}
+    >
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onEdit() }}
+        className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-foreground/80 transition-colors duration-100 hover:bg-secondary"
+      >
+        Edit
+      </button>
+      <div className="mx-3 h-px bg-secondary" />
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDelete() }}
+        className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-red-400/70 transition-colors duration-100 hover:bg-red-500/[0.08] hover:text-red-400"
+      >
+        <Trash2 className="h-3 w-3" />
+        Delete
+      </button>
+    </div>
+  )
+}
+
 export default function DashboardClient({ initialArtist, statusMessage }: DashboardClientProps) {
   const [artist, setArtist] = useState<Artist>(initialArtist)
   const initialLinkUrls = getLinkUrlsFromArtist(artist)
@@ -3285,55 +3335,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
 
-  // ── Gig three-dot actions dropdown ──────────────────────────────────────
-  function GigActionsDropdown({
-    onEdit,
-    onDelete,
-    onClose,
-    align = "right",
-  }: {
-    onEdit: () => void
-    onDelete: () => void
-    onClose: () => void
-    align?: "right" | "left"
-  }) {
-    const menuRef = useRef<HTMLDivElement>(null)
-    useLayoutEffect(() => {
-      function handlePointerDown(e: PointerEvent) {
-        if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose()
-      }
-      document.addEventListener("pointerdown", handlePointerDown)
-      return () => document.removeEventListener("pointerdown", handlePointerDown)
-    }, [onClose])
-    return (
-      <div
-        ref={menuRef}
-        className={cn(
-          "absolute top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-xl",
-          "border border-border bg-[#111520] shadow-2xl shadow-black/60",
-          align === "right" ? "right-0" : "left-0",
-        )}
-      >
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onEdit() }}
-          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-foreground/80 transition-colors duration-100 hover:bg-secondary"
-        >
-          Edit
-        </button>
-        <div className="mx-3 h-px bg-secondary" />
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onDelete() }}
-          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-red-400/70 transition-colors duration-100 hover:bg-red-500/[0.08] hover:text-red-400"
-        >
-          <Trash2 className="h-3 w-3" />
-          Delete
-        </button>
-      </div>
-    )
-  }
-
   function renderGigs() {
     const today       = new Date().toISOString().slice(0, 10)
     const currentYear = new Date().getFullYear().toString()
@@ -3529,13 +3530,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                 return (
                   <div key={gig.id}>
-                    {/* Premium horizontal card — boarding pass style */}
-                    <div className={cn(
-                      "group flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
-                      isOpen
-                        ? "border-accent/28 ring-1 ring-accent/12"
-                        : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_4px_16px_rgba(0,0,0,0.30)]",
-                    )}>
+                    {/* Premium horizontal card — clicking the card body opens Edit modal */}
+                    <div
+                      onClick={() => setEditingGig(gig)}
+                      className={cn(
+                        "group flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
+                        isOpen
+                          ? "border-accent/28 ring-1 ring-accent/12"
+                          : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_4px_16px_rgba(0,0,0,0.30)]",
+                      )}
+                    >
                       {/* Date block */}
                       {dp ? (
                         <div className="flex w-[68px] shrink-0 flex-col items-center justify-center bg-secondary px-3 py-4 text-center">
@@ -3659,12 +3663,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                               return (
                                 <div key={gig.id}>
-                                  <div className={cn(
-                                    "flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
-                                    isOpen
-                                      ? "border-border"
-                                      : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_2px_12px_rgba(0,0,0,0.22)]",
-                                  )}>
+                                  <div
+                                    onClick={() => setEditingGig(gig)}
+                                    className={cn(
+                                      "flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
+                                      isOpen
+                                        ? "border-border"
+                                        : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_2px_12px_rgba(0,0,0,0.22)]",
+                                    )}
+                                  >
                                     {/* Date block — muted, no tint */}
                                     {dp ? (
                                       <div className="flex w-[60px] shrink-0 flex-col items-center justify-center px-2 py-3 text-center">
