@@ -755,7 +755,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       </div>
 
       {/* ── Full-bleed cinematic hero — edge-to-edge, no card container ── */}
-      <section className="relative overflow-hidden" style={{ minHeight: "100dvh" }}>
+      <section id="hero" className="relative overflow-hidden" style={{ minHeight: "100dvh" }}>
         {/* Top readability gradient — supports nav contrast without visible overlay */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[160px]"
@@ -764,22 +764,24 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {/* Artist-website navigation — integrated into hero */}
         <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-7 lg:px-12">
-          {/* Left: section navigation — canonical PUBLIC_SECTION_NAV, Contact filtered if no booking email */}
-          <nav className="flex items-center gap-2.5 sm:gap-12">
-            {PUBLIC_SECTION_NAV
-              .filter(({ label }) => label !== "Contact" || !!artist.bookingInfo.email.trim())
-              .map(({ label, href: navHref }) => (
-                <a
-                  key={label}
-                  href={navHref}
-                  className="text-[11px] font-semibold uppercase tracking-[0.07em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]"
-                >
-                  {label}
-                </a>
-              ))}
+          {/* Left: section navigation — scrollable on mobile to prevent overflow with 5 items */}
+          <nav className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-none sm:overflow-visible">
+            <div className="flex items-center gap-4 sm:gap-12">
+              {PUBLIC_SECTION_NAV
+                .filter(({ label }) => label !== "Contact" || !!artist.bookingInfo.email.trim())
+                .map(({ label, href: navHref }) => (
+                  <a
+                    key={label}
+                    href={navHref}
+                    className="whitespace-nowrap text-[13px] font-semibold uppercase tracking-[0.12em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]"
+                  >
+                    {label}
+                  </a>
+                ))}
+            </div>
           </nav>
           {/* Right: social platform links */}
-          <div className="flex items-center gap-3">
+          <div className="ml-4 flex flex-shrink-0 items-center gap-3">
             <HeroSocialLinks links={prioritizedLinks} />
             {/* DJHQ attribution — subtle, non-pro only */}
             {(artist.plan !== "pro" || artist.showHeaderBranding) && (
