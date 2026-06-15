@@ -229,7 +229,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 border-t border-white/[0.05] px-2 py-2.5 xl:px-3",
+        "flex items-center gap-2 border-t border-white/[0.05] px-2 py-[7px] xl:px-3",
         "transition-colors duration-150",
         isPast ? "hover:bg-white/[0.012]" : "hover:bg-white/[0.025]",
       )}
@@ -253,9 +253,6 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
           {month}
         </span>
       </div>
-
-      {/* Thin vertical rule */}
-      <div className={cn("h-6 w-px shrink-0", isPast ? "bg-white/[0.04]" : "bg-white/[0.07]")} />
 
       {/* Title → optional venue sub → location */}
       <div className="min-w-0 flex-1">
@@ -417,8 +414,8 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
         </button>
       )}
 
-      {/* Past shows toggle */}
-      {hasPastToggle && (
+      {/* Past shows toggle — hidden when "View All Shows" is the primary CTA to avoid competition */}
+      {hasPastToggle && !(scenarioC && !showAllFuture) && (
         <button
           type="button"
           onClick={() => setPastExpanded((v) => !v)}
