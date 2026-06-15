@@ -39,7 +39,7 @@ import { MobileScrollNav } from "@/components/profile/mobile-scroll-nav"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
-import { HeroSocialLinks } from "@/components/djhq/hero-social-links"
+import { HeroSocialLinks, HeroMobileSocialRow } from "@/components/djhq/hero-social-links"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 
 type PublicProfilePageProps = {
@@ -911,6 +911,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     ) : null}
                   </div>
                 ) : null}
+                <HeroMobileSocialRow links={prioritizedLinks} />
               </div>
             ) : (
               /* Floating logo placement: logo is separate, tagline + CTAs centered below */
@@ -946,6 +947,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     ) : null}
                   </div>
                 ) : null}
+                <HeroMobileSocialRow links={prioritizedLinks} />
               </div>
             )}
         </div>
