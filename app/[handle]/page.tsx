@@ -850,7 +850,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 the logo layer is separate (above) and only tagline+CTAs sit here. */}
             {!isFloatingPlacement ? (
               /* Editorial: logo → tagline → CTAs — three elements only */
-              <div className="absolute inset-x-0 top-[26%] z-10 flex flex-col items-center px-4 text-center sm:top-[35%]">
+              <div className="absolute inset-x-0 top-[33%] z-10 flex flex-col items-center px-4 text-center sm:top-[35%]">
 
                 {/* Logo with atmospheric depth layer */}
                 <div className="relative">
@@ -880,7 +880,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 {/* Tagline — artist statement, sole text element */}
                 {displayHeroTagline && (
                   <p
-                    className="mt-5 max-w-[80vw] text-[14px] font-bold uppercase tracking-[0.12em] text-white/90 line-clamp-2 sm:mt-11 sm:max-w-none sm:text-[17px] sm:tracking-[0.22em] sm:line-clamp-none"
+                    className="mt-4 max-w-[80vw] text-[14px] font-bold uppercase tracking-[0.12em] text-white/90 line-clamp-2 sm:mt-11 sm:max-w-none sm:text-[17px] sm:tracking-[0.22em] sm:line-clamp-none"
                     style={{ textShadow: "0 1px 10px rgba(0,0,0,0.55)" }}
                   >
                     {displayHeroTagline}
@@ -889,7 +889,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* CTAs */}
                 {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                  <div className="mt-5 flex flex-wrap items-center justify-center gap-[10px] sm:mt-9 sm:flex-nowrap sm:gap-3">
+                  <div className="mt-[17px] flex flex-wrap items-center justify-center gap-[10px] sm:mt-9 sm:flex-nowrap sm:gap-3">
                     {artist.bookingInfo.email.trim() ? (
                       <div className="transition-transform duration-150 hover:-translate-y-0.5">
                         <BookingInquiryModal
@@ -912,6 +912,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 ) : null}
                 <HeroMobileSocialRow links={prioritizedLinks} />
+                {/* Scroll cue — decorative vertical line, editorial placement only */}
+                <div className="mt-5 flex justify-center md:hidden" aria-hidden="true">
+                  <div className="h-7 w-px rounded-full bg-white opacity-[0.35]" />
+                </div>
               </div>
             ) : (
               /* Floating logo placement: logo is separate, tagline + CTAs centered below */
