@@ -65,10 +65,13 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
   const locationStr = [gig.city, gig.country].filter(Boolean).join(" • ")
   const showTicket = !isPast && !isHidden && !!gig.ticketUrl
   const showInstagram = !isHidden && !!gig.instagramUrl
+  const hasEventName = !isHidden &&
+    !!gig.eventName?.trim() &&
+    gig.eventName.trim().toLowerCase() !== (gig.venue ?? "").trim().toLowerCase()
 
   const displayTitle = isHidden
     ? vis === "tba" ? "TBA" : vis === "tbc" ? "TBC" : "CANCELLED"
-    : (gig.eventName || gig.venue)
+    : hasEventName ? (gig.eventName ?? gig.venue) : gig.venue
 
   return (
     <div
@@ -134,15 +137,16 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           )}
         </div>
 
-        {/* Venue context line — only for announced shows where event name is also shown */}
-        {!isHidden && gig.eventName && gig.venue && (
+        {/* Venue context line — always reserved for height; invisible when event name equals/absent venue */}
+        {!isHidden && (
           <p
             className={cn(
               "mt-0.5 truncate text-xs font-medium leading-tight",
               isPast ? "text-white/18" : "text-white/55",
+              !hasEventName && "invisible",
             )}
           >
-            {gig.venue}
+            {gig.venue || " "}
           </p>
         )}
 
