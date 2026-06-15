@@ -187,6 +187,7 @@ type GigRow = {
   ticket_url: string | null
   flyer_url: string | null
   instagram_url: string | null
+  visibility_status: string | null
 }
 
 type GalleryImageRow = {
@@ -410,7 +411,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<ReleaseRow[]>(),
       supabase
         .from("gigs")
-        .select("id, date, event_name, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url")
+        .select("id, date, event_name, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url, visibility_status")
         .eq("artist_id", artistRow.id)
         .order("date", { ascending: true })
         .returns<GigRow[]>(),
@@ -492,6 +493,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         ticketUrl: gig.ticket_url ?? undefined,
         flyerUrl: gig.flyer_url ?? undefined,
         instagramUrl: gig.instagram_url ?? undefined,
+        visibilityStatus: (gig.visibility_status ?? "announced") as "announced" | "tba" | "tbc" | "cancelled",
       })),
       djSets: (djSetsResult.data ?? []).map(
         (row): DjSet => ({

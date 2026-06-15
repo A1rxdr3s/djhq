@@ -510,6 +510,7 @@ type GigFormState = {
   feeAmount?: number | null
   feeCurrency?: string | null
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
+  visibilityStatus: "announced" | "tba" | "tbc" | "cancelled"
 }
 
 type DjSetFormState = {
@@ -799,6 +800,7 @@ function getGigFormState(artist: Artist): GigFormState[] {
       feeAmount: gig.feeAmount ?? null,
       feeCurrency: gig.feeCurrency ?? null,
       paymentStatus: gig.paymentStatus ?? null,
+      visibilityStatus: (gig.visibilityStatus ?? "announced") as "announced" | "tba" | "tbc" | "cancelled",
     })),
   )
 }
@@ -1552,6 +1554,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         feeAmount: gig.feeAmount ?? null,
         feeCurrency: gig.feeCurrency?.trim() || null,
         paymentStatus: gig.paymentStatus ?? null,
+        visibilityStatus: gig.visibilityStatus,
       })),
       djSets: djSets.map((set, index): DjSet => {
         const generatedTitle = computeDjSetTitle(
@@ -1809,6 +1812,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       feeAmount: gig.feeAmount ?? null,
       feeCurrency: gig.feeCurrency ?? null,
       paymentStatus: gig.paymentStatus ?? null,
+      visibilityStatus: gig.visibilityStatus ?? "announced",
     }
     setUpcomingGigs((current) => sortGigsByDate([...current, formState]))
   }
@@ -1829,8 +1833,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       feeAmount: gig.feeAmount ?? null,
       feeCurrency: gig.feeCurrency ?? null,
       paymentStatus: gig.paymentStatus ?? null,
+      visibilityStatus: gig.visibilityStatus ?? "announced",
     }
-    // Update the existing gig in-place (no duplicate created).
     setUpcomingGigs((current) =>
       sortGigsByDate(current.map((g) => g.id === formState.id ? formState : g)),
     )

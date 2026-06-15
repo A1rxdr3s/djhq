@@ -194,6 +194,9 @@ export interface Release {
 /** Public-facing status of a live show. */
 export type GigEventStatus = "upcoming" | "sold_out" | "cancelled" | "past"
 
+/** Controls what the public profile displays for a booking. */
+export type GigVisibilityStatus = "announced" | "tba" | "tbc" | "cancelled"
+
 /**
  * Upcoming live performance information.
  */
@@ -226,6 +229,8 @@ export interface Gig {
   feeCurrency?: string | null
   /** Internal: booking payment status. */
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
+  /** Public visibility: announced = full details, tba/tbc/cancelled = date + location only. */
+  visibilityStatus?: GigVisibilityStatus
 }
 
 /**

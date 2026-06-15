@@ -59,9 +59,16 @@ type GigRowProps = {
 
 function GigRow({ gig, isNext, isPast }: GigRowProps) {
   const { day, month } = parseGigDate(gig.date)
+  const vis = gig.visibilityStatus ?? "announced"
+  const isHidden = vis === "tba" || vis === "tbc" || vis === "cancelled"
   const statusConfig = gig.eventStatus ? STATUS_CONFIG[gig.eventStatus] : null
   const locationStr = [gig.city, gig.country].filter(Boolean).join(" • ")
-  const showTicket = !isPast && !!gig.ticketUrl
+  const showTicket = !isPast && !isHidden && !!gig.ticketUrl
+  const showInstagram = !isHidden && !!gig.instagramUrl
+
+  const displayTitle = isHidden
+    ? vis === "tba" ? "TBA" : vis === "tbc" ? "TBC" : "CANCELLED"
+    : (gig.eventName || gig.venue)
 
   return (
     <div
@@ -113,8 +120,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
               isPast ? "text-foreground/30" : "text-foreground/92",
             )}
           >
-            {/* If event name exists, show it as primary; otherwise fall back to venue */}
-            {gig.eventName || gig.venue}
+            {displayTitle}
           </p>
           {statusConfig && (
             <span
@@ -128,8 +134,8 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           )}
         </div>
 
-        {/* Venue shown as context line only when event name is displayed above it */}
-        {gig.eventName && gig.venue && (
+        {/* Venue context line — only for announced shows where event name is also shown */}
+        {!isHidden && gig.eventName && gig.venue && (
           <p
             className={cn(
               "mt-0.5 truncate text-xs font-medium leading-tight",
@@ -140,7 +146,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           </p>
         )}
 
-        {gig.clubVenue && (
+        {!isHidden && gig.clubVenue && (
           <p
             className={cn(
               "mt-0.5 truncate text-xs leading-tight",
@@ -163,8 +169,8 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         )}
       </div>
 
-      {/* Icon action buttons */}
-      {(showTicket || !!gig.instagramUrl) && (
+      {/* Icon action buttons — hidden for TBA/TBC/Cancelled shows */}
+      {(showTicket || showInstagram) && (
         <div className="flex shrink-0 items-center gap-2.5">
           {showTicket && gig.ticketUrl && resolveSafeHref(gig.ticketUrl) && (
             <a
@@ -177,7 +183,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
               <Ticket className="h-5 w-5" />
             </a>
           )}
-          {gig.instagramUrl && resolveSafeHref(gig.instagramUrl) && (
+          {showInstagram && gig.instagramUrl && resolveSafeHref(gig.instagramUrl) && (
             <a
               href={resolveSafeHref(gig.instagramUrl)!}
               target="_blank"

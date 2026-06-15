@@ -210,7 +210,10 @@ create table if not exists public.gigs (
   fee_amount      numeric     null,
   fee_currency    text        null,
   payment_status  text        null,
-  event_name      text        null,
+  event_name        text        null,
+  -- Visibility system (045): controls public display of private bookings
+  visibility_status text        not null default 'announced'
+    check (visibility_status in ('announced', 'tba', 'tbc', 'cancelled')),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

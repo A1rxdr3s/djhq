@@ -74,6 +74,7 @@ type SaveGigPayload = {
   feeAmount?: number | null
   feeCurrency?: string | null
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
+  visibilityStatus?: "announced" | "tba" | "tbc"
 }
 
 type SaveDjSetPayload = {
@@ -584,6 +585,7 @@ export async function PATCH(request: Request) {
           fee_amount: gig.feeAmount ?? null,
           fee_currency: gig.feeCurrency?.trim() || null,
           payment_status: gig.paymentStatus ?? null,
+          visibility_status: gig.visibilityStatus ?? "announced",
         })),
       )
 

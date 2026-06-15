@@ -45,6 +45,7 @@ type ShowForm = {
   instagramUrl: string
   feeAmount: number | null
   feeCurrency: string
+  visibilityStatus: "announced" | "tba" | "tbc" | "cancelled"
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ function emptyForm(): ShowForm {
     instagramUrl: "",
     feeAmount: null,
     feeCurrency: "USD",
+    visibilityStatus: "announced",
   }
 }
 
@@ -78,6 +80,7 @@ function fromGigEntry(gig: GigEntry): ShowForm {
     instagramUrl: gig.instagramUrl ?? "",
     feeAmount: gig.feeAmount ?? null,
     feeCurrency: gig.feeCurrency ?? "USD",
+    visibilityStatus: gig.visibilityStatus ?? "announced",
   }
 }
 
@@ -88,14 +91,51 @@ const inputClass = cn(
   "px-3 text-sm font-medium text-foreground",
   "placeholder:text-muted-foreground/30",
   "outline-none transition-colors duration-150",
-  "focus:border-white/[0.14] focus:bg-white/[0.04]",
+  "focus:border-accent/30 focus:bg-white/[0.04] focus:ring-1 focus:ring-accent/15",
 )
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/40">
+    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
       {children}
     </p>
+  )
+}
+
+// ── Visibility segmented control ─────────────────────────────────────────────
+
+const VIS_OPTIONS: { value: "announced" | "tba" | "tbc" | "cancelled"; label: string }[] = [
+  { value: "announced", label: "Announced" },
+  { value: "tba",       label: "TBA"       },
+  { value: "tbc",       label: "TBC"       },
+  { value: "cancelled", label: "Cancelled" },
+]
+
+function VisibilityControl({
+  value,
+  onChange,
+}: {
+  value: ShowForm["visibilityStatus"]
+  onChange: (v: ShowForm["visibilityStatus"]) => void
+}) {
+  return (
+    <div className="flex gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1">
+      {VIS_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "flex-1 rounded-lg py-1.5 text-[11px] font-semibold uppercase tracking-[0.10em] transition-colors duration-150",
+            value === opt.value
+              ? "bg-white/[0.10] text-foreground shadow-sm"
+              : "text-white/35 hover:text-white/55",
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -288,6 +328,7 @@ export function ShowModal({
       instagramUrl: form.instagramUrl.trim() || undefined,
       feeAmount: form.feeAmount,
       feeCurrency: form.feeCurrency.trim() || null,
+      visibilityStatus: form.visibilityStatus,
       // Preserve hidden fields from existing show; default on create.
       eventStatus: initialGig?.eventStatus ?? "upcoming",
       paymentStatus: initialGig?.paymentStatus ?? null,
@@ -317,7 +358,7 @@ export function ShowModal({
 
           {/* Scrollable form body */}
           <div className="flex-1 overflow-y-auto px-6 py-5">
-            <div className="space-y-6">
+            <div className="space-y-5">
 
               {/* ── EVENT ──────────────────────────────────────────────────────
                   The brand/series name for the event (e.g. "Afterlife", "MISA").
@@ -330,11 +371,22 @@ export function ShowModal({
                   suggestions={existingEventNames}
                   autoFocus
                 />
+                <div className="mt-2">
+                  <VisibilityControl
+                    value={form.visibilityStatus}
+                    onChange={(v) => set("visibilityStatus", v)}
+                  />
+                  {form.visibilityStatus !== "announced" && (
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-white/35">
+                      Private event details remain stored but are hidden from the public profile.
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {/* ── EVENT VENUE ─────────────────────────────────────────────── */}
+              {/* ── VENUE ───────────────────────────────────────────────────── */}
               <div>
-                <SectionLabel>Event Venue</SectionLabel>
+                <SectionLabel>Venue</SectionLabel>
                 <div className="space-y-2">
                   <VenueAutocomplete
                     value={form.venue}
@@ -351,9 +403,9 @@ export function ShowModal({
                 </div>
               </div>
 
-              {/* ── EVENT DETAILS ────────────────────────────────────────────── */}
+              {/* ── DETAILS ──────────────────────────────────────────────────── */}
               <div>
-                <SectionLabel>Event Details</SectionLabel>
+                <SectionLabel>Details</SectionLabel>
                 <div className="space-y-2">
                   <DatePicker
                     value={form.date}
@@ -457,38 +509,33 @@ export function ShowModal({
 
           {/* Footer */}
           <div className="shrink-0 border-t border-white/[0.05] px-6 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] text-muted-foreground/30">
-                Event, venue, date, city and country are required.
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onOpenChange(false)}
-                  className={cn(
-                    "h-9 rounded-lg border border-white/[0.07] bg-transparent px-4",
-                    "text-[13px] font-medium text-muted-foreground/60",
-                    "transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/70",
-                  )}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={!isValid || saving}
-                  className={cn(
-                    "flex h-9 items-center gap-2 rounded-lg bg-accent px-5",
-                    "text-[13px] font-semibold text-accent-foreground",
-                    "transition-all duration-150",
-                    "hover:bg-accent/90 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_30%,transparent)]",
-                    "disabled:cursor-not-allowed disabled:opacity-40",
-                  )}
-                >
-                  {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {mode === "edit" ? "Save Changes" : "Save Show"}
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className={cn(
+                  "h-9 rounded-lg border border-white/[0.07] bg-transparent px-4",
+                  "text-[13px] font-medium text-muted-foreground/60",
+                  "transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/70",
+                )}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!isValid || saving}
+                className={cn(
+                  "flex h-9 shrink-0 items-center gap-2 rounded-lg bg-accent px-5",
+                  "whitespace-nowrap text-[13px] font-semibold text-accent-foreground",
+                  "transition-all duration-150",
+                  "hover:bg-accent/90 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_30%,transparent)]",
+                  "disabled:cursor-not-allowed disabled:opacity-40",
+                )}
+              >
+                {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {mode === "edit" ? "Save Changes" : "Save Show"}
+              </button>
             </div>
           </div>
 

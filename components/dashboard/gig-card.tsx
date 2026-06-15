@@ -27,6 +27,7 @@ export type GigEntry = {
   feeAmount?: number | null
   feeCurrency?: string | null
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
+  visibilityStatus?: "announced" | "tba" | "tbc" | "cancelled"
 }
 
 type GigCardProps = {
