@@ -6,6 +6,7 @@ import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import {
   Calendar,
+  ChevronDown,
   Download,
   ExternalLink,
   Globe,
@@ -912,9 +913,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 ) : null}
                 <HeroMobileSocialRow links={prioritizedLinks} />
-                {/* Scroll cue — decorative vertical line, editorial placement only */}
-                <div className="mt-5 flex justify-center md:hidden" aria-hidden="true">
-                  <div className="h-7 w-px rounded-full bg-white opacity-[0.35]" />
+                {/* Scroll cue — text + chevron, editorial mobile only */}
+                <div className="mt-6 flex justify-center md:hidden" aria-hidden="true">
+                  <div className="hero-scroll-cue flex flex-col items-center gap-[5px] opacity-[0.40]">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
+                      Scroll to explore
+                    </span>
+                    <ChevronDown className="h-[11px] w-[11px] text-white" />
+                  </div>
                 </div>
               </div>
             ) : (

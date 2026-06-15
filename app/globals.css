@@ -297,3 +297,17 @@ body:has(.djhq-dashboard) {
     display: none;
   }
 }
+
+/* ── Hero scroll cue float animation ────────────────────────────────────────
+   Extremely subtle 3px vertical drift — draws the eye downward without
+   feeling like a loading spinner or call-to-action. Mobile-only context;
+   the class is applied inside an md:hidden wrapper so it never runs on
+   desktop.
+   ─────────────────────────────────────────────────────────────────────────── */
+@keyframes hero-scroll-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(3px); }
+}
+.hero-scroll-cue {
+  animation: hero-scroll-float 2.8s ease-in-out infinite;
+}
