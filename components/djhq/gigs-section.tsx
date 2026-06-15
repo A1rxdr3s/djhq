@@ -257,7 +257,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
       {/* Thin vertical rule */}
       <div className={cn("h-6 w-px shrink-0", isPast ? "bg-white/[0.04]" : "bg-white/[0.07]")} />
 
-      {/* Title + optional venue sub */}
+      {/* Title → optional venue sub → location */}
       <div className="min-w-0 flex-1">
         <p
           className={cn(
@@ -277,19 +277,17 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
             {gig.venue}
           </p>
         )}
+        {locationStr && (
+          <p
+            className={cn(
+              "mt-[2px] truncate text-[10px] font-medium uppercase tracking-[0.08em]",
+              isPast ? "text-white/18" : "text-white/30",
+            )}
+          >
+            {locationStr}
+          </p>
+        )}
       </div>
-
-      {/* Location — right-anchored */}
-      {locationStr && (
-        <p
-          className={cn(
-            "shrink-0 text-[10px] font-medium uppercase tracking-[0.08em]",
-            isPast ? "text-white/18" : "text-white/30",
-          )}
-        >
-          {locationStr}
-        </p>
-      )}
 
       {/* Fixed-width action slot — always rendered so rows without actions stay aligned.
           Width = 2 × h-7 icons (28px) + gap-1.5 (6px) = 62px. */}
