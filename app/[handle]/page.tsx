@@ -913,15 +913,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 ) : null}
                 <HeroMobileSocialRow links={prioritizedLinks} />
-                {/* Scroll cue — text + chevron, editorial mobile only */}
-                <div className="mt-6 flex justify-center md:hidden" aria-hidden="true">
-                  <div className="hero-scroll-cue flex flex-col items-center gap-[5px] opacity-[0.40]">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
-                      Scroll to explore
-                    </span>
-                    <ChevronDown className="h-[11px] w-[11px] text-white" />
-                  </div>
-                </div>
               </div>
             ) : (
               /* Floating logo placement: logo is separate, tagline + CTAs centered below */
@@ -960,6 +951,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <HeroMobileSocialRow links={prioritizedLinks} />
               </div>
             )}
+            {/* Mobile — extended bottom vignette: deepens the fade zone behind the scroll cue */}
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[28%] md:hidden"
+              style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.50) 0%, transparent 100%)" }}
+            />
+            {/* Mobile scroll cue — absolutely anchored to hero bottom, scrolls to first content section */}
+            <a
+              href="#shows"
+              aria-label="Scroll to content"
+              className="absolute left-1/2 z-10 -translate-x-1/2 opacity-[0.42] transition-all duration-150 active:translate-y-0.5 active:opacity-100 md:hidden"
+              style={{ bottom: "clamp(72px, 10vh, 96px)" }}
+            >
+              <div className="hero-scroll-cue flex flex-col items-center gap-[5px]">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
+                  Scroll to explore
+                </span>
+                <ChevronDown className="h-[11px] w-[11px] text-white" />
+              </div>
+            </a>
         </div>
       </section>
 
