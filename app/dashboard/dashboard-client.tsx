@@ -3372,7 +3372,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       const d = new Date(`${date}T00:00:00Z`)
       if (isNaN(d.getTime())) return null
       return {
-        day : String(d.getUTCDate()),
+        day : String(d.getUTCDate()).padStart(2, "0"),
         mon : d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase(),
         year: String(d.getUTCFullYear()),
       }

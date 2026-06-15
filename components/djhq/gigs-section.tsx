@@ -13,7 +13,7 @@ const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "
 function parseGigDate(dateStr: string) {
   const d = new Date(dateStr)
   return {
-    day: String(d.getUTCDate()),
+    day: String(d.getUTCDate()).padStart(2, "0"),
     month: MONTHS[d.getUTCMonth()],
   }
 }
