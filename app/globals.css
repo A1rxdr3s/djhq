@@ -298,6 +298,30 @@ body:has(.djhq-dashboard) {
   }
 }
 
+/* ── Hero nav mobile: edge-fade masks signal horizontal scroll ───────────────
+   Only applied below sm (639px). Above sm the nav doesn't overflow so no mask
+   needed. The 24px inner padding keeps the first/last items fully legible;
+   the mask fades the outer 20px to hint that more items exist off-screen.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .hero-nav-scroll {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0px,
+      black 20px,
+      black calc(100% - 20px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0px,
+      black 20px,
+      black calc(100% - 20px),
+      transparent 100%
+    );
+  }
+}
+
 /* ── Hero scroll cue float animation ────────────────────────────────────────
    Extremely subtle 3px vertical drift — draws the eye downward without
    feeling like a loading spinner or call-to-action. Mobile-only context;
