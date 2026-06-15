@@ -39,6 +39,7 @@ import { MobileScrollNav } from "@/components/profile/mobile-scroll-nav"
 import { SectionHeader } from "@/components/djhq/section-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
+import { HeroSocialLinks } from "@/components/djhq/hero-social-links"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 
 type PublicProfilePageProps = {
@@ -779,25 +780,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             ))}
           </nav>
           {/* Right: social platform links */}
-          <div className="flex items-center gap-3 sm:gap-7">
-            {prioritizedLinks.slice(0, 5).map((link, linkIndex) => {
-              const linkHref = resolveSafeHref(link.url)
-              if (!linkHref) return null
-              const SocialIcon = socialIcons[link.platform]
-              return (
-                <a
-                  key={`hero-${link.platform}-${link.url}`}
-                  href={linkHref}
-                  aria-label={link.label}
-                  title={link.label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn("text-white/75 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent", linkIndex >= 2 && "hidden sm:inline-block")}
-                >
-                  <SocialIcon className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px]" />
-                </a>
-              )
-            })}
+          <div className="flex items-center gap-3">
+            <HeroSocialLinks links={prioritizedLinks} />
             {/* DJHQ attribution — subtle, non-pro only */}
             {(artist.plan !== "pro" || artist.showHeaderBranding) && (
               <Link href="/" className="ml-1 flex items-center gap-1.5 text-white/22 transition-colors duration-300 hover:text-white/45">
