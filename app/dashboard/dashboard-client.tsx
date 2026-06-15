@@ -3421,7 +3421,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 Delete Show?
               </p>
               <p className="mt-2 text-[13px] leading-[1.55] text-muted-foreground/65">
-                This removes the show from your profile, but keeps the record in your account history.
+                This removes the show from your public profile and HQ list, but keeps the record in your account history.
               </p>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
@@ -3531,12 +3531,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 const isOpen   = expandedGigId === gig.id
 
                 return (
-                  <div key={gig.id}>
-                    {/* Premium horizontal card — clicking the card body opens Edit modal */}
+                  <div key={gig.id} className="relative">
+                    {/* Premium horizontal card — clicking the card body opens Edit modal.
+                        overflow-hidden clips the date block bg; the actions menu is a sibling
+                        outside this element so its dropdown is never clipped. */}
                     <div
                       onClick={() => setEditingGig(gig)}
                       className={cn(
-                        "group flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
+                        "group flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150 pr-9",
                         isOpen
                           ? "border-accent/28 ring-1 ring-accent/12"
                           : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_4px_16px_rgba(0,0,0,0.30)]",
@@ -3583,9 +3585,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           </span>
                         )}
                       </div>
+                    </div>
 
-                      {/* Three-dot actions menu */}
-                      <div className="relative flex shrink-0 items-center pr-2">
+                    {/* Three-dot actions menu — sibling of the card, not inside overflow-hidden */}
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-1.5">
+                      <div className="relative">
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
@@ -3664,11 +3668,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                               const dp       = formatDateShort(gig.date)
 
                               return (
-                                <div key={gig.id}>
+                                <div key={gig.id} className="relative">
+                                  {/* Past show card — overflow-hidden clips border-radius only.
+                                      Actions menu is a sibling so its dropdown is never clipped. */}
                                   <div
                                     onClick={() => setEditingGig(gig)}
                                     className={cn(
-                                      "flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150",
+                                      "flex cursor-pointer overflow-hidden rounded-xl border transition-all duration-150 pr-9",
                                       isOpen
                                         ? "border-border"
                                         : "border-border hover:-translate-y-px hover:border-border hover:[box-shadow:0_2px_12px_rgba(0,0,0,0.22)]",
@@ -3711,9 +3717,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                         </span>
                                       )}
                                     </div>
+                                  </div>
 
-                                    {/* Three-dot actions menu */}
-                                    <div className="relative flex shrink-0 items-center pr-1.5">
+                                  {/* Three-dot actions menu — sibling of card, outside overflow-hidden */}
+                                  <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+                                    <div className="relative">
                                       <button
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
