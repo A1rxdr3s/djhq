@@ -87,16 +87,16 @@ function fromGigEntry(gig: GigEntry): ShowForm {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const inputClass = cn(
-  "h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025]",
-  "px-3 text-sm font-medium text-foreground",
-  "placeholder:text-muted-foreground/30",
+  "h-9 w-full rounded-lg border border-gray-200 bg-white",
+  "px-3 text-sm font-medium text-gray-900",
+  "placeholder:text-gray-400",
   "outline-none transition-colors duration-150",
-  "focus:border-accent/30 focus:bg-white/[0.04] focus:ring-1 focus:ring-accent/15",
+  "focus:border-accent/40 focus:ring-2 focus:ring-accent/10",
 )
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
       {children}
     </p>
   )
@@ -119,17 +119,17 @@ function VisibilityControl({
   onChange: (v: ShowForm["visibilityStatus"]) => void
 }) {
   return (
-    <div className="flex gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1">
+    <div className="flex gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5">
       {VIS_OPTIONS.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "flex-1 rounded-lg py-1.5 text-[11px] font-semibold uppercase tracking-[0.10em] transition-colors duration-150",
+            "flex-1 rounded-md py-1.5 text-[11px] font-semibold uppercase tracking-[0.10em] transition-all duration-150",
             value === opt.value
-              ? "bg-white/[0.10] text-foreground shadow-sm"
-              : "text-white/35 hover:text-white/55",
+              ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200"
+              : "text-gray-400 hover:text-gray-600",
           )}
         >
           {opt.label}
@@ -213,8 +213,8 @@ function EventNameInput({
           role="listbox"
           className={cn(
             "absolute left-0 right-0 top-full z-50 mt-1",
-            "overflow-hidden rounded-xl border border-white/[0.09]",
-            "bg-[hsl(var(--card))] shadow-2xl shadow-black/50",
+            "overflow-hidden rounded-xl border border-gray-200",
+            "bg-white shadow-lg shadow-gray-200/80",
           )}
         >
           {filtered.slice(0, 6).map((name, i) => (
@@ -226,11 +226,11 @@ function EventNameInput({
               onPointerEnter={() => setActiveIndex(i)}
               className={cn(
                 "cursor-default select-none px-3.5 py-2.5 text-[13px] font-semibold",
-                "border-b border-white/[0.04] last:border-0",
+                "border-b border-gray-100 last:border-0",
                 "transition-colors duration-75",
                 i === activeIndex
-                  ? "bg-white/[0.07] text-foreground"
-                  : "text-foreground/80 hover:bg-white/[0.04]",
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-700 hover:bg-gray-50",
               )}
             >
               {name}
@@ -343,15 +343,15 @@ export function ShowModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "max-w-lg border-white/[0.08] bg-[#0e1117] p-0 sm:max-w-lg",
-          "[&>button]:text-white/30 [&>button:hover]:text-white/60",
+          "max-w-lg border-gray-200 bg-white p-0 shadow-xl shadow-gray-300/40 sm:max-w-lg",
+          "[&>button]:text-gray-400 [&>button:hover]:text-gray-700",
         )}
       >
         <div className="flex max-h-[90dvh] flex-col">
 
           {/* Header */}
-          <DialogHeader className="shrink-0 border-b border-white/[0.06] px-6 pb-4 pt-5">
-            <DialogTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+          <DialogHeader className="shrink-0 border-b border-gray-100 px-6 pb-4 pt-5">
+            <DialogTitle className="text-[15px] font-semibold tracking-[-0.01em] text-gray-900">
               {mode === "edit" ? "Edit Show" : "Add Show"}
             </DialogTitle>
           </DialogHeader>
@@ -377,7 +377,7 @@ export function ShowModal({
                     onChange={(v) => set("visibilityStatus", v)}
                   />
                   {form.visibilityStatus !== "announced" && (
-                    <p className="mt-1.5 text-[11px] leading-relaxed text-white/35">
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-gray-400">
                       Private event details remain stored but are hidden from the public profile.
                     </p>
                   )}
@@ -508,15 +508,15 @@ export function ShowModal({
           </div>
 
           {/* Footer */}
-          <div className="shrink-0 border-t border-white/[0.05] px-6 py-4">
+          <div className="shrink-0 border-t border-gray-100 px-6 py-4">
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
                 className={cn(
-                  "h-9 rounded-lg border border-white/[0.07] bg-transparent px-4",
-                  "text-[13px] font-medium text-muted-foreground/60",
-                  "transition-colors duration-150 hover:border-white/[0.12] hover:text-foreground/70",
+                  "h-9 rounded-lg border border-gray-200 bg-white px-4",
+                  "text-[13px] font-medium text-gray-600",
+                  "transition-colors duration-150 hover:border-gray-300 hover:text-gray-900",
                 )}
               >
                 Cancel
@@ -528,8 +528,7 @@ export function ShowModal({
                 className={cn(
                   "flex h-9 shrink-0 items-center gap-2 rounded-lg bg-accent px-5",
                   "whitespace-nowrap text-[13px] font-semibold text-accent-foreground",
-                  "transition-all duration-150",
-                  "hover:bg-accent/90 hover:[box-shadow:0_0_20px_color-mix(in_srgb,var(--accent)_30%,transparent)]",
+                  "transition-all duration-150 hover:opacity-90",
                   "disabled:cursor-not-allowed disabled:opacity-40",
                 )}
               >

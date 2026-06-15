@@ -140,7 +140,7 @@ export function VenueAutocomplete({ value, onChange, onSelect, autoFocus }: Venu
     <div ref={containerRef} className="relative min-w-0 flex-1">
       {/* Input */}
       <div className="relative">
-        <MapPin className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/30" />
+        <MapPin className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
         <input
           ref={inputRef}
           value={value}
@@ -158,11 +158,11 @@ export function VenueAutocomplete({ value, onChange, onSelect, autoFocus }: Venu
           }}
           onKeyDown={handleKeyDown}
           className={cn(
-            "h-9 w-full rounded-lg border border-white/[0.07] bg-white/[0.025]",
-            "pl-8 pr-3 text-sm font-medium text-foreground",
-            "placeholder:text-muted-foreground/30",
+            "h-9 w-full rounded-lg border border-gray-200 bg-white",
+            "pl-8 pr-3 text-sm font-medium text-gray-900",
+            "placeholder:text-gray-400",
             "outline-none transition-colors duration-150",
-            "focus:border-white/[0.14] focus:bg-white/[0.04]",
+            "focus:border-accent/40 focus:ring-2 focus:ring-accent/10",
           )}
         />
       </div>
@@ -173,8 +173,8 @@ export function VenueAutocomplete({ value, onChange, onSelect, autoFocus }: Venu
           role="listbox"
           className={cn(
             "absolute left-0 right-0 top-full z-50 mt-1",
-            "overflow-hidden rounded-xl border border-white/[0.09]",
-            "bg-[hsl(var(--card))] shadow-2xl shadow-black/50",
+            "overflow-hidden rounded-xl border border-gray-200",
+            "bg-white shadow-lg shadow-gray-200/80",
           )}
         >
           {results.map((venue, i) => (
@@ -189,21 +189,21 @@ export function VenueAutocomplete({ value, onChange, onSelect, autoFocus }: Venu
               onPointerEnter={() => setActiveIndex(i)}
               className={cn(
                 "flex cursor-default select-none items-center gap-3 px-3.5 py-2.5",
-                "border-b border-white/[0.04] last:border-0",
+                "border-b border-gray-100 last:border-0",
                 "transition-colors duration-75",
                 i === activeIndex
-                  ? "bg-white/[0.07] text-foreground"
-                  : "text-foreground/80 hover:bg-white/[0.04]",
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-700 hover:bg-gray-50",
               )}
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-semibold">{venue.name}</p>
                 {venue.city && (
-                  <p className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground/45">
+                  <p className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.1em] text-gray-400">
                     {venue.city}
                     {venue.country ? (
                       <>
-                        <span className="mx-1.5 text-muted-foreground/25">·</span>
+                        <span className="mx-1.5 text-gray-300">·</span>
                         {venue.country}
                       </>
                     ) : null}

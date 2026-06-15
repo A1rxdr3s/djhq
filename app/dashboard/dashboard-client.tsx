@@ -1046,22 +1046,22 @@ function GigActionsDropdown({
       ref={menuRef}
       className={cn(
         "absolute top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-xl",
-        "border border-border bg-[#111520] shadow-2xl shadow-black/60",
+        "border border-gray-200 bg-white shadow-lg shadow-gray-200/60",
         align === "right" ? "right-0" : "left-0",
       )}
     >
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onEdit() }}
-        className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-foreground/80 transition-colors duration-100 hover:bg-secondary"
+        className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-gray-700 transition-colors duration-100 hover:bg-gray-50"
       >
         Edit
       </button>
-      <div className="mx-3 h-px bg-secondary" />
+      <div className="mx-3 h-px bg-gray-100" />
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onDelete() }}
-        className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-red-400/70 transition-colors duration-100 hover:bg-red-500/[0.08] hover:text-red-400"
+        className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-red-500/80 transition-colors duration-100 hover:bg-red-50 hover:text-red-600"
       >
         <Trash2 className="h-3 w-3" />
         Delete
@@ -3409,26 +3409,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       {deletingGig && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
+          style={{ background: "rgba(0,0,0,0.18)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setDeletingGig(null) }}
         >
           <div
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-[#0e1117] shadow-2xl shadow-black/60"
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl shadow-gray-300/40"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 pt-6 pb-5">
-              <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+              <p className="text-[15px] font-semibold tracking-[-0.01em] text-gray-900">
                 Delete Show?
               </p>
-              <p className="mt-2 text-[13px] leading-[1.55] text-muted-foreground/65">
+              <p className="mt-2 text-[13px] leading-[1.55] text-gray-500">
                 This removes the show from your public profile and HQ list, but keeps the record in your account history.
               </p>
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-6 py-4">
               <button
                 type="button"
                 onClick={() => setDeletingGig(null)}
-                className="h-9 rounded-lg border border-border bg-transparent px-4 text-[13px] font-medium text-muted-foreground/60 transition-colors duration-150 hover:border-border hover:text-foreground/70"
+                className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[13px] font-medium text-gray-600 transition-colors duration-150 hover:border-gray-300 hover:text-gray-900"
               >
                 Cancel
               </button>
@@ -3438,7 +3438,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   handleDeleteGig(deletingGig.id)
                   setDeletingGig(null)
                 }}
-                className="h-9 rounded-lg bg-red-500/[0.85] px-4 text-[13px] font-semibold text-foreground transition-colors duration-150 hover:bg-red-500"
+                className="h-9 whitespace-nowrap rounded-lg bg-red-500 px-4 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-red-600"
               >
                 Delete Show
               </button>
