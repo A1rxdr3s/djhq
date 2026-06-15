@@ -405,9 +405,9 @@ type HeroPreset = {
 
 const HERO_PRESETS: HeroPreset[] = [
   {
-    id: "editorial_center",
-    label: "Editorial Center",
-    description: "Balanced premium lockup",
+    id: "editorial",
+    label: "Editorial",
+    description: "Balanced premium center lockup",
     heroIdentityMode: "logo",
     heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
@@ -418,9 +418,9 @@ const HERO_PRESETS: HeroPreset[] = [
     heroLogoStyle: "soft",
   },
   {
-    id: "club_poster",
-    label: "Club Poster",
-    description: "Large festival-style mark",
+    id: "festival",
+    label: "Festival",
+    description: "Large mark, full-bleed impact",
     heroIdentityMode: "logo",
     heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
@@ -431,9 +431,22 @@ const HERO_PRESETS: HeroPreset[] = [
     heroLogoStyle: "solid",
   },
   {
-    id: "left_lockup",
-    label: "Left Lockup",
-    description: "Editorial left-weighted layout",
+    id: "minimal",
+    label: "Minimal",
+    description: "Quiet identity, restrained presence",
+    heroIdentityMode: "logo",
+    heroLogoPlacement: "editorial",
+    heroLogoLayout: "replace_text",
+    heroLogoAlignment: "center",
+    heroLogoScale: 120,
+    heroLogoOffsetX: 0,
+    heroLogoOffsetY: 10,
+    heroLogoStyle: "soft",
+  },
+  {
+    id: "poster",
+    label: "Poster",
+    description: "Left-weighted editorial layout",
     heroIdentityMode: "logo",
     heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
@@ -444,9 +457,9 @@ const HERO_PRESETS: HeroPreset[] = [
     heroLogoStyle: "soft",
   },
   {
-    id: "cinematic_wide",
-    label: "Cinematic Wide",
-    description: "Blends into photography",
+    id: "cinematic",
+    label: "Cinematic",
+    description: "Blends mark into photography",
     heroIdentityMode: "logo",
     heroLogoPlacement: "editorial",
     heroLogoLayout: "replace_text",
@@ -455,19 +468,6 @@ const HERO_PRESETS: HeroPreset[] = [
     heroLogoOffsetX: -20,
     heroLogoOffsetY: 0,
     heroLogoStyle: "cinematic",
-  },
-  {
-    id: "minimal_mark",
-    label: "Minimal Mark",
-    description: "Quiet identity presence",
-    heroIdentityMode: "logo",
-    heroLogoPlacement: "editorial",
-    heroLogoLayout: "replace_text",
-    heroLogoAlignment: "center",
-    heroLogoScale: 120,
-    heroLogoOffsetX: 0,
-    heroLogoOffsetY: 10,
-    heroLogoStyle: "soft",
   },
 ]
 
@@ -1056,6 +1056,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [accentTheme, setAccentTheme] = useState<ArtistAccentTheme>(initialArtist.accentTheme ?? "matrix")
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const [previewScale, setPreviewScale] = useState(0.4)
+  const [openHeroPanel, setOpenHeroPanel] = useState<"content"|"branding"|"media"|"appearance"|null>("content")
   const [heroLogoFile, setHeroLogoFile] = useState<File | null>(null)
   const [isUploadingHeroLogo, setIsUploadingHeroLogo] = useState(false)
   const [linkUrls, setLinkUrls] = useState<Record<string, string>>(initialLinkUrls)
@@ -6859,155 +6860,156 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       ? `translate(calc(-50% + ${heroLogoOffsetX}px), ${heroLogoOffsetY}px)`
       : `translate(calc(-50% + ${heroLogoOffsetX}px), calc(-50% + ${heroLogoOffsetY}px))`
     const isPro = artist.plan === "pro"
+    const togglePanel = (id: "content"|"branding"|"media"|"appearance") =>
+      setOpenHeroPanel(prev => prev === id ? null : id)
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div>
           <h2 className="text-base font-semibold text-foreground">Hero</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">Configure the hero section of your public profile — image, identity, copy and style.</p>
         </div>
 
-        <div className="space-y-4">
-          {/* Two-column layout: preview+presets left, panels right */}
-          <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        {/* ── Preset strip ── */}
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary px-3 py-1.5">
+          <p className="shrink-0 text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/35">Layout</p>
+          <div className="flex flex-1 items-center gap-0.5">
+            {HERO_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                disabled={!isPro}
+                onClick={() => {
+                  if (!isPro) return
+                  setHeroIdentityMode(preset.heroIdentityMode)
+                  setHeroLogoPlacement(preset.heroLogoPlacement)
+                  setHeroLogoLayout(preset.heroLogoLayout)
+                  setHeroLogoAlignment(preset.heroLogoAlignment)
+                  setHeroLogoScale(preset.heroLogoScale)
+                  setHeroLogoOffsetX(preset.heroLogoOffsetX)
+                  setHeroLogoOffsetY(preset.heroLogoOffsetY)
+                  setHeroLogoStyle(preset.heroLogoStyle)
+                }}
+                className={cn(
+                  "flex-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-center transition-colors duration-100",
+                  "text-muted-foreground/45 hover:bg-background/25 hover:text-muted-foreground/70",
+                  !isPro && "pointer-events-none opacity-40"
+                )}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          {!isPro && <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">Pro</span>}
+        </div>
 
-            {/* ── LEFT: Preview + presets ── */}
-            <div className="space-y-4">
+        {/* ── Two-column layout ── */}
+        <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
 
-              {/* Preview frame */}
-              <div className="overflow-hidden rounded-2xl border border-border bg-[#080808]">
-                <div ref={previewContainerRef} className="relative aspect-[16/7] overflow-hidden">
-                  <div style={{ position:"absolute",top:0,left:0,width:PREVIEW_NATURAL_W,height:PREVIEW_NATURAL_H,transform:`scale(${previewScale})`,transformOrigin:"top left","--accent":previewTheme.accent,"--accent-foreground":previewTheme.accentForeground } as React.CSSProperties}>
-                    {heroImageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={heroImageUrl} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:`${heroImageX}% ${heroImageY}%`,transform:heroImageZoom>100?`scale(${heroImageZoom/100})`:undefined,transformOrigin:"center"}} />
-                    ) : (
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_30%,rgba(255,255,255,0.04)_0%,transparent_70%)]" />
-                    )}
-                    <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
-                    <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
-                    <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
-                    {previewHasFloatingLogo && (
-                      <div className="pointer-events-none absolute" style={{top:heroLogoPlacement==="top_center"?"18%":"50%",left:"50%",transform:previewFloatingTransform}}>
-                        <HeroLogoElement logoUrl={heroLogoUrl} artistName={previewName} logoWidth={previewLogoWidth} heroLogoStyle={heroLogoStyle} heroLogoReadability={heroLogoReadability} />
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
-                      <div className={cn("relative", heroContentSurface==="soft"&&"rounded-[1.5rem] border border-border bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4", heroContentSurface==="strong"&&"rounded-[1.5rem] border border-border bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4")}>
-                        {heroContentSurface!=="none"&&<div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />}
-                        {genres.split(",").map((g)=>g.trim()).filter(Boolean).length>0&&(
-                          <div className="mb-3.5 flex flex-wrap gap-2 sm:mb-4">
-                            {genres.split(",").map((g)=>g.trim()).filter(Boolean).map((genre)=>(
-                              <span key={genre} className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{boxShadow:"0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)"}}>{genre}</span>
-                            ))}
-                          </div>
-                        )}
-                        {!isFloating&&(
-                          <HeroIdentity artistName={previewName} heroLogoUrl={isPro?(heroLogoUrl||null):null} heroIdentityMode={heroIdentityMode} heroTextStyle={heroTextStyle} heroLogoScale={heroLogoScale} heroLogoLayout={heroLogoLayout} heroLogoAlignment={heroLogoAlignment} heroLogoOffsetX={heroLogoOffsetX} heroLogoOffsetY={heroLogoOffsetY} heroLogoStyle={heroLogoStyle} heroLogoReadability={heroLogoReadability} isPro={isPro} isPreview />
-                        )}
-                        <div className={cn("relative",previewContentWidthClass)}>
-                          {location&&<p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3"><MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />{location}</p>}
-                          {heroTagline&&<p className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg" style={{textShadow:`0 0 10px rgba(${previewTheme.glowRgb}, 0.15)`}}>{heroTagline}</p>}
-                          {shortBio&&<p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">{shortBio}</p>}
-                          {bookingEmail&&<div className="mt-4 flex flex-col gap-3 sm:mt-5"><div className="flex h-11 w-fit items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-md shadow-accent/15 sm:h-12"><Mail className="h-4 w-4" />Book this artist</div></div>}
+          {/* LEFT: Preview (sticky) */}
+          <div className="xl:sticky xl:top-6 xl:self-start">
+            <div className="overflow-hidden rounded-2xl border border-border bg-[#080808]">
+              <div ref={previewContainerRef} className="relative aspect-[16/5] overflow-hidden">
+                <div style={{ position:"absolute",bottom:0,left:0,width:PREVIEW_NATURAL_W,height:PREVIEW_NATURAL_H,transform:`scale(${previewScale})`,transformOrigin:"bottom left","--accent":previewTheme.accent,"--accent-foreground":previewTheme.accentForeground } as React.CSSProperties}>
+                  {heroImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={heroImageUrl} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:`${heroImageX}% ${heroImageY}%`,transform:heroImageZoom>100?`scale(${heroImageZoom/100})`:undefined,transformOrigin:"center"}} />
+                  ) : (
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_30%,rgba(255,255,255,0.04)_0%,transparent_70%)]" />
+                  )}
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,_hsl(var(--background)/0.32),_hsl(var(--background)/0.04)_28%,_hsl(var(--background)/0.52)_66%,_hsl(var(--background)/0.98))]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,_transparent_18%,_hsl(var(--background)/0.24)_55%,_hsl(var(--background)/0.72)_100%)]" />
+                  <div className="absolute inset-y-0 left-0 w-3/4 bg-[linear-gradient(92deg,_hsl(var(--background)/0.42),_transparent_72%)]" />
+                  <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_20%_90%,_hsl(var(--accent)/0.10),_transparent_38%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_hsl(var(--background)/0.30)_100%)]" />
+                  {previewHasFloatingLogo && (
+                    <div className="pointer-events-none absolute" style={{top:heroLogoPlacement==="top_center"?"18%":"50%",left:"50%",transform:previewFloatingTransform}}>
+                      <HeroLogoElement logoUrl={heroLogoUrl} artistName={previewName} logoWidth={previewLogoWidth} heroLogoStyle={heroLogoStyle} heroLogoReadability={heroLogoReadability} />
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8">
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(78%,460px)] bg-[linear-gradient(0deg,_hsl(var(--background)/0.95)_0%,_hsl(var(--background)/0.62)_38%,_hsl(var(--background)/0.10)_72%,_transparent_100%)]" />
+                    <div className={cn("relative",heroContentSurface==="soft"&&"rounded-[1.5rem] border border-border bg-black/[0.10] px-4 py-3 backdrop-blur-[1px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4",heroContentSurface==="strong"&&"rounded-[1.5rem] border border-border bg-black/[0.18] px-4 py-3 backdrop-blur-[2px] [box-shadow:inset_0_0_40px_rgba(0,0,0,0.08)] sm:px-5 sm:py-4")}>
+                      {heroContentSurface!=="none"&&<div aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-b from-black/[0.04] to-transparent" />}
+                      {genres.split(",").map((g)=>g.trim()).filter(Boolean).length>0&&(
+                        <div className="mb-3.5 flex flex-wrap gap-2 sm:mb-4">
+                          {genres.split(",").map((g)=>g.trim()).filter(Boolean).map((genre)=>(
+                            <span key={genre} className="rounded-full border border-accent/70 bg-black/35 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90 backdrop-blur-sm" style={{boxShadow:"0 0 16px color-mix(in srgb, var(--accent) 12%, transparent)"}}>{genre}</span>
+                          ))}
                         </div>
+                      )}
+                      {!isFloating&&(
+                        <HeroIdentity artistName={previewName} heroLogoUrl={isPro?(heroLogoUrl||null):null} heroIdentityMode={heroIdentityMode} heroTextStyle={heroTextStyle} heroLogoScale={heroLogoScale} heroLogoLayout={heroLogoLayout} heroLogoAlignment={heroLogoAlignment} heroLogoOffsetX={heroLogoOffsetX} heroLogoOffsetY={heroLogoOffsetY} heroLogoStyle={heroLogoStyle} heroLogoReadability={heroLogoReadability} isPro={isPro} isPreview />
+                      )}
+                      <div className={cn("relative",previewContentWidthClass)}>
+                        {location&&<p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3"><MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />{location}</p>}
+                        {heroTagline&&<p className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg" style={{textShadow:`0 0 10px rgba(${previewTheme.glowRgb}, 0.15)`}}>{heroTagline}</p>}
+                        {shortBio&&<p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">{shortBio}</p>}
+                        {bookingEmail&&<div className="mt-4 flex flex-col gap-3 sm:mt-5"><div className="flex h-11 w-fit items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-md shadow-accent/15 sm:h-12"><Mail className="h-4 w-4" />Book this artist</div></div>}
                       </div>
                     </div>
                   </div>
-                  <div className="absolute right-2 top-2 z-10 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">Preview</div>
                 </div>
-              </div>
-
-              {/* Composition presets */}
-              <div className="rounded-xl border border-border bg-secondary p-4">
-                <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Composition Presets</p>
-                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
-                  {HERO_PRESETS.map((preset)=>(
-                    <button key={preset.id} type="button" disabled={!isPro}
-                      onClick={()=>{if(!isPro)return;setHeroIdentityMode(preset.heroIdentityMode);setHeroLogoPlacement(preset.heroLogoPlacement);setHeroLogoLayout(preset.heroLogoLayout);setHeroLogoAlignment(preset.heroLogoAlignment);setHeroLogoScale(preset.heroLogoScale);setHeroLogoOffsetX(preset.heroLogoOffsetX);setHeroLogoOffsetY(preset.heroLogoOffsetY);setHeroLogoStyle(preset.heroLogoStyle)}}
-                      className={cn("flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-100","border-border bg-secondary hover:border-border hover:bg-secondary",!isPro&&"pointer-events-none opacity-40")}>
-                      <span className="text-[10px] font-semibold text-foreground/70">{preset.label}</span>
-                      <span className="text-[9px] text-muted-foreground/40">{preset.description}</span>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-[10px] text-muted-foreground/30">Start with a curated composition, then fine-tune in the panels.</p>
+                <div className="absolute right-2 top-2 z-10 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">Preview</div>
               </div>
             </div>
+          </div>
 
-            {/* ── RIGHT: Control panels ── */}
-            <div className="space-y-4">
+          {/* RIGHT: Accordion panels */}
+          <div className="space-y-1.5">
 
-              {/* A. Hero Image */}
-              <div className="rounded-2xl border border-border bg-secondary p-5">
-                <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Image</p>
-                <p className="mb-4 text-[10px] text-muted-foreground/40">Photograph or artwork behind the hero.</p>
-                <div className="space-y-4">
+            {/* Content */}
+            <div className="overflow-hidden rounded-xl border border-border bg-secondary">
+              <button type="button" onClick={() => togglePanel("content")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Content</span>
+                <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "content" && "rotate-180")} />
+              </button>
+              {openHeroPanel === "content" && (
+                <div className="border-t border-border px-4 pb-4 pt-3">
                   <div className="space-y-1.5">
-                    <label htmlFor="heroImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Image URL</label>
-                    <Input id="heroImageUrl" value={heroImageUrl} onChange={(e)=>setHeroImageUrl(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="heroImageFile" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Upload</label>
-                    <Input id="heroImageFile" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e)=>setHeroImageFile(e.target.files?.[0]??null)} />
-                    <Button type="button" onClick={handleUploadHeroImage} disabled={!heroImageFile||isUploadingHeroImage||isSaving||isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">
-                      {heroUploadStatus==="compressing"?"Compressing...":heroUploadStatus==="uploading"?"Uploading...":"Upload hero image"}
-                    </Button>
-                    <p className="text-[10px] text-muted-foreground/38">Recommended: high-quality landscape. Large images are auto-optimized before upload.</p>
-                  </div>
-                  <div className="space-y-3 rounded-xl border border-border bg-secondary p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Image Composition</p>
-                      <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.10em] text-muted-foreground/30">Preview only</span>
+                    <div className="flex items-baseline justify-between">
+                      <label htmlFor="heroTagline" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Tagline</label>
+                      <span className={cn("text-[10px] tabular-nums transition-colors duration-150", heroTagline.length > 90 ? "text-amber-400/60" : "text-muted-foreground/30")}>{heroTagline.length}/100</span>
                     </div>
-                    {[{label:"Position X",val:heroImageX,set:setHeroImageX,min:0,max:100},{label:"Position Y",val:heroImageY,set:setHeroImageY,min:0,max:100},{label:"Zoom",val:heroImageZoom,set:setHeroImageZoom,min:100,max:140}].map(({label,val,set,min,max})=>(
-                      <div key={label} className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] text-muted-foreground/50">{label}</p>
-                          <span className="text-[10px] tabular-nums text-muted-foreground/50">{val}%</span>
-                        </div>
-                        <input type="range" min={min} max={max} step={1} value={val} onChange={(e)=>set(Number(e.target.value))} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70" />
-                      </div>
-                    ))}
-                    <p className="text-[10px] text-muted-foreground/30">Adjusts the image in the preview only. Changes are not saved to your profile.</p>
+                    <Input id="heroTagline" value={heroTagline} maxLength={100} placeholder="Peak-time house music for underground dance floors." onChange={(e) => setHeroTagline(e.target.value)} />
+                    <p className="text-[10px] text-muted-foreground/38">Rendered above the bio in accent color. Leave blank to omit.</p>
                   </div>
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* B. Hero Identity */}
-              <div className="rounded-2xl border border-border bg-secondary p-5">
-                <div className="mb-4 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Identity</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Logo and name in the public hero.</p>
-                  </div>
-                  {!isPro&&<span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>}
+            {/* Branding */}
+            <div className="overflow-hidden rounded-xl border border-border bg-secondary">
+              <button type="button" onClick={() => togglePanel("branding")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Branding</span>
+                  {!isPro && <span className="rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">Pro</span>}
                 </div>
-                <div className="space-y-5">
+                <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "branding" && "rotate-180")} />
+              </button>
+              {openHeroPanel === "branding" && (
+                <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
                   <div className="space-y-2">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Identity Mode</p>
                     <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
-                      {(["text","logo","both"] as const).map((mode)=>(
-                        <button key={mode} type="button" onClick={()=>isPro&&setHeroIdentityMode(mode)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",heroIdentityMode===mode?"bg-secondary text-foreground/75":"text-muted-foreground/30 hover:text-muted-foreground/50",!isPro&&"pointer-events-none")}>{mode}</button>
+                      {(["text","logo","both"] as const).map((mode) => (
+                        <button key={mode} type="button" onClick={() => isPro && setHeroIdentityMode(mode)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroIdentityMode === mode ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{mode}</button>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground/35">Text: name only. Logo: logo only or alongside name. Both: logo + name together.</p>
+                    <p className="text-[10px] text-muted-foreground/35">Text: name only. Logo: logo only. Both: logo + name.</p>
                   </div>
-                  <div className="space-y-2 border-t border-border pt-4">
+                  <div className="space-y-2 border-t border-border pt-3">
                     <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Typography Style</p>
                     <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
-                      {(["default","condensed","cinematic","editorial"] as const).map((style)=>(
-                        <button key={style} type="button" onClick={()=>isPro&&setHeroTextStyle(style)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",heroTextStyle===style?"bg-secondary text-foreground/75":"text-muted-foreground/30 hover:text-muted-foreground/50",!isPro&&"pointer-events-none")}>{style}</button>
+                      {(["default","condensed","cinematic","editorial"] as const).map((style) => (
+                        <button key={style} type="button" onClick={() => isPro && setHeroTextStyle(style)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroTextStyle === style ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{style}</button>
                       ))}
                     </div>
                   </div>
-                  {isPro&&(
-                    <div className="space-y-2 border-t border-border pt-4">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Logo</p>
-                      {heroLogoUrl&&(
+                  {isPro && (
+                    <div className="space-y-2 border-t border-border pt-3">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo</p>
+                      {heroLogoUrl && (
                         <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3">
                           <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-[#0a0a0a]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -7015,115 +7017,144 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-[11px] text-foreground/55">{heroLogoUrl.split("/").pop()}</p>
-                            <button type="button" onClick={()=>setHeroLogoUrl("")} className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80">Remove</button>
+                            <button type="button" onClick={() => setHeroLogoUrl("")} className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80">Remove</button>
                           </div>
                         </div>
                       )}
-                      <Input id="heroLogoFile" type="file" accept="image/png,image/svg+xml,image/webp" onChange={(e)=>setHeroLogoFile(e.target.files?.[0]??null)} />
-                      <Button type="button" onClick={handleUploadHeroLogo} disabled={!heroLogoFile||isUploadingHeroLogo||isSaving||isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">{isUploadingHeroLogo?"Uploading...":"Upload logo"}</Button>
+                      <Input id="heroLogoFile" type="file" accept="image/png,image/svg+xml,image/webp" onChange={(e) => setHeroLogoFile(e.target.files?.[0] ?? null)} />
+                      <Button type="button" onClick={handleUploadHeroLogo} disabled={!heroLogoFile || isUploadingHeroLogo || isSaving || isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">{isUploadingHeroLogo ? "Uploading..." : "Upload logo"}</Button>
                       <p className="text-[10px] text-muted-foreground/38">PNG, SVG, or WEBP. Transparent background recommended.</p>
                     </div>
                   )}
-                  {[
-                    {title:"Logo Placement",ctrl:(
-                      <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
-                        {([{value:"editorial",label:"Editorial"},{value:"top_center",label:"Top Center"},{value:"center",label:"Center"},{value:"custom",label:"Custom"}] as {value:HeroLogoPlacement;label:string}[]).map(({value,label})=>(
-                          <button key={value} type="button" onClick={()=>isPro&&setHeroLogoPlacement(value)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",heroLogoPlacement===value?"bg-secondary text-foreground/75":"text-muted-foreground/30 hover:text-muted-foreground/50",!isPro&&"pointer-events-none")}>{label}</button>
-                        ))}
-                      </div>
-                    ),note:"Editorial keeps the logo in content flow. Floating places it independently over the photo.",dim:false},
-                    {title:"Logo Layout",ctrl:(
-                      <div className={cn("flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit",isFloating&&"pointer-events-none opacity-30")}>
-                        {([{value:"replace_text",label:"Replace"},{value:"above_text",label:"Above"},{value:"below_text",label:"Below"},{value:"left_text",label:"Left"},{value:"right_text",label:"Right"}] as {value:HeroLogoLayout;label:string}[]).map(({value,label})=>(
-                          <button key={value} type="button" onClick={()=>isPro&&setHeroLogoLayout(value)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",heroLogoLayout===value?"bg-secondary text-foreground/75":"text-muted-foreground/30 hover:text-muted-foreground/50",!isPro&&"pointer-events-none")}>{label}</button>
-                        ))}
-                      </div>
-                    ),note:"Use Replace if your logo already contains your name.",dim:isFloating},
-                    {title:"Logo Alignment",ctrl:(
-                      <div className={cn("flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit",isFloating&&"pointer-events-none opacity-30")}>
-                        {(["left","center","right"] as const).map((a)=>(
-                          <button key={a} type="button" onClick={()=>isPro&&setHeroLogoAlignment(a)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",heroLogoAlignment===a?"bg-secondary text-foreground/75":"text-muted-foreground/30 hover:text-muted-foreground/50",!isPro&&"pointer-events-none")}>{a}</button>
-                        ))}
-                      </div>
-                    ),note:"",dim:isFloating},
-                  ].map(({title,ctrl,note,dim})=>(
-                    <div key={title} className={cn("space-y-2 border-t border-border pt-4",dim&&"pointer-events-none opacity-30")}>
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{title}</p>
-                      {ctrl}
-                      {note&&<p className="text-[10px] text-muted-foreground/35">{note}</p>}
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Placement</p>
+                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
+                      {([{value:"editorial",label:"Editorial"},{value:"top_center",label:"Top"},{value:"center",label:"Center"},{value:"custom",label:"Custom"}] as {value:HeroLogoPlacement;label:string}[]).map(({value,label}) => (
+                        <button key={value} type="button" onClick={() => isPro && setHeroLogoPlacement(value)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroLogoPlacement === value ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{label}</button>
+                      ))}
                     </div>
-                  ))}
-                  <div className="space-y-2 border-t border-border pt-4">
-                    <div className="flex items-center justify-between"><p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Size</p><span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoScale}px</span></div>
-                    <input type="range" min={40} max={240} step={5} value={heroLogoScale} onChange={(e)=>isPro&&setHeroLogoScale(Number(e.target.value))} disabled={!isPro} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40" />
+                    <p className="text-[10px] text-muted-foreground/35">Editorial: in content flow. Floating: over the photo.</p>
                   </div>
-                  <div className="space-y-3 border-t border-border pt-4">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Position Offset</p>
-                    {[{label:"Horizontal",val:heroLogoOffsetX,set:setHeroLogoOffsetX},{label:"Vertical",val:heroLogoOffsetY,set:setHeroLogoOffsetY}].map(({label,val,set})=>(
+                  <div className={cn("space-y-2 border-t border-border pt-3", isFloating && "pointer-events-none opacity-30")}>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Layout</p>
+                    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
+                      {([{value:"replace_text",label:"Replace"},{value:"above_text",label:"Above"},{value:"below_text",label:"Below"},{value:"left_text",label:"Left"},{value:"right_text",label:"Right"}] as {value:HeroLogoLayout;label:string}[]).map(({value,label}) => (
+                        <button key={value} type="button" onClick={() => isPro && setHeroLogoLayout(value)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroLogoLayout === value ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{label}</button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/35">Use Replace if your logo already contains your name.</p>
+                  </div>
+                  <div className={cn("space-y-2 border-t border-border pt-3", isFloating && "pointer-events-none opacity-30")}>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Alignment</p>
+                    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
+                      {(["left","center","right"] as const).map((a) => (
+                        <button key={a} type="button" onClick={() => isPro && setHeroLogoAlignment(a)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroLogoAlignment === a ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{a}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Size</p>
+                      <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoScale}px</span>
+                    </div>
+                    <input type="range" min={40} max={240} step={5} value={heroLogoScale} onChange={(e) => isPro && setHeroLogoScale(Number(e.target.value))} disabled={!isPro} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40" />
+                  </div>
+                  <div className="space-y-3 border-t border-border pt-3">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Position Offset</p>
+                    {[{label:"H",val:heroLogoOffsetX,set:setHeroLogoOffsetX},{label:"V",val:heroLogoOffsetY,set:setHeroLogoOffsetY}].map(({label,val,set}) => (
                       <div key={label} className="space-y-1.5">
-                        <div className="flex items-center justify-between"><p className="text-[10px] text-muted-foreground/50">{label}</p><span className="text-[10px] tabular-nums text-muted-foreground/50">{val>0?"+":""}{val}px</span></div>
-                        <input type="range" min={-100} max={100} step={1} value={val} onChange={(e)=>isPro&&set(Number(e.target.value))} disabled={!isPro} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40" />
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] text-muted-foreground/50">{label}</p>
+                          <span className="text-[10px] tabular-nums text-muted-foreground/50">{val > 0 ? "+" : ""}{val}px</span>
+                        </div>
+                        <input type="range" min={-100} max={100} step={1} value={val} onChange={(e) => isPro && set(Number(e.target.value))} disabled={!isPro} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40" />
                       </div>
                     ))}
-                    <p className="text-[10px] text-muted-foreground/35">Fine-tune logo position without affecting layout or spacing.</p>
                   </div>
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* C. Hero Copy — tagline only (bio/genres/location live in Profile) */}
-              <div className="rounded-2xl border border-border bg-secondary p-5">
-                <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Copy</p>
-                <p className="mb-4 text-[10px] text-muted-foreground/40">Text content specific to the hero section.</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-baseline justify-between">
-                    <label htmlFor="heroTagline" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Tagline</label>
-                    <span className={cn("text-[10px] tabular-nums transition-colors duration-150",heroTagline.length>90?"text-amber-400/60":"text-muted-foreground/30")}>{heroTagline.length}/100</span>
+            {/* Media */}
+            <div className="overflow-hidden rounded-xl border border-border bg-secondary">
+              <button type="button" onClick={() => togglePanel("media")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Media</span>
+                <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "media" && "rotate-180")} />
+              </button>
+              {openHeroPanel === "media" && (
+                <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
+                  <div className="space-y-1.5">
+                    <label htmlFor="heroImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Image URL</label>
+                    <Input id="heroImageUrl" value={heroImageUrl} onChange={(e) => setHeroImageUrl(e.target.value)} />
                   </div>
-                  <Input id="heroTagline" value={heroTagline} maxLength={100} placeholder="Peak-time house music for underground dance floors." onChange={(e)=>setHeroTagline(e.target.value)} />
-                  <p className="text-[10px] text-muted-foreground/38">Rendered above the bio in accent color. Leave blank to omit.</p>
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <label htmlFor="heroImageFile" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Upload</label>
+                    <Input id="heroImageFile" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setHeroImageFile(e.target.files?.[0] ?? null)} />
+                    <Button type="button" onClick={handleUploadHeroImage} disabled={!heroImageFile || isUploadingHeroImage || isSaving || isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">
+                      {heroUploadStatus === "compressing" ? "Compressing..." : heroUploadStatus === "uploading" ? "Uploading..." : "Upload image"}
+                    </Button>
+                    <p className="text-[10px] text-muted-foreground/38">JPEG, PNG, or WEBP. Large images are auto-optimized before upload.</p>
+                  </div>
+                  <div className="space-y-3 border-t border-border pt-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Composition</p>
+                      <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.10em] text-muted-foreground/30">Preview only</span>
+                    </div>
+                    {[{label:"Position X",val:heroImageX,set:setHeroImageX,min:0,max:100},{label:"Position Y",val:heroImageY,set:setHeroImageY,min:0,max:100},{label:"Zoom",val:heroImageZoom,set:setHeroImageZoom,min:100,max:140}].map(({label,val,set,min,max}) => (
+                      <div key={label} className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] text-muted-foreground/50">{label}</p>
+                          <span className="text-[10px] tabular-nums text-muted-foreground/50">{val}%</span>
+                        </div>
+                        <input type="range" min={min} max={max} step={1} value={val} onChange={(e) => set(Number(e.target.value))} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* D. Hero Style */}
-              <div className="rounded-2xl border border-border bg-secondary p-5">
-                <div className="mb-4 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Hero Style</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">Visual treatment and color theme.</p>
-                  </div>
-                  {!isPro&&<span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>}
+            {/* Appearance */}
+            <div className="overflow-hidden rounded-xl border border-border bg-secondary">
+              <button type="button" onClick={() => togglePanel("appearance")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Appearance</span>
+                  {!isPro && <span className="rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">Pro</span>}
                 </div>
-                <div className="space-y-5">
+                <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "appearance" && "rotate-180")} />
+              </button>
+              {openHeroPanel === "appearance" && (
+                <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Accent Theme</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Theme</p>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {Object.values(ACCENT_THEMES).map((theme)=>(
-                        <button key={theme.value} type="button" onClick={()=>isPro&&setAccentTheme(theme.value)} disabled={!isPro} className={cn("flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",accentTheme===theme.value?"border-border bg-secondary text-foreground/80":"border-transparent text-muted-foreground/30 hover:text-muted-foreground/50",!isPro&&"pointer-events-none")}>
+                      {Object.values(ACCENT_THEMES).map((theme) => (
+                        <button key={theme.value} type="button" onClick={() => isPro && setAccentTheme(theme.value)} disabled={!isPro} className={cn("flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", accentTheme === theme.value ? "border-border bg-secondary text-foreground/80" : "border-transparent text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>
                           <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{backgroundColor:theme.hex}} />{theme.name}
                         </button>
                       ))}
                     </div>
                   </div>
                   {[
-                    {title:"Logo Visual Style",items:[["solid","soft","cinematic"] as const],state:heroLogoStyle,set:(v:string)=>isPro&&setHeroLogoStyle(v as "solid"|"soft"|"cinematic"),note:"Solid: full opacity. Soft: reduced opacity with glow. Cinematic: blends into the photo."},
-                    {title:"Logo Readability",items:[["none","subtle","strong"] as const],state:heroLogoReadability,set:(v:string)=>isPro&&setHeroLogoReadability(v as "none"|"subtle"|"strong"),note:"Soft contrast protection behind the logo without a visible box."},
-                    {title:"Content Surface",items:[["none","soft","strong"] as const],state:heroContentSurface,set:(v:string)=>isPro&&setHeroContentSurface(v as "none"|"soft"|"strong"),note:"Atmospheric surface behind the full content cluster for readability on busy photos."},
-                    {title:"Content Width",items:[["compact","standard","wide"] as const],state:heroContentWidth,set:(v:string)=>isPro&&setHeroContentWidth(v as "compact"|"standard"|"wide"),note:"How wide the text content block extends across the hero."},
-                  ].map(({title,items,state,set,note})=>(
-                    <div key={title} className="space-y-2 border-t border-border pt-4">
+                    {title:"Logo Style",items:["solid","soft","cinematic"] as const,state:heroLogoStyle,set:(v:string)=>isPro&&setHeroLogoStyle(v as HeroLogoStyle),note:"Solid: full opacity. Soft: reduced opacity with glow. Cinematic: blends into photo."},
+                    {title:"Logo Readability",items:["none","subtle","strong"] as const,state:heroLogoReadability,set:(v:string)=>isPro&&setHeroLogoReadability(v as HeroLogoReadability),note:"Contrast protection behind the logo without a visible box."},
+                    {title:"Content Surface",items:["none","soft","strong"] as const,state:heroContentSurface,set:(v:string)=>isPro&&setHeroContentSurface(v as HeroContentSurface),note:"Atmospheric backing for readability on busy photos."},
+                    {title:"Content Width",items:["compact","standard","wide"] as const,state:heroContentWidth,set:(v:string)=>isPro&&setHeroContentWidth(v as HeroContentWidth),note:"How wide the text block extends across the hero."},
+                  ].map(({title,items,state,set,note}) => (
+                    <div key={title} className="space-y-2 border-t border-border pt-3">
                       <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{title}</p>
                       <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
-                        {items[0].map((v)=>(
-                          <button key={v} type="button" onClick={()=>set(v)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",state===v?"bg-secondary text-foreground/75":"text-muted-foreground/30 hover:text-muted-foreground/50",!isPro&&"pointer-events-none")}>{v}</button>
+                        {items.map((v) => (
+                          <button key={v} type="button" onClick={() => set(v)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", state === v ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{v}</button>
                         ))}
                       </div>
-                      {note&&<p className="text-[10px] text-muted-foreground/35">{note}</p>}
+                      {note && <p className="text-[10px] text-muted-foreground/35">{note}</p>}
                     </div>
                   ))}
                 </div>
-              </div>
-
+              )}
             </div>
+
           </div>
         </div>
       </div>
