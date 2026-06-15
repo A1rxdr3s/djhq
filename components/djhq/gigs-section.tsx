@@ -51,6 +51,22 @@ const item = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE } },
 }
 
+// ── Shared content derivation ──────────────────────────────────────────────────
+
+function deriveGigDisplay(gig: Gig) {
+  const vis = gig.visibilityStatus ?? "announced"
+  const isHidden = vis === "tba" || vis === "tbc" || vis === "cancelled"
+  const hasEventName = !isHidden &&
+    !!gig.eventName?.trim() &&
+    gig.eventName.trim().toLowerCase() !== (gig.venue ?? "").trim().toLowerCase()
+  const displayTitle = isHidden
+    ? vis === "tba" ? "TBA" : vis === "tbc" ? "TBC" : "CANCELLED"
+    : hasEventName ? (gig.eventName ?? gig.venue) : gig.venue
+  return { isHidden, hasEventName, displayTitle }
+}
+
+// ── Featured show card (first in primary list) ─────────────────────────────────
+
 type GigRowProps = {
   gig: Gig
   isNext: boolean
@@ -59,19 +75,11 @@ type GigRowProps = {
 
 function GigRow({ gig, isNext, isPast }: GigRowProps) {
   const { day, month } = parseGigDate(gig.date)
-  const vis = gig.visibilityStatus ?? "announced"
-  const isHidden = vis === "tba" || vis === "tbc" || vis === "cancelled"
+  const { isHidden, hasEventName, displayTitle } = deriveGigDisplay(gig)
   const statusConfig = gig.eventStatus ? STATUS_CONFIG[gig.eventStatus] : null
   const locationStr = [gig.city, gig.country].filter(Boolean).join(" • ")
   const showTicket = !isPast && !isHidden && !!gig.ticketUrl
   const showInstagram = !isHidden && !!gig.instagramUrl
-  const hasEventName = !isHidden &&
-    !!gig.eventName?.trim() &&
-    gig.eventName.trim().toLowerCase() !== (gig.venue ?? "").trim().toLowerCase()
-
-  const displayTitle = isHidden
-    ? vis === "tba" ? "TBA" : vis === "tbc" ? "TBC" : "CANCELLED"
-    : hasEventName ? (gig.eventName ?? gig.venue) : gig.venue
 
   return (
     <div
@@ -137,7 +145,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           )}
         </div>
 
-        {/* Venue context line — always reserved for height; invisible when event name equals/absent venue */}
+        {/* Venue context line — height always reserved; invisible when event name absent or equals venue */}
         {!isHidden && (
           <p
             className={cn(
@@ -146,7 +154,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
               !hasEventName && "invisible",
             )}
           >
-            {gig.venue || " "}
+            {gig.venue || " "}
           </p>
         )}
 
@@ -209,6 +217,118 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
   )
 }
 
+// ── Compact show row (shows 2–N in the primary list) ──────────────────────────
+
+function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
+  const { day, month } = parseGigDate(gig.date)
+  const { isHidden, hasEventName, displayTitle } = deriveGigDisplay(gig)
+  const locationStr = [gig.city, gig.country].filter(Boolean).join(" • ")
+  const showTicket = !isPast && !isHidden && !!gig.ticketUrl
+  const showInstagram = !isHidden && !!gig.instagramUrl
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2.5 border-t border-white/[0.05] px-2 py-2.5 xl:px-3",
+        "transition-colors duration-150",
+        isPast ? "hover:bg-white/[0.012]" : "hover:bg-white/[0.025]",
+      )}
+    >
+      {/* Date — compact stacked */}
+      <div className="flex w-9 shrink-0 flex-col items-center leading-none">
+        <span
+          className={cn(
+            "text-[1.05rem] font-black leading-none tracking-tight tabular-nums",
+            isPast ? "text-foreground/25" : "text-foreground/72",
+          )}
+        >
+          {day}
+        </span>
+        <span
+          className={cn(
+            "mt-[3px] text-[7px] font-bold uppercase tracking-[0.18em]",
+            isPast ? "text-white/15" : "text-accent/52",
+          )}
+        >
+          {month}
+        </span>
+      </div>
+
+      {/* Thin vertical rule */}
+      <div className={cn("h-6 w-px shrink-0", isPast ? "bg-white/[0.04]" : "bg-white/[0.07]")} />
+
+      {/* Title + optional venue sub */}
+      <div className="min-w-0 flex-1">
+        <p
+          className={cn(
+            "truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.04em]",
+            isPast ? "text-foreground/32" : "text-foreground/82",
+          )}
+        >
+          {displayTitle}
+        </p>
+        {hasEventName && gig.venue && (
+          <p
+            className={cn(
+              "truncate text-[10px] font-medium leading-tight",
+              isPast ? "text-white/18" : "text-white/38",
+            )}
+          >
+            {gig.venue}
+          </p>
+        )}
+      </div>
+
+      {/* Location — right-anchored */}
+      {locationStr && (
+        <p
+          className={cn(
+            "shrink-0 text-[10px] font-medium uppercase tracking-[0.08em]",
+            isPast ? "text-white/18" : "text-white/30",
+          )}
+        >
+          {locationStr}
+        </p>
+      )}
+
+      {/* Compact action icons */}
+      {(showTicket || showInstagram) && (
+        <div className="ml-1 flex shrink-0 items-center gap-1.5">
+          {showTicket && gig.ticketUrl && resolveSafeHref(gig.ticketUrl) && (
+            <a
+              href={resolveSafeHref(gig.ticketUrl)!}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Tickets"
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.05] text-accent/80 transition-all duration-150 hover:scale-[1.05] hover:border-accent/35 hover:bg-accent/10 hover:text-accent"
+            >
+              <Ticket className="h-3.5 w-3.5" />
+            </a>
+          )}
+          {showInstagram && gig.instagramUrl && resolveSafeHref(gig.instagramUrl) && (
+            <a
+              href={resolveSafeHref(gig.instagramUrl)!}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-150",
+                isPast
+                  ? "border-white/[0.06] text-white/18 hover:text-white/30"
+                  : "border-accent/[0.18] bg-accent/[0.04] text-accent/75 hover:scale-[1.05] hover:border-accent/[0.32] hover:bg-accent/[0.08] hover:text-accent",
+              )}
+            >
+              <Instagram className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── GigsSection ───────────────────────────────────────────────────────────────
+
 type GigsSectionProps = {
   /** Future shows sorted ascending (soonest first). Pre-filtered by the server. */
   futureGigs: Gig[]
@@ -248,27 +368,44 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
 
   const sectionTitle = scenarioA ? "Recent Shows" : "Shows"
 
+  // First show gets the full featured card; the rest render as compact rows.
+  const featuredGig = primaryRows[0]
+  const compactGigs = primaryRows.slice(1)
+
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:h-full lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5 xl:p-7 xl:pt-6">
       <SectionHeader>{sectionTitle}</SectionHeader>
 
       <div className="mt-4 lg:flex-1">
         <motion.div
-          className="flex flex-col gap-1.5"
+          className="flex flex-col"
           variants={container}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-24px" }}
         >
-          {primaryRows.map((gig, i) => (
-            <motion.div key={gig.id} variants={item}>
+          {/* Featured show — full card treatment */}
+          {featuredGig && (
+            <motion.div variants={item}>
               <GigRow
-                gig={gig}
-                isNext={!primaryIsPast && i === 0}
+                gig={featuredGig}
+                isNext={!primaryIsPast}
                 isPast={primaryIsPast}
               />
             </motion.div>
-          ))}
+          )}
+
+          {/* Compact list — remaining shows grouped in a single bordered block */}
+          {compactGigs.length > 0 && (
+            <motion.div
+              variants={item}
+              className="mt-1.5 overflow-hidden rounded-xl border border-white/[0.06]"
+            >
+              {compactGigs.map((gig) => (
+                <GigRowCompact key={gig.id} gig={gig} isPast={primaryIsPast} />
+              ))}
+            </motion.div>
+          )}
         </motion.div>
       </div>
 
