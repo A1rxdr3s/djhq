@@ -816,7 +816,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Zone 2 — edge vignette: subtle periphery framing */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_130%_100%_at_50%_0%,_transparent_42%,_hsl(var(--background)/0.22)_100%)]" />
             {/* Zone 3 — cinematic bottom lift: extended reach for smooth hero-to-content transition */}
-            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.58) 22%, rgba(0,0,0,0.18) 46%, rgba(0,0,0,0.04) 62%, rgba(0,0,0,0) 76%)" }} />
+            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.72) 22%, rgba(0,0,0,0.30) 48%, rgba(0,0,0,0.08) 66%, rgba(0,0,0,0) 82%)" }} />
             {/* Zone 3b — bottom-left corner ellipse: readability behind text, image open above */}
             <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.40) 38%, rgba(0,0,0,0) 68%)" }} />
             {/* Zone 4 — accent atmosphere: warm accent glow for brand character */}
@@ -904,7 +904,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <a
                         href={safePressKitHref}
                         {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                        className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/50 bg-white/[0.08] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/95 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/65 hover:bg-white/[0.14] sm:px-8 sm:text-sm"
+                        className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/25 bg-white/[0.04] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/65 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.08] sm:px-8 sm:text-sm"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Press Kit
@@ -940,7 +940,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <a
                         href={safePressKitHref}
                         {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                        className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:px-8 sm:text-sm"
+                        className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.04] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/60 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/[0.08] sm:px-8 sm:text-sm"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Press Kit
@@ -951,17 +951,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <HeroMobileSocialRow links={prioritizedLinks} />
               </div>
             )}
-            {/* Mobile — extended bottom vignette: deepens the fade zone behind the scroll cue */}
+            {/* Mobile — extended bottom vignette: hero dissolves into content darkness */}
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-[28%] md:hidden"
-              style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.50) 0%, transparent 100%)" }}
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[38%] md:hidden"
+              style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 55%, transparent 100%)" }}
             />
             {/* Mobile scroll cue — absolutely anchored to hero bottom, scrolls to first content section */}
             <a
               href="#shows"
               aria-label="Scroll to content"
-              className="absolute left-1/2 z-10 -translate-x-1/2 opacity-[0.42] transition-all duration-150 active:translate-y-0.5 active:opacity-100 md:hidden"
-              style={{ bottom: "clamp(72px, 10vh, 96px)" }}
+              className="absolute left-1/2 z-10 -translate-x-1/2 opacity-[0.36] transition-all duration-150 active:translate-y-0.5 active:opacity-90 md:hidden"
+              style={{ bottom: "clamp(44px, 7vh, 68px)" }}
             >
               <div className="hero-scroll-cue flex flex-col items-center gap-[5px]">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
