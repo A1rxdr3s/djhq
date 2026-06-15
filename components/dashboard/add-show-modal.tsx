@@ -202,7 +202,7 @@ function EventNameInput({
         onChange={(e) => { onChange(e.target.value); setActiveIndex(-1); setOpen(true) }}
         onFocus={() => { setOpen(true) }}
         onKeyDown={handleKeyDown}
-        placeholder="Event or show name"
+        placeholder="Event or show name (optional)"
         autoComplete="off"
         spellCheck={false}
         autoFocus={autoFocus}
@@ -291,7 +291,6 @@ export function ShowModal({
   }
 
   const isValid = !!(
-    form.eventName.trim() &&
     form.venue.trim() &&
     form.date &&
     form.city.trim() &&
@@ -360,11 +359,11 @@ export function ShowModal({
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <div className="space-y-5">
 
-              {/* ── EVENT ──────────────────────────────────────────────────────
+              {/* ── EVENT NAME ─────────────────────────────────────────────────
                   The brand/series name for the event (e.g. "Afterlife", "MISA").
-                  Separate from the physical venue. */}
+                  Optional — separate from the physical venue. */}
               <div>
-                <SectionLabel>Event</SectionLabel>
+                <SectionLabel>Event Name</SectionLabel>
                 <EventNameInput
                   value={form.eventName}
                   onChange={(v) => set("eventName", v)}

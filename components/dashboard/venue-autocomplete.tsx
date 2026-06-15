@@ -144,7 +144,7 @@ export function VenueAutocomplete({ value, onChange, onSelect, autoFocus }: Venu
         <input
           ref={inputRef}
           value={value}
-          placeholder="Venue"
+          placeholder="Venue, club, festival, or location"
           autoComplete="off"
           spellCheck={false}
           autoFocus={autoFocus}

@@ -3525,10 +3525,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             <div className="space-y-2">
               {upcoming.map((gig) => {
-                const dp       = formatDateShort(gig.date)
-                const location = [gig.city, gig.country].filter(Boolean).join(", ")
-                const subline  = [gig.clubVenue, location].filter(Boolean).join(" · ")
-                const isOpen   = expandedGigId === gig.id
+                const dp           = formatDateShort(gig.date)
+                const location     = [gig.city, gig.country].filter(Boolean).join(", ")
+                const subline      = [gig.clubVenue, location].filter(Boolean).join(" · ")
+                const isOpen       = expandedGigId === gig.id
+                const hasEventName = !!gig.eventName?.trim() &&
+                  gig.eventName.trim().toLowerCase() !== gig.venue.trim().toLowerCase()
 
                 return (
                   <div key={gig.id} className="relative">
@@ -3567,9 +3569,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       {/* Event content */}
                       <div className="min-w-0 flex-1 px-4 py-3">
                         <p className="truncate text-sm font-semibold text-foreground/88">
-                          {gig.eventName || gig.venue || <span className="text-muted-foreground/30">Untitled</span>}
+                          {hasEventName ? gig.eventName : (gig.venue || <span className="text-muted-foreground/30">Untitled</span>)}
                         </p>
-                        {(gig.eventName ? gig.venue : null) && (
+                        {hasEventName && (
                           <p className="mt-0.5 truncate text-xs font-medium text-foreground/50">{gig.venue}</p>
                         )}
                         {subline && (
@@ -3662,10 +3664,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           {/* Past show archived cards — same structure as Upcoming, reduced emphasis */}
                           <div className="space-y-1.5">
                             {yearGigs.map((gig) => {
-                              const isOpen   = expandedGigId === gig.id
-                              const location = [gig.city, gig.country].filter(Boolean).join(", ")
-                              const subline  = [gig.clubVenue, location].filter(Boolean).join(" · ")
-                              const dp       = formatDateShort(gig.date)
+                              const isOpen       = expandedGigId === gig.id
+                              const location     = [gig.city, gig.country].filter(Boolean).join(", ")
+                              const subline      = [gig.clubVenue, location].filter(Boolean).join(" · ")
+                              const dp           = formatDateShort(gig.date)
+                              const hasEventName = !!gig.eventName?.trim() &&
+                                gig.eventName.trim().toLowerCase() !== gig.venue.trim().toLowerCase()
 
                               return (
                                 <div key={gig.id} className="relative">
@@ -3702,9 +3706,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                     {/* Event content */}
                                     <div className="min-w-0 flex-1 px-3 py-2.5">
                                       <p className="truncate text-xs font-medium text-foreground/52">
-                                        {gig.eventName || gig.venue || <span className="text-muted-foreground/20">—</span>}
+                                        {hasEventName ? gig.eventName : (gig.venue || <span className="text-muted-foreground/20">—</span>)}
                                       </p>
-                                      {gig.eventName && gig.venue && (
+                                      {hasEventName && (
                                         <p className="mt-0.5 truncate text-[10px] text-muted-foreground/38">{gig.venue}</p>
                                       )}
                                       {subline && (
