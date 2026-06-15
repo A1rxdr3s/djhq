@@ -672,6 +672,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     ? [featuredRelease, ...selectedReleasesForDisplay]
     : selectedReleasesForDisplay
   const upcomingGigs = artist.upcomingGigs
+  const today = new Date().toISOString().slice(0, 10)
+  const futureGigs = upcomingGigs.filter((g) => g.date.slice(0, 10) >= today)
+  const pastGigs = [...upcomingGigs.filter((g) => g.date.slice(0, 10) < today)].reverse()
   const galleryImages = artist.galleryImages
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 6)
@@ -1028,8 +1031,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             )}
 
             {/* Compact Next Upcoming Show */}
-            {upcomingGigs[0] && (() => {
-              const gig = upcomingGigs[0]
+            {futureGigs[0] && (() => {
+              const gig = futureGigs[0]
               const d = new Date(gig.date)
               const MONTHS_SHORT = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
               const dayStr = String(d.getUTCDate())
@@ -1197,9 +1200,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             )}
 
             {/* Shows — bottom 58% of right column height */}
-            {upcomingGigs.length > 0 && (
+            {(futureGigs.length > 0 || pastGigs.length > 0) && (
               <MobileSection tab="live" id="shows">
-                <GigsSection gigs={upcomingGigs} />
+                <GigsSection futureGigs={futureGigs} pastGigs={pastGigs} />
               </MobileSection>
             )}
 

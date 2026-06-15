@@ -200,29 +200,35 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
 }
 
 type GigsSectionProps = {
-  gigs: Gig[]
+  /** Future shows sorted ascending (soonest first). Pre-filtered by the server. */
+  futureGigs: Gig[]
+  /** Past shows sorted descending (most recent first). Pre-filtered by the server. */
+  pastGigs: Gig[]
 }
 
-export function GigsSection({ gigs }: GigsSectionProps) {
+export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
+  const [showAllFuture, setShowAllFuture] = useState(false)
   const [pastExpanded, setPastExpanded] = useState(false)
   const [showAllPast, setShowAllPast] = useState(false)
 
-  if (gigs.length === 0) return null
+  if (futureGigs.length === 0 && pastGigs.length === 0) return null
 
-  const today = new Date().toISOString().slice(0, 10)
-  const upcoming = gigs.filter((g) => g.date.slice(0, 10) >= today)
-  // Reverse so most recent past is first
-  const past = [...gigs.filter((g) => g.date.slice(0, 10) < today)].reverse()
+  // Scenario A — 0 future shows: display up to 5 most recent past shows as primary content
+  // Scenario B — 1-5 future shows: display all upcoming
+  // Scenario C — 6+ future shows: display first 5, with "View All" expansion
+  const scenarioA = futureGigs.length === 0
+  const scenarioC = futureGigs.length > 5
 
-  // Fill primary list to a minimum of 3 rows: upcoming first, then most recent past
-  const upcomingSlice = upcoming.slice(0, 3)
-  const fillCount = 3 - upcomingSlice.length
-  const fillFromPast = past.slice(0, fillCount)
-  const primaryGigs = [...upcomingSlice, ...fillFromPast]
-  if (primaryGigs.length === 0) return null
+  const primaryRows: Gig[] = scenarioA
+    ? pastGigs.slice(0, 5)
+    : scenarioC && !showAllFuture
+    ? futureGigs.slice(0, 5)
+    : futureGigs
 
-  // Past shows available for the toggle — exclude rows already shown as fill
-  const pastForToggle = past.slice(fillCount)
+  const primaryIsPast = scenarioA
+
+  // Past shows for the toggle — in Scenario A, skip rows already shown as primary
+  const pastForToggle = scenarioA ? pastGigs.slice(5) : pastGigs
   const hasPastToggle = pastForToggle.length > 0
 
   const PAST_PAGE = 10
@@ -230,50 +236,42 @@ export function GigsSection({ gigs }: GigsSectionProps) {
   const hasMorePast = pastForToggle.length > PAST_PAGE
   const pastGroups = hasPastToggle ? groupByYear(visiblePast) : []
 
+  const sectionTitle = scenarioA ? "Recent Shows" : "Shows"
+
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:h-full lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5 xl:p-7 xl:pt-6">
-      <SectionHeader>Shows</SectionHeader>
+      <SectionHeader>{sectionTitle}</SectionHeader>
 
       <div className="mt-4 lg:flex-1">
-        {/* Upcoming rows */}
-        {upcomingSlice.length > 0 && (
-          <motion.div
-            className="flex flex-col gap-1.5"
-            variants={container}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-24px" }}
-          >
-            {upcomingSlice.map((gig, i) => (
-              <motion.div key={gig.id} variants={item}>
-                <GigRow gig={gig} isNext={i === 0} isPast={false} />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Divider — only in the mixed state */}
-        {upcomingSlice.length > 0 && fillFromPast.length > 0 && (
-          <div className="mt-3 mb-3 h-px bg-white/[0.08]" />
-        )}
-
-        {/* Recent filler rows */}
-        {fillFromPast.length > 0 && (
-          <motion.div
-            className="flex flex-col gap-1.5"
-            variants={container}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-24px" }}
-          >
-            {fillFromPast.map((gig) => (
-              <motion.div key={gig.id} variants={item}>
-                <GigRow gig={gig} isNext={false} isPast={false} />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+        <motion.div
+          className="flex flex-col gap-1.5"
+          variants={container}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-24px" }}
+        >
+          {primaryRows.map((gig, i) => (
+            <motion.div key={gig.id} variants={item}>
+              <GigRow
+                gig={gig}
+                isNext={!primaryIsPast && i === 0}
+                isPast={primaryIsPast}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
+
+      {/* Scenario C — expand to show all upcoming shows */}
+      {scenarioC && !showAllFuture && (
+        <button
+          type="button"
+          onClick={() => setShowAllFuture(true)}
+          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
+        >
+          View All Shows ({futureGigs.length}) →
+        </button>
+      )}
 
       {/* Past shows toggle */}
       {hasPastToggle && (
