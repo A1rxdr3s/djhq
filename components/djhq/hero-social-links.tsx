@@ -52,30 +52,34 @@ export function HeroSocialLinks({ links }: { links: SocialLink[] }) {
   )
 }
 
-/** Mobile hero social row — all active links, sits below CTAs, hidden on md and above. */
+/** Mobile hero social dock — glass pill, all active links, hidden on md and above. */
 export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
   if (links.length === 0) return null
   return (
-    <div className="mt-7 flex flex-wrap items-center justify-center gap-5 md:hidden">
-      {links.map((link) => {
-        const href = resolveSafeHref(link.url)
-        if (!href) return null
-        const Icon = SOCIAL_ICONS[link.platform]
-        return (
-          <a
-            key={link.platform}
-            href={href}
-            aria-label={link.label}
-            title={link.label}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/75 transition-colors duration-300 hover:text-white"
-            style={{ filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.40))" }}
-          >
-            <Icon className="h-[21px] w-[21px]" />
-          </a>
-        )
-      })}
+    <div className="mt-[22px] flex justify-center md:hidden">
+      <div
+        className="flex h-[52px] w-[85vw] max-w-[360px] items-center justify-between overflow-hidden rounded-full border border-white/[0.12] px-6 backdrop-blur-sm"
+        style={{ background: "rgba(0,0,0,0.22)" }}
+      >
+        {links.map((link) => {
+          const href = resolveSafeHref(link.url)
+          if (!href) return null
+          const Icon = SOCIAL_ICONS[link.platform]
+          return (
+            <a
+              key={link.platform}
+              href={href}
+              aria-label={link.label}
+              title={link.label}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center text-white opacity-[0.78] transition-opacity duration-200 hover:opacity-100 focus:opacity-100"
+            >
+              <Icon className="h-[21px] w-[21px]" />
+            </a>
+          )
+        })}
+      </div>
     </div>
   )
 }

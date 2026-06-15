@@ -850,7 +850,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 the logo layer is separate (above) and only tagline+CTAs sit here. */}
             {!isFloatingPlacement ? (
               /* Editorial: logo → tagline → CTAs — three elements only */
-              <div className="absolute inset-x-0 top-[30%] z-10 flex flex-col items-center px-4 text-center sm:top-[35%]">
+              <div className="absolute inset-x-0 top-[26%] z-10 flex flex-col items-center px-4 text-center sm:top-[35%]">
 
                 {/* Logo with atmospheric depth layer */}
                 <div className="relative">
