@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-import { PUBLIC_SECTION_NAV } from "@/lib/public-nav"
+import { MOBILE_PUBLIC_NAV } from "@/lib/public-nav"
 
-const SECTIONS = PUBLIC_SECTION_NAV
+const SECTIONS = MOBILE_PUBLIC_NAV
 
 export function MobileScrollNav() {
   const [activeId, setActiveId]     = useState<string>("")
@@ -64,7 +64,7 @@ export function MobileScrollNav() {
         heroExited ? "opacity-100" : "opacity-0 pointer-events-none",
       )}
     >
-      <div className="grid h-12 grid-cols-5 items-center">
+      <div className="grid h-12 grid-cols-4 items-center">
         {SECTIONS.map(({ id, label }) => {
           const isActive = activeId === id
           return (

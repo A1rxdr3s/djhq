@@ -764,24 +764,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {/* Artist-website navigation — integrated into hero */}
         <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-7 lg:px-12">
-          {/* Left: section navigation — scrollable on mobile, fade masks at edges */}
-          <nav className="hero-nav-scroll min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-none sm:overflow-visible">
-            <div className="flex items-center gap-[24px] px-6 sm:gap-12 sm:px-0">
-              {PUBLIC_SECTION_NAV
-                .filter(({ label }) => label !== "Contact" || !!artist.bookingInfo.email.trim())
-                .map(({ label, href: navHref }) => (
-                  <a
-                    key={label}
-                    href={navHref}
-                    className="whitespace-nowrap text-[12px] font-semibold uppercase tracking-[0.14em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]"
-                  >
-                    {label}
-                  </a>
-                ))}
-            </div>
+          {/* Left: section navigation — 4 items on mobile (Performance hidden), all 5 on desktop */}
+          <nav className="flex items-center gap-4 sm:gap-12">
+            {PUBLIC_SECTION_NAV
+              .filter(({ label }) => label !== "Contact" || !!artist.bookingInfo.email.trim())
+              .map(({ label, href: navHref }) => (
+                <a
+                  key={label}
+                  href={navHref}
+                  className={cn(
+                    "text-[13px] font-semibold uppercase tracking-[0.12em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]",
+                    label === "Performance" && "hidden sm:block",
+                  )}
+                >
+                  {label}
+                </a>
+              ))}
           </nav>
           {/* Right: social platform links */}
-          <div className="ml-4 flex flex-shrink-0 items-center gap-3">
+          <div className="flex items-center gap-3">
             <HeroSocialLinks links={prioritizedLinks} />
             {/* DJHQ attribution — subtle, non-pro only */}
             {(artist.plan !== "pro" || artist.showHeaderBranding) && (
