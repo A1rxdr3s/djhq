@@ -3335,7 +3335,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
   function handleDeleteGig(id: string) {
+    // Optimistically remove from UI; fire-and-forget the soft-delete API call.
     setUpcomingGigs((current) => current.filter((g) => g.id !== id))
+    fetch(`/api/gigs/${id}`, { method: "PATCH" }).catch((err) => {
+      console.error("[handleDeleteGig] API error:", err)
+    })
   }
 
 
@@ -3414,16 +3418,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           >
             <div className="px-6 pt-6 pb-5">
               <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
-                Delete Show
+                Delete Show?
               </p>
               <p className="mt-2 text-[13px] leading-[1.55] text-muted-foreground/65">
-                Are you sure you want to delete
-                {deletingGig.eventName ? (
-                  <> <span className="font-semibold text-foreground/80">{deletingGig.eventName}</span> at <span className="font-semibold text-foreground/80">{deletingGig.venue}</span></>
-                ) : (
-                  <> <span className="font-semibold text-foreground/80">{deletingGig.venue}</span></>
-                )}
-                ? This action cannot be undone.
+                This removes the show from your profile, but keeps the record in your account history.
               </p>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">

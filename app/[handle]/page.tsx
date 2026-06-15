@@ -413,6 +413,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .from("gigs")
         .select("id, date, event_name, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url, visibility_status")
         .eq("artist_id", artistRow.id)
+        .is("deleted_at", null)
         .order("date", { ascending: true })
         .returns<GigRow[]>(),
       supabase

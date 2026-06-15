@@ -214,6 +214,8 @@ create table if not exists public.gigs (
   -- Visibility system (045): controls public display of private bookings
   visibility_status text        not null default 'announced'
     check (visibility_status in ('announced', 'tba', 'tbc', 'cancelled')),
+  -- Soft delete (046): null = active, non-null = deleted (preserved in DB)
+  deleted_at  timestamptz null    default null,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

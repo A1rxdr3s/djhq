@@ -74,7 +74,7 @@ type SaveGigPayload = {
   feeAmount?: number | null
   feeCurrency?: string | null
   paymentStatus?: "pending" | "partial" | "paid" | "cancelled" | null
-  visibilityStatus?: "announced" | "tba" | "tbc"
+  visibilityStatus?: "announced" | "tba" | "tbc" | "cancelled"
 }
 
 type SaveDjSetPayload = {
@@ -562,7 +562,12 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const { error: deleteGigsError } = await supabase.from("gigs").delete().eq("artist_id", artistId)
+    // Only delete active (non-soft-deleted) gigs so soft-deleted records are preserved in history.
+    const { error: deleteGigsError } = await supabase
+      .from("gigs")
+      .delete()
+      .eq("artist_id", artistId)
+      .is("deleted_at", null)
 
     if (deleteGigsError) {
       throw deleteGigsError

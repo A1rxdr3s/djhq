@@ -282,6 +282,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .from("gigs")
       .select("id, date, event_name, venue, city, country, club_venue, event_status, ticket_url, flyer_url, instagram_url, fee_amount, fee_currency, payment_status, visibility_status")
       .eq("artist_id", artistRow.id)
+      .is("deleted_at", null)
       .order("date", { ascending: true })
       .returns<GigRow[]>(),
     supabase
@@ -373,7 +374,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       feeAmount: gig.fee_amount != null ? parseFloat(gig.fee_amount) : null,
       feeCurrency: gig.fee_currency ?? null,
       paymentStatus: (gig.payment_status ?? null) as "pending" | "partial" | "paid" | "cancelled" | null,
-      visibilityStatus: (gig.visibility_status ?? "announced") as "announced" | "tba" | "tbc",
+      visibilityStatus: (gig.visibility_status ?? "announced") as "announced" | "tba" | "tbc" | "cancelled",
     })),
     djSets: (djSetsResult.data ?? []).map((set) => ({
       id: set.id,
