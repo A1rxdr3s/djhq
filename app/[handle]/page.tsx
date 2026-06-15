@@ -42,6 +42,7 @@ import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { HeroSocialLinks, HeroMobileSocialRow } from "@/components/djhq/hero-social-links"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
+import { PUBLIC_SECTION_NAV } from "@/lib/public-nav"
 
 type PublicProfilePageProps = {
   params: Promise<{
@@ -763,22 +764,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {/* Artist-website navigation — integrated into hero */}
         <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-7 lg:px-12">
-          {/* Left: section navigation */}
-          <nav className="flex items-center gap-4 sm:gap-12">
-            {[
-              { label: "Releases", href: "#music" },
-              { label: "Shows",    href: "#shows" },
-              { label: "Sets",     href: "#performance" },
-              ...(artist.bookingInfo.email.trim() ? [{ label: "Contact", href: "#contact" }] : []),
-            ].map(({ label, href: navHref }) => (
-              <a
-                key={label}
-                href={navHref}
-                className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]"
-              >
-                {label}
-              </a>
-            ))}
+          {/* Left: section navigation — canonical PUBLIC_SECTION_NAV, Contact filtered if no booking email */}
+          <nav className="flex items-center gap-2.5 sm:gap-12">
+            {PUBLIC_SECTION_NAV
+              .filter(({ label }) => label !== "Contact" || !!artist.bookingInfo.email.trim())
+              .map(({ label, href: navHref }) => (
+                <a
+                  key={label}
+                  href={navHref}
+                  className="text-[11px] font-semibold uppercase tracking-[0.07em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]"
+                >
+                  {label}
+                </a>
+              ))}
           </nav>
           {/* Right: social platform links */}
           <div className="flex items-center gap-3">

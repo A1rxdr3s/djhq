@@ -2,14 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
+import { PUBLIC_SECTION_NAV } from "@/lib/public-nav"
 
-const SECTIONS = [
-  { id: "shows",       label: "Shows"       },
-  { id: "media",       label: "Moments"     },
-  { id: "music",       label: "Music"       },
-  { id: "performance", label: "Performance" },
-  { id: "contact",     label: "Contact"     },
-] as const
+const SECTIONS = PUBLIC_SECTION_NAV
 
 export function MobileScrollNav() {
   const [activeId, setActiveId] = useState<string>("")
