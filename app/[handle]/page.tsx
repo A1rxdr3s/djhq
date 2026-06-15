@@ -734,7 +734,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   return (
     <>
       <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}`}</style>
-      <main className="relative min-h-screen bg-background text-foreground">
+      <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
           src={artist.heroImageUrl}
@@ -762,7 +762,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {/* Artist-website navigation — integrated into hero */}
         <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-7 lg:px-12">
           {/* Left: section navigation */}
-          <nav className="flex items-center gap-8 sm:gap-12">
+          <nav className="flex items-center gap-4 sm:gap-12">
             {[
               { label: "Releases", href: "#music" },
               { label: "Shows",    href: "#shows" },
@@ -772,15 +772,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               <a
                 key={label}
                 href={navHref}
-                className="text-[13px] font-semibold uppercase tracking-[0.18em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px]"
+                className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]"
               >
                 {label}
               </a>
             ))}
           </nav>
           {/* Right: social platform links */}
-          <div className="flex items-center gap-5 sm:gap-7">
-            {prioritizedLinks.slice(0, 5).map((link) => {
+          <div className="flex items-center gap-3 sm:gap-7">
+            {prioritizedLinks.slice(0, 5).map((link, linkIndex) => {
               const linkHref = resolveSafeHref(link.url)
               if (!linkHref) return null
               const SocialIcon = socialIcons[link.platform]
@@ -792,7 +792,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   title={link.label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/75 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                  className={cn("text-white/75 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent", linkIndex >= 2 && "hidden sm:inline-block")}
                 >
                   <SocialIcon className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px]" />
                 </a>
@@ -896,7 +896,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 {/* Tagline — artist statement, sole text element */}
                 {displayHeroTagline && (
                   <p
-                    className="mt-9 text-[15px] font-bold uppercase tracking-[0.22em] text-white/90 sm:mt-11 sm:text-[17px]"
+                    className="mt-5 max-w-[80vw] text-[14px] font-bold uppercase tracking-[0.12em] text-white/90 line-clamp-2 sm:mt-11 sm:max-w-none sm:text-[17px] sm:tracking-[0.22em] sm:line-clamp-none"
                     style={{ textShadow: "0 1px 10px rgba(0,0,0,0.55)" }}
                   >
                     {displayHeroTagline}
@@ -905,7 +905,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* CTAs */}
                 {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                  <div className="mt-7 flex items-center gap-3 sm:mt-9">
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-[10px] sm:mt-9 sm:flex-nowrap sm:gap-3">
                     {artist.bookingInfo.email.trim() ? (
                       <div className="transition-transform duration-150 hover:-translate-y-0.5">
                         <BookingInquiryModal
@@ -919,7 +919,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <a
                         href={safePressKitHref}
                         {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                        className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/50 bg-white/[0.08] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/95 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/65 hover:bg-white/[0.14] sm:h-12 sm:px-8"
+                        className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/50 bg-white/[0.08] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/95 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/65 hover:bg-white/[0.14] sm:px-8 sm:text-sm"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Press Kit
@@ -933,14 +933,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               <div className="absolute inset-x-0 bottom-[14%] z-10 flex flex-col items-center px-4 text-center sm:bottom-[16%]">
                 {displayHeroTagline && (
                   <p
-                    className="mb-5 text-[13px] font-semibold uppercase tracking-[0.22em] text-white/78 sm:text-[14px]"
+                    className="mb-5 max-w-[80vw] text-[13px] font-semibold uppercase tracking-[0.12em] text-white/78 line-clamp-2 sm:max-w-none sm:text-[14px] sm:tracking-[0.22em] sm:line-clamp-none"
                     style={{ textShadow: "0 1px 10px rgba(0,0,0,0.50)" }}
                   >
                     {displayHeroTagline}
                   </p>
                 )}
                 {(artist.bookingInfo.email.trim() || hasPressKit) ? (
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center justify-center gap-[10px] sm:flex-nowrap sm:gap-3">
                     {artist.bookingInfo.email.trim() ? (
                       <div className="transition-transform duration-150 hover:-translate-y-0.5">
                         <BookingInquiryModal
@@ -954,7 +954,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <a
                         href={safePressKitHref}
                         {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                        className="flex h-11 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-7 text-sm font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:h-12 sm:px-8"
+                        className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/40 bg-white/[0.06] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.12] sm:px-8 sm:text-sm"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Press Kit

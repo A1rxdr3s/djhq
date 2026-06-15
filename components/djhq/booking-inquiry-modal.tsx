@@ -477,7 +477,7 @@ export function BookingInquiryModal({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11 w-fit items-center gap-2.5 rounded-full bg-accent px-6 text-sm font-semibold uppercase tracking-[0.12em] text-accent-foreground shadow-md shadow-accent/15 transition-colors hover:bg-accent/90 sm:h-12"
+        className="flex h-12 w-fit items-center gap-2.5 rounded-full bg-accent px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-accent-foreground shadow-md shadow-accent/15 transition-colors hover:bg-accent/90 sm:px-6 sm:text-sm"
       >
         <Send className="h-3.5 w-3.5" />
         Booking

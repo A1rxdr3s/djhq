@@ -44,7 +44,7 @@ export function HeroLogoElement({
 
   return (
     <div
-      className="relative"
+      className="relative max-sm:!w-auto max-sm:max-w-[78vw]"
       style={{
         width: logoWidth,
         transform: `translate(${offsetX}px, ${offsetY}px)`,
@@ -72,7 +72,7 @@ export function HeroLogoElement({
         src={logoUrl}
         alt={artistName}
         style={{ width: "100%", height: "auto", ...logoStyleProps }}
-        className="relative object-contain"
+        className="relative object-contain max-sm:!w-auto max-sm:max-w-[78vw] max-sm:max-h-24"
       />
     </div>
   )
