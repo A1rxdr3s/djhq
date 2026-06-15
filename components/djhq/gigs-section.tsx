@@ -291,38 +291,37 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
         </p>
       )}
 
-      {/* Compact action icons */}
-      {(showTicket || showInstagram) && (
-        <div className="ml-1 flex shrink-0 items-center gap-1.5">
-          {showTicket && gig.ticketUrl && resolveSafeHref(gig.ticketUrl) && (
-            <a
-              href={resolveSafeHref(gig.ticketUrl)!}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Tickets"
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.05] text-accent/80 transition-all duration-150 hover:scale-[1.05] hover:border-accent/35 hover:bg-accent/10 hover:text-accent"
-            >
-              <Ticket className="h-3.5 w-3.5" />
-            </a>
-          )}
-          {showInstagram && gig.instagramUrl && resolveSafeHref(gig.instagramUrl) && (
-            <a
-              href={resolveSafeHref(gig.instagramUrl)!}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-150",
-                isPast
-                  ? "border-white/[0.06] text-white/18 hover:text-white/30"
-                  : "border-accent/[0.18] bg-accent/[0.04] text-accent/75 hover:scale-[1.05] hover:border-accent/[0.32] hover:bg-accent/[0.08] hover:text-accent",
-              )}
-            >
-              <Instagram className="h-3.5 w-3.5" />
-            </a>
-          )}
-        </div>
-      )}
+      {/* Fixed-width action slot — always rendered so rows without actions stay aligned.
+          Width = 2 × h-7 icons (28px) + gap-1.5 (6px) = 62px. */}
+      <div className="flex w-[62px] shrink-0 items-center justify-end gap-1.5">
+        {showTicket && gig.ticketUrl && resolveSafeHref(gig.ticketUrl) && (
+          <a
+            href={resolveSafeHref(gig.ticketUrl)!}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Tickets"
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.05] text-accent/80 transition-all duration-150 hover:scale-[1.05] hover:border-accent/35 hover:bg-accent/10 hover:text-accent"
+          >
+            <Ticket className="h-3.5 w-3.5" />
+          </a>
+        )}
+        {showInstagram && gig.instagramUrl && resolveSafeHref(gig.instagramUrl) && (
+          <a
+            href={resolveSafeHref(gig.instagramUrl)!}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-150",
+              isPast
+                ? "border-white/[0.06] text-white/18 hover:text-white/30"
+                : "border-accent/[0.18] bg-accent/[0.04] text-accent/75 hover:scale-[1.05] hover:border-accent/[0.32] hover:bg-accent/[0.08] hover:text-accent",
+            )}
+          >
+            <Instagram className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </div>
     </div>
   )
 }
