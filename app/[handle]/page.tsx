@@ -920,6 +920,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 ) : null}
                 <HeroMobileSocialRow links={prioritizedLinks} />
+                {/* Scroll cue — flows inline 48px below social icons, mobile only */}
+                <a
+                  href="#shows"
+                  aria-label="Scroll to content"
+                  className="mt-12 flex flex-col items-center gap-[5px] opacity-[0.36] transition-all duration-150 active:translate-y-0.5 active:opacity-90 md:hidden"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
+                    Scroll to explore
+                  </span>
+                  <ChevronDown className="h-[11px] w-[11px] text-white" />
+                </a>
               </div>
             ) : (
               /* Floating logo placement: logo is separate, tagline + CTAs centered below */
