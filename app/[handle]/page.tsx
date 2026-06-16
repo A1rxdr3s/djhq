@@ -950,7 +950,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             )}
             {!isFloatingPlacement ? (
               /* Editorial: tablet/desktop only (sm+) — logo + CTA stack unified */
-              <div className="absolute inset-x-0 top-[47%] z-10 hidden flex-col items-center px-4 text-center sm:flex sm:top-[43%]">
+              <div className="absolute inset-x-0 top-[47%] z-10 hidden flex-col items-center px-4 text-center sm:flex sm:top-[38%]">
 
                 {/* Logo — tablet/desktop only (sm+); mobile logo is the separate upper brand block */}
                 <div className="relative hidden sm:block">
