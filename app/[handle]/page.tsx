@@ -46,7 +46,6 @@ import { PUBLIC_SECTION_NAV } from "@/lib/public-nav"
 
 type PublicProfilePageProps = {
   params: Promise<{ handle: string }>
-  searchParams: Promise<{ heroVariant?: string }>
 }
 
 export const dynamic = "force-dynamic"
@@ -649,11 +648,8 @@ function MainLink({ link }: { link: SocialLink }) {
   )
 }
 
-export default async function PublicArtistProfilePage({ params, searchParams }: PublicProfilePageProps) {
+export default async function PublicArtistProfilePage({ params }: PublicProfilePageProps) {
   const { handle } = await params
-  // ── TEMPORARY: hero variant preview — remove after design decision ──
-  const { heroVariant: heroVariantRaw } = await searchParams
-  const heroVariant = (heroVariantRaw === 'a' || heroVariantRaw === 'b' || heroVariantRaw === 'c') ? heroVariantRaw : null
   const artist = await getArtistProfile(handle)
 
   if (!artist) {
@@ -859,9 +855,9 @@ export default async function PublicArtistProfilePage({ params, searchParams }: 
                         CTA stack (tagline → CTAs → social → scroll) sits independently below.
                 Tablet/desktop (sm+): logo + CTA stack unified in one editorial block.
                 Floating placement: independent floating logo layer, CTAs anchor to bottom. */}
-            {/* Mobile-only logo — upper brand zone, sits below nav above CTA stack */}
-            {!isFloatingPlacement && heroVariant === null && (
-              <div className="absolute inset-x-0 top-[22%] z-10 flex flex-col items-center px-4 text-center sm:hidden">
+            {/* Mobile-only logo — upper brand zone, brand header over photo */}
+            {!isFloatingPlacement && (
+              <div className="absolute inset-x-0 top-[16%] z-10 flex flex-col items-center px-4 text-center sm:hidden">
                 <div className="relative">
                   <div
                     className="pointer-events-none absolute -inset-8"
@@ -887,279 +883,72 @@ export default async function PublicArtistProfilePage({ params, searchParams }: 
                 </div>
               </div>
             )}
-            {/* ── TEMPORARY: hero variant preview (mobile only, sm:hidden) ────────────
-                Remove this block after design decision. One of a / b / c wins.
-                Testing: ?heroVariant=a  ?heroVariant=b  ?heroVariant=c */}
-            {heroVariant !== null && !isFloatingPlacement && (
-              <>
-                {/* ─────────────────────────────────────────────────────────────────
-                    Variant A — Centered Classic
-                    Single centered column: logo → tagline → CTAs → social → scroll.
-                    Classic editorial stack, everything balanced in one composition.
-                    ───────────────────────────────────────────────────────────────── */}
-                {heroVariant === 'a' && (
-                  <div className="absolute inset-x-0 top-[34%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
-                    <div className="relative">
-                      <div
-                        className="pointer-events-none absolute -inset-8"
-                        aria-hidden
-                        style={{ background: "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,0.28) 0%, transparent 68%)" }}
-                      />
-                      <div className="relative" style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}>
-                        <HeroIdentity
+            {/* Mobile CTA stack — tagline → CTAs → social → scroll (sm:hidden, editorial placement only) */}
+            {!isFloatingPlacement && (
+              <div className="absolute inset-x-0 bottom-[24%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
+                {displayHeroTagline && (
+                  <p className="mb-4 max-w-[80vw] text-[12px] font-semibold uppercase tracking-[0.16em] text-white/68 line-clamp-1">
+                    {displayHeroTagline}
+                  </p>
+                )}
+                {(artist.bookingInfo.email.trim() || hasPressKit) && (
+                  <div className="flex flex-wrap items-center justify-center gap-[10px]">
+                    {artist.bookingInfo.email.trim() && (
+                      <div className="transition-transform duration-150 hover:-translate-y-0.5">
+                        <BookingInquiryModal
+                          artistHandle={artist.handle}
                           artistName={artist.artistName}
-                          heroLogoUrl={artist.heroLogoUrl}
-                          heroIdentityMode={artist.heroIdentityMode ?? "text"}
-                          heroTextStyle={heroTextStyle}
-                          heroLogoScale={logoScale}
-                          heroLogoLayout={logoLayout}
-                          heroLogoAlignment={logoAlignment}
-                          heroLogoOffsetX={logoOffsetX}
-                          heroLogoOffsetY={logoOffsetY}
-                          heroLogoStyle={logoStyle}
-                          heroLogoReadability={logoReadability}
-                          isPro={isPro}
+                          pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
                         />
                       </div>
-                    </div>
-                    {displayHeroTagline && (
-                      <p
-                        className="mt-5 max-w-[84vw] text-[13px] font-bold uppercase tracking-[0.14em] text-white/82 line-clamp-2"
-                        style={{ textShadow: "0 1px 10px rgba(0,0,0,0.55)" }}
+                    )}
+                    {hasPressKit && safePressKitHref && (
+                      <a
+                        href={safePressKitHref}
+                        {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
+                        className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/25 bg-white/[0.04] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/65 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.08]"
                       >
-                        {displayHeroTagline}
-                      </p>
+                        <Download className="h-3.5 w-3.5" />
+                        Press Kit
+                      </a>
                     )}
-                    {(artist.bookingInfo.email.trim() || hasPressKit) && (
-                      <div className="mt-5 flex flex-wrap items-center justify-center gap-[10px]">
-                        {artist.bookingInfo.email.trim() && (
-                          <div className="transition-transform duration-150 hover:-translate-y-0.5">
-                            <BookingInquiryModal
-                              artistHandle={artist.handle}
-                              artistName={artist.artistName}
-                              pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
-                            />
-                          </div>
-                        )}
-                        {hasPressKit && safePressKitHref && (
-                          <a
-                            href={safePressKitHref}
-                            {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                            className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/25 bg-white/[0.04] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/65 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.08]"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            Press Kit
-                          </a>
-                        )}
-                      </div>
-                    )}
-                    {prioritizedLinks.length > 0 && (
-                      <div className="mt-5 flex items-center justify-center gap-7">
-                        {prioritizedLinks.map((link) => {
-                          const href = resolveSafeHref(link.url)
-                          if (!href) return null
-                          const Icon = socialIcons[link.platform]
-                          return (
-                            <a
-                              key={link.platform}
-                              href={href}
-                              aria-label={link.label}
-                              title={link.label}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="-m-2 p-2 text-white/80 transition-colors duration-200 hover:text-white"
-                            >
-                              <Icon className="h-[18px] w-[18px]" />
-                            </a>
-                          )
-                        })}
-                      </div>
-                    )}
-                    <a
-                      href="#shows"
-                      aria-label="Scroll to content"
-                      className="mt-9 flex flex-col items-center gap-[5px] opacity-[0.36] transition-all duration-150 active:translate-y-0.5 active:opacity-90"
-                    >
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">Scroll to explore</span>
-                      <ChevronDown className="h-[11px] w-[11px] text-white" />
-                    </a>
                   </div>
                 )}
-
-                {/* ─────────────────────────────────────────────────────────────────
-                    Variant B — Brand Top / CTA Bottom
-                    Logo anchored in the upper-middle zone, photo as visual protagonist.
-                    Tagline minimal (smaller, lower weight). CTAs in lower third.
-                    ───────────────────────────────────────────────────────────────── */}
-                {heroVariant === 'b' && (
-                  <>
-                    <div className="absolute inset-x-0 top-[16%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
-                      <div className="relative">
-                        <div
-                          className="pointer-events-none absolute -inset-8"
-                          aria-hidden
-                          style={{ background: "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,0.28) 0%, transparent 68%)" }}
-                        />
-                        <div className="relative" style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}>
-                          <HeroIdentity
-                            artistName={artist.artistName}
-                            heroLogoUrl={artist.heroLogoUrl}
-                            heroIdentityMode={artist.heroIdentityMode ?? "text"}
-                            heroTextStyle={heroTextStyle}
-                            heroLogoScale={logoScale}
-                            heroLogoLayout={logoLayout}
-                            heroLogoAlignment={logoAlignment}
-                            heroLogoOffsetX={logoOffsetX}
-                            heroLogoOffsetY={logoOffsetY}
-                            heroLogoStyle={logoStyle}
-                            heroLogoReadability={logoReadability}
-                            isPro={isPro}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute inset-x-0 bottom-[18%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
-                      {displayHeroTagline && (
-                        <p className="mb-4 max-w-[80vw] text-[11px] font-semibold uppercase tracking-[0.20em] text-white/50 line-clamp-1">
-                          {displayHeroTagline}
-                        </p>
-                      )}
-                      {(artist.bookingInfo.email.trim() || hasPressKit) && (
-                        <div className="flex flex-wrap items-center justify-center gap-[10px]">
-                          {artist.bookingInfo.email.trim() && (
-                            <div className="transition-transform duration-150 hover:-translate-y-0.5">
-                              <BookingInquiryModal
-                                artistHandle={artist.handle}
-                                artistName={artist.artistName}
-                                pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
-                              />
-                            </div>
-                          )}
-                          {hasPressKit && safePressKitHref && (
-                            <a
-                              href={safePressKitHref}
-                              {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                              className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/25 bg-white/[0.04] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/65 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.08]"
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                              Press Kit
-                            </a>
-                          )}
-                        </div>
-                      )}
-                      {prioritizedLinks.length > 0 && (
-                        <div className="mt-4 flex items-center justify-center gap-7">
-                          {prioritizedLinks.map((link) => {
-                            const href = resolveSafeHref(link.url)
-                            if (!href) return null
-                            const Icon = socialIcons[link.platform]
-                            return (
-                              <a
-                                key={link.platform}
-                                href={href}
-                                aria-label={link.label}
-                                title={link.label}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="-m-2 p-2 text-white/75 transition-colors duration-200 hover:text-white"
-                              >
-                                <Icon className="h-[18px] w-[18px]" />
-                              </a>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </>
+                {prioritizedLinks.length > 0 && (
+                  <div className="mt-4 flex items-center justify-center gap-7">
+                    {prioritizedLinks.map((link) => {
+                      const href = resolveSafeHref(link.url)
+                      if (!href) return null
+                      const Icon = socialIcons[link.platform]
+                      return (
+                        <a
+                          key={link.platform}
+                          href={href}
+                          aria-label={link.label}
+                          title={link.label}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="-m-2 p-2 text-white/75 transition-colors duration-200 hover:text-white"
+                        >
+                          <Icon className="h-[18px] w-[18px]" />
+                        </a>
+                      )
+                    })}
+                  </div>
                 )}
-
-                {/* ─────────────────────────────────────────────────────────────────
-                    Variant C — Editorial Minimal
-                    Logo high and clean, no tagline on mobile. CTAs as sole lower focal
-                    point. Social below. No scroll indicator. Premium / editorial feel.
-                    ───────────────────────────────────────────────────────────────── */}
-                {heroVariant === 'c' && (
-                  <>
-                    <div className="absolute inset-x-0 top-[18%] z-10 flex flex-col items-center px-6 sm:hidden">
-                      <div className="relative">
-                        <div
-                          className="pointer-events-none absolute -inset-10"
-                          aria-hidden
-                          style={{ background: "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,0.22) 0%, transparent 68%)" }}
-                        />
-                        <div className="relative" style={{ filter: "drop-shadow(0 2px 14px rgba(0,0,0,0.65)) drop-shadow(0 0 40px rgba(0,0,0,0.22))" }}>
-                          <HeroIdentity
-                            artistName={artist.artistName}
-                            heroLogoUrl={artist.heroLogoUrl}
-                            heroIdentityMode={artist.heroIdentityMode ?? "text"}
-                            heroTextStyle={heroTextStyle}
-                            heroLogoScale={logoScale}
-                            heroLogoLayout={logoLayout}
-                            heroLogoAlignment={logoAlignment}
-                            heroLogoOffsetX={logoOffsetX}
-                            heroLogoOffsetY={logoOffsetY}
-                            heroLogoStyle={logoStyle}
-                            heroLogoReadability={logoReadability}
-                            isPro={isPro}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute inset-x-0 bottom-[22%] z-10 flex flex-col items-center px-6 sm:hidden">
-                      {(artist.bookingInfo.email.trim() || hasPressKit) && (
-                        <div className="flex flex-wrap items-center justify-center gap-3">
-                          {artist.bookingInfo.email.trim() && (
-                            <div className="transition-transform duration-150 hover:-translate-y-0.5">
-                              <BookingInquiryModal
-                                artistHandle={artist.handle}
-                                artistName={artist.artistName}
-                                pressKitUrl={hasPressKit && safePressKitHref ? safePressKitHref : undefined}
-                              />
-                            </div>
-                          )}
-                          {hasPressKit && safePressKitHref && (
-                            <a
-                              href={safePressKitHref}
-                              {...(!isSafeInternalPath(safePressKitHref) && { target: "_blank", rel: "noopener noreferrer" })}
-                              className="flex h-12 w-fit items-center gap-2.5 rounded-full border border-white/25 bg-white/[0.04] px-5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white/65 backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.08]"
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                              Press Kit
-                            </a>
-                          )}
-                        </div>
-                      )}
-                      {prioritizedLinks.length > 0 && (
-                        <div className="mt-5 flex items-center justify-center gap-8">
-                          {prioritizedLinks.map((link) => {
-                            const href = resolveSafeHref(link.url)
-                            if (!href) return null
-                            const Icon = socialIcons[link.platform]
-                            return (
-                              <a
-                                key={link.platform}
-                                href={href}
-                                aria-label={link.label}
-                                title={link.label}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="-m-2 p-2 text-white/72 transition-colors duration-200 hover:text-white"
-                              >
-                                <Icon className="h-[20px] w-[20px]" />
-                              </a>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </>
+                <a
+                  href="#shows"
+                  aria-label="Scroll to content"
+                  className="mt-8 flex flex-col items-center gap-[5px] opacity-[0.32] transition-all duration-150 active:translate-y-0.5 active:opacity-90"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">Scroll to explore</span>
+                  <ChevronDown className="h-[11px] w-[11px] text-white" />
+                </a>
+              </div>
             )}
             {!isFloatingPlacement ? (
-              /* Editorial: on desktop (sm+) always shows logo + CTA stack unified.
-                 On mobile, hidden when a variant is active (variant block takes over). */
-              <div className={cn("absolute inset-x-0 top-[47%] z-10 flex flex-col items-center px-4 text-center sm:top-[43%]", heroVariant !== null && "hidden sm:flex")}>
+              /* Editorial: tablet/desktop only (sm+) — logo + CTA stack unified */
+              <div className="absolute inset-x-0 top-[47%] z-10 hidden flex-col items-center px-4 text-center sm:flex sm:top-[43%]">
 
                 {/* Logo — tablet/desktop only (sm+); mobile logo is the separate upper brand block */}
                 <div className="relative hidden sm:block">
