@@ -320,18 +320,18 @@ function GigRowPast({ gig }: { gig: Gig }) {
   return (
     <div className="flex items-center gap-2 border-t border-white/[0.035] py-[5px] first:border-0">
       {/* Inline date — "31 MAY" */}
-      <span className="w-[46px] shrink-0 text-[10px] font-bold tabular-nums tracking-[0.02em] text-white/22">
+      <span className="w-[46px] shrink-0 text-[10px] font-bold tabular-nums tracking-[0.02em] text-white/38">
         {day} {month}
       </span>
 
       {/* Title */}
-      <p className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase leading-none tracking-[0.04em] text-foreground/30">
+      <p className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase leading-none tracking-[0.04em] text-foreground/48">
         {displayTitle}
       </p>
 
       {/* Location */}
       {locationStr && (
-        <p className="shrink-0 max-w-[38%] truncate text-[9px] font-medium uppercase tracking-[0.08em] text-white/18">
+        <p className="shrink-0 max-w-[38%] truncate text-[9px] font-medium uppercase tracking-[0.08em] text-white/32">
           {locationStr}
         </p>
       )}
@@ -344,7 +344,7 @@ function GigRowPast({ gig }: { gig: Gig }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram"
-            className="-m-2 p-2 text-white/20 transition-colors duration-150 hover:text-white/45"
+            className="-m-2 p-2 text-white/32 transition-colors duration-150 hover:text-white/58"
           >
             <Instagram className="h-[11px] w-[11px]" />
           </a>

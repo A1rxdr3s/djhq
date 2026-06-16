@@ -1136,7 +1136,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             The outer grid has ONE row. Moments (left) defines the section height.
             The right wrapper uses its own fr-based nested grid to divide that
             height proportionally between Featured Release (42%) and Shows (58%). */}
-        <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.55fr)_minmax(420px,0.95fr)] lg:items-stretch lg:gap-x-10 xl:gap-x-14">
+        <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.55fr)_minmax(420px,0.95fr)] lg:items-start lg:gap-x-10 xl:gap-x-14">
 
           {/* ── LEFT: Moments — the height anchor for this entire section ─────── */}
           <MobileSection tab="media" className="max-lg:hidden">
@@ -1146,14 +1146,14 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </section>
           </MobileSection>
 
-          {/* ── RIGHT: nested proportional grid fills exactly the Moments height ─ */}
-          {/* Mobile: flex-col stack. Desktop: height-filling nested grid with fr rows. */}
-          <div className="flex flex-col gap-y-6 lg:grid lg:h-full lg:grid-rows-[42fr_58fr] lg:gap-y-8 xl:gap-y-10">
+          {/* ── RIGHT: flex-col stack; each card is its natural height ─ */}
+          {/* Decoupled from Moments height so Shows expansion does not affect Releases. */}
+          <div className="flex flex-col gap-y-6 lg:flex lg:flex-col lg:gap-y-8 xl:gap-y-10">
 
             {/* Featured Release — top 42% of right column height */}
             {featuredRelease && (
             <MobileSection tab="music" className="max-lg:hidden">
-            <section className="flex h-full flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-5 shadow-lg shadow-black/20 sm:p-6 lg:p-6 xl:p-9">
+            <section className="flex flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-5 shadow-lg shadow-black/20 sm:p-6 lg:p-6 xl:p-9">
               <SectionHeader>Featured Release</SectionHeader>
               <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,44%)_minmax(0,1fr)] sm:gap-5 lg:mt-4 lg:grid-cols-[minmax(0,48%)_minmax(0,1fr)] lg:items-stretch lg:gap-6 xl:gap-8">
                 <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full lg:aspect-auto lg:self-stretch">
