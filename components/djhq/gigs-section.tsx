@@ -18,18 +18,6 @@ function parseGigDate(dateStr: string) {
   }
 }
 
-function groupByYear(gigs: Gig[]): { year: number; gigs: Gig[] }[] {
-  const map = new Map<number, Gig[]>()
-  for (const gig of gigs) {
-    const y = new Date(gig.date).getUTCFullYear()
-    if (!map.has(y)) map.set(y, [])
-    map.get(y)!.push(gig)
-  }
-  return [...map.entries()]
-    .sort((a, b) => b[0] - a[0])
-    .map(([year, gigs]) => ({ year, gigs }))
-}
-
 // "upcoming" is intentionally omitted: it is the default state for any future show
 // and is already communicated by the section heading and the isNext accent highlight.
 // Only non-default, actionable states get a visible badge.
@@ -321,6 +309,51 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
   )
 }
 
+// ── Past show archive row (expanded "View Past Shows" list) ───────────────────
+
+function GigRowPast({ gig }: { gig: Gig }) {
+  const { day, month } = parseGigDate(gig.date)
+  const { isHidden, displayTitle } = deriveGigDisplay(gig)
+  const locationStr = [gig.city, gig.country].filter(Boolean).join(" • ")
+  const showInstagram = !isHidden && !!gig.instagramUrl
+
+  return (
+    <div className="flex items-center gap-2 border-t border-white/[0.035] py-[5px] first:border-0">
+      {/* Inline date — "31 MAY" */}
+      <span className="w-[46px] shrink-0 text-[10px] font-bold tabular-nums tracking-[0.02em] text-white/22">
+        {day} {month}
+      </span>
+
+      {/* Title */}
+      <p className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase leading-none tracking-[0.04em] text-foreground/30">
+        {displayTitle}
+      </p>
+
+      {/* Location */}
+      {locationStr && (
+        <p className="shrink-0 max-w-[38%] truncate text-[9px] font-medium uppercase tracking-[0.08em] text-white/18">
+          {locationStr}
+        </p>
+      )}
+
+      {/* Fixed-width Instagram slot — bare icon, always present for alignment */}
+      <div className="flex w-5 shrink-0 items-center justify-end">
+        {showInstagram && gig.instagramUrl && resolveSafeHref(gig.instagramUrl) && (
+          <a
+            href={resolveSafeHref(gig.instagramUrl)!}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="-m-2 p-2 text-white/20 transition-colors duration-150 hover:text-white/45"
+          >
+            <Instagram className="h-[11px] w-[11px]" />
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── GigsSection ───────────────────────────────────────────────────────────────
 
 type GigsSectionProps = {
@@ -333,7 +366,6 @@ type GigsSectionProps = {
 export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
   const [showAllFuture, setShowAllFuture] = useState(false)
   const [pastExpanded, setPastExpanded] = useState(false)
-  const [showAllPast, setShowAllPast] = useState(false)
 
   if (futureGigs.length === 0 && pastGigs.length === 0) return null
 
@@ -354,11 +386,6 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
   // Past shows for the toggle — in Scenario A, skip rows already shown as primary
   const pastForToggle = scenarioA ? pastGigs.slice(5) : pastGigs
   const hasPastToggle = pastForToggle.length > 0
-
-  const PAST_PAGE = 10
-  const visiblePast = showAllPast ? pastForToggle : pastForToggle.slice(0, PAST_PAGE)
-  const hasMorePast = pastForToggle.length > PAST_PAGE
-  const pastGroups = hasPastToggle ? groupByYear(visiblePast) : []
 
   const sectionTitle = scenarioA ? "Recent Shows" : "Shows"
 
@@ -425,43 +452,23 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
         </button>
       )}
 
-      {/* Past shows — grouped by year, most recent first */}
+      {/* Past shows — compact archive, up to 3 most recent */}
       <AnimatePresence initial={false}>
         {pastExpanded && hasPastToggle && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: EASE }}
+            transition={{ duration: 0.22, ease: EASE }}
             style={{ overflow: "hidden" }}
           >
-            <div className="mt-3 space-y-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/48">
+            <div className="mt-2 border-t border-white/[0.05] pt-2.5">
+              <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white/28">
                 Past Shows
               </p>
-              <div className="space-y-4 opacity-75">
-                {pastGroups.map(({ year, gigs: yearGigs }) => (
-                  <div key={year}>
-                    <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/32">
-                      {year}
-                    </p>
-                    <div className="flex flex-col gap-1.5">
-                      {yearGigs.map((gig) => (
-                        <GigRow key={gig.id} gig={gig} isNext={false} isPast />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {hasMorePast && !showAllPast && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllPast(true)}
-                  className="text-xs font-semibold uppercase tracking-[0.20em] text-white/38 transition-colors duration-200 hover:text-accent"
-                >
-                  Show More →
-                </button>
-              )}
+              {pastForToggle.slice(0, 3).map((gig) => (
+                <GigRowPast key={gig.id} gig={gig} />
+              ))}
             </div>
           </motion.div>
         )}
