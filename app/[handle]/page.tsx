@@ -676,8 +676,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     : selectedReleasesForDisplay
   const upcomingGigs = artist.upcomingGigs
   const today = new Date().toISOString().slice(0, 10)
-  const futureGigs = upcomingGigs.filter((g) => g.date.slice(0, 10) >= today)
-  const pastGigs = [...upcomingGigs.filter((g) => g.date.slice(0, 10) < today)].reverse()
+  const futureGigs = upcomingGigs.filter((g) => g.date.slice(0, 10) >= today && g.visibilityStatus !== "cancelled")
+  const pastGigs = [...upcomingGigs.filter((g) => g.date.slice(0, 10) < today && g.visibilityStatus !== "cancelled")].reverse()
   const galleryImages = artist.galleryImages
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 6)

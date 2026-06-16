@@ -394,7 +394,7 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
   const compactGigs = primaryRows.slice(1)
 
   return (
-    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:h-full lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5 xl:p-7 xl:pt-6">
+    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5 xl:p-7 xl:pt-6">
       <SectionHeader>{sectionTitle}</SectionHeader>
 
       <div className="mt-4 lg:flex-1">
