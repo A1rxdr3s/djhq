@@ -852,18 +852,45 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               </div>
             )}
 
-            {/* ── Unified identity block: logo → tagline → CTAs ───────────────
-                All three elements read as one composition. For editorial placement,
-                they are stacked in a single centered column. For floating placement,
-                the logo layer is separate (above) and only tagline+CTAs sit here. */}
+            {/* ── Unified identity block ──────────────────────────────────────
+                Mobile: logo lives in a separate upper brand block (sm:hidden, top-[22%]).
+                        CTA stack (tagline → CTAs → social → scroll) sits independently below.
+                Tablet/desktop (sm+): logo + CTA stack unified in one editorial block.
+                Floating placement: independent floating logo layer, CTAs anchor to bottom. */}
+            {/* Mobile-only logo — upper brand zone, sits below nav above CTA stack */}
+            {!isFloatingPlacement && (
+              <div className="absolute inset-x-0 top-[22%] z-10 flex flex-col items-center px-4 text-center sm:hidden">
+                <div className="relative">
+                  <div
+                    className="pointer-events-none absolute -inset-8"
+                    aria-hidden
+                    style={{ background: "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,0.28) 0%, transparent 68%)" }}
+                  />
+                  <div className="relative" style={{ filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 32px rgba(0,0,0,0.18))" }}>
+                    <HeroIdentity
+                      artistName={artist.artistName}
+                      heroLogoUrl={artist.heroLogoUrl}
+                      heroIdentityMode={artist.heroIdentityMode ?? "text"}
+                      heroTextStyle={heroTextStyle}
+                      heroLogoScale={logoScale}
+                      heroLogoLayout={logoLayout}
+                      heroLogoAlignment={logoAlignment}
+                      heroLogoOffsetX={logoOffsetX}
+                      heroLogoOffsetY={logoOffsetY}
+                      heroLogoStyle={logoStyle}
+                      heroLogoReadability={logoReadability}
+                      isPro={isPro}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             {!isFloatingPlacement ? (
-              /* Editorial: logo → tagline → CTAs — three elements only */
+              /* Editorial: mobile shows CTA stack only; sm+ shows logo + CTA stack unified */
               <div className="absolute inset-x-0 top-[47%] z-10 flex flex-col items-center px-4 text-center sm:top-[43%]">
 
-                {/* Logo with atmospheric depth layer */}
-                {/* On mobile, translated up so logo occupies the upper-middle hero space
-                    independently of the tagline/CTA stack below. sm: resets to flow position. */}
-                <div className="relative -translate-y-[52px] sm:translate-y-0">
+                {/* Logo — tablet/desktop only (sm+); mobile logo is the separate upper brand block */}
+                <div className="relative hidden sm:block">
                   <div
                     className="pointer-events-none absolute -inset-8 sm:-inset-12"
                     aria-hidden
