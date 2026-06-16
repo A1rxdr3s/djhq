@@ -769,7 +769,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         />
 
         {/* Artist-website navigation — integrated into hero */}
-        <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-7 lg:px-12">
+        <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-3 sm:px-10 sm:pt-7 lg:px-12">
           {/* Left: section navigation — 4 items on mobile (Performance hidden), all 5 on desktop */}
           <nav className="flex items-center gap-4 sm:gap-12">
             {PUBLIC_SECTION_NAV
@@ -858,7 +858,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 the logo layer is separate (above) and only tagline+CTAs sit here. */}
             {!isFloatingPlacement ? (
               /* Editorial: logo → tagline → CTAs — three elements only */
-              <div className="absolute inset-x-0 top-[41%] z-10 flex flex-col items-center px-4 text-center sm:top-[38%]">
+              <div className="absolute inset-x-0 top-[47%] z-10 flex flex-col items-center px-4 text-center sm:top-[43%]">
 
                 {/* Logo with atmospheric depth layer */}
                 <div className="relative">
