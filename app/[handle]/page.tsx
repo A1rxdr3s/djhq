@@ -858,7 +858,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 the logo layer is separate (above) and only tagline+CTAs sit here. */}
             {!isFloatingPlacement ? (
               /* Editorial: logo → tagline → CTAs — three elements only */
-              <div className="absolute inset-x-0 top-[33%] z-10 flex flex-col items-center px-4 text-center sm:top-[35%]">
+              <div className="absolute inset-x-0 top-[41%] z-10 flex flex-col items-center px-4 text-center sm:top-[38%]">
 
                 {/* Logo with atmospheric depth layer */}
                 <div className="relative">
@@ -967,7 +967,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <a
               href="#shows"
               aria-label="Scroll to content"
-              className="absolute left-1/2 z-10 -translate-x-1/2 opacity-[0.36] transition-all duration-150 active:translate-y-0.5 active:opacity-90 md:hidden"
+              className="absolute left-1/2 z-10 -translate-x-1/2 opacity-[0.36] transition-all duration-150 active:translate-y-0.5 active:opacity-90 hidden"
               style={{ bottom: "clamp(44px, 7vh, 68px)" }}
             >
               <div className="hero-scroll-cue flex flex-col items-center gap-[5px]">
