@@ -56,7 +56,7 @@ export function HeroSocialLinks({ links }: { links: SocialLink[] }) {
 export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
   if (links.length === 0) return null
   return (
-    <div className="mt-5 flex items-center justify-center gap-7 md:hidden">
+    <div className="mt-3 flex items-center justify-center gap-7 md:hidden">
       {links.map((link) => {
         const href = resolveSafeHref(link.url)
         if (!href) return null
@@ -69,9 +69,9 @@ export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
             title={link.label}
             target="_blank"
             rel="noopener noreferrer"
-            className="-m-2 p-2 text-white/88 transition-opacity duration-200 hover:text-white focus:text-white"
+            className="-m-2 p-2 text-white/80 transition-colors duration-200 hover:text-white focus:text-white"
           >
-            <Icon className="h-[20px] w-[20px]" />
+            <Icon className="h-[18px] w-[18px]" />
           </a>
         )
       })}
