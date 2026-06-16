@@ -58,8 +58,11 @@ export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
   return (
     <div className="mt-[14px] flex justify-center md:hidden">
       <div
-        className="flex h-[44px] w-[75vw] max-w-[320px] items-center justify-between overflow-hidden rounded-full border border-white/[0.07] px-5 backdrop-blur-md"
-        style={{ background: "rgba(0,0,0,0.32)" }}
+        className="flex h-[44px] w-[75vw] max-w-[320px] items-center justify-between overflow-hidden rounded-full border border-white/[0.13] px-5 backdrop-blur-lg"
+        style={{
+          background: "rgba(0,0,0,0.26)",
+          boxShadow: "0 2px 20px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.07)",
+        }}
       >
         {links.map((link) => {
           const href = resolveSafeHref(link.url)

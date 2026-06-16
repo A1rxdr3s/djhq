@@ -72,7 +72,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
   return (
     <div
       className={cn(
-        "group flex items-center gap-3.5 rounded-xl px-2.5 py-3 xl:px-4 xl:py-4",
+        "group flex items-center gap-3.5 rounded-xl px-2.5 py-4 xl:px-4 xl:py-5",
         "border transition-colors duration-200",
         isNext
           ? "border-accent/25 bg-accent/[0.04] hover:bg-accent/[0.06]"
@@ -217,7 +217,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 border-t border-white/[0.05] px-2 py-[7px] xl:px-3",
+        "flex items-center gap-2 border-t border-white/[0.05] px-2 py-2.5 xl:px-3",
         "transition-colors duration-150",
         isPast ? "hover:bg-white/[0.012]" : "hover:bg-white/[0.025]",
       )}
@@ -369,22 +369,22 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
 
   if (futureGigs.length === 0 && pastGigs.length === 0) return null
 
-  // Scenario A — 0 future shows: display up to 5 most recent past shows as primary content
-  // Scenario B — 1-5 future shows: display all upcoming
-  // Scenario C — 6+ future shows: display first 5, with "View All" expansion
+  // Scenario A — 0 future shows: display up to 4 most recent past shows as primary content
+  // Scenario B — 1-4 future shows: display all upcoming
+  // Scenario C — 5+ future shows: display first 4 (1 featured + 3 compact), with "View All" expansion
   const scenarioA = futureGigs.length === 0
-  const scenarioC = futureGigs.length > 5
+  const scenarioC = futureGigs.length > 4
 
   const primaryRows: Gig[] = scenarioA
-    ? pastGigs.slice(0, 5)
+    ? pastGigs.slice(0, 4)
     : scenarioC && !showAllFuture
-    ? futureGigs.slice(0, 5)
+    ? futureGigs.slice(0, 4)
     : futureGigs
 
   const primaryIsPast = scenarioA
 
   // Past shows for the toggle — in Scenario A, skip rows already shown as primary
-  const pastForToggle = scenarioA ? pastGigs.slice(5) : pastGigs
+  const pastForToggle = scenarioA ? pastGigs.slice(4) : pastGigs
   const hasPastToggle = pastForToggle.length > 0
 
   const sectionTitle = scenarioA ? "Recent Shows" : "Shows"
@@ -394,7 +394,7 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
   const compactGigs = primaryRows.slice(1)
 
   return (
-    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-5 lg:pt-5 xl:p-7 xl:pt-6">
+    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-6 xl:p-9">
       <SectionHeader>{sectionTitle}</SectionHeader>
 
       <div className="mt-4 lg:flex-1">
@@ -420,7 +420,7 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
           {compactGigs.length > 0 && (
             <motion.div
               variants={item}
-              className="mt-1.5 overflow-hidden rounded-xl border border-white/[0.06]"
+              className="mt-2.5 overflow-hidden rounded-xl border border-white/[0.06]"
             >
               {compactGigs.map((gig) => (
                 <GigRowCompact key={gig.id} gig={gig} isPast={primaryIsPast} />
