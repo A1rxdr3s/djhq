@@ -861,7 +861,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               <div className="absolute inset-x-0 top-[47%] z-10 flex flex-col items-center px-4 text-center sm:top-[43%]">
 
                 {/* Logo with atmospheric depth layer */}
-                <div className="relative">
+                {/* On mobile, translated up so logo occupies the upper-middle hero space
+                    independently of the tagline/CTA stack below. sm: resets to flow position. */}
+                <div className="relative -translate-y-[52px] sm:translate-y-0">
                   <div
                     className="pointer-events-none absolute -inset-8 sm:-inset-12"
                     aria-hidden
