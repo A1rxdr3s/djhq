@@ -857,7 +857,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 Floating placement: independent floating logo layer, CTAs anchor to bottom. */}
             {/* Mobile-only logo — upper brand zone, brand header over photo */}
             {!isFloatingPlacement && (
-              <div className="absolute inset-x-0 top-[19%] z-10 flex flex-col items-center px-4 text-center sm:hidden">
+              <div className="absolute inset-x-0 top-[23%] z-10 flex flex-col items-center px-4 text-center sm:hidden">
                 <div className="relative">
                   <div
                     className="pointer-events-none absolute -inset-8"
@@ -887,7 +887,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {!isFloatingPlacement && (
               <div className="absolute inset-x-0 bottom-[28%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
                 {displayHeroTagline && (
-                  <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-white/68">
+                  <p className="mb-7 text-[12px] font-semibold uppercase tracking-[0.16em] text-white/68">
                     {displayHeroTagline.split(/\. /).map((part, i, arr) => (
                       <span key={i} className="block">{part}{i < arr.length - 1 ? "." : ""}</span>
                     ))}
