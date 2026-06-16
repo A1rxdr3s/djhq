@@ -56,7 +56,7 @@ export function HeroSocialLinks({ links }: { links: SocialLink[] }) {
 export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
   if (links.length === 0) return null
   return (
-    <div className="mt-3 flex items-center justify-center gap-7 md:hidden">
+    <div className="mt-6 flex items-center justify-center gap-7 md:hidden">
       {links.map((link) => {
         const href = resolveSafeHref(link.url)
         if (!href) return null
