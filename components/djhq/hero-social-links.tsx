@@ -58,11 +58,8 @@ export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
   return (
     <div className="mt-[14px] flex justify-center md:hidden">
       <div
-        className="flex h-[44px] w-[75vw] max-w-[320px] items-center justify-between overflow-hidden rounded-full border border-white/[0.13] px-5 backdrop-blur-lg"
-        style={{
-          background: "rgba(0,0,0,0.26)",
-          boxShadow: "0 2px 20px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.07)",
-        }}
+        className="flex h-[44px] w-[75vw] max-w-[320px] items-center justify-between rounded-full border border-white/[0.10] px-5 backdrop-blur-[12px]"
+        style={{ background: "rgba(0,0,0,0.14)" }}
       >
         {links.map((link) => {
           const href = resolveSafeHref(link.url)
@@ -76,7 +73,7 @@ export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
               title={link.label}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center text-white opacity-[0.58] transition-opacity duration-200 hover:opacity-80 focus:opacity-80"
+              className="flex items-center justify-center text-white opacity-[0.85] transition-opacity duration-200 hover:opacity-100 focus:opacity-100"
             >
               <Icon className="h-[18px] w-[18px]" />
             </a>
