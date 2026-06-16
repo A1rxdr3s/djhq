@@ -56,30 +56,25 @@ export function HeroSocialLinks({ links }: { links: SocialLink[] }) {
 export function HeroMobileSocialRow({ links }: { links: SocialLink[] }) {
   if (links.length === 0) return null
   return (
-    <div className="mt-[14px] flex justify-center md:hidden">
-      <div
-        className="flex h-[44px] w-[75vw] max-w-[320px] items-center justify-between rounded-full border border-white/[0.10] px-5 backdrop-blur-[12px]"
-        style={{ background: "rgba(0,0,0,0.14)" }}
-      >
-        {links.map((link) => {
-          const href = resolveSafeHref(link.url)
-          if (!href) return null
-          const Icon = SOCIAL_ICONS[link.platform]
-          return (
-            <a
-              key={link.platform}
-              href={href}
-              aria-label={link.label}
-              title={link.label}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center text-white opacity-[0.85] transition-opacity duration-200 hover:opacity-100 focus:opacity-100"
-            >
-              <Icon className="h-[18px] w-[18px]" />
-            </a>
-          )
-        })}
-      </div>
+    <div className="mt-5 flex items-center justify-center gap-7 md:hidden">
+      {links.map((link) => {
+        const href = resolveSafeHref(link.url)
+        if (!href) return null
+        const Icon = SOCIAL_ICONS[link.platform]
+        return (
+          <a
+            key={link.platform}
+            href={href}
+            aria-label={link.label}
+            title={link.label}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="-m-2 p-2 text-white/88 transition-opacity duration-200 hover:text-white focus:text-white"
+          >
+            <Icon className="h-[20px] w-[20px]" />
+          </a>
+        )
+      })}
     </div>
   )
 }
