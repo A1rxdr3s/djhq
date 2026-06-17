@@ -25,12 +25,15 @@ export function resolveArtistFavicon(opts: {
   isPro: boolean
   faviconUrl?: string | null
   artistName: string
+  /** Stable cache-busting key (e.g. brand assignment ID slice). Appended as ?v= to external URLs only. */
+  cacheKey?: string | null
 }): string {
-  const { isPro, faviconUrl, artistName } = opts
+  const { isPro, faviconUrl, artistName, cacheKey } = opts
   if (!isPro) return "/favicon.ico"
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.com"
-  return (
-    faviconUrl?.trim() ||
-    `${appUrl}/api/favicon/${encodeURIComponent(getArtistInitials(artistName))}`
-  )
+  const customUrl = faviconUrl?.trim()
+  if (customUrl) {
+    return cacheKey ? `${customUrl}?v=${cacheKey}` : customUrl
+  }
+  return `${appUrl}/api/favicon/${encodeURIComponent(getArtistInitials(artistName))}`
 }

@@ -603,17 +603,43 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     ? (artist.browserTitle?.trim() || artist.artistName)
     : `${artist.artistName} — DJHQ`
 
+  // Resolve favicon — query brand_asset_assignments directly for ground truth and a stable
+  // cache key. This bypasses any lag in the artists.favicon_url sync column and ensures
+  // the browser gets a versioned URL that changes only when the assignment changes.
+  let faviconUrl = artist.faviconUrl
+  let faviconCacheKey: string | null = null
+  if (isPro && artist.id) {
+    const supabase = createSupabaseReadClient()
+    if (supabase) {
+      const { data: faviconAssignment } = await supabase
+        .from("brand_asset_assignments")
+        .select("id, variant_url")
+        .eq("artist_id", artist.id)
+        .eq("assignment_type", "favicon")
+        .maybeSingle()
+      if (faviconAssignment?.variant_url) {
+        faviconUrl = faviconAssignment.variant_url
+        faviconCacheKey = faviconAssignment.id.slice(0, 8)
+      }
+    }
+  }
+
   const faviconHref = resolveArtistFavicon({
     isPro,
-    faviconUrl: artist.faviconUrl,
+    faviconUrl,
     artistName: artist.artistName,
+    cacheKey: faviconCacheKey,
   })
 
   return {
     metadataBase: new URL("https://djhq.com"),
     title,
     description: artist.shortBio,
-    icons: { icon: faviconHref },
+    icons: {
+      icon: faviconHref,
+      shortcut: faviconHref,
+      apple: faviconHref,
+    },
     openGraph: {
       title,
       description: artist.shortBio,
