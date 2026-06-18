@@ -139,7 +139,7 @@ export function ProfileClosing({
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
       {/* ── Mobile layout ─────────────────────────────────────────────── */}
-      <div className="sm:hidden py-7">
+      <div className="sm:hidden py-6">
 
         {/* 1. Identity: logo / name + genres + location */}
         {resolvedLogoUrl ? (
@@ -209,7 +209,7 @@ export function ProfileClosing({
               <p className="text-[12px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
-                <p className="mb-3 text-[12px] text-white/35">New music. Shows. Guest list access.</p>
+                <p className="mb-3 text-[12px] text-white/35">New music. Upcoming shows. Guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
                     type="email"
@@ -291,7 +291,7 @@ export function ProfileClosing({
 
       {/* ── Desktop editorial grid ───────────────────────────────────── */}
       <div className={cn(
-        "hidden sm:grid sm:gap-x-10 sm:py-14 lg:gap-x-16 lg:py-16",
+        "hidden sm:grid sm:gap-x-10 sm:py-10 lg:gap-x-16 lg:py-12",
         footerNewsletterEnabled ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
       )}>
 
@@ -373,7 +373,7 @@ export function ProfileClosing({
               <p className="text-[13px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
-                <p className="mb-4 text-[12px] text-white/38">New music. Shows. Guest list access.</p>
+                <p className="mb-4 text-[12px] text-white/38">New music. Upcoming shows. Guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="space-y-2">
                   <input
                     type="email"
@@ -413,38 +413,41 @@ export function ProfileClosing({
       {/* ── end desktop grid ─────────────────────────────────────────── */}
 
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
-      <div className="border-t border-white/[0.04] py-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[10px] text-white/22">
+      <div className="border-t border-white/[0.04] py-4 sm:py-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <p className="text-[11px] text-white/30">
             {copyrightLine}
             {!isPro && (
               <>
                 {" · "}
-                <Link href="/" className="transition-colors duration-150 hover:text-white/40">
+                <Link href="/" className="transition-colors duration-150 hover:text-white/48">
                   {brand.copy.poweredBy}
                 </Link>
               </>
             )}
           </p>
-          {/* Sitemap + Legal inline — desktop only */}
-          <div className="hidden sm:flex sm:flex-wrap sm:items-center sm:gap-x-5">
-            {sitemapLinks.map(({ label, href, external }) =>
-              external ? (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/25 transition-colors duration-150 hover:text-white/45">
+          {/* Sitemap row + Legal row — desktop only, right-aligned */}
+          <div className="hidden sm:flex sm:flex-col sm:items-end sm:gap-y-1.5">
+            <div className="flex flex-wrap items-center gap-x-4">
+              {sitemapLinks.map(({ label, href, external }) =>
+                external ? (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/28 transition-colors duration-150 hover:text-white/48">
+                    {label}
+                  </a>
+                ) : (
+                  <a key={label} href={href} className="text-[10px] text-white/28 transition-colors duration-150 hover:text-white/48">
+                    {label}
+                  </a>
+                ),
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4">
+              {legalLinks.map(({ label, href }) => (
+                <Link key={label} href={href} className="text-[10px] text-white/18 transition-colors duration-150 hover:text-white/35">
                   {label}
-                </a>
-              ) : (
-                <a key={label} href={href} className="text-[10px] text-white/25 transition-colors duration-150 hover:text-white/45">
-                  {label}
-                </a>
-              ),
-            )}
-            <span className="text-[10px] text-white/12" aria-hidden>·</span>
-            {legalLinks.map(({ label, href }) => (
-              <Link key={label} href={href} className="text-[10px] text-white/18 transition-colors duration-150 hover:text-white/35">
-                {label}
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
