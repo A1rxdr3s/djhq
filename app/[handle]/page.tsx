@@ -1501,111 +1501,51 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               {featuredSet ? (
                 <div className="flex flex-col gap-4">
 
-                  {/* Featured Set: vertical hero — title first, artwork below, waveform+CTA at base */}
-                  <div className="overflow-hidden rounded-[16px] border border-white/[0.04] bg-white/[0.015]">
-                    <a
-                      href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group block"
-                    >
-                      {/* Title block — primary editorial focus, read first */}
-                      <div className="px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-accent/50">
-                          FEATURED SET
-                        </p>
-                        <h3 className="mt-1 text-balance text-[22px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[26px]">
-                          {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
-                        </h3>
-                        {(() => {
-                          const cityPart = featuredSet.city?.trim() || null
-                          const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "").toUpperCase() ?? null) : null
-                          const combined = [cityPart, datePart].filter(Boolean).join(" · ")
-                          return combined ? (
+                  {/* Featured Set: mirrors Featured Performance — same aspect, same overlay pattern */}
+                  <a
+                    href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative block aspect-video overflow-hidden rounded-[16px] bg-secondary"
+                  >
+                    {featuredSet.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={featuredSet.imageUrl}
+                        alt={`${featuredSet.title} artwork`}
+                        className="absolute inset-0 h-full w-full object-cover brightness-[0.72] transition-transform duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <Play className="h-6 w-6 fill-white text-white" />
+                      </div>
+                    </div>
+                    {(() => {
+                      const setTitle = featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)
+                      const cityPart = featuredSet.city?.trim() || null
+                      const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "") ?? null) : null
+                      const metaParts = [cityPart, datePart].filter(Boolean)
+                      return (
+                        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                          <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[24px] xl:text-[28px]">
+                            {setTitle}
+                          </h3>
+                          {metaParts.length > 0 ? (
                             <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-white/50">
-                              {combined}
+                              {metaParts.join(" · ")}
                             </p>
-                          ) : null
-                        })()}
-                        {(() => {
-                          // Editorial metadata from real fields only — no fake data
-                          const metaLines: string[] = []
-
-                          // Artist genres → style signal (first 1–2 genres)
-                          if (artist.genres.length > 0) {
-                            metaLines.push(artist.genres.slice(0, 2).map((g) => g.toUpperCase()).join(" · "))
-                          }
-
-                          // Collaborators for B2B / B3B sets
-                          if (
-                            (featuredSet.performanceType === "b2b" || featuredSet.performanceType === "b3b") &&
-                            featuredSet.performanceArtists.length > 1
-                          ) {
-                            const others = featuredSet.performanceArtists.filter(
-                              (a) => a.toLowerCase() !== artist.artistName.toLowerCase(),
-                            )
-                            if (others.length > 0) {
-                              metaLines.push(`WITH ${others.join(", ").toUpperCase()}`)
-                            }
-                          }
-
-                          // Venue as secondary context when event name is the primary title
-                          if (featuredSet.event?.trim() && featuredSet.venue?.trim()) {
-                            metaLines.push(`AT ${featuredSet.venue.trim().toUpperCase()}`)
-                          }
-
-                          if (metaLines.length === 0) return null
-                          return (
-                            <div className="mt-2 space-y-[3px]">
-                              {metaLines.map((line, i) => (
-                                <p key={i} className="text-[10px] uppercase tracking-[0.18em] text-white/40">
-                                  {line}
-                                </p>
-                              ))}
-                            </div>
-                          )
-                        })()}
-                      </div>
-
-                      {/* Supporting artwork — large but positioned below the title */}
-                      <div className="relative aspect-[4/3] w-full overflow-hidden">
-                        {featuredSet.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={featuredSet.imageUrl}
-                            alt={`${featuredSet.title} artwork`}
-                            className="h-full w-full object-cover brightness-[0.88] transition-transform duration-300 group-hover:scale-[1.02]"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.20),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                            <Play className="h-12 w-12 text-accent/40" />
-                          </div>
-                        )}
-                        {/* Fades blend artwork edges into card background */}
-                        <div className="absolute inset-x-0 top-0 h-[16%] bg-gradient-to-b from-[hsl(var(--background)/0.4)] to-transparent" />
-                        <div className="absolute inset-x-0 bottom-0 h-[16%] bg-gradient-to-t from-[hsl(var(--background)/0.4)] to-transparent" />
-                      </div>
-
-                      {/* Waveform + CTA — audio identity and action */}
-                      <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-                        {/* Decorative waveform — signals audio content, not a player UI */}
-                        <svg
-                          aria-hidden="true"
-                          viewBox="0 0 180 16"
-                          className="h-[10px] w-full max-w-[240px] text-white/[0.14]"
-                          preserveAspectRatio="none"
-                          fill="currentColor"
-                        >
-                          {[2,4,8,12,14,11,7,4,6,10,13,14,11,8,5,3,6,9,13,14,12,9,6,4,7,11,13,10,7,3].map((h, i) => (
-                            <rect key={i} x={i * 6} y={16 - h} width={4} height={h} rx="1" />
-                          ))}
-                        </svg>
-                        <span className="mt-3 inline-flex w-fit items-center rounded-full border border-accent/20 bg-transparent px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-accent/65 transition-all duration-200 group-hover:border-accent/35 group-hover:bg-accent/[0.04]">
-                          PLAY SET ↗
-                        </span>
-                      </div>
-                    </a>
-                  </div>
+                          ) : null}
+                          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-accent/70 transition-colors duration-150 group-hover:text-accent/95">
+                            PLAY SET ↗
+                          </p>
+                        </div>
+                      )
+                    })()}
+                  </a>
 
                   {/* Recent Sets */}
                   {recentSets.length > 0 ? (
