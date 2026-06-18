@@ -210,6 +210,24 @@ export async function revokeInvitation(id: string): Promise<RevokeInvitationResu
   }
 }
 
+// ─── Delete ───────────────────────────────────────────────────────────────────
+
+export async function deleteInvitation(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!id) return { success: false, error: "Missing invitation ID." }
+
+  const auth = await verifyAdminCaller()
+  if (!auth.ok) return { success: false, error: auth.error }
+
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { error } = await supabase.from("admin_invitations").delete().eq("id", id)
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Unknown error." }
+  }
+}
+
 // ─── Fetch by token (for /invite/[token]) ─────────────────────────────────────
 
 export interface InvitationByToken {

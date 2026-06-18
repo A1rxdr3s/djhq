@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react"
 import { Copy, Check, X, RefreshCw, Plus, Mail, ExternalLink } from "lucide-react"
 import { AdminSectionHeader } from "@/components/admin/admin-section-header"
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge"
-import { createInvitation, revokeInvitation } from "@/app/actions/admin-invitations"
+import { createInvitation, revokeInvitation, deleteInvitation } from "@/app/actions/admin-invitations"
 import type { DbAdminInvitation, AdminRealArtist, AdminUserRole, LicenseDuration } from "@/types/admin"
 import { cn } from "@/lib/utils"
 
@@ -80,6 +80,70 @@ function CopyButton({ text, label = "Copy Link" }: { text: string; label?: strin
   )
 }
 
+// ─── Delete modal ─────────────────────────────────────────────────────────────
+
+interface DeleteInviteModalProps {
+  invitation: DbAdminInvitation
+  onConfirm: () => Promise<void>
+  onClose: () => void
+  isDeleting: boolean
+  error: string | null
+}
+
+function DeleteInviteModal({ invitation, onConfirm, onClose, isDeleting, error }: DeleteInviteModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-[14px] font-semibold text-slate-900">Delete Invitation</h3>
+          <button onClick={onClose} disabled={isDeleting} className="rounded p-0.5 text-slate-400 hover:text-slate-700">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="rounded-md bg-slate-50 px-3 py-2.5 mb-3 space-y-1">
+          <p className="text-[13px] font-semibold text-slate-800">{invitation.email}</p>
+          <p className="text-[11px] text-slate-500">
+            {ROLE_LABELS[invitation.role]} · {LICENSE_LABELS[invitation.licenseDuration]}
+          </p>
+        </div>
+
+        <p className="text-[12px] text-slate-600 mb-4">
+          This will permanently remove the invitation record from the database.
+          {invitation.status === "pending" && (
+            <> The invite link will immediately become invalid.</>
+          )}
+          {" "}This action cannot be undone.
+        </p>
+
+        {error && (
+          <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2">
+            <p className="text-[11px] text-red-700">{error}</p>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-[12px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex-1 rounded-md bg-red-600 px-3 py-2 text-[12px] font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {isDeleting ? "Deleting…" : "Delete Permanently"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface AdminInvitationsProps {
@@ -96,6 +160,9 @@ export function AdminInvitations({ initialInvitations, realArtists }: AdminInvit
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [revoking, setRevoking]       = useState<string | null>(null)
   const [revokeError, setRevokeError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<DbAdminInvitation | null>(null)
+  const [isDeleting, setIsDeleting]     = useState(false)
+  const [deleteError, setDeleteError]   = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -136,6 +203,20 @@ export function AdminInvitations({ initialInvitations, realArtists }: AdminInvit
       setRevokeError(result.error ?? "Revoke failed.")
     }
     setRevoking(null)
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    setDeleteError(null)
+    const result = await deleteInvitation(deleteTarget.id)
+    if (result.success) {
+      setInvitations((prev) => prev.filter((inv) => inv.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } else {
+      setDeleteError(result.error ?? "Delete failed.")
+    }
+    setIsDeleting(false)
   }
 
   function handleClose() {
@@ -252,7 +333,7 @@ export function AdminInvitations({ initialInvitations, realArtists }: AdminInvit
                             <RefreshCw className="h-2.5 w-2.5" /> Resend
                           </button>
                         )}
-                        {/* Revoke */}
+                        {/* Revoke — pending only */}
                         {inv.status === "pending" && (
                           <button
                             onClick={() => handleRevoke(inv.id)}
@@ -263,6 +344,14 @@ export function AdminInvitations({ initialInvitations, realArtists }: AdminInvit
                             {revoking === inv.id ? "Revoking…" : "Revoke"}
                           </button>
                         )}
+                        {/* Delete — available for all statuses */}
+                        <button
+                          onClick={() => { setDeleteTarget(inv); setDeleteError(null) }}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 hover:text-red-800"
+                          title="Permanently delete this invitation record"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -271,6 +360,17 @@ export function AdminInvitations({ initialInvitations, realArtists }: AdminInvit
             </table>
           </div>
         </div>
+      )}
+
+      {/* ── Delete confirmation modal ────────────────────────────────────────── */}
+      {deleteTarget && (
+        <DeleteInviteModal
+          invitation={deleteTarget}
+          onConfirm={handleDelete}
+          onClose={() => { setDeleteTarget(null); setDeleteError(null) }}
+          isDeleting={isDeleting}
+          error={deleteError}
+        />
       )}
 
       {/* ── Invite modal ─────────────────────────────────────────────────────── */}
