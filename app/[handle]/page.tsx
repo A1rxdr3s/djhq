@@ -1394,49 +1394,50 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               {featuredVideo ? (
                 <div className="flex flex-col gap-4">
 
-                  {/* Featured Performance: full-bleed cinematic card */}
-                  <a
-                    href={resolveSafeHref(featuredVideo.platformUrl) ?? "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative block aspect-video overflow-hidden rounded-[16px] bg-secondary"
-                  >
-                    {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl)!}
-                        alt={`${featuredVideo.title} thumbnail`}
-                        className="absolute inset-0 h-full w-full object-cover brightness-[0.82] transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-                        <Play className="h-6 w-6 fill-white text-white" />
-                      </div>
-                    </div>
-                    {(() => {
-                      const { displayTitle } = getVideoDisplayInfo(featuredVideo, artist.artistName)
-                      const metaParts = [
-                        featuredVideo.venue?.trim() || null,
-                        featuredVideo.videoDate ? (formatReleaseDate(featuredVideo.videoDate)?.replace(",", "") ?? null) : null,
-                      ].filter(Boolean)
-                      return (
-                        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                          <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[24px] xl:text-[28px]">
+                  {/* Featured Performance */}
+                  {(() => {
+                    const { displayTitle } = getVideoDisplayInfo(featuredVideo, artist.artistName)
+                    const metaParts = [
+                      featuredVideo.venue?.trim() || null,
+                      featuredVideo.videoDate ? (formatReleaseDate(featuredVideo.videoDate)?.replace(",", "") ?? null) : null,
+                    ].filter(Boolean)
+                    return (
+                      <a
+                        href={resolveSafeHref(featuredVideo.platformUrl) ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group block overflow-hidden rounded-[16px] bg-white/[0.04]"
+                      >
+                        <div className="relative aspect-video w-full bg-secondary">
+                          {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl)!}
+                              alt={`${featuredVideo.title} thumbnail`}
+                              className="absolute inset-0 h-full w-full object-cover brightness-[0.85] transition-transform duration-500 group-hover:scale-[1.03]"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                              <Play className="h-6 w-6 fill-white text-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="px-4 py-3 sm:px-5 sm:py-4">
+                          <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px] xl:text-[28px]">
                             {displayTitle}
                           </h3>
                           {metaParts.length > 0 ? (
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-white/50">
+                            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-foreground/50">
                               {metaParts.join(" · ")}
                             </p>
                           ) : null}
                         </div>
-                      )
-                    })()}
-                  </a>
+                      </a>
+                    )
+                  })()}
 
                   {/* Recent Performances */}
                   {secondaryVideos.length > 0 ? (
@@ -1501,41 +1502,42 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               {featuredSet ? (
                 <div className="flex flex-col gap-4">
 
-                  {/* Featured Set: mirrors Featured Performance — same aspect, same overlay pattern */}
-                  <a
-                    href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative block aspect-video overflow-hidden rounded-[16px] bg-secondary"
-                  >
-                    {featuredSet.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={featuredSet.imageUrl}
-                        alt={`${featuredSet.title} artwork`}
-                        className="absolute inset-0 h-full w-full object-cover brightness-[0.72] transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-                        <Play className="h-6 w-6 fill-white text-white" />
-                      </div>
-                    </div>
-                    {(() => {
-                      const setTitle = featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)
-                      const cityPart = featuredSet.city?.trim() || null
-                      const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "") ?? null) : null
-                      const metaParts = [cityPart, datePart].filter(Boolean)
-                      return (
-                        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                          <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[24px] xl:text-[28px]">
+                  {/* Featured Set */}
+                  {(() => {
+                    const setTitle = featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)
+                    const cityPart = featuredSet.city?.trim() || null
+                    const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "") ?? null) : null
+                    const metaParts = [cityPart, datePart].filter(Boolean)
+                    return (
+                      <a
+                        href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group block overflow-hidden rounded-[16px] bg-white/[0.04]"
+                      >
+                        <div className="relative aspect-video w-full bg-secondary">
+                          {featuredSet.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={featuredSet.imageUrl}
+                              alt={`${featuredSet.title} artwork`}
+                              className="absolute inset-0 h-full w-full object-cover brightness-[0.85] transition-transform duration-500 group-hover:scale-[1.03]"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                              <Play className="h-6 w-6 fill-white text-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="px-4 py-3 sm:px-5 sm:py-4">
+                          <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px] xl:text-[28px]">
                             {setTitle}
                           </h3>
                           {metaParts.length > 0 ? (
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-white/50">
+                            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-foreground/50">
                               {metaParts.join(" · ")}
                             </p>
                           ) : null}
@@ -1543,9 +1545,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             PLAY SET ↗
                           </p>
                         </div>
-                      )
-                    })()}
-                  </a>
+                      </a>
+                    )
+                  })()}
 
                   {/* Recent Sets */}
                   {recentSets.length > 0 ? (
