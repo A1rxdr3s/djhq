@@ -114,9 +114,9 @@ export function ProfileClosing({
     )
 
   const legalLinks = [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms",   href: "/terms" },
-    { label: "Cookies", href: "/cookies" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms",          href: "/terms" },
+    { label: "Cookies Policy", href: "/cookies" },
   ]
 
   const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
@@ -139,16 +139,6 @@ export function ProfileClosing({
         ) : (
           <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
         )}
-        <div className="mt-3 flex items-center">
-          {legalLinks.map(({ label, href }, i) => (
-            <span key={label} className="flex items-center">
-              {i > 0 && <span className="mx-2 text-white/15" aria-hidden>·</span>}
-              <Link href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
-                {label}
-              </Link>
-            </span>
-          ))}
-        </div>
 
         {/* 2. Booking */}
         {contacts[0] && (
@@ -252,16 +242,6 @@ export function ProfileClosing({
           ) : (
             <p className="text-[15px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
           )}
-          <div className="mt-3 flex items-center">
-            {legalLinks.map(({ label, href }, i) => (
-              <span key={label} className="flex items-center">
-                {i > 0 && <span className="mx-2 text-white/15" aria-hidden>·</span>}
-                <Link href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
-                  {label}
-                </Link>
-              </span>
-            ))}
-          </div>
         </div>
 
         {/* Col 2: Booking + Connect */}
@@ -358,17 +338,29 @@ export function ProfileClosing({
 
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
-        <p className="text-[11px] text-white/30">
-          {copyrightLine}
-          {!isPro && (
-            <>
-              {" · "}
-              <Link href="/" className="transition-colors duration-150 hover:text-white/48">
-                {brand.copy.poweredBy}
-              </Link>
-            </>
-          )}
-        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] text-white/30">
+            {copyrightLine}
+            {!isPro && (
+              <>
+                {" · "}
+                <Link href="/" className="transition-colors duration-150 hover:text-white/48">
+                  {brand.copy.poweredBy}
+                </Link>
+              </>
+            )}
+          </p>
+          <div className="flex flex-wrap items-center">
+            {legalLinks.map(({ label, href }, i) => (
+              <span key={label} className="flex items-center">
+                {i > 0 && <span className="mx-2 text-white/15" aria-hidden>·</span>}
+                <Link href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
+                  {label}
+                </Link>
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
 
     </footer>
