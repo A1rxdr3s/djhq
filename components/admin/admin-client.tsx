@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminHeader } from "@/components/admin/admin-header"
 import { AdminOverview } from "@/components/admin/sections/admin-overview"
@@ -15,7 +15,7 @@ import { AdminPressKits } from "@/components/admin/sections/admin-press-kits"
 import { AdminFeatureFlags } from "@/components/admin/sections/admin-feature-flags"
 import { AdminSupport } from "@/components/admin/sections/admin-support"
 import { AdminSettings } from "@/components/admin/sections/admin-settings"
-import type { AdminInvitation, AdminRealData } from "@/types/admin"
+import type { AdminRealData } from "@/types/admin"
 
 // TODO: enforce platform admin role — connect to Supabase auth
 // TODO: redirect non-admin users to sign-in
@@ -35,27 +35,6 @@ export type AdminSection =
   | "support"
   | "settings"
 
-const STORAGE_KEY = "djhq_admin_invitations"
-
-function loadInvitations(): AdminInvitation[] {
-  if (typeof window === "undefined") return []
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as AdminInvitation[]) : []
-  } catch {
-    return []
-  }
-}
-
-function saveInvitations(invitations: AdminInvitation[]): void {
-  if (typeof window === "undefined") return
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(invitations))
-  } catch {
-    // localStorage unavailable in certain environments
-  }
-}
-
 interface AdminClientProps {
   realData: AdminRealData
   sessionEmail: string | null
@@ -65,17 +44,6 @@ interface AdminClientProps {
 export function AdminClient({ realData, sessionEmail, isAdminVerified }: AdminClientProps) {
   const [section, setSection] = useState<AdminSection>("overview")
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [invitations, setInvitations] = useState<AdminInvitation[]>([])
-
-  // Hydrate invitations from localStorage after mount
-  useEffect(() => {
-    setInvitations(loadInvitations())
-  }, [])
-
-  function handleInvitationsChange(updated: AdminInvitation[]) {
-    setInvitations(updated)
-    saveInvitations(updated)
-  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -102,12 +70,11 @@ export function AdminClient({ realData, sessionEmail, isAdminVerified }: AdminCl
         {/* Content */}
         <main className="flex-1 overflow-y-auto px-5 py-6 sm:px-7 lg:px-8">
           {section === "overview"      && <AdminOverview realData={realData} />}
-          {section === "users"         && <AdminUsers realData={realData} localInvitations={invitations} sessionEmail={sessionEmail} />}
+          {section === "users"         && <AdminUsers realData={realData} sessionEmail={sessionEmail} />}
           {section === "artists"       && <AdminArtists realData={realData} />}
           {section === "invitations"   && (
             <AdminInvitations
-              invitations={invitations}
-              onInvitationsChange={handleInvitationsChange}
+              initialInvitations={realData.invitations}
               realArtists={realData.artists}
             />
           )}

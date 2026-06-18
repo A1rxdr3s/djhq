@@ -6,7 +6,7 @@ import { AdminSectionHeader } from "@/components/admin/admin-section-header"
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge"
 import { AdminEmptyState } from "@/components/admin/admin-empty-state"
 import { deleteAuthUser } from "@/app/actions/admin-delete-user"
-import type { AdminRealData, AdminInvitation, AdminUserRole } from "@/types/admin"
+import type { AdminRealData, AdminUserRole } from "@/types/admin"
 
 const ROLE_LABELS: Record<AdminUserRole, string> = {
   platform_admin: "Platform Admin",
@@ -81,11 +81,10 @@ function DeleteConfirmModal({ email, userId, onConfirm, onClose, isDeleting, del
 
 interface AdminUsersProps {
   realData: AdminRealData
-  localInvitations: AdminInvitation[]
   sessionEmail: string | null
 }
 
-export function AdminUsers({ realData, localInvitations, sessionEmail }: AdminUsersProps) {
+export function AdminUsers({ realData, sessionEmail }: AdminUsersProps) {
   const { authUsers, artists } = realData
 
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; email: string } | null>(null)
@@ -98,21 +97,6 @@ export function AdminUsers({ realData, localInvitations, sessionEmail }: AdminUs
   artists.forEach((a) => {
     if (a.ownerUserId) userArtistMap[a.ownerUserId] = a.handle
   })
-
-  // Pending invitations from localStorage (shown in a separate row with "invited" status)
-  const invitedRows = localInvitations
-    .filter((inv) => inv.status === "pending")
-    .map((inv) => ({
-      id: `inv-${inv.id}`,
-      email: inv.email,
-      role: ROLE_LABELS[inv.role] ?? inv.role,
-      status: "invited" as const,
-      artistHandle: inv.artistHandle ?? null,
-      createdAt: inv.createdAt,
-      lastSignInAt: null as string | null,
-      isLocal: true,
-      isPlatformAdmin: false,
-    }))
 
   // Real auth users from Supabase, excluding already-deleted ones
   const authRows = authUsers
@@ -129,7 +113,7 @@ export function AdminUsers({ realData, localInvitations, sessionEmail }: AdminUs
       isPlatformAdmin: u.email === "andres@tothebit.com",
     }))
 
-  const allRows = [...invitedRows, ...authRows]
+  const allRows = authRows
 
   async function handleDelete(userId: string) {
     setIsDeleting(true)
@@ -164,7 +148,7 @@ export function AdminUsers({ realData, localInvitations, sessionEmail }: AdminUs
     <div>
       <AdminSectionHeader
         title="Users"
-        description={`${authRows.length} auth user${authRows.length !== 1 ? "s" : ""} · ${invitedRows.length} pending invite${invitedRows.length !== 1 ? "s" : ""}`}
+        description={`${authRows.length} auth user${authRows.length !== 1 ? "s" : ""} · real Supabase accounts`}
       />
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -194,9 +178,6 @@ export function AdminUsers({ realData, localInvitations, sessionEmail }: AdminUs
                         </span>
                       )}
                     </div>
-                    {row.isLocal && (
-                      <p className="text-[10px] text-slate-400">local invite only — not persisted</p>
-                    )}
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">{row.role}</td>
                   <td className="px-4 py-2.5">

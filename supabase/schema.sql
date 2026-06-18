@@ -424,10 +424,45 @@ create index if not exists brand_assets_artist_idx     on public.brand_assets (a
 create index if not exists brand_assets_source_idx     on public.brand_assets (source_file_id);
 create index if not exists brand_asset_assignments_artist_idx on public.brand_asset_assignments (artist_id);
 
+-- ── Admin Invitations ────────────────────────────────────────────────────────
+
+create table if not exists public.admin_invitations (
+  id                  uuid          primary key default gen_random_uuid(),
+  email               text          not null,
+  role                text          not null default 'artist_owner',
+  artist_id           uuid          null references public.artists(id) on delete set null,
+  status              text          not null default 'pending',
+  token               text          not null unique,
+  invite_url          text          null,
+  note                text          null,
+  license_duration    text          not null default 'one_year',
+  license_expires_at  timestamptz   null,
+  created_by          text          not null,
+  created_at          timestamptz   not null default now(),
+  accepted_at         timestamptz   null,
+  revoked_at          timestamptz   null,
+  expires_at          timestamptz   null,
+
+  constraint admin_invitations_role_check check (
+    role in ('platform_admin', 'support', 'artist_owner', 'artist_editor', 'viewer')
+  ),
+  constraint admin_invitations_status_check check (
+    status in ('pending', 'accepted', 'expired', 'revoked')
+  ),
+  constraint admin_invitations_license_duration_check check (
+    license_duration in ('one_month', 'three_months', 'six_months', 'one_year', 'lifetime')
+  )
+);
+
+create index if not exists admin_invitations_email_idx  on public.admin_invitations (email);
+create index if not exists admin_invitations_token_idx  on public.admin_invitations (token);
+create index if not exists admin_invitations_status_idx on public.admin_invitations (status);
+
 -- ── Row Level Security ───────────────────────────────────────────────────────
 -- Enable RLS on all tables
 
 alter table public.artists             enable row level security;
+alter table public.admin_invitations   enable row level security;
 alter table public.social_links        enable row level security;
 alter table public.brand_source_files  enable row level security;
 alter table public.brand_assets        enable row level security;

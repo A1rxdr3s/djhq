@@ -24,9 +24,32 @@ export interface AdminRealUser {
   lastSignInAt: string | null
 }
 
+export type LicenseDuration = "one_month" | "three_months" | "six_months" | "one_year" | "lifetime"
+
+export interface DbAdminInvitation {
+  id: string
+  email: string
+  role: AdminUserRole
+  artistId: string | null
+  artistHandle: string | null
+  artistName: string | null
+  status: "pending" | "accepted" | "expired" | "revoked"
+  token: string
+  inviteUrl: string
+  note: string | null
+  licenseDuration: LicenseDuration
+  licenseExpiresAt: string | null
+  createdBy: string
+  createdAt: string
+  acceptedAt: string | null
+  revokedAt: string | null
+  expiresAt: string | null
+}
+
 export interface AdminRealData {
   artists: AdminRealArtist[]
   authUsers: AdminRealUser[]
+  invitations: DbAdminInvitation[]
   totalGigs: number
   totalReleases: number
   fetchedAt: string

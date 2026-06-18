@@ -1,11 +1,14 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { Copy, Check, X, RefreshCw, Plus, Mail } from "lucide-react"
+import { Copy, Check, X, RefreshCw, Plus, Mail, ExternalLink } from "lucide-react"
 import { AdminSectionHeader } from "@/components/admin/admin-section-header"
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge"
-import type { AdminInvitation, AdminRealArtist, AdminUserRole } from "@/types/admin"
+import { createInvitation, revokeInvitation } from "@/app/actions/admin-invitations"
+import type { DbAdminInvitation, AdminRealArtist, AdminUserRole, LicenseDuration } from "@/types/admin"
 import { cn } from "@/lib/utils"
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROLE_OPTIONS: { value: AdminUserRole; label: string }[] = [
   { value: "artist_owner",   label: "Artist Owner" },
@@ -23,79 +26,139 @@ const ROLE_LABELS: Record<AdminUserRole, string> = {
   viewer:         "Viewer",
 }
 
-function generateToken(): string {
-  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+const LICENSE_OPTIONS: { value: LicenseDuration; label: string }[] = [
+  { value: "one_month",    label: "1 month" },
+  { value: "three_months", label: "3 months" },
+  { value: "six_months",   label: "6 months" },
+  { value: "one_year",     label: "1 year" },
+  { value: "lifetime",     label: "Lifetime Access" },
+]
+
+const LICENSE_LABELS: Record<LicenseDuration, string> = {
+  one_month:    "1 month",
+  three_months: "3 months",
+  six_months:   "6 months",
+  one_year:     "1 year",
+  lifetime:     "Lifetime Access",
 }
 
+// ─── Form state ───────────────────────────────────────────────────────────────
+
+const DEFAULT_FORM = {
+  email:           "",
+  role:            "artist_owner" as AdminUserRole,
+  artistHandle:    "",
+  licenseDuration: "one_year" as LicenseDuration,
+  note:            "",
+}
+
+// ─── Copy button ──────────────────────────────────────────────────────────────
+
+function CopyButton({ text, label = "Copy Link" }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={cn(
+        "inline-flex items-center gap-1 text-[11px] transition-colors",
+        copied ? "text-emerald-600" : "text-slate-500 hover:text-slate-800",
+      )}
+    >
+      {copied ? <><Check className="h-2.5 w-2.5" /> Copied</> : <><Copy className="h-2.5 w-2.5" /> {label}</>}
+    </button>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 interface AdminInvitationsProps {
-  invitations: AdminInvitation[]
-  onInvitationsChange: (updated: AdminInvitation[]) => void
+  initialInvitations: DbAdminInvitation[]
   realArtists: AdminRealArtist[]
 }
 
-export function AdminInvitations({ invitations, onInvitationsChange, realArtists }: AdminInvitationsProps) {
-  const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ email: "", role: "artist_owner" as AdminUserRole, artistHandle: "", note: "" })
-  const [generatedLink, setGeneratedLink] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+export function AdminInvitations({ initialInvitations, realArtists }: AdminInvitationsProps) {
+  const [invitations, setInvitations] = useState<DbAdminInvitation[]>(initialInvitations)
+  const [showModal, setShowModal]     = useState(false)
+  const [form, setForm]               = useState(DEFAULT_FORM)
+  const [generatedInvite, setGeneratedInvite] = useState<DbAdminInvitation | null>(null)
+  const [submitting, setSubmitting]   = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [revoking, setRevoking]       = useState<string | null>(null)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!form.email.trim()) return
     setSubmitting(true)
+    setSubmitError(null)
 
-    const token = generateToken()
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://djhq.app"
-    const link = `${origin}/invite/${token}`
+    const result = await createInvitation({
+      email:           form.email.trim(),
+      role:            form.role,
+      artistHandle:    form.artistHandle,
+      licenseDuration: form.licenseDuration,
+      note:            form.note,
+    })
 
-    const newInvitation: AdminInvitation = {
-      id: `inv-${Date.now()}`,
-      email: form.email.trim(),
-      role: form.role,
-      artistHandle: form.artistHandle || undefined,
-      status: "pending",
-      invitedBy: "Platform Admin",
-      createdAt: new Date().toISOString().slice(0, 10),
-      expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10),
+    if (result.success && result.invitation) {
+      setInvitations((prev) => [result.invitation!, ...prev])
+      setGeneratedInvite(result.invitation)
+    } else {
+      setSubmitError(result.error ?? "Failed to create invitation.")
     }
-
-    onInvitationsChange([newInvitation, ...invitations])
-    setGeneratedLink(link)
     setSubmitting(false)
   }
 
-  function handleCopy() {
-    if (!generatedLink) return
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(generatedLink).then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      })
+  async function handleRevoke(id: string) {
+    setRevoking(id)
+    setRevokeError(null)
+    const result = await revokeInvitation(id)
+    if (result.success) {
+      setInvitations((prev) =>
+        prev.map((inv) =>
+          inv.id === id
+            ? { ...inv, status: "revoked" as const, revokedAt: new Date().toISOString().slice(0, 10) }
+            : inv,
+        ),
+      )
     } else {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setRevokeError(result.error ?? "Revoke failed.")
     }
-  }
-
-  function handleRevoke(id: string) {
-    onInvitationsChange(
-      invitations.map((inv) => (inv.id === id ? { ...inv, status: "revoked" as const } : inv)),
-    )
+    setRevoking(null)
   }
 
   function handleClose() {
     setShowModal(false)
-    setGeneratedLink(null)
-    setCopied(false)
-    setForm({ email: "", role: "artist_owner", artistHandle: "", note: "" })
+    setGeneratedInvite(null)
+    setSubmitError(null)
+    setForm(DEFAULT_FORM)
   }
+
+  const labelField = (text: string, required = false) => (
+    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+      {text}{required && " *"}
+    </label>
+  )
+
+  const inputCls = "h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+  const selectCls = "h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
 
   return (
     <div>
       <AdminSectionHeader
         title="Invitations"
-        description={`${invitations.length} invitation${invitations.length !== 1 ? "s" : ""} · stored locally (localStorage)`}
+        description={`${invitations.length} invitation${invitations.length !== 1 ? "s" : ""} · database-backed`}
         action={
           <button
             onClick={() => setShowModal(true)}
@@ -107,27 +170,27 @@ export function AdminInvitations({ invitations, onInvitationsChange, realArtists
         }
       />
 
-      {/* Notice: localStorage only */}
-      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5">
-        <p className="text-[11px] text-amber-700">
-          Invitations are stored in browser localStorage only — not persisted to database.
-          {/* TODO: create invitations table in Supabase and persist here */}
-        </p>
-      </div>
+      {revokeError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5">
+          <p className="text-[11px] text-red-700">{revokeError}</p>
+        </div>
+      )}
 
       {invitations.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-8 py-10 text-center">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-8 py-12 text-center">
           <Mail className="mx-auto mb-3 h-7 w-7 text-slate-300" />
           <p className="text-[13px] font-medium text-slate-600">No invitations yet</p>
-          <p className="mt-1 text-[12px] text-slate-400">Click "Invite User" to generate your first invitation link.</p>
+          <p className="mt-1 text-[12px] text-slate-400">
+            Create your first invitation link to invite artists, editors, or platform users.
+          </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] border-collapse text-[12px]">
+            <table className="w-full min-w-[900px] border-collapse text-[12px]">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  {["Email", "Role", "Artist", "Status", "Invited By", "Created", "Expires", ""].map((h) => (
+                  {["Email", "Role", "Artist", "License", "License Expires", "Invite Expires", "Status", "Created", ""].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400"
@@ -151,26 +214,56 @@ export function AdminInvitations({ invitations, onInvitationsChange, realArtists
                         <span className="text-slate-300">—</span>
                       )}
                     </td>
+                    <td className="px-4 py-2.5 text-slate-600">{LICENSE_LABELS[inv.licenseDuration]}</td>
+                    <td className="px-4 py-2.5 text-slate-400">
+                      {inv.licenseExpiresAt ?? (
+                        <span className="text-emerald-600 font-medium">Lifetime</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-slate-400">{inv.expiresAt ?? "—"}</td>
                     <td className="px-4 py-2.5">
                       <AdminStatusBadge status={inv.status} />
                     </td>
-                    <td className="px-4 py-2.5 text-slate-500">{inv.invitedBy}</td>
                     <td className="px-4 py-2.5 text-slate-400">{inv.createdAt}</td>
-                    <td className="px-4 py-2.5 text-slate-400">{inv.expiresAt}</td>
                     <td className="px-4 py-2.5">
-                      {inv.status === "pending" && (
-                        <div className="flex gap-3 opacity-0 transition-opacity duration-100 group-hover:opacity-100">
-                          <button className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800">
+                      <div className="flex items-center gap-3 opacity-0 transition-opacity duration-100 group-hover:opacity-100">
+                        {/* Copy invite link */}
+                        {inv.inviteUrl && inv.status === "pending" && (
+                          <CopyButton text={inv.inviteUrl} />
+                        )}
+                        {/* View invite page */}
+                        {inv.inviteUrl && (
+                          <a
+                            href={inv.inviteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800"
+                          >
+                            View <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        )}
+                        {/* Resend placeholder */}
+                        {inv.status === "pending" && (
+                          <button
+                            className="inline-flex items-center gap-1 text-[11px] text-slate-400 cursor-not-allowed"
+                            title="Resend — TODO: email integration"
+                            disabled
+                          >
                             <RefreshCw className="h-2.5 w-2.5" /> Resend
                           </button>
+                        )}
+                        {/* Revoke */}
+                        {inv.status === "pending" && (
                           <button
                             onClick={() => handleRevoke(inv.id)}
-                            className="inline-flex items-center gap-1 text-[11px] text-red-500 hover:text-red-700"
+                            disabled={revoking === inv.id}
+                            className="inline-flex items-center gap-1 text-[11px] text-red-500 hover:text-red-700 disabled:opacity-40"
                           >
-                            <X className="h-2.5 w-2.5" /> Revoke
+                            <X className="h-2.5 w-2.5" />
+                            {revoking === inv.id ? "Revoking…" : "Revoke"}
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -180,7 +273,7 @@ export function AdminInvitations({ invitations, onInvitationsChange, realArtists
         </div>
       )}
 
-      {/* Invite modal */}
+      {/* ── Invite modal ─────────────────────────────────────────────────────── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/50" onClick={handleClose} />
@@ -193,32 +286,28 @@ export function AdminInvitations({ invitations, onInvitationsChange, realArtists
               </button>
             </div>
 
-            {!generatedLink ? (
+            {!generatedInvite ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Email */}
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    Email *
-                  </label>
+                  {labelField("Email", true)}
                   <input
                     type="email"
                     required
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder="user@example.com"
-                    className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                    className={inputCls}
                   />
                 </div>
 
                 {/* Role */}
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    Role *
-                  </label>
+                  {labelField("Role", true)}
                   <select
                     value={form.role}
                     onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as AdminUserRole }))}
-                    className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                    className={selectCls}
                   >
                     {ROLE_OPTIONS.map((r) => (
                       <option key={r.value} value={r.value}>{r.label}</option>
@@ -228,69 +317,99 @@ export function AdminInvitations({ invitations, onInvitationsChange, realArtists
 
                 {/* Artist / Tenant */}
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    Artist / Tenant
-                  </label>
+                  {labelField("Artist / Tenant")}
                   <select
                     value={form.artistHandle}
                     onChange={(e) => setForm((f) => ({ ...f, artistHandle: e.target.value }))}
-                    className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                    className={selectCls}
                   >
                     <option value="">None (platform-level)</option>
                     {realArtists.map((a) => (
-                      <option key={a.handle} value={a.handle}>{a.artistName} (@{a.handle})</option>
+                      <option key={a.handle} value={a.handle}>
+                        {a.artistName} (@{a.handle})
+                      </option>
                     ))}
                   </select>
                 </div>
 
+                {/* License Duration */}
+                <div>
+                  {labelField("License Duration", true)}
+                  <select
+                    value={form.licenseDuration}
+                    onChange={(e) => setForm((f) => ({ ...f, licenseDuration: e.target.value as LicenseDuration }))}
+                    className={selectCls}
+                  >
+                    {LICENSE_OPTIONS.map((l) => (
+                      <option key={l.value} value={l.value}>{l.label}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    {form.licenseDuration === "lifetime"
+                      ? "Invited user will have permanent access with no expiry."
+                      : `Invited user's access expires ${LICENSE_LABELS[form.licenseDuration]} after accepting.`}
+                  </p>
+                </div>
+
                 {/* Note */}
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    Note (optional)
-                  </label>
+                  {labelField("Note (optional)")}
                   <input
                     type="text"
                     value={form.note}
                     onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                     placeholder="Internal note about this invite"
-                    className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                    className={inputCls}
                   />
                 </div>
+
+                {submitError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2">
+                    <p className="text-[11px] text-red-700">{submitError}</p>
+                  </div>
+                )}
 
                 <button
                   type="submit"
                   disabled={submitting}
                   className="mt-1 flex h-9 w-full items-center justify-center rounded-md bg-slate-900 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {submitting ? "Generating…" : "Generate Invite Link"}
+                  {submitting ? "Creating…" : "Create Invitation"}
                 </button>
               </form>
             ) : (
-              /* Generated link UI */
+              /* ── Generated invite ── */
               <div className="space-y-4">
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-600">
-                    Invite link ready
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-600">
+                    Invitation created
                   </p>
-                  <p className="break-all font-mono text-[11px] text-emerald-800">{generatedLink}</p>
+                  <p className="break-all font-mono text-[11px] text-emerald-800">{generatedInvite.inviteUrl}</p>
                 </div>
+
+                {/* License info summary */}
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[11px] text-slate-600">
+                  <span className="font-semibold">License:</span> {LICENSE_LABELS[generatedInvite.licenseDuration]}
+                  {generatedInvite.licenseExpiresAt && (
+                    <> · expires {generatedInvite.licenseExpiresAt}</>
+                  )}
+                  {generatedInvite.licenseDuration === "lifetime" && (
+                    <span className="ml-1 text-emerald-600 font-medium">· no expiry</span>
+                  )}
+                </div>
+
+                {/* Copy button */}
                 <button
-                  onClick={handleCopy}
-                  className={cn(
-                    "flex h-9 w-full items-center justify-center gap-2 rounded-md border text-[12px] font-semibold transition-colors",
-                    copied
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
-                  )}
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedInvite.inviteUrl)
+                  }}
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white text-[12px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
-                  {copied ? (
-                    <><Check className="h-3.5 w-3.5" /> Copied!</>
-                  ) : (
-                    <><Copy className="h-3.5 w-3.5" /> Copy Link</>
-                  )}
+                  <Copy className="h-3.5 w-3.5" /> Copy Invite Link
                 </button>
+
                 <p className="text-center text-[11px] text-slate-500">
-                  Invitation added to the table with status <strong>Pending</strong>.
+                  Invitation link expires in <strong>7 days</strong>. License duration begins on acceptance.
                 </p>
                 <button
                   onClick={handleClose}

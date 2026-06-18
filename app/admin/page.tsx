@@ -4,6 +4,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { isAdminEmail, getAdminEmails } from "@/lib/admin/admin-auth"
+import { listInvitations } from "@/app/actions/admin-invitations"
 import { AdminClient } from "@/components/admin/admin-client"
 import type { AdminRealData, AdminRealArtist, AdminRealUser } from "@/types/admin"
 
@@ -73,9 +74,12 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
       .from("releases")
       .select("*", { count: "exact", head: true })
 
+    const invitations = await listInvitations()
+
     return {
       artists,
       authUsers,
+      invitations,
       totalGigs: totalGigs ?? 0,
       totalReleases: totalReleases ?? 0,
       fetchedAt,
@@ -87,6 +91,7 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
     return {
       artists: [],
       authUsers: [],
+      invitations: [],
       totalGigs: 0,
       totalReleases: 0,
       fetchedAt,
