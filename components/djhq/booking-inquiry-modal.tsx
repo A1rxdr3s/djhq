@@ -369,6 +369,8 @@ type FormState = {
   countryIso: string // ISO 2-letter code — drives CountrySelect
   phone: string
   eventDate: string
+  city: string
+  eventType: string
   company: string
   message: string
   website: string // honeypot
@@ -382,6 +384,8 @@ const INITIAL_FORM: FormState = {
   countryIso: "CL", // default: Chile
   phone: "",
   eventDate: "",
+  city: "",
+  eventType: "",
   company: "",
   message: "",
   website: "",
@@ -390,7 +394,7 @@ const INITIAL_FORM: FormState = {
 const inputClass =
   "h-11 border-white/[0.08] bg-white/[0.03] text-foreground placeholder:text-muted-foreground/30 focus-visible:border-accent/40 focus-visible:ring-0 transition-colors duration-150"
 const fieldLabelClass =
-  "text-[10px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/50"
+  "text-[10px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/62"
 
 // ---------------------------------------------------------------------------
 // BookingInquiryModal
@@ -432,6 +436,9 @@ export function BookingInquiryModal({
     const fullPhone = form.phone.trim()
       ? `${selectedCountry.dialCode} ${form.phone.trim()}`
       : ""
+    const fullMessage = form.eventType
+      ? `Event Type: ${form.eventType}\n\n${form.message.trim()}`
+      : form.message.trim()
 
     try {
       const response = await fetch("/api/booking-inquiry", {
@@ -444,11 +451,11 @@ export function BookingInquiryModal({
           phone: fullPhone,
           preferredContact: "Email",
           eventDate: form.eventDate,
-          city: "",
+          city: form.city,
           country: "",
           company: form.company,
           attendance: "",
-          message: form.message,
+          message: fullMessage,
           website: form.website,
         }),
       })
@@ -484,8 +491,8 @@ export function BookingInquiryModal({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent
           className={cn(
-            "max-w-2xl border-white/[0.08] bg-[#0c0c0c] p-0 sm:max-w-2xl",
-            "[&>button]:text-white/30 [&>button:hover]:text-white/60",
+            "max-w-2xl border-white/[0.08] bg-[#0c0c0c] p-0 outline-none sm:max-w-2xl",
+            "[&>button]:!bg-transparent [&>button]:text-white/30 [&>button:hover]:text-white/55",
           )}
         >
           <div className="max-h-[92dvh] overflow-y-auto p-6 sm:p-8">
@@ -499,13 +506,13 @@ export function BookingInquiryModal({
             ) : (
               <>
                 <DialogHeader className="mb-7 text-left">
-                  <DialogTitle className="text-base font-semibold uppercase tracking-[0.10em] text-foreground/85">
+                  <DialogTitle className="text-base font-semibold uppercase tracking-[0.10em] text-foreground/90">
                     Booking Request
                   </DialogTitle>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/55">
-                    Submit your event details and availability request.
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/68">
+                    Booking inquiries for clubs, festivals and special events.
                   </p>
-                  <p className="mt-2 text-[11px] text-muted-foreground/32">
+                  <p className="mt-2 text-[11px] text-muted-foreground/42">
                     Available for clubs, festivals, private events and international bookings.
                   </p>
                 </DialogHeader>
@@ -582,7 +589,46 @@ export function BookingInquiryModal({
                     </Field>
                   </div>
 
-                  {/* Row 3: Venue / Festival / Promoter (full width) */}
+                  {/* Row 3: City | Event Type */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="City" required>
+                      <Input
+                        value={form.city}
+                        onChange={(e) => update("city", e.target.value)}
+                        placeholder="Berlin"
+                        required
+                        maxLength={100}
+                        disabled={isSubmitting}
+                        className={inputClass}
+                      />
+                    </Field>
+                    <Field label="Event Type" required>
+                      <div className="relative">
+                        <select
+                          value={form.eventType}
+                          onChange={(e) => update("eventType", e.target.value)}
+                          required
+                          disabled={isSubmitting}
+                          className={cn(
+                            "h-11 w-full appearance-none rounded-md border border-white/[0.08] bg-white/[0.03] px-3 pr-8 text-[14px] transition-colors duration-150 focus:border-accent/40 focus:outline-none disabled:opacity-50",
+                            form.eventType ? "text-foreground" : "text-muted-foreground/30",
+                          )}
+                        >
+                          <option value="" disabled>Select type</option>
+                          <option value="Club">Club</option>
+                          <option value="Festival">Festival</option>
+                          <option value="Rooftop">Rooftop</option>
+                          <option value="Beach Club">Beach Club</option>
+                          <option value="Private Event">Private Event</option>
+                          <option value="Corporate Event">Corporate Event</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/35" />
+                      </div>
+                    </Field>
+                  </div>
+
+                  {/* Row 4: Venue / Festival / Promoter (full width) */}
                   <Field label="Venue / Festival / Promoter" required>
                     <Input
                       value={form.company}
@@ -595,12 +641,12 @@ export function BookingInquiryModal({
                     />
                   </Field>
 
-                  {/* Row 4: Event Details (full width) */}
+                  {/* Row 5: Event Details (full width) */}
                   <Field label="Event Details" required>
                     <Textarea
                       value={form.message}
                       onChange={(e) => update("message", e.target.value)}
-                      placeholder="Capacity, expected audience, lineup, set length and any relevant event details."
+                      placeholder="Event concept, expected attendance, lineup, venue details and any relevant information."
                       rows={4}
                       required
                       maxLength={2000}
@@ -614,7 +660,7 @@ export function BookingInquiryModal({
                   )}
 
                   {/* Trust line */}
-                  <p className="text-[10px] leading-relaxed text-muted-foreground/28">
+                  <p className="text-[10px] leading-relaxed text-muted-foreground/36">
                     This information helps us evaluate availability and event requirements.
                   </p>
 
