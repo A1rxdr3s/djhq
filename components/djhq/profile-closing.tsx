@@ -125,7 +125,7 @@ export function ProfileClosing({
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
       {/* ── Mobile layout ─────────────────────────────────────────────── */}
-      <div className="sm:hidden py-6">
+      <div className="sm:hidden py-5">
 
         {/* 1. Identity: logo / name + genres + location */}
         {resolvedLogoUrl ? (
@@ -225,7 +225,7 @@ export function ProfileClosing({
 
       {/* ── Desktop editorial grid ───────────────────────────────────── */}
       <div className={cn(
-        "hidden sm:grid sm:gap-x-10 sm:py-10 lg:gap-x-16 lg:py-12",
+        "hidden sm:grid sm:items-start sm:gap-x-10 sm:py-9 lg:gap-x-16 lg:py-11",
         footerNewsletterEnabled ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
       )}>
 
@@ -339,12 +339,12 @@ export function ProfileClosing({
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
         <div className="flex flex-wrap items-center">
-          <span className="whitespace-nowrap text-[11px] text-white/30">
+          <span className="whitespace-nowrap text-[11px] text-white/40">
             {copyrightLine}
             {!isPro && (
               <>
                 {" · "}
-                <Link href="/" className="transition-colors duration-150 hover:text-white/48">
+                <Link href="/" className="transition-colors duration-150 hover:text-white/58">
                   {brand.copy.poweredBy}
                 </Link>
               </>
@@ -352,8 +352,8 @@ export function ProfileClosing({
           </span>
           {legalLinks.map(({ label, href }) => (
             <span key={label} className="flex items-center">
-              <span className="mx-2 text-[11px] text-white/15" aria-hidden>·</span>
-              <Link href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
+              <span className="mx-2 text-[11px] text-white/20" aria-hidden>·</span>
+              <Link href={href} className="text-[10px] text-white/32 transition-colors duration-150 hover:text-white/55">
                 {label}
               </Link>
             </span>
