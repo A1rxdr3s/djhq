@@ -1541,9 +1541,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                               {metaParts.join(" · ")}
                             </p>
                           ) : null}
-                          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-accent/70 transition-colors duration-150 group-hover:text-accent/95">
-                            PLAY SET ↗
-                          </p>
                         </div>
                       </a>
                     )
