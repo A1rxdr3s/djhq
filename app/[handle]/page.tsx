@@ -1481,8 +1481,20 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           </p>
                         ) : null
                       })()}
+                      {/* Decorative waveform — signals audio content, not a player UI */}
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 180 16"
+                        className="mt-3 h-[10px] w-full max-w-[180px] text-white/[0.15]"
+                        preserveAspectRatio="none"
+                        fill="currentColor"
+                      >
+                        {[2,4,8,12,14,11,7,4,6,10,13,14,11,8,5,3,6,9,13,14,12,9,6,4,7,11,13,10,7,3].map((h, i) => (
+                          <rect key={i} x={i * 6} y={16 - h} width={4} height={h} rx="1" />
+                        ))}
+                      </svg>
                       <span className="mt-3 inline-flex w-fit items-center rounded-full border border-accent/20 bg-transparent px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-accent/65 transition-all duration-200 group-hover:border-accent/35 group-hover:bg-accent/[0.04]">
-                        LISTEN ↗
+                        PLAY SET ↗
                       </span>
                     </div>
                   </a>
