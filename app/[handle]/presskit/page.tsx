@@ -263,7 +263,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-accent/[0.03] sm:blur-[140px]" />
         </div>
 
-        <div className="mx-auto max-w-4xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
+        <div className="mx-auto max-w-5xl pb-24 pt-10" style={{ paddingInline: "clamp(24px, 3vw, 48px)" }}>
 
           {/* Back link */}
           <Link
@@ -287,7 +287,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   quality={70}
                   placeholder="empty"
                   className="object-cover object-[50%_22%] brightness-[0.5]"
-                  sizes="(max-width: 640px) 100vw, 896px"
+                  sizes="(max-width: 640px) 100vw, 1024px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
               </div>
@@ -336,7 +336,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                       rel="noopener noreferrer"
                       className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
                     >
-                      <Download className="h-3.5 w-3.5 shrink-0 text-accent/65 transition-colors duration-200 group-hover:text-accent/90" />
+                      <span className="text-[18px] leading-none" aria-label="Spanish">🇪🇸</span>
                       <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
                         Press Kit ESP
                       </span>
@@ -352,7 +352,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                       rel="noopener noreferrer"
                       className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
                     >
-                      <Download className="h-3.5 w-3.5 shrink-0 text-accent/65 transition-colors duration-200 group-hover:text-accent/90" />
+                      <span className="text-[18px] leading-none" aria-label="English">🇬🇧</span>
                       <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
                         Press Kit ENG
                       </span>
