@@ -4,6 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { resolveSafeHref } from "@/lib/safe-url"
@@ -258,11 +259,11 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
       <div className="min-h-screen bg-background text-foreground">
         {/* Background atmosphere */}
         <div className="pk-bg-atmosphere pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-accent/[0.05] sm:blur-[140px]" />
-          <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-accent/[0.03] sm:blur-[120px]" />
+          <div className="absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-accent/[0.05] sm:blur-[160px]" />
+          <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-accent/[0.03] sm:blur-[140px]" />
         </div>
 
-        <div className="mx-auto max-w-3xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
+        <div className="mx-auto max-w-4xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
 
           {/* Back link */}
           <Link
@@ -273,219 +274,143 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             {artist.artistName}
           </Link>
 
-          {/* ── Compact EPK header — informational, not promotional ──────── */}
+          {/* ── Hero + Downloads ──────────────────────────────────────── */}
           <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
-            {/* Cover image — reduced height, banner style */}
+            {/* Banner image */}
             {artist.heroImageUrl && (
-              <div className="relative h-[140px] w-full sm:h-[170px]">
+              <div className="relative h-[220px] w-full sm:h-[300px]">
                 <Image
                   src={artist.heroImageUrl}
                   alt={artist.artistName}
                   fill
                   priority
-                  quality={65}
+                  quality={70}
                   placeholder="empty"
-                  className="object-cover object-[50%_20%]"
-                  sizes="(max-width: 768px) 100vw, 768px"
+                  className="object-cover object-[50%_22%] brightness-[0.5]"
+                  sizes="(max-width: 640px) 100vw, 896px"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
               </div>
             )}
 
-            <div className="px-6 pb-6 pt-5 sm:px-8 sm:pb-7 sm:pt-6">
+            <div className="px-6 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-7">
               {/* Eyebrow */}
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
-                Electronic Press Kit
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.26em] text-accent/65">
+                Press Kit Downloads
               </p>
 
-              {/* Logo (when available) or artist name text */}
+              {/* Artist identity */}
               {artist.heroLogoUrl && (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both") ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={artist.heroLogoUrl}
                   alt={artist.artistName}
-                  loading="lazy"
-                  className="max-h-[80px] max-w-[200px] object-contain opacity-85 sm:max-h-[90px] sm:max-w-[240px] lg:max-h-[100px] lg:max-w-[280px]"
+                  loading="eager"
+                  className="max-h-[72px] max-w-[200px] object-contain opacity-88 sm:max-h-[88px] sm:max-w-[260px]"
                 />
               ) : (
-                <h1 className="text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl">
+                <h1 className="text-[32px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground sm:text-[44px] xl:text-[52px]">
                   {artist.artistName}
                 </h1>
               )}
 
-              {/* Genres + location on one muted line */}
-              <p className="mt-1.5 text-[12px] text-white/38">
-                {[
-                  artist.genres.join(" · "),
-                  artist.location,
-                ].filter(Boolean).join("  ·  ")}
+              {/* Subtitle */}
+              <p className="mt-2.5 text-[13px] text-white/38 sm:text-[14px]">
+                Electronic Press Kit
               </p>
 
-              {/* Helper text */}
-              <p className="mt-2 text-[13px] leading-relaxed text-white/28">
-                Download press materials, artist assets and booking information.
-              </p>
-            </div>
-          </div>
-
-          {/* ── Press Kit Downloads ────────────────────────────────────── */}
-          <div className="mt-8">
-            <div className="mb-5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
-                Press Kit Downloads
-              </p>
-              <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
-                Choose your language
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {pk.pdfEsUrl && (
-                <a
-                  href={resolveSafeHref(pk.pdfEsUrl) ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-colors duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
-                >
-                  <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
-                  <Download className="h-6 w-6 text-accent/70" />
-                  <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
-                    {pk.pdfEsSize ? `PDF · ${pk.pdfEsSize}` : "Spanish PDF"}
-                  </p>
-                  {/* Flag + title row */}
-                  <div className="mt-1 flex items-center gap-3">
-                    {/* Spain flag — red/yellow/red horizontal stripes */}
-                    <div
-                      aria-label="Spain flag — document language: Spanish"
-                      className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a] ring-1 ring-white/[0.10]"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="h-full w-full">
-                        <rect width="3" height="2" fill="#c60b1e" />
-                        <rect width="3" height="1" y="0.5" fill="#ffc400" />
-                      </svg>
-                    </div>
-                    <p className="text-2xl font-black tracking-[-0.02em] text-foreground">
-                      Press Kit ESP
-                    </p>
-                  </div>
-                  <span className="pk-download-btn mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
-                    Download ESP ↗
-                  </span>
-                </a>
+              {/* Included items */}
+              {pk.assetsIncluded.length > 0 && (
+                <p className="mt-3 text-[11px] uppercase tracking-[0.14em] text-white/22">
+                  {pk.assetsIncluded.join("  ·  ")}
+                </p>
               )}
 
-              {pk.pdfEnUrl && (
-                <a
-                  href={resolveSafeHref(pk.pdfEnUrl) ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-colors duration-200 hover:border-accent/40 hover:bg-white/[0.03]"
-                >
-                  <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
-                  <Download className="h-6 w-6 text-accent/70" />
-                  <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
-                    {pk.pdfEnSize ? `PDF · ${pk.pdfEnSize}` : "English PDF"}
-                  </p>
-                  {/* Flag + title row */}
-                  <div className="mt-1 flex items-center gap-3">
-                    {/* United Kingdom flag — Union Jack */}
-                    <div
-                      aria-label="United Kingdom flag — document language: English"
-                      className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#012169] ring-1 ring-white/[0.10]"
+              {/* Download CTAs */}
+              {hasPdfs && (
+                <div className="mt-7 flex flex-wrap gap-3">
+                  {pk.pdfEsUrl && (
+                    <a
+                      href={resolveSafeHref(pk.pdfEsUrl) ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
                     >
-                      {/*
-                        viewBox 60×36 keeps close to the 5:3 Union Jack ratio.
-                        Layers in paint order:
-                        1. Navy field
-                        2. White broad saltire (St Andrew's, Scotland)
-                        3. Red narrow saltire (St Patrick's, Ireland — simplified)
-                        4. White St George's fimbriation
-                        5. Red St George's cross (England)
-                      */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" className="h-full w-full">
-                        <rect width="60" height="36" fill="#012169" />
-                        <line x1="0" y1="0" x2="60" y2="36" stroke="#fff" strokeWidth="8" />
-                        <line x1="60" y1="0" x2="0" y2="36" stroke="#fff" strokeWidth="8" />
-                        <line x1="0" y1="0" x2="60" y2="36" stroke="#C8102E" strokeWidth="4.5" />
-                        <line x1="60" y1="0" x2="0" y2="36" stroke="#C8102E" strokeWidth="4.5" />
-                        <line x1="30" y1="0" x2="30" y2="36" stroke="#fff" strokeWidth="12" />
-                        <line x1="0" y1="18" x2="60" y2="18" stroke="#fff" strokeWidth="12" />
-                        <line x1="30" y1="0" x2="30" y2="36" stroke="#C8102E" strokeWidth="7" />
-                        <line x1="0" y1="18" x2="60" y2="18" stroke="#C8102E" strokeWidth="7" />
-                      </svg>
-                    </div>
-                    <p className="text-2xl font-black tracking-[-0.02em] text-foreground">
-                      Press Kit ENG
-                    </p>
-                  </div>
-                  <span className="pk-download-btn mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
-                    Download ENG ↗
-                  </span>
-                </a>
+                      <Download className="h-3.5 w-3.5 shrink-0 text-accent/65 transition-colors duration-200 group-hover:text-accent/90" />
+                      <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
+                        Press Kit ESP
+                      </span>
+                      {pk.pdfEsSize && (
+                        <span className="text-[10px] text-white/28">{pk.pdfEsSize}</span>
+                      )}
+                    </a>
+                  )}
+                  {pk.pdfEnUrl && (
+                    <a
+                      href={resolveSafeHref(pk.pdfEnUrl) ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
+                    >
+                      <Download className="h-3.5 w-3.5 shrink-0 text-accent/65 transition-colors duration-200 group-hover:text-accent/90" />
+                      <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
+                        Press Kit ENG
+                      </span>
+                      {pk.pdfEnSize && (
+                        <span className="text-[10px] text-white/28">{pk.pdfEnSize}</span>
+                      )}
+                    </a>
+                  )}
+                </div>
               )}
 
+              {/* Fallback: root folder when no PDFs */}
               {!hasPdfs && pk.rootUrl && (
-                <a
-                  href={resolveSafeHref(pk.rootUrl) ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 transition-colors duration-200 hover:border-accent/40 hover:bg-white/[0.03] sm:col-span-2"
-                >
-                  <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_65%)]" />
-                  <FolderOpen className="h-6 w-6 text-accent/70" />
-                  <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
-                    Google Drive
-                  </p>
-                  <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-foreground">
-                    Full Press Kit Folder
-                  </p>
-                  <p className="mt-1.5 text-sm text-white/35">
-                    Open all assets in Google Drive
-                  </p>
-                  <span className="pk-download-btn mt-7 inline-flex h-9 items-center rounded-full border border-accent/25 px-5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/80 transition-all duration-200 group-hover:border-accent/50 group-hover:bg-accent/[0.08] group-hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
-                    Open Drive ↗
-                  </span>
-                </a>
+                <div className="mt-7">
+                  <a
+                    href={resolveSafeHref(pk.rootUrl) ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
+                  >
+                    <FolderOpen className="h-3.5 w-3.5 shrink-0 text-accent/65" />
+                    <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80">
+                      Full Press Kit Folder
+                    </span>
+                  </a>
+                </div>
               )}
             </div>
           </div>
 
-          {/* ── Asset Folders ──────────────────────────────────────────── */}
+          {/* ── Press Kit Assets ──────────────────────────────────────── */}
           {hasIndividualFolders && (
             <div className="pk-section-lazy mt-10">
-              <div className="mb-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
-                  Press Kit Assets
-                </p>
-                <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
-                  Download Folders
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {folderCards.map((card) => (
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/30">
+                Press Kit Assets
+              </p>
+              <div className="overflow-hidden rounded-[16px] border border-white/[0.06]">
+                {folderCards.map((card, i) => (
                   <a
                     key={card.id}
                     href={resolveSafeHref(card.url) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-3.5 transition-colors duration-200 hover:border-white/[0.1] hover:bg-white/[0.04]"
+                    className={cn(
+                      "group flex items-center justify-between px-5 py-3.5 transition-colors duration-150 hover:bg-white/[0.03]",
+                      i > 0 && "border-t border-white/[0.04]",
+                    )}
                   >
-                    <div className="pk-hover-overlay pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--accent)_5%,transparent),transparent_70%)]" />
-                    <div className="flex items-center justify-between">
-                      <card.icon className="h-4 w-4 text-accent/70" />
-                      {card.id === "drive" && (
-                        <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-white/28">
-                          Complete
-                        </span>
-                      )}
+                    <div className="flex items-center gap-3.5">
+                      <card.icon className="h-[15px] w-[15px] shrink-0 text-accent/55 transition-colors duration-150 group-hover:text-accent/80" />
+                      <div>
+                        <p className="text-[13px] font-semibold text-foreground/75 transition-colors duration-150 group-hover:text-foreground">
+                          {card.label}
+                        </p>
+                        <p className="text-[11px] text-white/25">{card.description}</p>
+                      </div>
                     </div>
-                    <p className="mt-2.5 text-sm font-bold text-foreground/85 transition-colors duration-150 group-hover:text-foreground">
-                      {card.label}
-                    </p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-white/30">
-                      {card.description}
-                    </p>
-                    <div className="mt-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/60 transition-colors duration-150 group-hover:text-accent/90">
+                    <div className="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/40 transition-colors duration-150 group-hover:text-accent/75">
                       {card.cta}
                       <ExternalLink className="h-2.5 w-2.5" />
                     </div>
@@ -495,65 +420,58 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           )}
 
-          {/* ── Press Photos Preview ───────────────────────────────────── */}
+          {/* ── Press Photos ──────────────────────────────────────────── */}
           {pk.useGalleryPhotos && artist.galleryImages.length > 0 && (
             <div className="pk-section-lazy mt-10">
-              <div className="mb-4 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/60">
-                    Press Photos
-                  </p>
-                  <h2 className="mt-1 text-xl font-black tracking-[-0.01em] text-foreground">
-                    Press Photos Preview
-                  </h2>
-                  <p className="mt-1 text-[11px] text-white/25">
-                    Preview only · Download high-resolution images from the Press Photos folder.
-                  </p>
-                </div>
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-white/30">
+                  Press Photos
+                </p>
                 {pk.mediaFolderUrl && (
                   <a
                     href={resolveSafeHref(pk.mediaFolderUrl) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-6 inline-flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-accent/55 transition-colors duration-150 hover:text-accent/85"
+                    className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-accent/50 transition-colors duration-150 hover:text-accent/80"
                   >
-                    Open Folder
+                    Download All
                     <ExternalLink className="h-2.5 w-2.5" />
                   </a>
                 )}
               </div>
-              <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
-                <div className="grid grid-cols-2 gap-2 p-2">
-                  {artist.galleryImages.slice(0, 4).map((image) => (
-                    <div
-                      key={image.id}
-                      className="group relative aspect-square overflow-hidden rounded-xl bg-secondary"
-                    >
-                      <Image
-                        src={image.imageUrl}
-                        alt={image.altText}
-                        fill
-                        loading="lazy"
-                        sizes="(max-width: 768px) 45vw, 180px"
-                        className="pk-gallery-image object-cover sm:transition-[transform,filter] sm:duration-500 sm:group-hover:scale-[1.04] sm:group-hover:brightness-[1.08]"
-                        style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
-                      />
-                    </div>
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {artist.galleryImages.slice(0, 6).map((image) => (
+                  <div
+                    key={image.id}
+                    className="group relative aspect-[4/5] overflow-hidden rounded-[14px] bg-secondary"
+                  >
+                    <Image
+                      src={image.imageUrl}
+                      alt={image.altText}
+                      fill
+                      loading="lazy"
+                      sizes="(max-width: 640px) 48vw, (max-width: 896px) 32vw, 280px"
+                      className="object-cover sm:transition-[transform] sm:duration-500 sm:group-hover:scale-[1.04]"
+                      style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
+                    />
+                  </div>
+                ))}
               </div>
+              <p className="mt-3 text-[10px] text-white/18">
+                Preview only · Download high-res from the Press Photos folder
+              </p>
             </div>
           )}
 
-          {/* ── Compact Booking Contact ────────────────────────────────── */}
+          {/* ── Booking ───────────────────────────────────────────────── */}
           {artist.bookingInfo.email.trim() && (
-            <div className="pk-section-lazy mt-10 rounded-[16px] border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/28">
-                Booking Contact
+            <div className="pk-section-lazy mt-12 border-t border-white/[0.04] pt-8">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
+                Booking
               </p>
               <a
                 href={`mailto:${artist.bookingInfo.email}`}
-                className="mt-1.5 block font-mono text-sm text-white/55 underline decoration-white/[0.12] underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-accent/80 hover:decoration-accent/30"
+                className="text-[15px] font-semibold text-white/55 transition-colors duration-150 hover:text-accent/80"
               >
                 {artist.bookingInfo.email}
               </a>
