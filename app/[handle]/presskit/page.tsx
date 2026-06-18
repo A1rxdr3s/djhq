@@ -3,12 +3,12 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { ArrowLeft, Camera, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
+import { ArrowLeft, Camera, ExternalLink, FileText, FolderOpen, Layers, Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar, Wrench, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { resolveSafeHref } from "@/lib/safe-url"
-import type { GalleryImage, SubscriptionPlan } from "@/types/djhq"
+import type { GalleryImage, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
 
 type PressKitPageProps = {
@@ -61,6 +61,34 @@ type GalleryImageRow = {
   focal_y: number | null
 }
 
+type SocialLinkRow = {
+  platform: string
+  label: string
+  url: string
+}
+
+const socialPlatforms: SocialPlatform[] = [
+  "spotify", "beatport", "soundcloud", "youtube", "instagram",
+  "tiktok", "resident-advisor", "bandsintown", "website", "other",
+]
+
+function normalizeSocialPlatform(platform: string): SocialPlatform {
+  return socialPlatforms.includes(platform as SocialPlatform) ? (platform as SocialPlatform) : "other"
+}
+
+const socialIcons: Record<SocialPlatform, LucideIcon> = {
+  spotify:            Radio,
+  beatport:           Music2,
+  soundcloud:         Play,
+  youtube:            Youtube,
+  instagram:          Instagram,
+  tiktok:             Music,
+  "resident-advisor": Globe,
+  bandsintown:        Calendar,
+  website:            Globe,
+  other:              Link2,
+}
+
 function normalizePlan(plan: string): SubscriptionPlan {
   return plan === "pro" ? "pro" : "free"
 }
@@ -110,15 +138,24 @@ async function getArtistPressKit(handle: string): Promise<ReturnType<typeof buil
     focalY: row.focal_y ?? 50,
   }))
 
+  const socialLinksResult = await supabase
+    .from("social_links")
+    .select("platform, label, url")
+    .eq("artist_id", artistRow.id)
+    .order("sort_order", { ascending: true })
+    .returns<SocialLinkRow[]>()
+  const rawSocialLinks: SocialLinkRow[] = socialLinksResult.data ?? []
+
   const plan = normalizePlan(artistRow.plan)
   const isPro = plan === "pro"
 
-  return buildArtistResult(artistRow, galleryImages, plan, isPro)
+  return buildArtistResult(artistRow, galleryImages, rawSocialLinks, plan, isPro)
 }
 
 function buildArtistResult(
   artistRow: ArtistRow,
   galleryImages: GalleryImage[],
+  socialLinksRaw: SocialLinkRow[],
   plan: SubscriptionPlan,
   isPro: boolean,
 ) {
@@ -156,6 +193,11 @@ function buildArtistResult(
       useGalleryPhotos: artistRow.press_kit_use_gallery_photos ?? true,
     },
     galleryImages,
+    socialLinks: socialLinksRaw.map((link) => ({
+      platform: normalizeSocialPlatform(link.platform),
+      label: link.label,
+      url: link.url,
+    })),
     accentTheme: isPro ? (artistRow.artist_accent_theme as "matrix" | "electric_blue" | "signal_red" | undefined) : "matrix",
     plan,
     showHeaderBranding: artistRow.show_header_branding,
@@ -252,6 +294,14 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
   const hasIndividualFolders = folderCards.some((c) => c.id !== "drive")
   const profileHref = `/${artist.handle}`
 
+  const iconLinks = (artist.socialLinks ?? [])
+    .filter((l) => l.url.trim().length > 0)
+    .slice(0, 7)
+    .map((l) => ({ ...l, href: resolveSafeHref(l.url), Icon: socialIcons[l.platform] }))
+    .filter((l): l is typeof l & { href: string } => l.href !== null)
+
+  const footerYear = new Date().getFullYear()
+
   return (
     <>
       <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}`}</style>
@@ -263,7 +313,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-accent/[0.03] sm:blur-[140px]" />
         </div>
 
-        <div className="mx-auto max-w-[1600px] pb-24 pt-10" style={{ paddingInline: "clamp(24px, 3vw, 48px)" }}>
+        <div className="mx-auto max-w-[1600px] pt-10" style={{ paddingInline: "clamp(24px, 3vw, 48px)" }}>
 
           {/* Back link */}
           <Link
@@ -470,30 +520,85 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           )}
 
-          {/* ── Booking ───────────────────────────────────────────────── */}
-          {artist.bookingInfo.email.trim() && (
-            <div className="pk-section-lazy mt-12 border-t border-white/[0.04] pt-8">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.26em] text-white/25">
-                Booking
-              </p>
-              <a
-                href={`mailto:${artist.bookingInfo.email}`}
-                className="text-[15px] font-semibold text-white/55 transition-colors duration-150 hover:text-accent/80"
-              >
-                {artist.bookingInfo.email}
-              </a>
-            </div>
-          )}
+          {/* ── Micro Footer ──────────────────────────────────────────── */}
+          <footer className="mt-16 border-t border-white/[0.05] pb-6 pt-8">
+            <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:items-start sm:gap-6">
 
-          {/* Footer */}
-          {artist.showHeaderBranding && (
-            <p className="mt-12 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white/18">
-              Powered by{" "}
-              <Link href="/" className="transition-colors duration-150 hover:text-white/30">
-                DJHQ
-              </Link>
-            </p>
-          )}
+              {/* Left: Booking */}
+              <div>
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.26em] text-white/28">
+                  Booking
+                </p>
+                {artist.bookingInfo.email.trim() ? (
+                  <a
+                    href={`mailto:${artist.bookingInfo.email}`}
+                    className="text-[13px] text-white/58 transition-colors duration-150 hover:text-accent/80"
+                  >
+                    {artist.bookingInfo.email}
+                  </a>
+                ) : (
+                  <span className="text-[13px] text-white/22">—</span>
+                )}
+              </div>
+
+              {/* Center: Connect */}
+              <div>
+                {iconLinks.length > 0 && (
+                  <>
+                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.26em] text-white/28">
+                      Connect
+                    </p>
+                    <div className="flex flex-wrap items-center gap-[18px]">
+                      {iconLinks.map(({ platform, url, label, href, Icon }) => (
+                        <a
+                          key={`${platform}-${url}`}
+                          href={href}
+                          aria-label={label}
+                          title={label}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white/42 transition-colors duration-200 hover:text-accent/80"
+                        >
+                          <Icon className="h-[18px] w-[18px]" />
+                        </a>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Right: Copyright + legal */}
+              <div className="sm:text-right">
+                <p className="text-[11px] text-white/35">
+                  © {footerYear} {artist.artistName}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 sm:justify-end">
+                  {[
+                    { label: "Privacy Policy", href: "/privacy" },
+                    { label: "Terms", href: "/terms" },
+                    { label: "Cookies", href: "/cookies" },
+                  ].map(({ label, href }) => (
+                    <Link
+                      key={label}
+                      href={href}
+                      className="text-[10px] text-white/25 transition-colors duration-150 hover:text-white/48"
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+                {artist.showHeaderBranding && (
+                  <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/15">
+                    Powered by{" "}
+                    <Link href="/" className="transition-colors duration-150 hover:text-white/28">
+                      DJHQ
+                    </Link>
+                  </p>
+                )}
+              </div>
+
+            </div>
+          </footer>
         </div>
       </div>
     </>
