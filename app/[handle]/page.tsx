@@ -1426,6 +1426,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           </div>
                         </div>
                         <div className="px-4 py-3 sm:px-5 sm:py-4">
+                          <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/75">
+                            LIVE PERFORMANCE
+                          </p>
                           <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px] xl:text-[28px]">
                             {displayTitle}
                           </h3>
@@ -1533,6 +1536,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           </div>
                         </div>
                         <div className="px-4 py-3 sm:px-5 sm:py-4">
+                          <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/75">
+                            DJ SET
+                          </p>
                           <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px] xl:text-[28px]">
                             {setTitle}
                           </h3>
