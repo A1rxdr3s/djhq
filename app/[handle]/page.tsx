@@ -1481,6 +1481,44 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           </p>
                         ) : null
                       })()}
+                      {(() => {
+                        // Editorial metadata from real fields only — no fake data
+                        const metaLines: string[] = []
+
+                        // Artist genres → style signal (first 1–2 genres)
+                        if (artist.genres.length > 0) {
+                          metaLines.push(artist.genres.slice(0, 2).map((g) => g.toUpperCase()).join(" · "))
+                        }
+
+                        // Collaborators for B2B / B3B sets
+                        if (
+                          (featuredSet.performanceType === "b2b" || featuredSet.performanceType === "b3b") &&
+                          featuredSet.performanceArtists.length > 1
+                        ) {
+                          const others = featuredSet.performanceArtists.filter(
+                            (a) => a.toLowerCase() !== artist.artistName.toLowerCase(),
+                          )
+                          if (others.length > 0) {
+                            metaLines.push(`WITH ${others.join(", ").toUpperCase()}`)
+                          }
+                        }
+
+                        // Venue as secondary context when event name is the primary title
+                        if (featuredSet.event?.trim() && featuredSet.venue?.trim()) {
+                          metaLines.push(`AT ${featuredSet.venue.trim().toUpperCase()}`)
+                        }
+
+                        if (metaLines.length === 0) return null
+                        return (
+                          <div className="mt-3 space-y-1">
+                            {metaLines.map((line, i) => (
+                              <p key={i} className="text-[10px] uppercase tracking-[0.18em] text-white/40">
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        )
+                      })()}
                       {/* Decorative waveform — signals audio content, not a player UI */}
                       <svg
                         aria-hidden="true"
