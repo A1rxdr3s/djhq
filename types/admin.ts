@@ -46,6 +46,8 @@ export interface DbAdminInvitation {
   expiresAt: string | null
 }
 
+export type EmailDeliveryStatus = "pending" | "sent" | "failed"
+
 export interface DbBookingLead {
   id: string
   artistId: string
@@ -58,6 +60,9 @@ export interface DbBookingLead {
   venueOrPromoter: string
   eventDetails: string
   status: AdminBookingLeadStatus
+  emailDeliveryStatus: EmailDeliveryStatus
+  emailProviderMessageId: string | null
+  emailError: string | null
   createdAt: string
 }
 

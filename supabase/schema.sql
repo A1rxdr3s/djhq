@@ -461,21 +461,28 @@ create index if not exists admin_invitations_status_idx on public.admin_invitati
 -- ── booking_leads ─────────────────────────────────────────────────────────────
 
 create table if not exists public.booking_leads (
-  id                uuid        primary key default gen_random_uuid(),
-  artist_id         uuid        not null references public.artists(id) on delete cascade,
-  artist_handle     text        not null,
-  full_name         text        not null,
-  email             text        not null,
-  phone             text        null,
-  city              text        not null,
-  event_date        date        not null,
-  venue_or_promoter text        not null,
-  event_details     text        not null,
-  status            text        not null default 'new',
-  created_at        timestamptz not null default now(),
+  id                        uuid        primary key default gen_random_uuid(),
+  artist_id                 uuid        not null references public.artists(id) on delete cascade,
+  artist_handle             text        not null,
+  full_name                 text        not null,
+  email                     text        not null,
+  phone                     text        null,
+  city                      text        not null,
+  event_date                date        not null,
+  venue_or_promoter         text        not null,
+  event_details             text        not null,
+  status                    text        not null default 'new',
+  email_delivery_status     text        not null default 'pending',
+  email_provider            text        null,
+  email_provider_message_id text        null,
+  email_error               text        null,
+  created_at                timestamptz not null default now(),
 
   constraint booking_leads_status_check check (
     status in ('new', 'contacted', 'qualified', 'declined', 'converted')
+  ),
+  constraint booking_leads_email_delivery_status_check check (
+    email_delivery_status in ('pending', 'sent', 'failed')
   )
 );
 

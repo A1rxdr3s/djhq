@@ -3,16 +3,7 @@
 import { Inbox } from "lucide-react"
 import { AdminSectionHeader } from "@/components/admin/admin-section-header"
 import { AdminEmptyState } from "@/components/admin/admin-empty-state"
-import { AdminStatusBadge } from "@/components/admin/admin-status-badge"
-import type { AdminRealData, DbBookingLead, AdminBookingLeadStatus } from "@/types/admin"
-
-const STATUS_LABELS: Record<AdminBookingLeadStatus, string> = {
-  new:       "New",
-  contacted: "Contacted",
-  qualified: "Qualified",
-  declined:  "Declined",
-  converted: "Converted",
-}
+import type { AdminRealData, AdminBookingLeadStatus, EmailDeliveryStatus } from "@/types/admin"
 
 const STATUS_COLORS: Record<AdminBookingLeadStatus, string> = {
   new:       "bg-blue-50 text-blue-700 border-blue-200",
@@ -22,10 +13,19 @@ const STATUS_COLORS: Record<AdminBookingLeadStatus, string> = {
   converted: "bg-green-50 text-green-700 border-green-200",
 }
 
-function LeadStatusBadge({ status }: { status: AdminBookingLeadStatus }) {
+const DELIVERY_COLORS: Record<EmailDeliveryStatus, string> = {
+  pending: "bg-slate-100 text-slate-500 border-slate-200",
+  sent:    "bg-emerald-50 text-emerald-700 border-emerald-200",
+  failed:  "bg-red-50 text-red-600 border-red-200",
+}
+
+function Pill({ label, color, title }: { label: string; color: string; title?: string }) {
   return (
-    <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] ${STATUS_COLORS[status]}`}>
-      {STATUS_LABELS[status]}
+    <span
+      className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] ${color}`}
+      title={title}
+    >
+      {label}
     </span>
   )
 }
@@ -66,10 +66,10 @@ export function AdminBookingLeads({ realData }: AdminBookingLeadsProps) {
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-[12px]">
+          <table className="w-full min-w-[1000px] border-collapse text-[12px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
-                {["Artist", "Name", "Email", "City", "Event Date", "Venue / Promoter", "Status", "Received"].map((h) => (
+                {["Artist", "Name", "Email", "City", "Event Date", "Venue / Promoter", "Status", "Email", "Received"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400"
@@ -91,9 +91,16 @@ export function AdminBookingLeads({ realData }: AdminBookingLeadsProps) {
                   <td className="px-4 py-2.5 text-slate-600">{lead.email}</td>
                   <td className="px-4 py-2.5 text-slate-500">{lead.city}</td>
                   <td className="px-4 py-2.5 text-slate-500">{lead.eventDate}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{truncate(lead.venueOrPromoter, 40)}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{truncate(lead.venueOrPromoter, 36)}</td>
                   <td className="px-4 py-2.5">
-                    <LeadStatusBadge status={lead.status} />
+                    <Pill label={lead.status} color={STATUS_COLORS[lead.status]} />
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <Pill
+                      label={lead.emailDeliveryStatus}
+                      color={DELIVERY_COLORS[lead.emailDeliveryStatus]}
+                      title={lead.emailError ?? lead.emailProviderMessageId ?? undefined}
+                    />
                   </td>
                   <td className="px-4 py-2.5 text-slate-400">{lead.createdAt}</td>
                 </tr>
