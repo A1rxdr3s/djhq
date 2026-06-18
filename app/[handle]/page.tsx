@@ -706,7 +706,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 5)
   const featuredVideo = artist.videos[0] ?? null
-  const secondaryVideos = artist.videos.slice(1, 4)
+  const secondaryVideos = artist.videos.slice(1, 5)
   const featuredReleaseYear = featuredRelease ? new Date(featuredRelease.releaseDate).getUTCFullYear() : null
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -1522,9 +1522,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           href={videoHref}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 hover:bg-white/[0.04]"
+                          className="group flex items-center gap-3 rounded-xl px-2 py-3 transition-colors duration-150 hover:bg-white/[0.04]"
                         >
-                          <div className="relative aspect-video w-14 shrink-0 overflow-hidden rounded-lg bg-secondary">
+                          <div className="relative aspect-video w-16 shrink-0 overflow-hidden rounded-lg bg-secondary">
                             {(video.customThumbnailUrl ?? video.thumbnailUrl) ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
