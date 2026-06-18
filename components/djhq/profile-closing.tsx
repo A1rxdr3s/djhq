@@ -179,13 +179,13 @@ export function ProfileClosing({
           <div className="mt-6">
             <div className="mb-5 border-t border-white/[0.05]" />
             <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
-              Join the List
+              STAY CONNECTED
             </p>
             {status === "success" ? (
               <p className="text-[12px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
-                <p className="mb-3 text-[12px] text-white/35">New music. Upcoming shows. Guest list access.</p>
+                <p className="mb-3 text-[12px] text-white/35">New music, shows, and guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
                     type="email"
@@ -200,13 +200,13 @@ export function ProfileClosing({
                       "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/18",
                       status === "error"
                         ? "border-red-500/30 focus:border-red-500/50"
-                        : "border-white/[0.12] focus:border-accent/40",
+                        : "border-white/[0.18] focus:border-accent/50",
                     )}
                   />
                   <button
                     type="submit"
                     disabled={status === "loading"}
-                    className="h-9 shrink-0 rounded-full border border-white/[0.14] bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/48 transition-all duration-200 hover:border-white/[0.26] hover:text-white/72 disabled:opacity-40"
+                    className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
                   >
                     {status === "loading" ? "···" : "Join"}
                   </button>
@@ -292,13 +292,13 @@ export function ProfileClosing({
         {/* Col 3: Newsletter */}
         {footerNewsletterEnabled && (
           <div>
-            <p className={headingClass}>Join the List</p>
+            <p className={headingClass}>STAY CONNECTED</p>
             {status === "success" ? (
               <p className="text-[13px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
-                <p className="mb-4 text-[12px] text-white/38">New music. Upcoming shows. Guest list access.</p>
-                <form onSubmit={handleSubmit} noValidate className="space-y-2">
+                <p className="mb-4 text-[12px] text-white/38">New music, shows, and guest list access.</p>
+                <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
                     type="email"
                     value={email}
@@ -309,16 +309,16 @@ export function ProfileClosing({
                     placeholder="your@email.com"
                     aria-label="Email address"
                     className={cn(
-                      "h-9 w-full rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/18",
+                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/18",
                       status === "error"
                         ? "border-red-500/30 focus:border-red-500/50"
-                        : "border-white/[0.12] focus:border-accent/40",
+                        : "border-white/[0.18] focus:border-accent/50",
                     )}
                   />
                   <button
                     type="submit"
                     disabled={status === "loading"}
-                    className="h-9 w-full rounded-full border border-white/[0.14] bg-transparent text-[11px] font-semibold uppercase tracking-[0.14em] text-white/48 transition-all duration-200 hover:border-white/[0.26] hover:text-white/72 disabled:opacity-40"
+                    className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
                   >
                     {status === "loading" ? "···" : "Join"}
                   </button>
