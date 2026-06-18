@@ -1,6 +1,39 @@
 // Admin types for DJHQ Business Control Center
 // TODO: replace with Supabase-generated types when backend is connected
 
+// ─── Real data types (from Supabase) ─────────────────────────────────────────
+
+export interface AdminRealArtist {
+  id: string
+  handle: string
+  artistName: string
+  plan: string
+  isPublished: boolean
+  createdAt: string
+  updatedAt: string
+  bookingEmail: string
+  pressKitEnabled: boolean
+  location: string
+  ownerUserId: string | null
+}
+
+export interface AdminRealUser {
+  id: string
+  email: string
+  createdAt: string
+  lastSignInAt: string | null
+}
+
+export interface AdminRealData {
+  artists: AdminRealArtist[]
+  authUsers: AdminRealUser[]
+  totalGigs: number
+  totalReleases: number
+  fetchedAt: string
+  isDevMode: boolean
+  dataError: boolean
+}
+
 export type AdminUserRole = "platform_admin" | "support" | "artist_owner" | "artist_editor" | "viewer"
 export type AdminUserStatus = "active" | "invited" | "suspended" | "trial" | "churned"
 export type AdminPlan = "free" | "starter" | "pro" | "agency" | "enterprise"

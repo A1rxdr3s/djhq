@@ -1,57 +1,48 @@
 import { cn } from "@/lib/utils"
-import type {
-  AdminUserStatus,
-  AdminPublishStatus,
-  AdminInvitationStatus,
-  AdminSubscriptionStatus,
-  AdminPaymentStatus,
-  AdminBookingLeadStatus,
-  AdminTicketStatus,
-} from "@/types/admin"
 
-type StatusValue =
-  | AdminUserStatus
-  | AdminPublishStatus
-  | AdminInvitationStatus
-  | AdminSubscriptionStatus
-  | AdminPaymentStatus
-  | AdminBookingLeadStatus
-  | AdminTicketStatus
+// Light-mode status badge — does not rely on dark CSS variables.
+type StatusValue = string
 
 const STATUS_STYLES: Record<string, string> = {
-  // User
-  active:    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  invited:   "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  suspended: "bg-red-500/10 text-red-400 border-red-500/20",
-  trial:     "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  churned:   "bg-white/[0.04] text-white/30 border-white/[0.08]",
+  // User/auth
+  active:    "bg-emerald-50 text-emerald-700 border-emerald-200",
+  invited:   "bg-blue-50 text-blue-700 border-blue-200",
+  suspended: "bg-red-50 text-red-700 border-red-200",
+  trial:     "bg-amber-50 text-amber-700 border-amber-200",
+  churned:   "bg-slate-100 text-slate-500 border-slate-200",
   // Publish
-  published: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  draft:     "bg-white/[0.04] text-white/30 border-white/[0.08]",
+  published: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  draft:     "bg-slate-100 text-slate-500 border-slate-200",
   // Subscription
-  trialing:  "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  past_due:  "bg-red-500/10 text-red-400 border-red-500/20",
-  canceled:  "bg-white/[0.04] text-white/30 border-white/[0.08]",
-  paused:    "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  trialing:  "bg-amber-50 text-amber-700 border-amber-200",
+  past_due:  "bg-red-50 text-red-700 border-red-200",
+  canceled:  "bg-slate-100 text-slate-500 border-slate-200",
+  paused:    "bg-orange-50 text-orange-700 border-orange-200",
   // Payment
-  paid:      "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  failed:    "bg-red-500/10 text-red-400 border-red-500/20",
-  refunded:  "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  pending:   "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  paid:      "bg-emerald-50 text-emerald-700 border-emerald-200",
+  failed:    "bg-red-50 text-red-700 border-red-200",
+  refunded:  "bg-purple-50 text-purple-700 border-purple-200",
+  pending:   "bg-amber-50 text-amber-700 border-amber-200",
   // Invitation
-  accepted:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  expired:   "bg-white/[0.04] text-white/30 border-white/[0.08]",
-  revoked:   "bg-red-500/10 text-red-400 border-red-500/20",
+  accepted:  "bg-emerald-50 text-emerald-700 border-emerald-200",
+  expired:   "bg-slate-100 text-slate-500 border-slate-200",
+  revoked:   "bg-red-50 text-red-700 border-red-200",
   // Booking lead
-  new:       "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  contacted: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  qualified: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  declined:  "bg-red-500/10 text-red-400 border-red-500/20",
-  converted: "bg-accent/10 text-accent border-accent/20",
+  new:       "bg-blue-50 text-blue-700 border-blue-200",
+  contacted: "bg-amber-50 text-amber-700 border-amber-200",
+  qualified: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  declined:  "bg-red-50 text-red-700 border-red-200",
+  converted: "bg-green-50 text-green-700 border-green-200",
   // Ticket
-  open:        "bg-red-500/10 text-red-400 border-red-500/20",
-  in_progress: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  resolved:    "bg-white/[0.04] text-white/30 border-white/[0.08]",
+  open:        "bg-red-50 text-red-700 border-red-200",
+  in_progress: "bg-amber-50 text-amber-700 border-amber-200",
+  resolved:    "bg-slate-100 text-slate-500 border-slate-200",
+  // Plan
+  free:       "bg-slate-100 text-slate-500 border-slate-200",
+  starter:    "bg-blue-50 text-blue-700 border-blue-200",
+  pro:        "bg-green-50 text-green-700 border-green-200",
+  agency:     "bg-purple-50 text-purple-700 border-purple-200",
+  enterprise: "bg-amber-50 text-amber-700 border-amber-200",
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -70,7 +61,6 @@ const STATUS_LABELS: Record<string, string> = {
   failed:      "Failed",
   refunded:    "Refunded",
   pending:     "Pending",
-  pending_invitation: "Pending",
   accepted:    "Accepted",
   expired:     "Expired",
   revoked:     "Revoked",
@@ -82,15 +72,20 @@ const STATUS_LABELS: Record<string, string> = {
   open:        "Open",
   in_progress: "In Progress",
   resolved:    "Resolved",
+  free:        "Free",
+  starter:     "Starter",
+  pro:         "Pro",
+  agency:      "Agency",
+  enterprise:  "Enterprise",
 }
 
 interface AdminStatusBadgeProps {
-  status: StatusValue | string
+  status: StatusValue
   className?: string
 }
 
 export function AdminStatusBadge({ status, className }: AdminStatusBadgeProps) {
-  const style = STATUS_STYLES[status] ?? "bg-white/[0.04] text-white/30 border-white/[0.08]"
+  const style = STATUS_STYLES[status] ?? "bg-slate-100 text-slate-500 border-slate-200"
   const label = STATUS_LABELS[status] ?? status
 
   return (

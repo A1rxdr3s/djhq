@@ -1,18 +1,17 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { Copy, Check, X, RefreshCw, Plus } from "lucide-react"
+import { Copy, Check, X, RefreshCw, Plus, Mail } from "lucide-react"
 import { AdminSectionHeader } from "@/components/admin/admin-section-header"
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge"
-import { MOCK_INVITATIONS, MOCK_TENANTS } from "@/lib/admin/mock-data"
 import type { AdminInvitation, AdminUserRole } from "@/types/admin"
 import { cn } from "@/lib/utils"
 
 const ROLE_OPTIONS: { value: AdminUserRole; label: string }[] = [
-  { value: "artist_owner",  label: "Artist Owner" },
-  { value: "artist_editor", label: "Artist Editor" },
-  { value: "viewer",        label: "Viewer" },
-  { value: "support",       label: "Support" },
+  { value: "artist_owner",   label: "Artist Owner" },
+  { value: "artist_editor",  label: "Artist Editor" },
+  { value: "viewer",         label: "Viewer" },
+  { value: "support",        label: "Support" },
   { value: "platform_admin", label: "Platform Admin" },
 ]
 
@@ -23,6 +22,12 @@ const ROLE_LABELS: Record<AdminUserRole, string> = {
   artist_editor:  "Artist Editor",
   viewer:         "Viewer",
 }
+
+const MOCK_TENANTS_FOR_SELECT = [
+  { handle: "andresherrera", name: "ANDRES:HERRERA" },
+  { handle: "mock_artist_2", name: "Mock Artist 2" },
+  { handle: "mock_artist_3", name: "Mock Artist 3" },
+]
 
 function generateToken(): string {
   return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
@@ -39,8 +44,6 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-
-  const allInvitations = [...invitations, ...MOCK_INVITATIONS]
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -59,11 +62,10 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
       status: "pending",
       invitedBy: "Platform Admin",
       createdAt: new Date().toISOString().slice(0, 10),
-      expiresAt: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+      expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10),
     }
 
-    const updated = [newInvitation, ...invitations]
-    onInvitationsChange(updated)
+    onInvitationsChange([newInvitation, ...invitations])
     setGeneratedLink(link)
     setSubmitting(false)
   }
@@ -82,10 +84,9 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
   }
 
   function handleRevoke(id: string) {
-    const updated = invitations.map((inv) =>
-      inv.id === id ? { ...inv, status: "revoked" as const } : inv,
+    onInvitationsChange(
+      invitations.map((inv) => (inv.id === id ? { ...inv, status: "revoked" as const } : inv)),
     )
-    onInvitationsChange(updated)
   }
 
   function handleClose() {
@@ -99,11 +100,11 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
     <div>
       <AdminSectionHeader
         title="Invitations"
-        description="Manage platform access invitations."
+        description={`${invitations.length} invitation${invitations.length !== 1 ? "s" : ""} · stored locally (localStorage)`}
         action={
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-[12px] font-medium text-foreground/75 transition-colors hover:bg-white/[0.07] hover:text-foreground"
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
           >
             <Plus className="h-3.5 w-3.5" />
             Invite User
@@ -111,73 +112,88 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
         }
       />
 
-      {/* Invitations table */}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px] border-collapse text-[12px]">
-          <thead>
-            <tr className="border-b border-white/[0.05]">
-              {["Email", "Role", "Artist", "Status", "Invited By", "Created", "Expires", "Actions"].map((h) => (
-                <th
-                  key={h}
-                  className="pb-2.5 pr-4 text-left text-[10px] font-semibold uppercase tracking-[0.10em] text-white/30 first:pl-0"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/[0.04]">
-            {allInvitations.map((inv) => (
-              <tr key={inv.id} className="group hover:bg-white/[0.015]">
-                <td className="py-2.5 pr-4 font-medium text-foreground/80">{inv.email}</td>
-                <td className="py-2.5 pr-4 text-white/50">{ROLE_LABELS[inv.role]}</td>
-                <td className="py-2.5 pr-4">
-                  {inv.artistHandle ? (
-                    <span className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-white/45">
-                      @{inv.artistHandle}
-                    </span>
-                  ) : (
-                    <span className="text-white/20">—</span>
-                  )}
-                </td>
-                <td className="py-2.5 pr-4">
-                  <AdminStatusBadge status={inv.status} />
-                </td>
-                <td className="py-2.5 pr-4 text-white/35">{inv.invitedBy}</td>
-                <td className="py-2.5 pr-4 text-white/35">{inv.createdAt}</td>
-                <td className="py-2.5 pr-4 text-white/35">{inv.expiresAt}</td>
-                <td className="py-2.5 pr-4">
-                  <div className="flex gap-2 opacity-0 transition-opacity duration-100 group-hover:opacity-100">
-                    {inv.status === "pending" && (
-                      <>
-                        <button className="inline-flex items-center gap-1 text-[11px] text-white/42 hover:text-white/80">
-                          <RefreshCw className="h-2.5 w-2.5" /> Resend
-                        </button>
-                        <button
-                          onClick={() => handleRevoke(inv.id)}
-                          className="inline-flex items-center gap-1 text-[11px] text-red-400/50 hover:text-red-400"
-                        >
-                          <X className="h-2.5 w-2.5" /> Revoke
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Notice: localStorage only */}
+      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5">
+        <p className="text-[11px] text-amber-700">
+          Invitations are stored in browser localStorage only — not persisted to database.
+          {/* TODO: create invitations table in Supabase and persist here */}
+        </p>
       </div>
+
+      {invitations.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-8 py-10 text-center">
+          <Mail className="mx-auto mb-3 h-7 w-7 text-slate-300" />
+          <p className="text-[13px] font-medium text-slate-600">No invitations yet</p>
+          <p className="mt-1 text-[12px] text-slate-400">Click "Invite User" to generate your first invitation link.</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] border-collapse text-[12px]">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  {["Email", "Role", "Artist", "Status", "Invited By", "Created", "Expires", ""].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {invitations.map((inv) => (
+                  <tr key={inv.id} className="group hover:bg-slate-50">
+                    <td className="px-4 py-2.5 font-medium text-slate-800">{inv.email}</td>
+                    <td className="px-4 py-2.5 text-slate-600">{ROLE_LABELS[inv.role]}</td>
+                    <td className="px-4 py-2.5">
+                      {inv.artistHandle ? (
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+                          @{inv.artistHandle}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <AdminStatusBadge status={inv.status} />
+                    </td>
+                    <td className="px-4 py-2.5 text-slate-500">{inv.invitedBy}</td>
+                    <td className="px-4 py-2.5 text-slate-400">{inv.createdAt}</td>
+                    <td className="px-4 py-2.5 text-slate-400">{inv.expiresAt}</td>
+                    <td className="px-4 py-2.5">
+                      {inv.status === "pending" && (
+                        <div className="flex gap-3 opacity-0 transition-opacity duration-100 group-hover:opacity-100">
+                          <button className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800">
+                            <RefreshCw className="h-2.5 w-2.5" /> Resend
+                          </button>
+                          <button
+                            onClick={() => handleRevoke(inv.id)}
+                            className="inline-flex items-center gap-1 text-[11px] text-red-500 hover:text-red-700"
+                          >
+                            <X className="h-2.5 w-2.5" /> Revoke
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Invite modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70" onClick={handleClose} />
-          <div className="relative z-10 w-full max-w-md rounded-xl border border-white/[0.08] bg-[#0e0e0e] p-6 shadow-2xl">
+          <div className="absolute inset-0 bg-slate-900/50" onClick={handleClose} />
+          <div className="relative z-10 w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
             {/* Header */}
             <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-[14px] font-semibold text-foreground/90">Invite User</h3>
-              <button onClick={handleClose} className="rounded p-0.5 text-white/30 hover:text-white/70">
+              <h3 className="text-[15px] font-semibold text-slate-900">Invite User</h3>
+              <button onClick={handleClose} className="rounded p-0.5 text-slate-400 hover:text-slate-700">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -186,7 +202,7 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Email */}
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.10em] text-white/40">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                     Email *
                   </label>
                   <input
@@ -195,50 +211,46 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder="user@example.com"
-                    className="h-9 w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 text-[13px] text-foreground outline-none placeholder:text-white/20 focus:border-accent/40"
+                    className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                   />
                 </div>
 
                 {/* Role */}
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.10em] text-white/40">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                     Role *
                   </label>
                   <select
                     value={form.role}
                     onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as AdminUserRole }))}
-                    className="h-9 w-full appearance-none rounded-md border border-white/[0.08] bg-white/[0.03] px-3 text-[13px] text-foreground outline-none focus:border-accent/40"
+                    className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                   >
                     {ROLE_OPTIONS.map((r) => (
-                      <option key={r.value} value={r.value} className="bg-[#111]">
-                        {r.label}
-                      </option>
+                      <option key={r.value} value={r.value}>{r.label}</option>
                     ))}
                   </select>
                 </div>
 
                 {/* Artist / Tenant */}
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.10em] text-white/40">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                     Artist / Tenant
                   </label>
                   <select
                     value={form.artistHandle}
                     onChange={(e) => setForm((f) => ({ ...f, artistHandle: e.target.value }))}
-                    className="h-9 w-full appearance-none rounded-md border border-white/[0.08] bg-white/[0.03] px-3 text-[13px] text-foreground outline-none focus:border-accent/40"
+                    className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                   >
-                    <option value="" className="bg-[#111]">None (platform-level)</option>
-                    {MOCK_TENANTS.map((t) => (
-                      <option key={t.handle} value={t.handle} className="bg-[#111]">
-                        {t.artistName} (@{t.handle})
-                      </option>
+                    <option value="">None (platform-level)</option>
+                    {MOCK_TENANTS_FOR_SELECT.map((t) => (
+                      <option key={t.handle} value={t.handle}>{t.name} (@{t.handle})</option>
                     ))}
                   </select>
                 </div>
 
                 {/* Note */}
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.10em] text-white/40">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                     Note (optional)
                   </label>
                   <input
@@ -246,34 +258,34 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
                     value={form.note}
                     onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                     placeholder="Internal note about this invite"
-                    className="h-9 w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 text-[13px] text-foreground outline-none placeholder:text-white/20 focus:border-accent/40"
+                    className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-1 flex h-9 w-full items-center justify-center rounded-md bg-accent px-4 text-[12px] font-semibold uppercase tracking-[0.10em] text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50"
+                  className="mt-1 flex h-9 w-full items-center justify-center rounded-md bg-slate-900 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {submitting ? "Generating..." : "Generate Invite Link"}
+                  {submitting ? "Generating…" : "Generate Invite Link"}
                 </button>
               </form>
             ) : (
               /* Generated link UI */
               <div className="space-y-4">
-                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.10em] text-emerald-400/70">
-                    Invite link generated
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-600">
+                    Invite link ready
                   </p>
-                  <p className="break-all font-mono text-[11px] text-white/55">{generatedLink}</p>
+                  <p className="break-all font-mono text-[11px] text-emerald-800">{generatedLink}</p>
                 </div>
                 <button
                   onClick={handleCopy}
                   className={cn(
-                    "flex h-9 w-full items-center justify-center gap-2 rounded-md border px-4 text-[12px] font-semibold transition-colors",
+                    "flex h-9 w-full items-center justify-center gap-2 rounded-md border text-[12px] font-semibold transition-colors",
                     copied
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                      : "border-white/[0.08] bg-white/[0.04] text-foreground/75 hover:bg-white/[0.08]",
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
                   )}
                 >
                   {copied ? (
@@ -282,12 +294,12 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
                     <><Copy className="h-3.5 w-3.5" /> Copy Link</>
                   )}
                 </button>
-                <p className="text-center text-[11px] text-white/30">
-                  Invitation added to the table with status <strong className="text-white/50">Pending</strong>.
+                <p className="text-center text-[11px] text-slate-500">
+                  Invitation added to the table with status <strong>Pending</strong>.
                 </p>
                 <button
                   onClick={handleClose}
-                  className="w-full text-center text-[12px] text-white/35 hover:text-white/60"
+                  className="w-full text-center text-[12px] text-slate-400 hover:text-slate-700"
                 >
                   Done
                 </button>

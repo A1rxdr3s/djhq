@@ -15,10 +15,11 @@ import { AdminPressKits } from "@/components/admin/sections/admin-press-kits"
 import { AdminFeatureFlags } from "@/components/admin/sections/admin-feature-flags"
 import { AdminSupport } from "@/components/admin/sections/admin-support"
 import { AdminSettings } from "@/components/admin/sections/admin-settings"
-import type { AdminInvitation } from "@/types/admin"
+import type { AdminInvitation, AdminRealData } from "@/types/admin"
 
 // TODO: enforce platform admin role — connect to Supabase auth
 // TODO: redirect non-admin users to sign-in
+// TODO: audit admin access events
 
 export type AdminSection =
   | "overview"
@@ -51,11 +52,15 @@ function saveInvitations(invitations: AdminInvitation[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(invitations))
   } catch {
-    // localStorage may be unavailable in certain environments
+    // localStorage unavailable in certain environments
   }
 }
 
-export function AdminClient() {
+interface AdminClientProps {
+  realData: AdminRealData
+}
+
+export function AdminClient({ realData }: AdminClientProps) {
   const [section, setSection] = useState<AdminSection>("overview")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [invitations, setInvitations] = useState<AdminInvitation[]>([])
@@ -71,7 +76,7 @@ export function AdminClient() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Sidebar */}
       <AdminSidebar
         active={section}
@@ -83,13 +88,18 @@ export function AdminClient() {
       {/* Main area */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <AdminHeader section={section} onMenuToggle={() => setSidebarOpen((o) => !o)} />
+        <AdminHeader
+          section={section}
+          onMenuToggle={() => setSidebarOpen((o) => !o)}
+          isDevMode={realData.isDevMode}
+          dataError={realData.dataError}
+        />
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto px-5 py-6 sm:px-7 lg:px-8">
-          {section === "overview"      && <AdminOverview />}
-          {section === "users"         && <AdminUsers extraInvitedUsers={invitations} />}
-          {section === "artists"       && <AdminArtists />}
+          {section === "overview"      && <AdminOverview realData={realData} />}
+          {section === "users"         && <AdminUsers realData={realData} localInvitations={invitations} />}
+          {section === "artists"       && <AdminArtists realData={realData} />}
           {section === "invitations"   && (
             <AdminInvitations
               invitations={invitations}
@@ -103,7 +113,7 @@ export function AdminClient() {
           {section === "press-kits"    && <AdminPressKits />}
           {section === "feature-flags" && <AdminFeatureFlags />}
           {section === "support"       && <AdminSupport />}
-          {section === "settings"      && <AdminSettings />}
+          {section === "settings"      && <AdminSettings realData={realData} />}
         </main>
       </div>
     </div>
