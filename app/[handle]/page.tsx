@@ -1446,7 +1446,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-4 p-5 sm:gap-5 sm:p-6"
+                    className="group flex items-center gap-4 p-4 sm:gap-5 sm:p-5"
                   >
                     <div className="relative aspect-square w-[120px] shrink-0 overflow-hidden rounded-xl sm:w-[176px]">
                       {featuredSet.imageUrl ? (
@@ -1463,10 +1463,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       )}
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent/55">
-                        {featuredSet.performanceType === "other" && featuredSet.customPerformanceType
-                          ? featuredSet.customPerformanceType
-                          : PERFORMANCE_TYPE_LABELS[featuredSet.performanceType]}
+                      <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-accent/50">
+                        FEATURED SET
                       </p>
                       <h3 className="mt-1 text-balance text-[18px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground sm:text-[22px]">
                         {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
@@ -1476,7 +1474,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "").toUpperCase() ?? null) : null
                         const combined = [cityPart, datePart].filter(Boolean).join(" · ")
                         return combined ? (
-                          <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-white/35">
+                          <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-white/35">
                             {combined}
                           </p>
                         ) : null
@@ -1510,9 +1508,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                         if (metaLines.length === 0) return null
                         return (
-                          <div className="mt-3 space-y-1">
+                          <div className="mt-3 space-y-[3px]">
                             {metaLines.map((line, i) => (
-                              <p key={i} className="text-[10px] uppercase tracking-[0.18em] text-white/40">
+                              <p key={i} className="text-[10px] uppercase tracking-[0.18em] text-white/38">
                                 {line}
                               </p>
                             ))}
@@ -1523,7 +1521,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       <svg
                         aria-hidden="true"
                         viewBox="0 0 180 16"
-                        className="mt-4 h-[10px] w-full max-w-[180px] text-white/[0.15]"
+                        className="mt-3 h-[10px] w-full max-w-[180px] text-white/[0.14]"
                         preserveAspectRatio="none"
                         fill="currentColor"
                       >
