@@ -47,8 +47,6 @@ type Props = {
 
 export function ProfileClosing({
   artistName,
-  location,
-  genres,
   bookingEmail,
   isPro,
   socialLinks = [],
@@ -123,8 +121,6 @@ export function ProfileClosing({
 
   const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
 
-  const hasGenresOrLocation = (genres && genres.length > 0) || !!location
-
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
@@ -142,16 +138,6 @@ export function ProfileClosing({
           />
         ) : (
           <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
-        )}
-        {hasGenresOrLocation && (
-          <div className="mt-2 space-y-0.5">
-            {genres && genres.length > 0 && (
-              <p className="text-[11px] text-white/40">{genres.join(" / ")}</p>
-            )}
-            {location && (
-              <p className="text-[11px] text-white/28">{location}</p>
-            )}
-          </div>
         )}
 
         {/* 2. Booking */}
@@ -255,16 +241,6 @@ export function ProfileClosing({
             />
           ) : (
             <p className="text-[15px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
-          )}
-          {hasGenresOrLocation && (
-            <div className="mt-3 space-y-1">
-              {genres && genres.length > 0 && (
-                <p className="text-[12px] text-white/40">{genres.join(" / ")}</p>
-              )}
-              {location && (
-                <p className="text-[12px] text-white/28">{location}</p>
-              )}
-            </div>
           )}
         </div>
 
@@ -374,11 +350,14 @@ export function ProfileClosing({
               </>
             )}
           </p>
-          <div className="flex flex-wrap items-center gap-x-5">
-            {legalLinks.map(({ label, href }) => (
-              <Link key={label} href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
-                {label}
-              </Link>
+          <div className="flex items-center">
+            {legalLinks.map(({ label, href }, i) => (
+              <span key={label} className="flex items-center">
+                {i > 0 && <span className="mx-2 text-white/15" aria-hidden>·</span>}
+                <Link href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
+                  {label}
+                </Link>
+              </span>
             ))}
           </div>
         </div>
