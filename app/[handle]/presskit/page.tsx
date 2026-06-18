@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { ArrowLeft, Camera, Download, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
+import { ArrowLeft, Camera, ExternalLink, FileText, FolderOpen, Layers, Wrench, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
@@ -276,114 +276,124 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── Hero + Downloads ──────────────────────────────────────── */}
           <div className="overflow-hidden rounded-[20px] border border-white/[0.06] bg-white/[0.015]">
-            {/* Banner image */}
-            {artist.heroImageUrl && (
-              <div className="relative h-[220px] w-full sm:h-[300px]">
-                <Image
-                  src={artist.heroImageUrl}
-                  alt={artist.artistName}
-                  fill
-                  priority
-                  quality={70}
-                  placeholder="empty"
-                  className="object-cover object-[50%_22%] brightness-[0.5]"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1600px) calc(100vw - 6vw), 1504px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-              </div>
-            )}
+            {/* Mobile: image top, content below. Desktop: image left, content right. */}
+            <div className={cn(
+              "grid grid-cols-1",
+              artist.heroImageUrl ? "sm:grid-cols-[3fr_2fr] lg:grid-cols-[5fr_3fr]" : "",
+            )}>
 
-            <div className="px-6 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-7">
-              {/* Eyebrow */}
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.26em] text-accent/65">
-                Press Kit Downloads
-              </p>
-
-              {/* Artist identity */}
-              {artist.heroLogoUrl && (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both") ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={artist.heroLogoUrl}
-                  alt={artist.artistName}
-                  loading="eager"
-                  className="max-h-[72px] max-w-[200px] object-contain opacity-88 sm:max-h-[88px] sm:max-w-[260px]"
-                />
-              ) : (
-                <h1 className="text-[32px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground sm:text-[44px] xl:text-[52px]">
-                  {artist.artistName}
-                </h1>
+              {/* Image column */}
+              {artist.heroImageUrl && (
+                <div className="relative aspect-video sm:aspect-auto sm:min-h-[480px]">
+                  <Image
+                    src={artist.heroImageUrl}
+                    alt={artist.artistName}
+                    fill
+                    priority
+                    quality={80}
+                    placeholder="empty"
+                    className="object-cover object-[50%_22%]"
+                    sizes="(max-width: 640px) 100vw, 60vw"
+                  />
+                  {/* fade into content below on mobile only */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent sm:hidden" />
+                </div>
               )}
 
-              {/* Subtitle */}
-              <p className="mt-2.5 text-[13px] text-white/38 sm:text-[14px]">
-                Electronic Press Kit
-              </p>
-
-              {/* Included items */}
-              {pk.assetsIncluded.length > 0 && (
-                <p className="mt-3 text-[11px] uppercase tracking-[0.14em] text-white/22">
-                  {pk.assetsIncluded.join("  ·  ")}
+              {/* Content column */}
+              <div className="flex flex-col justify-center px-6 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+                {/* Eyebrow */}
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.26em] text-accent/65">
+                  Press Kit Downloads
                 </p>
-              )}
 
-              {/* Download CTAs */}
-              {hasPdfs && (
-                <div className="mt-7 flex flex-wrap gap-3">
-                  {pk.pdfEsUrl && (
+                {/* Artist identity */}
+                {artist.heroLogoUrl && (artist.heroIdentityMode === "logo" || artist.heroIdentityMode === "both") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={artist.heroLogoUrl}
+                    alt={artist.artistName}
+                    loading="eager"
+                    className="max-h-[60px] max-w-[180px] object-contain opacity-88 sm:max-h-[76px] sm:max-w-[220px] lg:max-h-[88px] lg:max-w-[260px]"
+                  />
+                ) : (
+                  <h1 className="text-[28px] font-black uppercase leading-[0.9] tracking-[-0.02em] text-foreground sm:text-[36px] lg:text-[44px] xl:text-[52px]">
+                    {artist.artistName}
+                  </h1>
+                )}
+
+                {/* Subtitle */}
+                <p className="mt-2.5 text-[13px] text-white/38">
+                  Electronic Press Kit
+                </p>
+
+                {/* Included items */}
+                {pk.assetsIncluded.length > 0 && (
+                  <p className="mt-3 text-[11px] uppercase tracking-[0.14em] text-white/22">
+                    {pk.assetsIncluded.join("  ·  ")}
+                  </p>
+                )}
+
+                {/* Download CTAs */}
+                {hasPdfs && (
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    {pk.pdfEsUrl && (
+                      <a
+                        href={resolveSafeHref(pk.pdfEsUrl) ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
+                      >
+                        <span className="inline-flex items-center rounded border border-white/[0.20] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white/55 transition-colors duration-200 group-hover:border-accent/40 group-hover:text-accent/75">
+                          ESP
+                        </span>
+                        <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
+                          Press Kit ESP
+                        </span>
+                        {pk.pdfEsSize && (
+                          <span className="text-[10px] text-white/28">{pk.pdfEsSize}</span>
+                        )}
+                      </a>
+                    )}
+                    {pk.pdfEnUrl && (
+                      <a
+                        href={resolveSafeHref(pk.pdfEnUrl) ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
+                      >
+                        <span className="inline-flex items-center rounded border border-white/[0.20] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white/55 transition-colors duration-200 group-hover:border-accent/40 group-hover:text-accent/75">
+                          ENG
+                        </span>
+                        <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
+                          Press Kit ENG
+                        </span>
+                        {pk.pdfEnSize && (
+                          <span className="text-[10px] text-white/28">{pk.pdfEnSize}</span>
+                        )}
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Fallback: root folder when no PDFs */}
+                {!hasPdfs && pk.rootUrl && (
+                  <div className="mt-7">
                     <a
-                      href={resolveSafeHref(pk.pdfEsUrl) ?? "#"}
+                      href={resolveSafeHref(pk.rootUrl) ?? "#"}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
                     >
-                      <span className="inline-flex items-center rounded border border-white/[0.20] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white/55 transition-colors duration-200 group-hover:border-accent/40 group-hover:text-accent/75">
-                        ESP
+                      <FolderOpen className="h-3.5 w-3.5 shrink-0 text-accent/65" />
+                      <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80">
+                        Full Press Kit Folder
                       </span>
-                      <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
-                        Press Kit ESP
-                      </span>
-                      {pk.pdfEsSize && (
-                        <span className="text-[10px] text-white/28">{pk.pdfEsSize}</span>
-                      )}
                     </a>
-                  )}
-                  {pk.pdfEnUrl && (
-                    <a
-                      href={resolveSafeHref(pk.pdfEnUrl) ?? "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
-                    >
-                      <span className="inline-flex items-center rounded border border-white/[0.20] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white/55 transition-colors duration-200 group-hover:border-accent/40 group-hover:text-accent/75">
-                        ENG
-                      </span>
-                      <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80 transition-colors duration-200 group-hover:text-foreground">
-                        Press Kit ENG
-                      </span>
-                      {pk.pdfEnSize && (
-                        <span className="text-[10px] text-white/28">{pk.pdfEnSize}</span>
-                      )}
-                    </a>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
 
-              {/* Fallback: root folder when no PDFs */}
-              {!hasPdfs && pk.rootUrl && (
-                <div className="mt-7">
-                  <a
-                    href={resolveSafeHref(pk.rootUrl) ?? "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.06]"
-                  >
-                    <FolderOpen className="h-3.5 w-3.5 shrink-0 text-accent/65" />
-                    <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/80">
-                      Full Press Kit Folder
-                    </span>
-                  </a>
-                </div>
-              )}
             </div>
           </div>
 
@@ -393,28 +403,21 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
               <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/30">
                 Press Kit Assets
               </p>
-              <div className="overflow-hidden rounded-[16px] border border-white/[0.06]">
-                {folderCards.map((card, i) => (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {folderCards.map((card) => (
                   <a
                     key={card.id}
                     href={resolveSafeHref(card.url) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={cn(
-                      "group flex items-center justify-between px-5 py-3.5 transition-colors duration-150 hover:bg-white/[0.03]",
-                      i > 0 && "border-t border-white/[0.04]",
-                    )}
+                    className="group overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-4 transition-all duration-200 hover:border-white/[0.10] hover:bg-white/[0.04]"
                   >
-                    <div className="flex items-center gap-3.5">
-                      <card.icon className="h-[15px] w-[15px] shrink-0 text-accent/55 transition-colors duration-150 group-hover:text-accent/80" />
-                      <div>
-                        <p className="text-[13px] font-semibold text-foreground/75 transition-colors duration-150 group-hover:text-foreground">
-                          {card.label}
-                        </p>
-                        <p className="text-[11px] text-white/25">{card.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/40 transition-colors duration-150 group-hover:text-accent/75">
+                    <card.icon className="h-4 w-4 text-accent/60 transition-colors duration-150 group-hover:text-accent/85" />
+                    <p className="mt-2.5 text-[13px] font-semibold text-foreground/80 transition-colors duration-150 group-hover:text-foreground">
+                      {card.label}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-white/28">{card.description}</p>
+                    <div className="mt-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/50 transition-colors duration-150 group-hover:text-accent/80">
                       {card.cta}
                       <ExternalLink className="h-2.5 w-2.5" />
                     </div>
