@@ -713,13 +713,10 @@ function SuccessScreen({
       </div>
       <div className="space-y-1.5">
         <p className="text-base font-semibold uppercase tracking-[0.08em] text-foreground/85">
-          Request Sent
+          Booking request sent.
         </p>
         <p className="max-w-[300px] text-[13px] leading-relaxed text-muted-foreground/60">
-          We&apos;ll be in touch soon.
-        </p>
-        <p className="text-[11px] text-muted-foreground/35">
-          Typical response time is 24–48 hours.
+          We&apos;ll get back to you within 24–48 hours.
         </p>
       </div>
       <div className="flex flex-col items-center gap-2 pt-2">

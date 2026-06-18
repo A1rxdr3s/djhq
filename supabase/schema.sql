@@ -458,11 +458,36 @@ create index if not exists admin_invitations_email_idx  on public.admin_invitati
 create index if not exists admin_invitations_token_idx  on public.admin_invitations (token);
 create index if not exists admin_invitations_status_idx on public.admin_invitations (status);
 
+-- ── booking_leads ─────────────────────────────────────────────────────────────
+
+create table if not exists public.booking_leads (
+  id                uuid        primary key default gen_random_uuid(),
+  artist_id         uuid        not null references public.artists(id) on delete cascade,
+  artist_handle     text        not null,
+  full_name         text        not null,
+  email             text        not null,
+  phone             text        null,
+  city              text        not null,
+  event_date        date        not null,
+  venue_or_promoter text        not null,
+  event_details     text        not null,
+  status            text        not null default 'new',
+  created_at        timestamptz not null default now(),
+
+  constraint booking_leads_status_check check (
+    status in ('new', 'contacted', 'qualified', 'declined', 'converted')
+  )
+);
+
+create index if not exists booking_leads_artist_id_idx  on public.booking_leads (artist_id);
+create index if not exists booking_leads_created_at_idx on public.booking_leads (created_at desc);
+
 -- ── Row Level Security ───────────────────────────────────────────────────────
 -- Enable RLS on all tables
 
 alter table public.artists             enable row level security;
 alter table public.admin_invitations   enable row level security;
+alter table public.booking_leads       enable row level security;
 alter table public.social_links        enable row level security;
 alter table public.brand_source_files  enable row level security;
 alter table public.brand_assets        enable row level security;

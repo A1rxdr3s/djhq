@@ -46,10 +46,26 @@ export interface DbAdminInvitation {
   expiresAt: string | null
 }
 
+export interface DbBookingLead {
+  id: string
+  artistId: string
+  artistHandle: string
+  fullName: string
+  email: string
+  phone: string | null
+  city: string
+  eventDate: string
+  venueOrPromoter: string
+  eventDetails: string
+  status: AdminBookingLeadStatus
+  createdAt: string
+}
+
 export interface AdminRealData {
   artists: AdminRealArtist[]
   authUsers: AdminRealUser[]
   invitations: DbAdminInvitation[]
+  bookingLeads: DbBookingLead[]
   totalGigs: number
   totalReleases: number
   fetchedAt: string

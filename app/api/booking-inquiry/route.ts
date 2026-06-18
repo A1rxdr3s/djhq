@@ -104,11 +104,27 @@ export async function POST(request: Request) {
     )
   }
 
+  // Persist the lead before attempting email delivery so no inquiry is lost.
+  const { error: leadError } = await supabase.from("booking_leads").insert({
+    artist_id:         artistRow.id,
+    artist_handle:     handle,
+    full_name:         name!.trim(),
+    email:             email!.trim().toLowerCase(),
+    phone:             phone?.trim() || null,
+    city:              city!.trim(),
+    event_date:        eventDate!,
+    venue_or_promoter: company!.trim(),
+    event_details:     message!.trim(),
+  })
+  if (leadError) {
+    console.error("[booking-inquiry] booking_leads insert failed:", leadError)
+  }
+
   const resendApiKey = process.env.RESEND_API_KEY
   if (!resendApiKey) {
     console.error("[booking-inquiry] RESEND_API_KEY is not configured")
     return NextResponse.json(
-      { error: "Email delivery is not configured." },
+      { error: `Booking email is not configured yet. Please contact ${artistRow.booking_email} directly.` },
       { status: 503 },
     )
   }

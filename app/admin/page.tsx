@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { isAdminEmail, getAdminEmails } from "@/lib/admin/admin-auth"
 import { listInvitations } from "@/app/actions/admin-invitations"
 import { AdminClient } from "@/components/admin/admin-client"
-import type { AdminRealData, AdminRealArtist, AdminRealUser } from "@/types/admin"
+import type { AdminRealData, AdminRealArtist, AdminRealUser, DbBookingLead, AdminBookingLeadStatus } from "@/types/admin"
 
 // ─── Auth gate ────────────────────────────────────────────────────────────────
 
@@ -76,10 +76,32 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
 
     const invitations = await listInvitations()
 
+    const { data: leadRows } = await supabase
+      .from("booking_leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200)
+
+    const bookingLeads: DbBookingLead[] = (leadRows ?? []).map((row) => ({
+      id:               row.id as string,
+      artistId:         row.artist_id as string,
+      artistHandle:     row.artist_handle as string,
+      fullName:         row.full_name as string,
+      email:            row.email as string,
+      phone:            (row.phone as string) ?? null,
+      city:             row.city as string,
+      eventDate:        (row.event_date as string).slice(0, 10),
+      venueOrPromoter:  row.venue_or_promoter as string,
+      eventDetails:     row.event_details as string,
+      status:           ((row.status as string) ?? "new") as AdminBookingLeadStatus,
+      createdAt:        (row.created_at as string).slice(0, 10),
+    }))
+
     return {
       artists,
       authUsers,
       invitations,
+      bookingLeads,
       totalGigs: totalGigs ?? 0,
       totalReleases: totalReleases ?? 0,
       fetchedAt,
@@ -92,6 +114,7 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
       artists: [],
       authUsers: [],
       invitations: [],
+      bookingLeads: [],
       totalGigs: 0,
       totalReleases: 0,
       fetchedAt,

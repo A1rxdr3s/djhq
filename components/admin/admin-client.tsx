@@ -81,7 +81,7 @@ export function AdminClient({ realData, sessionEmail, isAdminVerified }: AdminCl
           {section === "subscriptions" && <AdminSubscriptions />}
           {section === "payments"      && <AdminPayments />}
           {section === "reports"       && <AdminReports />}
-          {section === "booking-leads" && <AdminBookingLeads />}
+          {section === "booking-leads" && <AdminBookingLeads realData={realData} />}
           {section === "press-kits"    && <AdminPressKits />}
           {section === "feature-flags" && <AdminFeatureFlags />}
           {section === "support"       && <AdminSupport />}
