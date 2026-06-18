@@ -47,6 +47,8 @@ type Props = {
 
 export function ProfileClosing({
   artistName,
+  location,
+  genres,
   bookingEmail,
   isPro,
   socialLinks = [],
@@ -80,18 +82,15 @@ export function ProfileClosing({
 
   const year = new Date().getFullYear()
 
-  // Logo: footer-specific → hero logo (logo/both mode) → null
   const resolvedLogoUrl =
     footerLogoUrl?.trim() ||
     ((heroIdentityMode === "logo" || heroIdentityMode === "both") && heroLogoUrl?.trim()
       ? heroLogoUrl.trim()
       : null)
 
-  // CSS filter: only "light" mode inverts to white (useful for dark/black logos)
   const logoFilter: string | undefined =
     footerLogoMode === "light" ? "brightness(0) invert(1)" : undefined
 
-  // Contact entries — render only those with a value
   const contacts: { label: string; email: string }[] = [
     (footerBookingEmail?.trim() || bookingEmail?.trim())
       ? { label: "Booking", email: (footerBookingEmail?.trim() || bookingEmail?.trim()) as string }
@@ -127,24 +126,22 @@ export function ProfileClosing({
   ]
 
   const legalLinks = [
-    { label: "Privacy Policy",   href: "/privacy" },
-    { label: "Cookie Policy",    href: "/cookies" },
-    { label: "Terms of Service", href: "/terms" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms",   href: "/terms" },
+    { label: "Cookies", href: "/cookies" },
   ]
 
-  // ── Typography tokens ──────────────────────────────────────────────
   const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
-  const linkClass    = "block text-[13px] text-white/58 transition-colors duration-200 hover:text-white/90"
 
-  const hasContactOrLogo = contacts.length > 0 || !!resolvedLogoUrl
+  const hasGenresOrLocation = (genres && genres.length > 0) || !!location
 
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
-      {/* ── Mobile compact layout — reordered, condensed (hidden on sm+) ── */}
+      {/* ── Mobile layout ─────────────────────────────────────────────── */}
       <div className="sm:hidden py-7">
 
-        {/* 1. Brand wordmark */}
+        {/* 1. Identity: logo / name + genres + location */}
         {resolvedLogoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -156,10 +153,20 @@ export function ProfileClosing({
         ) : (
           <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
         )}
+        {hasGenresOrLocation && (
+          <div className="mt-2 space-y-0.5">
+            {genres && genres.length > 0 && (
+              <p className="text-[11px] text-white/40">{genres.join(" / ")}</p>
+            )}
+            {location && (
+              <p className="text-[11px] text-white/28">{location}</p>
+            )}
+          </div>
+        )}
 
-        {/* 2. Booking email */}
+        {/* 2. Booking */}
         {contacts[0] && (
-          <div className="mt-3">
+          <div className="mt-4">
             <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
               {contacts[0].label}
             </p>
@@ -172,7 +179,7 @@ export function ProfileClosing({
           </div>
         )}
 
-        {/* 3. Social icons */}
+        {/* 3. Connect */}
         {footerSocialsEnabled && iconLinks.length > 0 && (
           <div className="mt-5 flex flex-wrap items-center gap-x-[22px] gap-y-3">
             {iconLinks.map(({ platform, url, label, href, Icon }) => (
@@ -195,13 +202,14 @@ export function ProfileClosing({
         {footerNewsletterEnabled && (
           <div className="mt-6">
             <div className="mb-5 border-t border-white/[0.05]" />
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
-              Stay Connected
+            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
+              Join the List
             </p>
             {status === "success" ? (
               <p className="text-[12px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
+                <p className="mb-3 text-[12px] text-white/35">New music. Shows. Guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
                     type="email"
@@ -235,11 +243,11 @@ export function ProfileClosing({
           </div>
         )}
 
-        {/* 5. Sitemap + Legal — compact two-column */}
+        {/* 5. Navigation + Legal */}
         <div className="mt-6 border-t border-white/[0.05]" />
         <div className="mt-4 grid grid-cols-2 gap-x-8">
           <div>
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/28">Sitemap</p>
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/20">Navigate</p>
             <ul className="space-y-1.5">
               {sitemapLinks.map(({ label, href, external }) => (
                 <li key={label}>
@@ -248,12 +256,12 @@ export function ProfileClosing({
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[12px] text-white/48 transition-colors duration-200 hover:text-white/80"
+                      className="text-[12px] text-white/38 transition-colors duration-200 hover:text-white/65"
                     >
                       {label}
                     </a>
                   ) : (
-                    <a href={href} className="text-[12px] text-white/48 transition-colors duration-200 hover:text-white/80">
+                    <a href={href} className="text-[12px] text-white/38 transition-colors duration-200 hover:text-white/65">
                       {label}
                     </a>
                   )}
@@ -262,13 +270,13 @@ export function ProfileClosing({
             </ul>
           </div>
           <div>
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/28">Legal</p>
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/20">Legal</p>
             <ul className="space-y-1.5">
               {legalLinks.map(({ label, href }) => (
                 <li key={label}>
                   <Link
                     href={href}
-                    className="text-[12px] text-white/38 transition-colors duration-200 hover:text-white/65"
+                    className="text-[12px] text-white/30 transition-colors duration-200 hover:text-white/55"
                   >
                     {label}
                   </Link>
@@ -281,81 +289,91 @@ export function ProfileClosing({
       </div>
       {/* ── end mobile ───────────────────────────────────────────────── */}
 
-      {/* ── Desktop editorial grid (hidden below sm, unchanged) ──────── */}
+      {/* ── Desktop editorial grid ───────────────────────────────────── */}
       <div className={cn(
-        "hidden sm:grid gap-x-10 gap-y-10 sm:py-14 lg:gap-x-14 lg:py-16",
-        "sm:grid-cols-2",
-        hasContactOrLogo && footerNewsletterEnabled
-          ? "lg:grid-cols-4"
-          : hasContactOrLogo || footerNewsletterEnabled
-          ? "lg:grid-cols-3"
-          : "lg:grid-cols-2",
+        "hidden sm:grid sm:gap-x-10 sm:py-14 lg:gap-x-16 lg:py-16",
+        footerNewsletterEnabled ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
       )}>
 
-        {/* Col 1 — Sitemap + Legal */}
-        <div className="space-y-8">
-          <div>
-            <p className={headingClass}>Sitemap</p>
-            <ul className="space-y-2.5">
-              {sitemapLinks.map(({ label, href, external }) => (
-                <li key={label}>
-                  {external ? (
-                    <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                      {label}
-                    </a>
-                  ) : (
-                    <a href={href} className={linkClass}>{label}</a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <p className={headingClass}>Legal</p>
-            <ul className="space-y-2.5">
-              {legalLinks.map(({ label, href }) => (
-                <li key={label}>
-                  <Link href={href} className={cn(linkClass, "text-white/42 hover:text-white/70")}>
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Col 1: Artist identity */}
+        <div>
+          {resolvedLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={resolvedLogoUrl}
+              alt={artistName}
+              style={{ maxWidth: `${Math.min(footerLogoWidth, 180)}px`, filter: logoFilter }}
+              className="max-h-[52px] object-contain opacity-82"
+            />
+          ) : (
+            <p className="text-[15px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
+          )}
+          {hasGenresOrLocation && (
+            <div className="mt-3 space-y-1">
+              {genres && genres.length > 0 && (
+                <p className="text-[12px] text-white/40">{genres.join(" / ")}</p>
+              )}
+              {location && (
+                <p className="text-[12px] text-white/28">{location}</p>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Col 2 — Connect (social icons) */}
-        {footerSocialsEnabled && iconLinks.length > 0 && (
-          <div>
-            <p className={headingClass}>Connect</p>
-            <div className="flex flex-wrap gap-4">
-              {iconLinks.map(({ platform, url, label, href, Icon }) => (
-                <a
-                  key={`foot-${platform}-${url}`}
-                  href={href}
-                  aria-label={label}
-                  title={label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/52 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
-                >
-                  <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
-                </a>
-              ))}
+        {/* Col 2: Booking + Connect */}
+        <div className="space-y-8">
+          {contacts.length > 0 && (
+            <div>
+              <p className={headingClass}>Booking</p>
+              <div className="space-y-4">
+                {contacts.map(({ label, email: addr }) => (
+                  <div key={label}>
+                    {contacts.length > 1 && (
+                      <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white/22">{label}</p>
+                    )}
+                    <a
+                      href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
+                      className="text-[13px] text-white/58 transition-colors duration-200 hover:text-white/88"
+                    >
+                      {addr}
+                    </a>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Col 3 — Stay Connected (Newsletter) */}
+          {footerSocialsEnabled && iconLinks.length > 0 && (
+            <div>
+              <p className={headingClass}>Connect</p>
+              <div className="flex flex-wrap gap-4">
+                {iconLinks.map(({ platform, url, label, href, Icon }) => (
+                  <a
+                    key={`foot-${platform}-${url}`}
+                    href={href}
+                    aria-label={label}
+                    title={label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/52 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                  >
+                    <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Col 3: Newsletter */}
         {footerNewsletterEnabled && (
           <div>
-            <p className={headingClass}>Stay Connected</p>
+            <p className={headingClass}>Join the List</p>
             {status === "success" ? (
               <p className="text-[13px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
-                <p className="mb-4 text-[12px] text-white/38">Music. Shows. Guest Lists.</p>
+                <p className="mb-4 text-[12px] text-white/38">New music. Shows. Guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="space-y-2">
                   <input
                     type="email"
@@ -391,59 +409,44 @@ export function ProfileClosing({
           </div>
         )}
 
-        {/* Col 4 — Logo + Contacts */}
-        {hasContactOrLogo && (
-          <div>
-            {resolvedLogoUrl && (
-              <div className="mb-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={resolvedLogoUrl}
-                  alt={artistName}
-                  style={{ maxWidth: `${Math.min(footerLogoWidth, 180)}px`, filter: logoFilter }}
-                  className="max-h-[52px] object-contain opacity-82"
-                />
-              </div>
-            )}
-            {contacts.length > 0 && (
-              <div className="space-y-4">
-                {contacts.map(({ label, email: addr }) => (
-                  <div key={label}>
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
-                      {label}
-                    </p>
-                    <a
-                      href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
-                      className="text-[13px] text-white/58 transition-colors duration-200 hover:text-white/88"
-                    >
-                      {addr}
-                    </a>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
       </div>
       {/* ── end desktop grid ─────────────────────────────────────────── */}
 
-      {/* ── Bottom bar — copyright (all sizes) ─────────────────────── */}
+      {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
       <div className="border-t border-white/[0.04] py-4">
-        <p className={cn(
-          "text-[10px] text-white/22",
-          resolvedLogoUrl ? "text-right" : "text-left",
-        )}>
-          {copyrightLine}
-          {!isPro && (
-            <>
-              {" · "}
-              <Link href="/" className="transition-colors duration-150 hover:text-white/40">
-                {brand.copy.poweredBy}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[10px] text-white/22">
+            {copyrightLine}
+            {!isPro && (
+              <>
+                {" · "}
+                <Link href="/" className="transition-colors duration-150 hover:text-white/40">
+                  {brand.copy.poweredBy}
+                </Link>
+              </>
+            )}
+          </p>
+          {/* Sitemap + Legal inline — desktop only */}
+          <div className="hidden sm:flex sm:flex-wrap sm:items-center sm:gap-x-5">
+            {sitemapLinks.map(({ label, href, external }) =>
+              external ? (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/25 transition-colors duration-150 hover:text-white/45">
+                  {label}
+                </a>
+              ) : (
+                <a key={label} href={href} className="text-[10px] text-white/25 transition-colors duration-150 hover:text-white/45">
+                  {label}
+                </a>
+              ),
+            )}
+            <span className="text-[10px] text-white/12" aria-hidden>·</span>
+            {legalLinks.map(({ label, href }) => (
+              <Link key={label} href={href} className="text-[10px] text-white/18 transition-colors duration-150 hover:text-white/35">
+                {label}
               </Link>
-            </>
-          )}
-        </p>
+            ))}
+          </div>
+        </div>
       </div>
 
     </footer>
