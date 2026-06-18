@@ -369,7 +369,6 @@ type FormState = {
   countryIso: string // ISO 2-letter code — drives CountrySelect
   phone: string
   eventDate: string
-  city: string
   company: string
   message: string
   website: string // honeypot
@@ -383,7 +382,6 @@ const INITIAL_FORM: FormState = {
   countryIso: "CL", // default: Chile
   phone: "",
   eventDate: "",
-  city: "",
   company: "",
   message: "",
   website: "",
@@ -446,7 +444,7 @@ export function BookingInquiryModal({
           phone: fullPhone,
           preferredContact: "Email",
           eventDate: form.eventDate,
-          city: form.city,
+          city: "",
           country: "",
           company: form.company,
           attendance: "",
@@ -502,10 +500,13 @@ export function BookingInquiryModal({
               <>
                 <DialogHeader className="mb-7 text-left">
                   <DialogTitle className="text-base font-semibold uppercase tracking-[0.10em] text-foreground/85">
-                    Booking Contact
+                    Booking Request
                   </DialogTitle>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/55">
-                    Bring {artistName} to your club, festival or event.
+                    Submit your event details and availability request.
+                  </p>
+                  <p className="mt-2 text-[11px] text-muted-foreground/32">
+                    Available for clubs, festivals, private events and international bookings.
                   </p>
                 </DialogHeader>
 
@@ -581,38 +582,25 @@ export function BookingInquiryModal({
                     </Field>
                   </div>
 
-                  {/* Row 3: City | Venue / Festival / Promoter */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="City" required>
-                      <Input
-                        value={form.city}
-                        onChange={(e) => update("city", e.target.value)}
-                        placeholder="Berlin"
-                        required
-                        maxLength={100}
-                        disabled={isSubmitting}
-                        className={inputClass}
-                      />
-                    </Field>
-                    <Field label="Venue / Festival / Promoter" required>
-                      <Input
-                        value={form.company}
-                        onChange={(e) => update("company", e.target.value)}
-                        placeholder="Venue, festival or promoter name"
-                        required
-                        maxLength={200}
-                        disabled={isSubmitting}
-                        className={inputClass}
-                      />
-                    </Field>
-                  </div>
+                  {/* Row 3: Venue / Festival / Promoter (full width) */}
+                  <Field label="Venue / Festival / Promoter" required>
+                    <Input
+                      value={form.company}
+                      onChange={(e) => update("company", e.target.value)}
+                      placeholder="Venue, festival or promoter name"
+                      required
+                      maxLength={200}
+                      disabled={isSubmitting}
+                      className={inputClass}
+                    />
+                  </Field>
 
                   {/* Row 4: Event Details (full width) */}
                   <Field label="Event Details" required>
                     <Textarea
                       value={form.message}
                       onChange={(e) => update("message", e.target.value)}
-                      placeholder="Tell us about your event, venue, lineup and any other relevant details."
+                      placeholder="Capacity, expected audience, lineup, set length and any relevant event details."
                       rows={4}
                       required
                       maxLength={2000}
@@ -639,18 +627,15 @@ export function BookingInquiryModal({
                       {isSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Sending...
+                          Submitting...
                         </>
                       ) : (
-                        <>
-                          <Send className="h-3.5 w-3.5" />
-                          Send
-                        </>
+                        "Request Booking"
                       )}
                     </button>
                   </div>
-                  <p className="text-center text-[10px] text-muted-foreground/25">
-                    Typical response time: 24–48 hours
+                  <p className="text-center text-[10px] text-muted-foreground/38">
+                    Response time: usually within 24–48 hours.
                   </p>
                 </form>
               </>
