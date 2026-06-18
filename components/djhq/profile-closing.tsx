@@ -115,16 +115,6 @@ export function ProfileClosing({
       l.href !== null && l.Icon !== undefined,
     )
 
-  const sitemapLinks = [
-    { label: "Releases",  href: "#music" },
-    { label: "Shows",     href: "#shows" },
-    { label: "Sets",      href: "#performance" },
-    ...(hasPressKit && pressKitHref
-      ? [{ label: "Press Kit", href: pressKitHref, external: true }]
-      : []),
-    { label: "Contact",   href: "#contact" },
-  ]
-
   const legalLinks = [
     { label: "Privacy", href: "/privacy" },
     { label: "Terms",   href: "/terms" },
@@ -243,48 +233,6 @@ export function ProfileClosing({
           </div>
         )}
 
-        {/* 5. Navigation + Legal */}
-        <div className="mt-6 border-t border-white/[0.05]" />
-        <div className="mt-4 grid grid-cols-2 gap-x-8">
-          <div>
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/20">Navigate</p>
-            <ul className="space-y-1.5">
-              {sitemapLinks.map(({ label, href, external }) => (
-                <li key={label}>
-                  {external ? (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[12px] text-white/38 transition-colors duration-200 hover:text-white/65"
-                    >
-                      {label}
-                    </a>
-                  ) : (
-                    <a href={href} className="text-[12px] text-white/38 transition-colors duration-200 hover:text-white/65">
-                      {label}
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/20">Legal</p>
-            <ul className="space-y-1.5">
-              {legalLinks.map(({ label, href }) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-[12px] text-white/30 transition-colors duration-200 hover:text-white/55"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
 
       </div>
       {/* ── end mobile ───────────────────────────────────────────────── */}
@@ -414,7 +362,7 @@ export function ProfileClosing({
 
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[11px] text-white/30">
             {copyrightLine}
             {!isPro && (
@@ -426,28 +374,12 @@ export function ProfileClosing({
               </>
             )}
           </p>
-          {/* Sitemap row + Legal row — desktop only, right-aligned */}
-          <div className="hidden sm:flex sm:flex-col sm:items-end sm:gap-y-1.5">
-            <div className="flex flex-wrap items-center gap-x-4">
-              {sitemapLinks.map(({ label, href, external }) =>
-                external ? (
-                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/28 transition-colors duration-150 hover:text-white/48">
-                    {label}
-                  </a>
-                ) : (
-                  <a key={label} href={href} className="text-[10px] text-white/28 transition-colors duration-150 hover:text-white/48">
-                    {label}
-                  </a>
-                ),
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4">
-              {legalLinks.map(({ label, href }) => (
-                <Link key={label} href={href} className="text-[10px] text-white/18 transition-colors duration-150 hover:text-white/35">
-                  {label}
-                </Link>
-              ))}
-            </div>
+          <div className="flex flex-wrap items-center gap-x-5">
+            {legalLinks.map(({ label, href }) => (
+              <Link key={label} href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
+                {label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
