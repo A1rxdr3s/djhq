@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react"
 import { Copy, Check, X, RefreshCw, Plus, Mail } from "lucide-react"
 import { AdminSectionHeader } from "@/components/admin/admin-section-header"
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge"
-import type { AdminInvitation, AdminUserRole } from "@/types/admin"
+import type { AdminInvitation, AdminRealArtist, AdminUserRole } from "@/types/admin"
 import { cn } from "@/lib/utils"
 
 const ROLE_OPTIONS: { value: AdminUserRole; label: string }[] = [
@@ -23,12 +23,6 @@ const ROLE_LABELS: Record<AdminUserRole, string> = {
   viewer:         "Viewer",
 }
 
-const MOCK_TENANTS_FOR_SELECT = [
-  { handle: "andresherrera", name: "ANDRES:HERRERA" },
-  { handle: "mock_artist_2", name: "Mock Artist 2" },
-  { handle: "mock_artist_3", name: "Mock Artist 3" },
-]
-
 function generateToken(): string {
   return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
 }
@@ -36,9 +30,10 @@ function generateToken(): string {
 interface AdminInvitationsProps {
   invitations: AdminInvitation[]
   onInvitationsChange: (updated: AdminInvitation[]) => void
+  realArtists: AdminRealArtist[]
 }
 
-export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvitationsProps) {
+export function AdminInvitations({ invitations, onInvitationsChange, realArtists }: AdminInvitationsProps) {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ email: "", role: "artist_owner" as AdminUserRole, artistHandle: "", note: "" })
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
@@ -242,8 +237,8 @@ export function AdminInvitations({ invitations, onInvitationsChange }: AdminInvi
                     className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                   >
                     <option value="">None (platform-level)</option>
-                    {MOCK_TENANTS_FOR_SELECT.map((t) => (
-                      <option key={t.handle} value={t.handle}>{t.name} (@{t.handle})</option>
+                    {realArtists.map((a) => (
+                      <option key={a.handle} value={a.handle}>{a.artistName} (@{a.handle})</option>
                     ))}
                   </select>
                 </div>

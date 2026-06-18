@@ -23,19 +23,30 @@ interface AdminHeaderProps {
   onMenuToggle: () => void
   isDevMode?: boolean
   dataError?: boolean
+  sessionEmail?: string | null
+  isAdminVerified?: boolean
 }
 
-export function AdminHeader({ section, onMenuToggle, isDevMode, dataError }: AdminHeaderProps) {
+export function AdminHeader({ section, onMenuToggle, isDevMode, dataError, sessionEmail, isAdminVerified }: AdminHeaderProps) {
   const env = isDevMode ? "Development" : "Production"
+  const notSignedIn = !sessionEmail
 
   return (
     <div className="shrink-0">
-      {/* Dev warning banner */}
-      {isDevMode && (
+      {/* Dev-only: unprotected access warning */}
+      {isDevMode && notSignedIn && (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-2">
           <p className="text-[11px] text-amber-700">
-            ⚠ Admin access is unprotected in development.
-            {/* TODO: enforce platform_admin role — connect Supabase auth */}
+            ⚠ No active session — admin is accessible in development without auth.
+            {/* TODO: enforce platform_admin role — require Supabase session */}
+          </p>
+        </div>
+      )}
+      {/* Dev-only: signed in but not admin */}
+      {isDevMode && sessionEmail && !isAdminVerified && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2">
+          <p className="text-[11px] text-amber-700">
+            ⚠ Signed in as <strong>{sessionEmail}</strong> — not a platform admin. Access would be blocked in production.
           </p>
         </div>
       )}
@@ -63,11 +74,26 @@ export function AdminHeader({ section, onMenuToggle, isDevMode, dataError }: Adm
           </span>
         </div>
 
-        {/* Right: env badge + search + bell */}
+        {/* Right: env badge + session + search + bell */}
         <div className="flex items-center gap-3">
           <span className="hidden rounded-full border border-slate-200 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 sm:inline-flex">
             {env}
           </span>
+          {sessionEmail ? (
+            <span className="hidden items-center gap-1.5 sm:flex">
+              <span className="h-5 w-5 rounded-full bg-green-600 flex items-center justify-center text-[9px] font-bold text-white uppercase">
+                {sessionEmail[0]}
+              </span>
+              <span className="max-w-[140px] truncate text-[11px] font-medium text-slate-600">{sessionEmail}</span>
+              {isAdminVerified && (
+                <span className="rounded-full bg-green-50 border border-green-200 px-1.5 py-0 text-[9px] font-semibold text-green-700">
+                  Admin
+                </span>
+              )}
+            </span>
+          ) : (
+            <span className="hidden text-[11px] text-slate-400 sm:inline">Not signed in</span>
+          )}
           <button
             className="hidden items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] text-slate-400 transition-colors hover:text-slate-700 sm:flex"
             onClick={() => {
