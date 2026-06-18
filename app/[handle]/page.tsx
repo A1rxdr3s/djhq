@@ -1501,7 +1501,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               {featuredSet ? (
                 <div className="flex flex-col gap-4">
 
-                  {/* Featured Set: vertical hero — full-width artwork, text below */}
+                  {/* Featured Set: vertical hero — title first, artwork below, waveform+CTA at base */}
                   <div className="overflow-hidden rounded-[16px] border border-white/[0.04] bg-white/[0.015]">
                     <a
                       href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
@@ -1509,30 +1509,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       rel="noopener noreferrer"
                       className="group block"
                     >
-                      {/* Hero artwork — full card width, square */}
-                      <div className="relative aspect-square w-full overflow-hidden">
-                        {featuredSet.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={featuredSet.imageUrl}
-                            alt={`${featuredSet.title} artwork`}
-                            className="h-full w-full object-cover brightness-[0.92] transition-transform duration-300 group-hover:scale-[1.02]"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.20),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
-                            <Play className="h-12 w-12 text-accent/40" />
-                          </div>
-                        )}
-                        {/* Subtle bottom fade to ease into the text area */}
-                        <div className="absolute inset-x-0 bottom-0 h-[22%] bg-gradient-to-t from-[hsl(var(--background)/0.5)] to-transparent" />
-                      </div>
-
-                      {/* Editorial text below artwork */}
-                      <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                      {/* Title block — primary editorial focus, read first */}
+                      <div className="px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
                         <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-accent/50">
                           FEATURED SET
                         </p>
-                        <h3 className="mt-1 text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px]">
+                        <h3 className="mt-1 text-balance text-[22px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[26px]">
                           {featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)}
                         </h3>
                         {(() => {
@@ -1583,11 +1565,34 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             </div>
                           )
                         })()}
+                      </div>
+
+                      {/* Supporting artwork — large but positioned below the title */}
+                      <div className="relative aspect-[4/3] w-full overflow-hidden">
+                        {featuredSet.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={featuredSet.imageUrl}
+                            alt={`${featuredSet.title} artwork`}
+                            className="h-full w-full object-cover brightness-[0.88] transition-transform duration-300 group-hover:scale-[1.02]"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.20),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
+                            <Play className="h-12 w-12 text-accent/40" />
+                          </div>
+                        )}
+                        {/* Fades blend artwork edges into card background */}
+                        <div className="absolute inset-x-0 top-0 h-[16%] bg-gradient-to-b from-[hsl(var(--background)/0.4)] to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 h-[16%] bg-gradient-to-t from-[hsl(var(--background)/0.4)] to-transparent" />
+                      </div>
+
+                      {/* Waveform + CTA — audio identity and action */}
+                      <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
                         {/* Decorative waveform — signals audio content, not a player UI */}
                         <svg
                           aria-hidden="true"
                           viewBox="0 0 180 16"
-                          className="mt-3 h-[10px] w-full max-w-[240px] text-white/[0.14]"
+                          className="h-[10px] w-full max-w-[240px] text-white/[0.14]"
                           preserveAspectRatio="none"
                           fill="currentColor"
                         >
