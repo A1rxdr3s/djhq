@@ -338,8 +338,8 @@ export function ProfileClosing({
 
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[11px] text-white/30">
+        <div className="flex flex-wrap items-center">
+          <span className="whitespace-nowrap text-[11px] text-white/30">
             {copyrightLine}
             {!isPro && (
               <>
@@ -349,17 +349,15 @@ export function ProfileClosing({
                 </Link>
               </>
             )}
-          </p>
-          <div className="flex flex-wrap items-center">
-            {legalLinks.map(({ label, href }, i) => (
-              <span key={label} className="flex items-center">
-                {i > 0 && <span className="mx-2 text-white/15" aria-hidden>·</span>}
-                <Link href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
-                  {label}
-                </Link>
-              </span>
-            ))}
-          </div>
+          </span>
+          {legalLinks.map(({ label, href }) => (
+            <span key={label} className="flex items-center">
+              <span className="mx-2 text-[11px] text-white/15" aria-hidden>·</span>
+              <Link href={href} className="text-[10px] text-white/24 transition-colors duration-150 hover:text-white/45">
+                {label}
+              </Link>
+            </span>
+          ))}
         </div>
       </div>
 
