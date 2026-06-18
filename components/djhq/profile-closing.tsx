@@ -148,7 +148,7 @@ export function ProfileClosing({
             </p>
             <a
               href={resolveSafeHref(`mailto:${contacts[0].email}`) ?? "#"}
-              className="text-[13px] text-white/58 transition-colors duration-200 hover:text-white/88"
+              className="text-[13px] text-white/72 transition-colors duration-200 hover:text-white/92"
             >
               {contacts[0].email}
             </a>
@@ -166,7 +166,7 @@ export function ProfileClosing({
                 title={label}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/50 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                className="text-white/62 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
               >
                 <Icon className="h-[22px] w-[22px]" />
               </a>
@@ -185,6 +185,9 @@ export function ProfileClosing({
               <p className="text-[12px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
+                <p className="mb-1.5 text-[14px] font-semibold leading-snug text-white/78">
+                  Get updates directly from {artistName}
+                </p>
                 <p className="mb-3 text-[12px] text-white/35">New music, shows, and guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
@@ -197,7 +200,7 @@ export function ProfileClosing({
                     placeholder="your@email.com"
                     aria-label="Email address"
                     className={cn(
-                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/18",
+                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
                       status === "error"
                         ? "border-red-500/30 focus:border-red-500/50"
                         : "border-white/[0.18] focus:border-accent/50",
@@ -257,7 +260,7 @@ export function ProfileClosing({
                     )}
                     <a
                       href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
-                      className="text-[13px] text-white/58 transition-colors duration-200 hover:text-white/88"
+                      className="text-[13px] text-white/72 transition-colors duration-200 hover:text-white/92"
                     >
                       {addr}
                     </a>
@@ -279,7 +282,7 @@ export function ProfileClosing({
                     title={label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white/52 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                    className="text-white/65 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
                   >
                     <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
                   </a>
@@ -297,6 +300,9 @@ export function ProfileClosing({
               <p className="text-[13px] text-white/45">You&apos;re on the list.</p>
             ) : (
               <>
+                <p className="mb-1.5 text-[15px] font-semibold leading-snug text-white/78">
+                  Get updates directly from {artistName}
+                </p>
                 <p className="mb-4 text-[12px] text-white/38">New music, shows, and guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
@@ -309,7 +315,7 @@ export function ProfileClosing({
                     placeholder="your@email.com"
                     aria-label="Email address"
                     className={cn(
-                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/18",
+                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
                       status === "error"
                         ? "border-red-500/30 focus:border-red-500/50"
                         : "border-white/[0.18] focus:border-accent/50",
@@ -339,7 +345,7 @@ export function ProfileClosing({
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
         <div className="flex flex-wrap items-center">
-          <span className="whitespace-nowrap text-[11px] text-white/40">
+          <span className="whitespace-nowrap text-[11px] text-white/48">
             {copyrightLine}
             {!isPro && (
               <>
@@ -352,8 +358,8 @@ export function ProfileClosing({
           </span>
           {legalLinks.map(({ label, href }) => (
             <span key={label} className="flex items-center">
-              <span className="mx-2 text-[11px] text-white/20" aria-hidden>·</span>
-              <Link href={href} className="text-[10px] text-white/32 transition-colors duration-150 hover:text-white/55">
+              <span className="mx-2 text-[11px] text-white/28" aria-hidden>·</span>
+              <Link href={href} className="text-[10px] text-white/40 transition-colors duration-150 hover:text-white/62">
                 {label}
               </Link>
             </span>
