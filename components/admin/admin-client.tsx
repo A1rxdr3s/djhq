@@ -58,9 +58,11 @@ function saveInvitations(invitations: AdminInvitation[]): void {
 
 interface AdminClientProps {
   realData: AdminRealData
+  sessionEmail: string | null
+  isAdminVerified: boolean
 }
 
-export function AdminClient({ realData }: AdminClientProps) {
+export function AdminClient({ realData, sessionEmail, isAdminVerified }: AdminClientProps) {
   const [section, setSection] = useState<AdminSection>("overview")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [invitations, setInvitations] = useState<AdminInvitation[]>([])
@@ -93,17 +95,20 @@ export function AdminClient({ realData }: AdminClientProps) {
           onMenuToggle={() => setSidebarOpen((o) => !o)}
           isDevMode={realData.isDevMode}
           dataError={realData.dataError}
+          sessionEmail={sessionEmail}
+          isAdminVerified={isAdminVerified}
         />
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto px-5 py-6 sm:px-7 lg:px-8">
           {section === "overview"      && <AdminOverview realData={realData} />}
-          {section === "users"         && <AdminUsers realData={realData} localInvitations={invitations} />}
+          {section === "users"         && <AdminUsers realData={realData} localInvitations={invitations} sessionEmail={sessionEmail} />}
           {section === "artists"       && <AdminArtists realData={realData} />}
           {section === "invitations"   && (
             <AdminInvitations
               invitations={invitations}
               onInvitationsChange={handleInvitationsChange}
+              realArtists={realData.artists}
             />
           )}
           {section === "subscriptions" && <AdminSubscriptions />}

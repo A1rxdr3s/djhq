@@ -1,10 +1,25 @@
-// TODO: enforce platform admin role — verify Supabase session and check admin flag
-// TODO: redirect non-admin users: if (!isAdmin) redirect("/sign-in")
-// TODO: audit admin page access
+// TODO: once auth is fully wired, redirect non-admin users: redirect("/sign-in")
+// TODO: audit all admin page access events to a Supabase log table
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { isAdminEmail, getAdminEmails } from "@/lib/admin/admin-auth"
 import { AdminClient } from "@/components/admin/admin-client"
 import type { AdminRealData, AdminRealArtist, AdminRealUser } from "@/types/admin"
+
+// ─── Auth gate ────────────────────────────────────────────────────────────────
+
+async function getSessionUser(): Promise<{ email: string | null; id: string | null }> {
+  try {
+    const serverClient = await createSupabaseServerClient()
+    const { data: { user } } = await serverClient.auth.getUser()
+    return { email: user?.email ?? null, id: user?.id ?? null }
+  } catch {
+    return { email: null, id: null }
+  }
+}
+
+// ─── Data fetch ───────────────────────────────────────────────────────────────
 
 async function fetchRealAdminData(): Promise<AdminRealData> {
   const isDevMode = process.env.NODE_ENV !== "production"
@@ -13,7 +28,6 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
   try {
     const supabase = createSupabaseAdminClient()
 
-    // All artists (service role bypasses RLS — gets every tenant)
     const { data: artistRows, error: artistsError } = await supabase
       .from("artists")
       .select(
@@ -37,7 +51,6 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
       ownerUserId: (row.owner_user_id as string) ?? null,
     }))
 
-    // Auth users — requires service role
     let authUsers: AdminRealUser[] = []
     try {
       const { data: authData } = await supabase.auth.admin.listUsers({ perPage: 1000 })
@@ -48,16 +61,14 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
         lastSignInAt: u.last_sign_in_at ? u.last_sign_in_at.slice(0, 10) : null,
       }))
     } catch {
-      // auth.admin.listUsers may fail if service role key is missing in dev
+      // auth.admin.listUsers fails without service role key
     }
 
-    // Gig count (published, not soft-deleted)
     const { count: totalGigs } = await supabase
       .from("gigs")
       .select("*", { count: "exact", head: true })
       .is("deleted_at", null)
 
-    // Release count
     const { count: totalReleases } = await supabase
       .from("releases")
       .select("*", { count: "exact", head: true })
@@ -72,7 +83,6 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
       dataError: false,
     }
   } catch (err) {
-    // Service role not configured or Supabase unreachable
     console.error("[Admin] Data fetch failed:", err)
     return {
       artists: [],
@@ -86,7 +96,60 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
   }
 }
 
+// ─── Access denied page ───────────────────────────────────────────────────────
+
+function AccessDenied({ email }: { email: string | null }) {
+  const isDevMode = process.env.NODE_ENV !== "production"
+  const adminEmails = getAdminEmails()
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center">
+        <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
+          <span className="text-lg">🔒</span>
+        </div>
+        <h1 className="text-[16px] font-semibold text-slate-900">Access Denied</h1>
+        <p className="mt-2 text-[13px] text-slate-500">
+          {email
+            ? <>You are signed in as <strong>{email}</strong> but do not have platform admin access.</>
+            : "You must be signed in as a platform admin to access this page."}
+        </p>
+        {isDevMode && (
+          <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">
+            Dev: admin emails are <code className="font-mono">{adminEmails.join(", ")}</code>
+          </p>
+        )}
+        <a
+          href="/hq"
+          className="mt-5 inline-block rounded-md bg-slate-900 px-4 py-2 text-[12px] font-semibold text-white hover:bg-slate-800"
+        >
+          Go to Dashboard
+        </a>
+      </div>
+    </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default async function AdminPage() {
+  const { email } = await getSessionUser()
+  const isDevMode = process.env.NODE_ENV !== "production"
+
+  // In production, enforce admin gate. In dev, allow through with a warning banner
+  // so the admin UI can be built without requiring a live Supabase session.
+  // TODO: remove the dev bypass once auth is fully wired and tested.
+  if (!isDevMode && !isAdminEmail(email)) {
+    return <AccessDenied email={email} />
+  }
+
   const realData = await fetchRealAdminData()
-  return <AdminClient realData={realData} />
+
+  return (
+    <AdminClient
+      realData={realData}
+      sessionEmail={email}
+      isAdminVerified={isAdminEmail(email)}
+    />
+  )
 }
