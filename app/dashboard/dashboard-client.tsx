@@ -1284,6 +1284,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return () => clearTimeout(tid)
   }, [activeSection, brandLoadStatus, artist.id])
 
+  // Set editor modal: Escape to close + body scroll lock
+  useEffect(() => {
+    if (!expandedSetId) {
+      document.body.style.overflow = ""
+      return
+    }
+    document.body.style.overflow = "hidden"
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setExpandedSetId(null)
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("keydown", onKeyDown)
+      document.body.style.overflow = ""
+    }
+  }, [expandedSetId])
+
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
     artistName !== artist.artistName ||
@@ -4035,241 +4052,278 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         )}
 
-        {/* Inline edit panel */}
+        {/* Set editor modal */}
         {expandedSet && expandedSetIdx >= 0 && (
-          <div className="rounded-xl border border-accent/25 bg-card/40 p-5">
-
-            {/* Edit panel header */}
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {expandedSet.imageUrl?.trim() ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={expandedSet.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-white/[0.08]" />
-                ) : (
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/60">
-                    <Headphones className="h-4 w-4 text-muted-foreground/30" />
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm font-semibold text-foreground/85">
-                    {(expandedSet.titleOverride.trim() || computeDjSetTitle(
-                      expandedSet.performanceType,
-                      expandedSet.performanceArtists,
-                      expandedSet.customPerformanceType || undefined,
-                      expandedSet.event || undefined,
-                      expandedSet.venue || undefined,
-                      artist.artistName,
-                    )) || "Untitled Set"}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/40">Editing set</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setExpandedSetId(null)}
-                className="text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60"
-              >
-                Close ✕
-              </button>
-            </div>
-
-            {/* Edit form — all existing fields */}
-            <div className="space-y-4">
-
-              {/* Performance type */}
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Type</p>
-                <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
-                  {performanceTypes.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => handleTypeChange(expandedSetIdx, type)}
-                      disabled={busy}
-                      className={cn(
-                        "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                        expandedSet.performanceType === type
-                          ? "bg-secondary text-foreground/75"
-                          : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      )}
-                    >
-                      {PERFORMANCE_TYPE_LABELS[type]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Artists */}
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</p>
-                <div className="space-y-2">
-                  {expandedSet.performanceArtists.map((name, ai) => (
-                    <div key={ai} className="flex gap-2">
-                      <Input
-                        value={name}
-                        placeholder="Artist name"
-                        onChange={(e) => {
-                          const next = [...expandedSet.performanceArtists]
-                          next[ai] = e.target.value
-                          updateSet(expandedSetIdx, { performanceArtists: next })
-                        }}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const next = expandedSet.performanceArtists.filter((_, j) => j !== ai)
-                          updateSet(expandedSetIdx, { performanceArtists: next.length > 0 ? next : [""] })
-                        }}
-                        disabled={expandedSet.performanceArtists.length <= 1 || busy}
-                        className="h-9 w-9 shrink-0 p-0 text-muted-foreground/40 hover:text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+              onClick={() => setExpandedSetId(null)}
+            />
+            {/* Modal */}
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="relative z-10 flex h-full max-h-[90vh] w-full max-w-[1100px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+            >
+              {/* ── Header ────────────────────────────────────────────── */}
+              <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-5 py-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  {expandedSet.imageUrl?.trim() ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={expandedSet.imageUrl} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover ring-1 ring-border" />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
+                      <Headphones className="h-5 w-5 text-muted-foreground/25" />
                     </div>
-                  ))}
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-semibold leading-snug text-foreground/90">
+                      {(expandedSet.titleOverride.trim() || computeDjSetTitle(
+                        expandedSet.performanceType,
+                        expandedSet.performanceArtists,
+                        expandedSet.customPerformanceType || undefined,
+                        expandedSet.event || undefined,
+                        expandedSet.venue || undefined,
+                        artist.artistName,
+                      )) || "Untitled Set"}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/40">Editing set</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpandedSetId(null)}
+                  className="shrink-0 rounded-lg p-1.5 text-muted-foreground/40 transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* ── Scrollable body ────────────────────────────────────── */}
+              <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                <div className="space-y-4">
+
+                  {/* Performance type */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Type</p>
+                    <div className="flex w-fit flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
+                      {performanceTypes.map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => handleTypeChange(expandedSetIdx, type)}
+                          disabled={busy}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                            expandedSet.performanceType === type
+                              ? "bg-secondary text-foreground/75"
+                              : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                          )}
+                        >
+                          {PERFORMANCE_TYPE_LABELS[type]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Artists */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</p>
+                    <div className="space-y-2">
+                      {expandedSet.performanceArtists.map((name, ai) => (
+                        <div key={ai} className="flex gap-2">
+                          <Input
+                            value={name}
+                            placeholder="Artist name"
+                            onChange={(e) => {
+                              const next = [...expandedSet.performanceArtists]
+                              next[ai] = e.target.value
+                              updateSet(expandedSetIdx, { performanceArtists: next })
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const next = expandedSet.performanceArtists.filter((_, j) => j !== ai)
+                              updateSet(expandedSetIdx, { performanceArtists: next.length > 0 ? next : [""] })
+                            }}
+                            disabled={expandedSet.performanceArtists.length <= 1 || busy}
+                            className="h-9 w-9 shrink-0 p-0 text-muted-foreground/40 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => updateSet(expandedSetIdx, { performanceArtists: [...expandedSet.performanceArtists, ""] })}
+                        disabled={busy}
+                        className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add artist
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Custom type */}
+                  {expandedSet.performanceType === "other" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Type</label>
+                      <Input
+                        value={expandedSet.customPerformanceType}
+                        placeholder="Radio show, podcast, guest mix…"
+                        onChange={(e) => updateSet(expandedSetIdx, { customPerformanceType: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  {/* Date · Venue · City · Event */}
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Date</label>
+                      <DatePicker
+                        value={expandedSet.setDate ?? ""}
+                        onChange={(v) => updateSet(expandedSetIdx, { setDate: v })}
+                        allowClear
+                        triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Venue</label>
+                      <VenueAutocomplete
+                        value={expandedSet.venue}
+                        onChange={(v) => updateSet(expandedSetIdx, { venue: v })}
+                        onSelect={(entry) => updateSet(expandedSetIdx, { venue: entry.name })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">City</label>
+                      <Input
+                        value={expandedSet.city}
+                        placeholder="Santiago, Berlin…"
+                        onChange={(e) => updateSet(expandedSetIdx, { city: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Event</label>
+                      <Input
+                        value={expandedSet.event}
+                        placeholder="MISA, Boiler Room…"
+                        onChange={(e) => updateSet(expandedSetIdx, { event: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Platform URL · Cover Image */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Platform URL</label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={expandedSet.platformUrl}
+                          placeholder="https://soundcloud.com/…"
+                          onChange={(e) => updateSet(expandedSetIdx, { platformUrl: e.target.value })}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleImportDjSetMetadata(expandedSetIdx)}
+                          disabled={importingDjSetIndex === expandedSetIdx || busy}
+                          className="shrink-0 border-border bg-background/70 text-xs"
+                        >
+                          {importingDjSetIndex === expandedSetIdx ? "Fetching…" : "Import"}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Cover Image URL</label>
+                      <Input
+                        value={expandedSet.imageUrl ?? ""}
+                        placeholder="https://…"
+                        onChange={(e) => updateSet(expandedSetIdx, { imageUrl: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Published toggle */}
+                  <div className="flex items-center gap-3 border-t border-border pt-3">
+                    <label className="relative inline-flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={expandedSet.isPublished}
+                        onChange={(e) => updateSet(expandedSetIdx, { isPublished: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <span className={cn(
+                        "flex h-4 w-7 items-center rounded-full p-0.5 transition-colors duration-150",
+                        expandedSet.isPublished ? "bg-accent/70" : "bg-secondary",
+                      )}>
+                        <span className={cn(
+                          "h-3 w-3 rounded-full bg-white/80 transition-transform duration-150",
+                          expandedSet.isPublished ? "translate-x-3" : "translate-x-0",
+                        )} />
+                      </span>
+                      <span className="text-[11px] text-muted-foreground/55">Show on public profile</span>
+                    </label>
+                  </div>
+
+                  {/* Advanced: Title Override */}
+                  <div className="border-t border-border pt-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleAdvanced(expandedSet.id)}
+                      className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/35 hover:text-muted-foreground/55"
+                    >
+                      <ChevronDown className={cn("h-3 w-3 transition-transform", advancedOpenIds.has(expandedSet.id) && "rotate-180")} />
+                      Advanced
+                    </button>
+                    {advancedOpenIds.has(expandedSet.id) && (
+                      <div className="mt-3 space-y-1.5">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                          Title Override
+                        </label>
+                        <Input
+                          value={expandedSet.titleOverride}
+                          placeholder="Leave blank to use generated title"
+                          onChange={(e) => updateSet(expandedSetIdx, { titleOverride: e.target.value })}
+                        />
+                        <p className="text-[10px] text-muted-foreground/28">Replaces the generated title on your public profile.</p>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ── Footer ────────────────────────────────────────────── */}
+              <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border px-5 py-4">
+                <p className="text-[11px] text-muted-foreground/35">
+                  {isSaveDirty ? "Unsaved changes — use Save Changes to persist." : "No pending changes."}
+                </p>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => updateSet(expandedSetIdx, { performanceArtists: [...expandedSet.performanceArtists, ""] })}
-                    disabled={busy}
-                    className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+                    onClick={() => setExpandedSetId(null)}
+                    className="rounded-lg border border-border bg-secondary px-4 py-2 text-[12px] font-medium text-foreground/70 transition-colors hover:bg-secondary/80 hover:text-foreground"
                   >
-                    <Plus className="h-3 w-3" />
-                    Add artist
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setExpandedSetId(null); void handleSaveChanges() }}
+                    disabled={busy || !isSaveDirty}
+                    className="rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-40"
+                  >
+                    {isSaving ? "Saving…" : "Save Changes"}
                   </button>
                 </div>
               </div>
-
-              {/* Custom type */}
-              {expandedSet.performanceType === "other" && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Type</label>
-                  <Input
-                    value={expandedSet.customPerformanceType}
-                    placeholder="Radio show, podcast, guest mix…"
-                    onChange={(e) => updateSet(expandedSetIdx, { customPerformanceType: e.target.value })}
-                  />
-                </div>
-              )}
-
-              {/* Date · Venue · City · Event */}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Date</label>
-                  <DatePicker
-                    value={expandedSet.setDate ?? ""}
-                    onChange={(v) => updateSet(expandedSetIdx, { setDate: v })}
-                    allowClear
-                    triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Venue</label>
-                  <VenueAutocomplete
-                    value={expandedSet.venue}
-                    onChange={(v) => updateSet(expandedSetIdx, { venue: v })}
-                    onSelect={(entry) => updateSet(expandedSetIdx, { venue: entry.name })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">City</label>
-                  <Input
-                    value={expandedSet.city}
-                    placeholder="Santiago, Berlin…"
-                    onChange={(e) => updateSet(expandedSetIdx, { city: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Event</label>
-                  <Input
-                    value={expandedSet.event}
-                    placeholder="MISA, Boiler Room…"
-                    onChange={(e) => updateSet(expandedSetIdx, { event: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Platform URL · Thumbnail */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Platform URL</label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={expandedSet.platformUrl}
-                      placeholder="https://soundcloud.com/…"
-                      onChange={(e) => updateSet(expandedSetIdx, { platformUrl: e.target.value })}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleImportDjSetMetadata(expandedSetIdx)}
-                      disabled={importingDjSetIndex === expandedSetIdx || busy}
-                      className="shrink-0 border-border bg-background/70 text-xs"
-                    >
-                      {importingDjSetIndex === expandedSetIdx ? "Fetching…" : "Import"}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Cover Image URL</label>
-                  <Input
-                    value={expandedSet.imageUrl ?? ""}
-                    placeholder="https://…"
-                    onChange={(e) => updateSet(expandedSetIdx, { imageUrl: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Published toggle */}
-              <div className="flex items-center gap-3 border-t border-border pt-3">
-                <label className="relative inline-flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={expandedSet.isPublished}
-                    onChange={(e) => updateSet(expandedSetIdx, { isPublished: e.target.checked })}
-                    className="sr-only"
-                  />
-                  <span className={cn(
-                    "flex h-4 w-7 items-center rounded-full p-0.5 transition-colors duration-150",
-                    expandedSet.isPublished ? "bg-accent/70" : "bg-secondary",
-                  )}>
-                    <span className={cn(
-                      "h-3 w-3 rounded-full bg-white/80 transition-transform duration-150",
-                      expandedSet.isPublished ? "translate-x-3" : "translate-x-0",
-                    )} />
-                  </span>
-                  <span className="text-[11px] text-muted-foreground/55">Show on public profile</span>
-                </label>
-              </div>
-
-              {/* Advanced: Title Override */}
-              <div className="border-t border-border pt-3">
-                <button
-                  type="button"
-                  onClick={() => toggleAdvanced(expandedSet.id)}
-                  className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/35 hover:text-muted-foreground/55"
-                >
-                  <ChevronDown className={cn("h-3 w-3 transition-transform", advancedOpenIds.has(expandedSet.id) && "rotate-180")} />
-                  Advanced
-                </button>
-                {advancedOpenIds.has(expandedSet.id) && (
-                  <div className="mt-3 space-y-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                      Title Override
-                    </label>
-                    <Input
-                      value={expandedSet.titleOverride}
-                      placeholder="Leave blank to use generated title"
-                      onChange={(e) => updateSet(expandedSetIdx, { titleOverride: e.target.value })}
-                    />
-                    <p className="text-[10px] text-muted-foreground/28">Replaces the generated title on your public profile.</p>
-                  </div>
-                )}
-              </div>
-
             </div>
           </div>
         )}
