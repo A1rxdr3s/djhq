@@ -4755,30 +4755,21 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Videos</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Manage your performance videos, live clips and recorded DJ moments.
-            </p>
-            {videos.length > 0 && (
-              <p className="mt-0.5 text-[11px] text-muted-foreground/32">
-                {videos.length} video{videos.length !== 1 ? "s" : ""}
-                {featuredCount > 0 ? " · 1 featured" : ""}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={handleAddVideo}
-            disabled={busy}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Video
-          </button>
-        </div>
+        <HqPageHeader
+          title="Videos"
+          description={`Performance videos, live clips and recorded DJ moments.${videos.length > 0 ? `  ${videos.length} video${videos.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 featured" : ""}.` : ""}`}
+          action={
+            <button
+              type="button"
+              onClick={handleAddVideo}
+              disabled={busy}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Video
+            </button>
+          }
+        />
 
         {/* Empty state */}
         {videos.length === 0 && (
@@ -5860,30 +5851,54 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               const tourGigCount = upcomingGigs.filter(
                 (g) => g.date && g.visibilityStatus !== "cancelled" && g.date >= tour.startDate && g.date <= tour.endDate,
               ).length
+              const startParsed = tour.startDate ? new Date(tour.startDate + "T00:00:00") : null
               return (
                 <button
                   key={tour.id}
                   type="button"
                   onClick={() => { setSelectedTourId(tour.id); setTourDeleteConfirm(false) }}
-                  className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card/35 px-4 py-4 text-left transition-all hover:border-border hover:bg-card/60"
+                  className="group flex w-full overflow-hidden rounded-xl border border-border text-left transition-all hover:-translate-y-px hover:[box-shadow:0_4px_16px_rgba(0,0,0,0.07)]"
                 >
-                  <div className="min-w-0 flex-1">
+                  {/* Start date block — mirrors show boarding pass */}
+                  <div className="flex w-[68px] shrink-0 flex-col items-center justify-center self-stretch bg-secondary px-2 py-4 text-center">
+                    {startParsed ? (
+                      <>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-accent/55">
+                          {startParsed.toLocaleString("en-US", { month: "short" }).toUpperCase()}
+                        </span>
+                        <span className="text-[1.7rem] font-black leading-none tabular-nums text-foreground/80">
+                          {String(startParsed.getDate()).padStart(2, "0")}
+                        </span>
+                        <span className="mt-0.5 text-[8px] text-muted-foreground/28">
+                          {startParsed.getFullYear()}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-sm font-bold text-muted-foreground/20">—</span>
+                    )}
+                  </div>
+                  <div className="w-px shrink-0 bg-secondary" />
+                  <div className="min-w-0 flex-1 px-4 py-3.5">
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-[14px] font-semibold text-foreground/85">{tour.name}</p>
-                      {!tour.isPublished && (
-                        <span className="shrink-0 rounded-full border border-border bg-secondary px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/40">
+                      <p className="truncate text-[14px] font-bold text-foreground/85">{tour.name}</p>
+                      {tour.isPublished ? (
+                        <span className="shrink-0 rounded-full bg-accent/[0.08] px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.12em] text-accent/60">
+                          Live
+                        </span>
+                      ) : (
+                        <span className="shrink-0 rounded-full bg-secondary px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/38">
                           Draft
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">{formatRange(tour.startDate, tour.endDate)}</p>
-                    <p className="mt-1 text-[10px] text-muted-foreground/32">
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/42">{formatRange(tour.startDate, tour.endDate)}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/28">
                       {tourGigCount} show{tourGigCount !== 1 ? "s" : ""} in range
-                      <span className="mx-1.5 text-muted-foreground/20">·</span>
-                      <span className="font-mono">/{artist.handle}/tours/{tour.slug}</span>
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/25 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground/50" />
+                  <div className="flex shrink-0 items-center pr-4">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/22 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground/50" />
+                  </div>
                 </button>
               )
             })}
