@@ -19,6 +19,7 @@ import { ShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { BookingsSection } from "@/components/dashboard/bookings-section"
 import { TourCalendar, type TourCalendarGig } from "@/components/djhq/tour-calendar"
+import { hqListBookingLeads } from "@/app/actions/booking-lead-actions"
 import { HqPageHeader } from "@/components/djhq/hq-page-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
@@ -1247,6 +1248,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [tourDeleting, setTourDeleting] = useState(false)
   const [tourDeleteConfirm, setTourDeleteConfirm] = useState(false)
 
+  type HomeBooking = {
+    id: string; referenceId: string; fullName: string
+    city: string; eventDate: string; status: string
+  } | null | "loading"
+  const [homeBooking, setHomeBooking] = useState<HomeBooking>("loading")
+  const homeBookingFetchedRef = useRef(false)
+
   useLayoutEffect(() => {
     const el = previewContainerRef.current
     if (!el) return
@@ -1345,9 +1353,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }, [expandedVideoId])
 
-  // Tour Planner: load tours once when section is first visited
+  // Tour Planner: load tours once when section is first visited (also needed on home for Active Tour)
   useEffect(() => {
-    if (activeSection !== "tours" || toursLoaded) return
+    if ((activeSection !== "tours" && activeSection !== "home") || toursLoaded) return
     void (async () => {
       try {
         const res = await fetch(`/api/artists/tours?artistId=${artist.id}`)
@@ -1359,6 +1367,30 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         setToursLoaded(true)
       }
     })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection])
+
+  // Home: fetch latest booking for the command surface (once per mount)
+  useEffect(() => {
+    if (activeSection !== "home" || homeBookingFetchedRef.current) return
+    homeBookingFetchedRef.current = true
+    void hqListBookingLeads(artist.id)
+      .then((leads) => {
+        const first = leads[0]
+        setHomeBooking(
+          first
+            ? {
+                id: first.id,
+                referenceId: first.referenceId,
+                fullName: first.fullName,
+                city: first.city,
+                eventDate: first.eventDate,
+                status: first.status,
+              }
+            : null,
+        )
+      })
+      .catch(() => setHomeBooking(null))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection])
 
@@ -2465,75 +2497,123 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function renderHome() {
     const today = new Date().toISOString().slice(0, 10)
     const hasActiveDomain = customDomains.some((d) => d.status === "active")
-    const hasBooking = !!bookingEmail.trim()
+    const activeDomain = customDomains.find((d) => d.status === "active")
 
-    const futureShows = artist.upcomingGigs
+    const futureShows = upcomingGigs
       .filter((g) => g.date >= today && g.visibilityStatus !== "cancelled")
       .sort((a, b) => a.date.localeCompare(b.date))
     const nextShow = futureShows[0] ?? null
 
-    function fmtShowDate(dateStr: string): string {
+    const activeTour = toursLoaded
+      ? (tours.find((t) => t.isPublished && t.startDate <= today && t.endDate >= today) ?? null)
+      : null
+    const nearestUpcomingTour =
+      toursLoaded && !activeTour
+        ? (tours
+            .filter((t) => t.isPublished && t.startDate > today)
+            .sort((a, b) => a.startDate.localeCompare(b.startDate))[0] ?? null)
+        : null
+    const displayTour = activeTour ?? nearestUpcomingTour
+
+    function fmtDate(dateStr: string): string {
       const d = new Date(dateStr + "T00:00:00")
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
     }
+    function fmtDateRange(s: string, e: string): string {
+      const sd = new Date(s + "T00:00:00")
+      const ed = new Date(e + "T00:00:00")
+      const sf = sd.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      const ef = ed.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: sd.getFullYear() !== ed.getFullYear() ? "numeric" : undefined,
+      })
+      return `${sf} – ${ef}`
+    }
+    function bookingBadgeClass(status: string): string {
+      const map: Record<string, string> = {
+        new: "text-accent",
+        contacted: "text-blue-500/70",
+        qualified: "text-amber-500/70",
+        confirmed: "text-emerald-500/70",
+        declined: "text-muted-foreground/35",
+      }
+      return map[status] ?? "text-muted-foreground/35"
+    }
 
-    const studioItems = [
-      { label: "Releases", count: artist.releases.length,    section: "releases", icon: Disc3      },
-      { label: "Shows",    count: artist.upcomingGigs.length, section: "shows",    icon: Calendar   },
-      { label: "Sets",     count: artist.djSets.length,      section: "sets",     icon: Headphones },
-      { label: "Videos",   count: artist.videos.length,      section: "media",    icon: Play       },
+    const contentRail = [
+      { label: "Releases", count: releases.length,     section: "releases" },
+      { label: "Shows",    count: upcomingGigs.length,  section: "shows"    },
+      { label: "Sets",     count: djSets.length,        section: "sets"     },
+      { label: "Videos",   count: videos.length,        section: "media"    },
+      { label: "Gallery",  count: galleryImages.length, section: "gallery"  },
     ]
 
-    const quickActions = [
-      { label: "+ Add Show",    section: "shows"    },
-      { label: "+ Add Release", section: "releases" },
-      { label: "+ Upload Set",  section: "sets"     },
-      { label: "+ Add Video",   section: "media"    },
-      { label: "Edit Profile",  section: "profile"  },
-      { label: "Create Tour",   section: "tours"    },
+    const commandDock = [
+      { label: "Add Show",     section: "shows",    Icon: Calendar   },
+      { label: "Add Set",      section: "sets",     Icon: Headphones },
+      { label: "Add Video",    section: "media",    Icon: Play       },
+      { label: "Add Release",  section: "releases", Icon: Disc3      },
+      { label: "Create Tour",  section: "tours",    Icon: Route      },
+      { label: "Edit Profile", section: "profile",  Icon: User       },
     ]
 
     return (
-      <div className="space-y-8">
+      <div className="divide-y divide-border">
 
-        {/* ── Identity strip ──────────────────────────────────────── */}
-        <div className="space-y-3">
+        {/* ── Artist Command Header ────────────────────────────────── */}
+        <div className="pb-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-[28px] font-black leading-none tracking-[-0.03em] text-foreground">
+              <h1 className="text-[26px] font-black uppercase leading-none tracking-[0.01em] text-foreground">
                 {artist.artistName}
               </h1>
-              <p className="mt-1.5 font-mono text-[11px] text-muted-foreground/40">/{artist.handle}</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                <span className="font-mono text-[11px] text-muted-foreground/40">/{artist.handle}</span>
+                {hasActiveDomain && activeDomain && (
+                  <>
+                    <span className="text-muted-foreground/20">·</span>
+                    <span className="font-mono text-[11px] text-accent/45">{activeDomain.domain}</span>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 pt-1">
-              <span className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[4px] text-[11px] font-semibold",
-                artist.isPublished
-                  ? "border-accent/25 bg-accent/[0.07] text-accent"
-                  : "border-border bg-secondary text-muted-foreground/55",
-              )}>
-                <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/35"}`} />
-                {artist.isPublished ? "Published" : "Draft"}
+            <div className="flex shrink-0 items-center gap-2 pt-0.5">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em]",
+                  artist.isPublished
+                    ? "bg-accent/[0.07] text-accent"
+                    : "bg-secondary text-muted-foreground/40",
+                )}
+              >
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    artist.isPublished ? "animate-pulse bg-accent" : "bg-muted-foreground/30",
+                  )}
+                />
+                {artist.isPublished ? "Live" : "Draft"}
               </span>
               <a
                 href={publicProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12px] font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground sm:inline-flex"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border px-2.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                <ExternalLink className="h-3.5 w-3.5" />View site
+                <ExternalLink className="h-3 w-3" />
+                View site
               </a>
             </div>
           </div>
-
           {isSaveDirty && (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-200/60 bg-amber-50 px-3 py-2">
+            <div className="mt-3 flex items-center gap-2">
               <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-amber-400" />
-              <span className="text-[11px] text-amber-700/80">Unsaved changes</span>
+              <span className="text-[11px] text-amber-700/70">Unsaved changes</span>
               <button
                 type="button"
                 onClick={() => void handleSaveChanges()}
-                className="ml-auto text-[11px] font-semibold text-amber-700 hover:text-amber-800"
+                className="text-[11px] font-semibold text-amber-700 hover:underline"
               >
                 Save now
               </button>
@@ -2541,139 +2621,177 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           )}
         </div>
 
-        {/* ── Command grid ────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* ── Artist Operations ────────────────────────────────────── */}
+        <div className="py-5">
+          <p className="mb-4 text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+            Operations
+          </p>
+          <div className="overflow-hidden rounded-xl border border-border">
+            <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
 
-          {/* Profile card */}
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
-              Profile
-            </p>
-            <div className="mb-1 flex items-center gap-2">
-              <span className={`h-2 w-2 shrink-0 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/30"}`} />
-              <span className="text-[13px] font-bold text-foreground/80">
-                {artist.isPublished ? "Live" : "Draft"}
-              </span>
-            </div>
-            <p className="font-mono text-[10px] text-muted-foreground/40">{publicProfileUrl}</p>
-            {hasActiveDomain && (
-              <p className="mt-0.5 text-[10px] text-accent/60">Custom domain active</p>
-            )}
-            <div className="mt-4 space-y-1">
-              <a
-                href={publicProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-[11px] text-accent/70 transition-colors hover:text-accent"
-              >
-                <ExternalLink className="h-3 w-3" />
-                View public site
-              </a>
+              {/* Next Show */}
               <button
                 type="button"
-                onClick={() => setActiveSection("publish")}
-                className="flex items-center gap-1.5 text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60"
+                onClick={() => setActiveSection("shows")}
+                className="group flex flex-col p-4 text-left transition-colors hover:bg-secondary/50"
               >
-                <ChevronRight className="h-3 w-3" />
-                Publish settings
+                <p className="mb-2.5 text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+                  Next Show
+                </p>
+                {nextShow ? (
+                  <>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent/60">
+                      {fmtDate(nextShow.date)}
+                    </p>
+                    <p className="mt-0.5 text-[15px] font-black leading-tight text-foreground/90">
+                      {nextShow.eventName ?? nextShow.venue}
+                    </p>
+                    {(nextShow.eventName ? nextShow.venue : null) ?? nextShow.city ? (
+                      <p className="mt-0.5 text-[11px] text-muted-foreground/45">
+                        {[nextShow.eventName ? nextShow.venue : null, nextShow.city]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    ) : null}
+                    <p className="mt-auto pt-3 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
+                      {futureShows.length} show{futureShows.length !== 1 ? "s" : ""} scheduled →
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[13px] font-medium text-muted-foreground/30">No upcoming shows</p>
+                    <p className="mt-auto pt-2 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
+                      Add a show →
+                    </p>
+                  </>
+                )}
               </button>
-            </div>
-          </div>
 
-          {/* Next Show card */}
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
-              Next Show
-            </p>
-            {nextShow ? (
-              <>
-                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-accent/70">
-                  {fmtShowDate(nextShow.date)}
-                </p>
-                <p className="mt-0.5 text-[14px] font-bold leading-tight text-foreground/85">
-                  {nextShow.eventName || nextShow.venue}
-                </p>
-                {(nextShow.eventName ? nextShow.venue : null) || nextShow.city ? (
-                  <p className="mt-0.5 text-[11px] text-muted-foreground/45">
-                    {[nextShow.eventName ? nextShow.venue : null, nextShow.city].filter(Boolean).join(" · ")}
-                  </p>
-                ) : null}
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("shows")}
-                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60"
-                  >
-                    <ChevronRight className="h-3 w-3" />
-                    All shows ({futureShows.length})
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-[13px] text-muted-foreground/38">No upcoming shows</p>
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("shows")}
-                  className="mt-3 flex items-center gap-1.5 text-[11px] text-accent/60 transition-colors hover:text-accent"
-                >
-                  <Plus className="h-3 w-3" />
-                  Add a show
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Studio card */}
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
-              Content Studio
-            </p>
-            <div className="space-y-0.5">
-              {studioItems.map(({ label, count, section, icon: Icon }) => (
-                <button
-                  key={section}
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary"
-                >
-                  <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
-                  <span className="flex-1 text-[12px] text-foreground/70">{label}</span>
-                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground/45">{count}</span>
-                </button>
-              ))}
-              <div className="my-1 border-t border-border" />
+              {/* Latest Booking */}
               <button
                 type="button"
                 onClick={() => setActiveSection("bookings")}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary"
+                className="group flex flex-col p-4 text-left transition-colors hover:bg-secondary/50"
               >
-                <Inbox className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
-                <span className="flex-1 text-[12px] text-foreground/70">Bookings</span>
-                {hasBooking ? (
-                  <span className="text-[10px] text-accent/60">Active</span>
+                <p className="mb-2.5 text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+                  Latest Booking
+                </p>
+                {homeBooking === "loading" ? (
+                  <p className="text-[13px] font-medium text-muted-foreground/25">Loading…</p>
+                ) : homeBooking && typeof homeBooking === "object" ? (
+                  <>
+                    <p className="text-[15px] font-black leading-tight text-foreground/90">
+                      {homeBooking.fullName}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">
+                      {[homeBooking.city, homeBooking.eventDate].filter(Boolean).join(" · ")}
+                    </p>
+                    <span
+                      className={cn(
+                        "mt-1 text-[9px] font-bold uppercase tracking-[0.12em]",
+                        bookingBadgeClass(homeBooking.status),
+                      )}
+                    >
+                      ● {homeBooking.status}
+                    </span>
+                    <p className="mt-auto pt-3 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
+                      View all bookings →
+                    </p>
+                  </>
                 ) : (
-                  <span className="text-[10px] text-muted-foreground/35">—</span>
+                  <>
+                    <p className="text-[13px] font-medium text-muted-foreground/30">No booking requests</p>
+                    <p className="mt-auto pt-2 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
+                      Configure booking →
+                    </p>
+                  </>
                 )}
               </button>
+
+              {/* Active / Next Tour */}
+              <button
+                type="button"
+                onClick={() => setActiveSection("tours")}
+                className="group flex flex-col p-4 text-left transition-colors hover:bg-secondary/50"
+              >
+                <p className="mb-2.5 text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+                  {activeTour ? "Active Tour" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
+                </p>
+                {!toursLoaded ? (
+                  <p className="text-[13px] font-medium text-muted-foreground/25">Loading…</p>
+                ) : displayTour ? (
+                  <>
+                    <p className="text-[15px] font-black leading-tight text-foreground/90">
+                      {displayTour.name}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">
+                      {fmtDateRange(displayTour.startDate, displayTour.endDate)}
+                    </p>
+                    {activeTour && (
+                      <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-accent/60">
+                        ● On tour
+                      </span>
+                    )}
+                    <p className="mt-auto pt-3 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
+                      View tour →
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[13px] font-medium text-muted-foreground/30">No active tour</p>
+                    <p className="mt-auto pt-2 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
+                      Create a tour →
+                    </p>
+                  </>
+                )}
+              </button>
+
             </div>
           </div>
-
         </div>
 
-        {/* ── Quick actions ────────────────────────────────────────── */}
-        <div>
-          <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
-            Quick Actions
+        {/* ── Content Pulse ────────────────────────────────────────── */}
+        <div className="py-5">
+          <p className="mb-3 text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+            Content
           </p>
-          <div className="flex flex-wrap gap-2">
-            {quickActions.map(({ label, section }) => (
+          <div className="flex flex-wrap items-stretch">
+            {contentRail.map(({ label, count, section }, i) => (
+              <div key={section} className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="flex items-baseline gap-1.5 rounded-lg px-3 py-2 transition-colors hover:bg-secondary"
+                >
+                  <span className="text-[24px] font-black tabular-nums leading-none text-foreground/85">
+                    {count}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/38">
+                    {label}
+                  </span>
+                </button>
+                {i < contentRail.length - 1 && (
+                  <span className="select-none text-muted-foreground/15">·</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Command Dock ─────────────────────────────────────────── */}
+        <div className="pt-5">
+          <p className="mb-3 text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+            Command
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {commandDock.map(({ label, section, Icon }) => (
               <button
                 key={section}
                 type="button"
                 onClick={() => setActiveSection(section)}
-                className="rounded-lg border border-border bg-card px-3.5 py-2 text-[12px] font-medium text-foreground/65 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-[11px] font-medium text-foreground/55 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
               >
+                <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
                 {label}
               </button>
             ))}
@@ -2681,9 +2799,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               href={publicProfileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-[12px] font-medium text-foreground/65 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-[11px] font-medium text-foreground/55 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
             >
-              View Site <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
+              View Site
             </a>
           </div>
         </div>
