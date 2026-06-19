@@ -3372,6 +3372,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           </div>
 
+        </div>{/* end ROW 2 */}
+
+        {/* ROW 3: Publish Status + Command Dock */}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+
           {/* ── 5. PUBLISH SIGNAL BOARD ───────────────────────────────── */}
           <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
             <div
@@ -3524,7 +3529,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           </div>
 
-        </div>
+        </div>{/* end ROW 3 */}
+
+        </div>{/* end command layout */}
       </div>
     )
   }
