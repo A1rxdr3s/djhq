@@ -3179,7 +3179,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </span>
               <button
                 type="button"
-                onClick={() => setActiveSection(homeContentTab === "recent" ? "releases" : homeContentTab)}
+                onClick={() => setActiveSection(homeContentTab)}
                 className="text-[9px] font-semibold transition-opacity hover:opacity-70"
                 style={{ color: "rgba(255,255,255,0.22)" }}
               >
