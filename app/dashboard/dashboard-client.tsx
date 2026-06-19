@@ -9425,7 +9425,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       </header>
 
       {/* ── Body ────────────────────────────────────────────────────── */}
-      <div className="mx-auto flex max-w-[1600px]">
+      {/* Full-width flex — sidebar must stay at x=0 to align with the header spine cap.
+          Max-width is applied to the content area only, not this wrapper. */}
+      <div className="flex">
 
         {/* ── Control Spine ───────────────────────────────────────────
              Dark near-black navigation rail — the studio console aesthetic.
@@ -9532,8 +9534,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             ))}
           </div>
 
-          {/* Active section */}
-          {renderActiveSection()}
+          {/* Active section — max-width keeps content readable on ultra-wide screens */}
+          <div className="mx-auto max-w-[1404px]">
+            {renderActiveSection()}
+          </div>
         </div>
       </div>
 
