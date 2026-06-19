@@ -3035,26 +3035,37 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </>
                 )}
 
-                {/* Base route line */}
-                {tcStripPts.length > 1 && (
-                  <line
-                    x1={tcXOf(0)} y1={15}
-                    x2={tcXOf(tcStripPts.length - 1)} y2={15}
-                    stroke="rgba(255,255,255,0.09)"
-                    strokeWidth="1"
-                  />
-                )}
-
-                {/* Progress overlay — green segment up to active stop */}
-                {tcStripPts.length > 1 && tcNextIdx > 0 && (
-                  <line
-                    x1={tcXOf(0)} y1={15}
-                    x2={tcXOf(tcNextIdx)} y2={15}
-                    stroke="oklch(0.75 0.18 160)"
-                    strokeWidth="1"
-                    style={{ opacity: 0.40 }}
-                  />
-                )}
+                {/* Segmented routing path — one leg per stop pair */}
+                {tcStripPts.length > 1 && tcStripPts.slice(0, -1).map((pt, i) => {
+                  const next = tcStripPts[i + 1]!
+                  const segIsPast = pt.isPast && next.isPast
+                  const segIsActive = tcNextIdx > 0 && i === tcNextIdx - 1
+                  const x1 = tcXOf(i)
+                  const x2 = tcXOf(i + 1)
+                  const mx = (x1 + x2) / 2
+                  const segColor = segIsPast
+                    ? "rgba(255,255,255,0.13)"
+                    : segIsActive
+                      ? "oklch(0.75 0.18 160)"
+                      : "rgba(255,255,255,0.20)"
+                  return (
+                    <g key={`leg-${pt.id}`}>
+                      <line
+                        x1={x1} y1={15} x2={x2} y2={15}
+                        stroke={segColor}
+                        strokeWidth={segIsActive ? "1" : "0.8"}
+                        strokeDasharray={segIsPast ? "1.5 5" : segIsActive ? "6 2.5" : "4 4"}
+                        style={{ opacity: segIsPast ? 0.7 : segIsActive ? 0.52 : 0.30 }}
+                      />
+                      <polygon
+                        points="-3,-1.8 3,0 -3,1.8"
+                        transform={`translate(${mx},15)`}
+                        fill={segColor}
+                        style={{ opacity: segIsPast ? 0.28 : segIsActive ? 0.55 : 0.20 }}
+                      />
+                    </g>
+                  )
+                })}
 
                 {/* Stop dots + city codes */}
                 {tcStripPts.map((pt, i) => {
