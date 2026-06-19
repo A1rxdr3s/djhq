@@ -2519,292 +2519,691 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         : null
     const displayTour = activeTour ?? nearestUpcomingTour
 
-    function fmtDate(dateStr: string): string {
-      const d = new Date(dateStr + "T00:00:00")
-      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+    // Shows within the active/next tour date window
+    const tourShows = displayTour
+      ? futureShows
+          .filter((g) => g.date >= displayTour.startDate && g.date <= displayTour.endDate)
+          .slice(0, 6)
+      : []
+
+    // Days until next show
+    let daysUntilShow: number | null = null
+    if (nextShow?.date) {
+      const diff = new Date(nextShow.date + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()
+      daysUntilShow = Math.ceil(diff / 86400000)
+    }
+
+    // Booking pipeline counts from homeLeads
+    const bookingCounts = {
+      new:       homeLeads.filter((l) => l.status === "new").length,
+      contacted: homeLeads.filter((l) => l.status === "contacted").length,
+      qualified: homeLeads.filter((l) => l.status === "qualified").length,
+      confirmed: homeLeads.filter((l) => l.status === "confirmed").length,
+    }
+    const recentLeads = homeLeads.slice(0, 4)
+
+    function fmtShort(dateStr: string): string {
+      return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
     }
     function fmtDateRange(s: string, e: string): string {
       const sd = new Date(s + "T00:00:00")
       const ed = new Date(e + "T00:00:00")
-      const sf = sd.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-      const ef = ed.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: sd.getFullYear() !== ed.getFullYear() ? "numeric" : undefined,
-      })
-      return `${sf} – ${ef}`
+      return `${sd.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${ed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: sd.getFullYear() !== ed.getFullYear() ? "numeric" : undefined })}`
     }
-    function bookingBadgeClass(status: string): string {
-      const map: Record<string, string> = {
-        new: "text-accent",
-        contacted: "text-blue-500/70",
-        qualified: "text-amber-500/70",
-        confirmed: "text-emerald-500/70",
-        declined: "text-muted-foreground/35",
+    function leadStatusColor(status: string): string {
+      const m: Record<string, string> = {
+        new: "oklch(0.75 0.18 160)",
+        contacted: "#60a5fa",
+        qualified: "#fbbf24",
+        confirmed: "#34d399",
+        declined: "rgba(255,255,255,0.22)",
       }
-      return map[status] ?? "text-muted-foreground/35"
+      return m[status] ?? "rgba(255,255,255,0.22)"
     }
 
-    const contentRail = [
-      { label: "Releases", count: releases.length,     section: "releases" },
-      { label: "Shows",    count: upcomingGigs.length,  section: "shows"    },
-      { label: "Sets",     count: djSets.length,        section: "sets"     },
-      { label: "Videos",   count: videos.length,        section: "media"    },
-      { label: "Gallery",  count: galleryImages.length, section: "gallery"  },
+    const publishChecks = [
+      { label: "Profile published",   ok: artist.isPublished,            sub: artist.isPublished ? "Public profile is live" : "Profile is in draft" },
+      { label: "Booking configured",  ok: !!artist.bookingInfo.email,    sub: artist.bookingInfo.email || "No booking email configured" },
+      { label: "Press kit ready",     ok: artist.pressKit.enabled,       sub: artist.pressKit.enabled ? "Downloadable on site" : "Press kit not enabled" },
+      { label: "Domain connected",    ok: hasActiveDomain,               sub: (hasActiveDomain && activeDomain) ? activeDomain.domain : "Using DJHQ default domain" },
     ]
 
-    const commandDock = [
-      { label: "Add Show",     section: "shows",    Icon: Calendar   },
-      { label: "Add Set",      section: "sets",     Icon: Headphones },
-      { label: "Add Video",    section: "media",    Icon: Play       },
-      { label: "Add Release",  section: "releases", Icon: Disc3      },
-      { label: "Create Tour",  section: "tours",    Icon: Route      },
-      { label: "Edit Profile", section: "profile",  Icon: User       },
+    const quickActions = [
+      { label: "Add Show",     Icon: Calendar,    sec: "shows"    },
+      { label: "Create Tour",  Icon: Route,       sec: "tours"    },
+      { label: "Add Set",      Icon: Headphones,  sec: "sets"     },
+      { label: "Edit Profile", Icon: User,        sec: "profile"  },
+      { label: "Add Video",    Icon: Play,        sec: "media"    },
+      { label: "Add Release",  Icon: Disc3,       sec: "releases" },
     ]
+
+    const panelCls = "overflow-hidden rounded-xl"
+    const panelSty: React.CSSProperties = { backgroundColor: "#101010", border: "1px solid rgba(255,255,255,0.07)" }
+    const dimLabelSty: React.CSSProperties = { color: "rgba(255,255,255,0.28)" }
 
     return (
-      <div>
+      <div className="space-y-4">
 
-        {/* ── IDENTITY HEADER — editorial, direct on canvas, no card ─────── */}
-        <div className="border-b border-border pb-7">
-          <div className="flex items-start justify-between gap-6">
-            <div>
-              <h1 className="text-[40px] font-black uppercase leading-[0.9] tracking-[-0.025em] text-foreground sm:text-[52px]">
-                {artist.artistName}
-              </h1>
-              <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
-                <span className="font-mono text-[11px] text-muted-foreground/38">/{artist.handle}</span>
-                {hasActiveDomain && activeDomain && (
-                  <>
-                    <span className="text-muted-foreground/20">·</span>
-                    <span className="font-mono text-[11px] text-accent/42">{activeDomain.domain}</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="shrink-0 text-right">
-              <div
-                className={cn(
-                  "inline-flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.06em]",
-                  artist.isPublished ? "text-accent" : "text-muted-foreground/35",
-                )}
+        {/* ── IDENTITY HEADER ─────────────────────────────────────────── */}
+        <div
+          className="flex items-start justify-between gap-4 pb-5"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <div>
+            <h1 className="text-[36px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[44px]">
+              {artist.artistName}
+            </h1>
+            <div className="mt-2.5 flex flex-wrap items-center gap-3">
+              <span
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold"
+                style={{ color: artist.isPublished ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.28)" }}
               >
                 <span
-                  className={cn(
-                    "h-2 w-2 rounded-full",
-                    artist.isPublished ? "animate-pulse bg-accent" : "bg-muted-foreground/22",
-                  )}
+                  className={artist.isPublished ? "animate-pulse" : ""}
+                  style={{
+                    display: "inline-block",
+                    width: 6, height: 6, borderRadius: "50%",
+                    backgroundColor: artist.isPublished ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.18)",
+                  }}
                 />
-                {artist.isPublished ? "Live" : "Draft"}
-              </div>
-              <div className="mt-1.5">
-                <a
-                  href={publicProfileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] text-muted-foreground/32 underline-offset-2 transition-colors hover:text-foreground/55 hover:underline"
-                >
-                  {publicProfileUrl} ↗
-                </a>
-              </div>
-              {isSaveDirty && (
-                <div className="mt-1.5 flex items-center justify-end gap-1.5">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
-                  <button
-                    type="button"
-                    onClick={() => void handleSaveChanges()}
-                    className="text-[11px] font-semibold text-amber-700/70 hover:text-amber-700 hover:underline"
+                {artist.isPublished ? "Published" : "Draft"}
+              </span>
+              {hasActiveDomain && activeDomain && (
+                <>
+                  <span style={{ color: "rgba(255,255,255,0.14)" }}>·</span>
+                  <span
+                    className="inline-flex items-center gap-1.5 text-[11px] font-medium"
+                    style={{ color: "oklch(0.75 0.18 160)", opacity: 0.70 }}
                   >
-                    Unsaved — save now
-                  </button>
-                </div>
+                    <span
+                      className="animate-pulse"
+                      style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }}
+                    />
+                    Site live
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,0.14)" }}>·</span>
+                  <span className="font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    {activeDomain.domain}
+                  </span>
+                </>
+              )}
+              {!hasActiveDomain && (
+                <>
+                  <span style={{ color: "rgba(255,255,255,0.14)" }}>·</span>
+                  <span className="font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                    /{artist.handle}
+                  </span>
+                </>
               )}
             </div>
           </div>
-        </div>
 
-        {/* ── OPERATIONS — 3 modules, NO card/box, just editorial columns ── */}
-        <div className="border-b border-border py-7">
-          <p className="mb-5 text-[8px] font-black uppercase tracking-[0.32em] text-muted-foreground/22">
-            Operations
-          </p>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border">
-
-            {/* Next Show */}
-            <button
-              type="button"
-              onClick={() => setActiveSection("shows")}
-              className="group text-left sm:pr-8"
-            >
-              <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em] text-muted-foreground/28">
-                Next Show
-              </p>
-              {nextShow ? (
-                <>
-                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-accent/65">
-                    {fmtDate(nextShow.date)}
-                  </p>
-                  <p className="mt-1 text-[22px] font-black leading-tight tracking-tight text-foreground/90">
-                    {nextShow.eventName ?? nextShow.venue}
-                  </p>
-                  {(nextShow.eventName ? nextShow.venue : null) ?? nextShow.city ? (
-                    <p className="mt-0.5 text-[12px] text-muted-foreground/38">
-                      {[nextShow.eventName ? nextShow.venue : null, nextShow.city]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  ) : null}
-                  <p className="mt-5 text-[10px] text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/55">
-                    {futureShows.length} show{futureShows.length !== 1 ? "s" : ""} scheduled →
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-[15px] font-medium text-muted-foreground/25">No upcoming shows</p>
-                  <p className="mt-4 text-[10px] text-muted-foreground/22 transition-colors group-hover:text-muted-foreground/50">
-                    Add first show →
-                  </p>
-                </>
-              )}
-            </button>
-
-            {/* Latest Booking */}
-            <button
-              type="button"
-              onClick={() => setActiveSection("bookings")}
-              className="group text-left sm:px-8"
-            >
-              <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em] text-muted-foreground/28">
-                Latest Booking
-              </p>
-              {homeBooking === "loading" ? (
-                <p className="text-[15px] font-medium text-muted-foreground/25">Loading…</p>
-              ) : homeBooking && typeof homeBooking === "object" ? (
-                <>
-                  <p className="text-[22px] font-black leading-tight tracking-tight text-foreground/90">
-                    {homeBooking.fullName}
-                  </p>
-                  <p className="mt-0.5 text-[12px] text-muted-foreground/38">
-                    {[homeBooking.city, homeBooking.eventDate].filter(Boolean).join(" · ")}
-                  </p>
-                  <span
-                    className={cn(
-                      "mt-1.5 inline-flex text-[9px] font-black uppercase tracking-[0.16em]",
-                      bookingBadgeClass(homeBooking.status),
-                    )}
-                  >
-                    ● {homeBooking.status}
-                  </span>
-                  <p className="mt-5 text-[10px] text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/55">
-                    View all bookings →
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-[15px] font-medium text-muted-foreground/25">No requests yet</p>
-                  <p className="mt-4 text-[10px] text-muted-foreground/22 transition-colors group-hover:text-muted-foreground/50">
-                    Configure booking →
-                  </p>
-                </>
-              )}
-            </button>
-
-            {/* Active / Next Tour */}
-            <button
-              type="button"
-              onClick={() => setActiveSection("tours")}
-              className="group text-left sm:pl-8"
-            >
-              <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em] text-muted-foreground/28">
-                {activeTour ? "Active Tour" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
-              </p>
-              {!toursLoaded ? (
-                <p className="text-[15px] font-medium text-muted-foreground/25">Loading…</p>
-              ) : displayTour ? (
-                <>
-                  <p className="text-[22px] font-black leading-tight tracking-tight text-foreground/90">
-                    {displayTour.name}
-                  </p>
-                  <p className="mt-0.5 text-[12px] text-muted-foreground/38">
-                    {fmtDateRange(displayTour.startDate, displayTour.endDate)}
-                  </p>
-                  {activeTour && (
-                    <span className="mt-1.5 inline-flex text-[9px] font-black uppercase tracking-[0.16em] text-accent/65">
-                      ● On tour
-                    </span>
-                  )}
-                  <p className="mt-5 text-[10px] text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/55">
-                    View tour →
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-[15px] font-medium text-muted-foreground/25">No active tour</p>
-                  <p className="mt-4 text-[10px] text-muted-foreground/22 transition-colors group-hover:text-muted-foreground/50">
-                    Create a tour →
-                  </p>
-                </>
-              )}
-            </button>
-
-          </div>
-        </div>
-
-        {/* ── CONTENT PULSE — editorial counter strip ───────────────────── */}
-        <div className="border-b border-border py-5">
-          <div className="flex flex-wrap items-stretch">
-            {contentRail.map(({ label, count, section }, i) => (
-              <div key={section} className="flex items-center">
-                <button
-                  type="button"
-                  onClick={() => setActiveSection(section)}
-                  className="group flex items-baseline gap-1.5 rounded-xl px-4 py-2.5 transition-colors hover:bg-secondary"
-                >
-                  <span className="text-[30px] font-black tabular-nums leading-none text-foreground/80">
-                    {count}
-                  </span>
-                  <span className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/32 transition-colors group-hover:text-muted-foreground/60">
-                    {label}
-                  </span>
-                </button>
-                {i < contentRail.length - 1 && (
-                  <span className="select-none text-[20px] leading-none text-muted-foreground/12">·</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── COMMAND DOCK ──────────────────────────────────────────────── */}
-        <div className="pt-5">
-          <p className="mb-3 text-[8px] font-black uppercase tracking-[0.32em] text-muted-foreground/22">
-            Command
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {commandDock.map(({ label, section, Icon }) => (
-              <button
-                key={section}
-                type="button"
-                onClick={() => setActiveSection(section)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-[11px] font-medium text-foreground/55 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
-              >
-                <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
-                {label}
-              </button>
-            ))}
+          <div className="flex shrink-0 flex-col items-end gap-2">
             <a
               href={publicProfileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-[11px] font-medium text-foreground/55 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors hover:opacity-80"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.06)",
+                color: "rgba(255,255,255,0.55)",
+                border: "1px solid rgba(255,255,255,0.09)",
+              }}
             >
-              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
+              <ExternalLink className="h-3 w-3" />
               View Site
             </a>
+            {isSaveDirty && (
+              <button
+                type="button"
+                onClick={() => void handleSaveChanges()}
+                className="flex items-center gap-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                style={{ color: "#fbbf24" }}
+              >
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
+                Unsaved — save now
+              </button>
+            )}
           </div>
         </div>
 
+        {/* ── COMMAND GRID — 2-column dense module layout ─────────────── */}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+
+          {/* ── 1. NEXT SHOW ─────────────────────────────────────────── */}
+          <button
+            type="button"
+            onClick={() => setActiveSection("shows")}
+            className={cn(panelCls, "group relative flex min-h-[230px] flex-col justify-end p-5 text-left")}
+            style={panelSty}
+          >
+            {/* Hero background — artist image with cinematic dark overlay */}
+            {artist.heroImageUrl && (
+              <div className="absolute inset-0 overflow-hidden rounded-xl">
+                <Image
+                  src={artist.heroImageUrl}
+                  alt=""
+                  fill
+                  className="object-cover opacity-[0.22] transition-opacity duration-500 group-hover:opacity-[0.28]"
+                  sizes="640px"
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: "linear-gradient(to top, #0d0d0d 45%, rgba(0,0,0,0.5) 100%)" }}
+                />
+              </div>
+            )}
+            <div className="relative">
+              <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+                Next Show
+              </p>
+              {nextShow ? (
+                <>
+                  {daysUntilShow !== null && (
+                    <div
+                      className="mb-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                      style={{ backgroundColor: "rgba(100,215,140,0.10)", border: "1px solid rgba(100,215,140,0.18)" }}
+                    >
+                      <span
+                        className="animate-pulse"
+                        style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }}
+                      />
+                      <span
+                        className="text-[9px] font-black uppercase tracking-[0.14em]"
+                        style={{ color: "oklch(0.75 0.18 160)" }}
+                      >
+                        In {daysUntilShow} {daysUntilShow === 1 ? "day" : "days"}
+                      </span>
+                    </div>
+                  )}
+                  <h2 className="text-[24px] font-black leading-tight text-white">
+                    {nextShow.eventName ?? nextShow.venue}
+                  </h2>
+                  <div
+                    className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px]"
+                    style={{ color: "rgba(255,255,255,0.48)" }}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3" />
+                      {fmtShort(nextShow.date)}
+                    </span>
+                    {nextShow.eventName && nextShow.venue && (
+                      <>
+                        <span style={{ color: "rgba(255,255,255,0.20)" }}>·</span>
+                        <span>{nextShow.venue}</span>
+                      </>
+                    )}
+                    {nextShow.city && (
+                      <>
+                        <span style={{ color: "rgba(255,255,255,0.20)" }}>·</span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-2.5 w-2.5" />
+                          {nextShow.city}, {nextShow.country}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <span
+                      className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-opacity group-hover:opacity-90"
+                      style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#0a0a0a" }}
+                    >
+                      View Shows →
+                    </span>
+                    {futureShows.length > 1 && (
+                      <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.30)" }}>
+                        +{futureShows.length - 1} more scheduled
+                      </span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col">
+                  <p className="text-[18px] font-medium" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    No upcoming shows
+                  </p>
+                  <p className="mt-3 text-[11px] transition-colors group-hover:opacity-70" style={{ color: "rgba(255,255,255,0.20)" }}>
+                    Add your first show →
+                  </p>
+                </div>
+              )}
+            </div>
+          </button>
+
+          {/* ── 2. BOOKING REQUESTS ──────────────────────────────────── */}
+          <button
+            type="button"
+            onClick={() => setActiveSection("bookings")}
+            className={cn(panelCls, "flex flex-col p-5 text-left")}
+            style={panelSty}
+          >
+            <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+              Booking Requests
+            </p>
+
+            {homeBooking === "loading" ? (
+              <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.22)" }}>Loading…</p>
+            ) : homeLeads.length > 0 ? (
+              <>
+                {/* Status pipeline */}
+                <div
+                  className="mb-4 grid grid-cols-4 overflow-hidden rounded-lg"
+                  style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  {([
+                    { key: "new",       label: "New",       count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
+                    { key: "contacted", label: "Contacted", count: bookingCounts.contacted, color: "#60a5fa" },
+                    { key: "qualified", label: "Qualified", count: bookingCounts.qualified, color: "#fbbf24" },
+                    { key: "confirmed", label: "Confirmed", count: bookingCounts.confirmed, color: "#34d399" },
+                  ] as const).map((s, i) => (
+                    <div
+                      key={s.key}
+                      className={`px-2.5 py-2.5${i > 0 ? " border-l" : ""}`}
+                      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+                    >
+                      <div className="text-[22px] font-black tabular-nums leading-none text-white">{s.count}</div>
+                      <div
+                        className="mt-1 text-[8px] font-bold uppercase tracking-[0.14em]"
+                        style={{ color: s.count > 0 ? s.color : "rgba(255,255,255,0.20)" }}
+                      >
+                        {s.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Recent leads */}
+                <div className="flex-1 space-y-1">
+                  {recentLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="flex items-center justify-between rounded-lg px-3 py-2"
+                      style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
+                    >
+                      <div className="min-w-0">
+                        <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.80)" }}>
+                          {lead.fullName}
+                        </span>
+                        <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.30)" }}>
+                          {[lead.city, lead.eventDate].filter(Boolean).join(" · ")}
+                        </span>
+                      </div>
+                      <span
+                        className="ml-2 shrink-0 text-[8px] font-black uppercase tracking-[0.12em]"
+                        style={{ color: leadStatusColor(lead.status) }}
+                      >
+                        {lead.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col justify-center py-4">
+                <p className="text-[15px] font-medium" style={{ color: "rgba(255,255,255,0.22)" }}>
+                  No booking requests yet
+                </p>
+                <p className="mt-2 text-[11px]" style={{ color: "rgba(255,255,255,0.16)" }}>
+                  Share your profile to start receiving inquiries
+                </p>
+              </div>
+            )}
+            <div className="mt-4 text-[10px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+              View all requests →
+            </div>
+          </button>
+
+          {/* ── 3. TOUR PLANNER / TOUR CONTROL ───────────────────────── */}
+          <button
+            type="button"
+            onClick={() => setActiveSection("tours")}
+            className={cn(panelCls, "flex flex-col p-5 text-left")}
+            style={panelSty}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+                {activeTour ? "Tour Control" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
+              </p>
+              {activeTour && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em]"
+                  style={{ backgroundColor: "rgba(100,215,140,0.10)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.18)" }}
+                >
+                  <span
+                    className="animate-pulse"
+                    style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }}
+                  />
+                  On Tour
+                </span>
+              )}
+            </div>
+
+            {!toursLoaded ? (
+              <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.22)" }}>Loading…</p>
+            ) : displayTour ? (
+              <>
+                <h3 className="text-[22px] font-black leading-tight text-white">{displayTour.name}</h3>
+                <p className="mt-1 text-[11px]" style={{ color: "rgba(255,255,255,0.38)" }}>
+                  {fmtDateRange(displayTour.startDate, displayTour.endDate)}
+                  {tourShows.length > 0 && (
+                    <> · {tourShows.length} show{tourShows.length !== 1 ? "s" : ""}</>
+                  )}
+                </p>
+                {tourShows.length > 0 && (
+                  <div className="mt-4 space-y-1">
+                    {tourShows.map((show) => (
+                      <div
+                        key={show.id}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2"
+                        style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
+                      >
+                        <span
+                          className="w-10 shrink-0 text-[9px] font-bold tabular-nums"
+                          style={{ color: "oklch(0.75 0.18 160)", opacity: 0.72 }}
+                        >
+                          {fmtShort(show.date)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.80)" }}>
+                            {show.city}
+                          </span>
+                          <span className="truncate text-[10px]" style={{ color: "rgba(255,255,255,0.30)" }}>
+                            {show.venue}
+                          </span>
+                        </div>
+                        <span
+                          className="shrink-0 text-[8px] font-bold uppercase tracking-[0.10em]"
+                          style={{ color: show.visibilityStatus === "announced" ? "#34d399" : "rgba(255,255,255,0.28)" }}
+                        >
+                          {show.visibilityStatus === "announced" ? "Confirmed" : (show.visibilityStatus ?? "—")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-4 text-[10px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                  View full tour →
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col justify-center py-4">
+                <p className="text-[15px] font-medium" style={{ color: "rgba(255,255,255,0.22)" }}>
+                  No active tour
+                </p>
+                <p className="mt-2 text-[11px]" style={{ color: "rgba(255,255,255,0.16)" }}>
+                  Create a tour to plan shows and routing
+                </p>
+                <div className="mt-4 text-[10px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                  Create tour →
+                </div>
+              </div>
+            )}
+          </button>
+
+          {/* ── 4. CONTENT STUDIO ────────────────────────────────────── */}
+          <div className={cn(panelCls, "flex flex-col p-5")} style={panelSty}>
+            <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+              Content Studio
+            </p>
+
+            {/* Tab strip */}
+            <div className="mb-3 flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {([
+                { label: "Releases", count: releases.length,      key: "releases" },
+                { label: "Shows",    count: upcomingGigs.length,  key: "shows"    },
+                { label: "Sets",     count: djSets.length,        key: "sets"     },
+                { label: "Videos",   count: videos.length,        key: "media"    },
+                { label: "Gallery",  count: galleryImages.length, key: "gallery"  },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setHomeContentTab(tab.key) }}
+                  className="shrink-0 rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-colors"
+                  style={
+                    homeContentTab === tab.key
+                      ? { backgroundColor: "rgba(100,215,140,0.10)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.18)" }
+                      : { backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }
+                  }
+                >
+                  {tab.label}{" "}
+                  <span style={{ opacity: 0.55 }}>{tab.count}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Content list */}
+            <div className="flex-1 space-y-1 overflow-y-auto">
+              {homeContentTab === "releases" && (
+                releases.length > 0
+                  ? releases.slice(0, 5).map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setActiveSection("releases")}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
+                      >
+                        {r.artworkUrl && (
+                          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
+                            <Image src={r.artworkUrl} alt={r.title} fill className="object-cover" sizes="32px" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.80)" }}>{r.title}</span>
+                          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.30)" }}>
+                            {r.type.toUpperCase()} · {r.releaseDate?.slice(0, 4)}
+                          </span>
+                        </div>
+                        <span
+                          className="shrink-0 text-[8px] font-bold uppercase tracking-[0.10em]"
+                          style={{ color: r.isFeatured ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.22)" }}
+                        >
+                          {r.isFeatured ? "Featured" : "Live"}
+                        </span>
+                      </button>
+                    ))
+                  : <p className="py-6 text-center text-[12px]" style={{ color: "rgba(255,255,255,0.20)" }}>No releases yet</p>
+              )}
+              {homeContentTab === "shows" && (
+                upcomingGigs.length > 0
+                  ? upcomingGigs.slice(0, 5).map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => setActiveSection("shows")}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
+                      >
+                        <span className="w-12 shrink-0 text-[9px] font-bold tabular-nums" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.72 }}>
+                          {fmtShort(g.date)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.80)" }}>
+                            {g.eventName ?? g.venue}
+                          </span>
+                          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.30)" }}>{g.city}</span>
+                        </div>
+                      </button>
+                    ))
+                  : <p className="py-6 text-center text-[12px]" style={{ color: "rgba(255,255,255,0.20)" }}>No shows yet</p>
+              )}
+              {homeContentTab === "sets" && (
+                djSets.length > 0
+                  ? djSets.slice(0, 5).map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setActiveSection("sets")}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
+                      >
+                        <Headphones className="h-4 w-4 shrink-0" style={{ color: "rgba(255,255,255,0.22)" }} />
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.80)" }}>
+                            {s.titleOverride || s.event || s.venue || s.city || "DJ Set"}
+                          </span>
+                          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.30)" }}>
+                            {[s.setDate?.slice(0, 4), s.city || s.venue].filter(Boolean).join(" · ")}
+                          </span>
+                        </div>
+                        <span
+                          className="shrink-0 text-[8px] font-bold uppercase tracking-[0.10em]"
+                          style={{ color: s.isPublished ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.14)" }}
+                        >
+                          {s.isPublished ? "Live" : "Draft"}
+                        </span>
+                      </button>
+                    ))
+                  : <p className="py-6 text-center text-[12px]" style={{ color: "rgba(255,255,255,0.20)" }}>No sets yet</p>
+              )}
+              {homeContentTab === "media" && (
+                videos.length > 0
+                  ? videos.slice(0, 5).map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setActiveSection("media")}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
+                      >
+                        {(v.customThumbnailUrl || v.thumbnailUrl) && (
+                          <div className="relative h-8 w-12 shrink-0 overflow-hidden rounded-md">
+                            <Image
+                              src={v.customThumbnailUrl ?? v.thumbnailUrl ?? ""}
+                              alt={v.videoEvent || "Video"}
+                              fill
+                              className="object-cover"
+                              sizes="48px"
+                            />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.80)" }}>
+                            {v.videoEvent || v.venue || v.videoCity || v.title || "Video"}
+                          </span>
+                          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.30)" }}>
+                            {[v.videoDate?.slice(0, 4), v.videoCity].filter(Boolean).join(" · ")}
+                          </span>
+                        </div>
+                        <span
+                          className="shrink-0 text-[8px] font-bold uppercase tracking-[0.10em]"
+                          style={{ color: v.isPublished ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.14)" }}
+                        >
+                          {v.isPublished ? "Live" : "Draft"}
+                        </span>
+                      </button>
+                    ))
+                  : <p className="py-6 text-center text-[12px]" style={{ color: "rgba(255,255,255,0.20)" }}>No videos yet</p>
+              )}
+              {homeContentTab === "gallery" && (
+                galleryImages.length > 0
+                  ? (
+                      <div className="grid grid-cols-4 gap-1">
+                        {galleryImages.slice(0, 8).map((img) => (
+                          <button
+                            key={img.id}
+                            type="button"
+                            onClick={() => setActiveSection("gallery")}
+                            className="relative aspect-square overflow-hidden rounded-md transition-opacity hover:opacity-80"
+                          >
+                            <Image
+                              src={img.imageUrl}
+                              alt={img.altText}
+                              fill
+                              className="object-cover"
+                              style={{ opacity: 0.72 }}
+                              sizes="80px"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  : <p className="py-6 text-center text-[12px]" style={{ color: "rgba(255,255,255,0.20)" }}>No gallery images yet</p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection(homeContentTab)}
+              className="mt-4 text-[10px] transition-opacity hover:opacity-70"
+              style={{ color: "rgba(255,255,255,0.22)" }}
+            >
+              Go to {homeContentTab} →
+            </button>
+          </div>
+
+          {/* ── 5. PUBLISH STATUS ─────────────────────────────────────── */}
+          <div className={cn(panelCls, "flex flex-col p-5")} style={panelSty}>
+            <p className="mb-4 text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+              Publish Status
+            </p>
+            <div className="space-y-2">
+              {publishChecks.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-start gap-3 rounded-lg px-3 py-2.5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
+                >
+                  <div
+                    className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: item.ok ? "rgba(100,215,140,0.15)" : "rgba(255,255,255,0.06)" }}
+                  >
+                    {item.ok ? (
+                      <Check className="h-2.5 w-2.5" style={{ color: "oklch(0.75 0.18 160)" }} />
+                    ) : (
+                      <span
+                        style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.20)" }}
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p
+                      className="text-[12px] font-semibold"
+                      style={{ color: item.ok ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.38)" }}
+                    >
+                      {item.label}
+                    </p>
+                    <p className="truncate text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                      {item.sub}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── 6. QUICK ACTIONS ──────────────────────────────────────── */}
+          <div className={cn(panelCls, "flex flex-col p-5")} style={panelSty}>
+            <p className="mb-4 text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+              Quick Actions
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {quickActions.map(({ label, Icon, sec }) => (
+                <button
+                  key={sec}
+                  type="button"
+                  onClick={() => setActiveSection(sec)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[11px] font-semibold transition-opacity hover:opacity-70"
+                  style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.28)" }} />
+                  {label}
+                </button>
+              ))}
+              <a
+                href={publicProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="col-span-2 flex items-center gap-2 rounded-lg px-3 py-2.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "rgba(100,215,140,0.07)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(100,215,140,0.14)" }}
+              >
+                <ExternalLink className="h-3.5 w-3.5 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.7 }} />
+                View Live Site
+              </a>
+            </div>
+          </div>
+
+        </div>
       </div>
     )
   }
@@ -8475,7 +8874,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   return (
-    <main className="djhq-dashboard min-h-screen">
+    <main className="djhq-hq min-h-screen">
 
       {/* ── HQ Status Bar ───────────────────────────────────────────────
            Split header: dark spine cap on left (matching control spine) +
@@ -8590,7 +8989,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* ── Control Spine ───────────────────────────────────────────
              Dark near-black navigation rail — the studio console aesthetic.
-             Inline style bypasses the .djhq-dashboard token overrides. */}
+             Inline style keeps this spine dark regardless of any parent token cascade. */}
         <aside
           className="hidden w-[196px] shrink-0 flex-col lg:flex"
           style={{ backgroundColor: "#0d0d0d" }}
