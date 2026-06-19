@@ -2919,12 +2919,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-5">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Links</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">
-            Only connected platforms appear on your public profile.
-          </p>
-        </div>
+        <HqPageHeader title="Links" description="Only connected platforms appear on your public profile." />
 
         {/* Summary card */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 px-4 py-3">
@@ -5877,12 +5872,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       <div className="space-y-5">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Press Kit</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground/55">
-            Manage your public EPK, downloads and press assets.
-          </p>
-        </div>
+        <HqPageHeader title="Press Kit" description="Manage your public EPK, downloads and press assets." />
 
         {/* ── 1. Public EPK ──────────────────────────────────────────────── */}
         <div className="rounded-xl border border-border bg-card/40 p-4">
@@ -6202,10 +6192,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function renderPublish() {
     return (
       <div className="space-y-6">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Publish</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Control whether your profile is visible to the public.</p>
-        </div>
+        <HqPageHeader title="Publish" description="Control whether your profile is visible to the public." />
         <div className="space-y-5 rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
           <div className="flex items-center gap-3">
             <span
@@ -6448,12 +6435,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-5">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Footer</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">
-            Configure the visual identity shown at the bottom of your artist profile.
-          </p>
-        </div>
+        <HqPageHeader title="Footer" description="Configure the visual identity shown at the bottom of your artist profile." />
 
         {/* Live preview — dark + light backgrounds */}
         <div className="overflow-hidden rounded-xl border border-border bg-card/30">
@@ -7751,10 +7733,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-5">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Hero</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Configure the hero section of your public profile — image, identity, copy and style.</p>
-        </div>
+        <HqPageHeader title="Hero" description="Configure the hero section of your public profile — image, identity, copy and style." />
 
         {/* ── Preset strip ── */}
         <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary px-3 py-1.5">
@@ -8089,10 +8068,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     if (!isPro) {
       return (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
-            <p className="mt-1 text-sm text-muted-foreground/60">Connect an apex domain you own to your DJHQ profile.</p>
-          </div>
+          <HqPageHeader title="Custom Domain" description="Connect an apex domain you own to your DJHQ profile." />
           <div className="rounded-xl border border-border bg-card/30 p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Pro feature</p>
             <h3 className="mt-2 text-sm font-semibold text-foreground">Available on Pro</h3>
