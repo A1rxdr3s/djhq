@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Instagram, Layers, Link2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, X, Youtube } from "lucide-react"
+import { ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -17,6 +17,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { GigCard } from "@/components/dashboard/gig-card"
 import { ShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
+import { BookingsSection } from "@/components/dashboard/bookings-section"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { brand } from "@/lib/brand"
@@ -374,6 +375,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Business",
     items: [
+      { id: "bookings",  label: "Bookings",  icon: Inbox },
       { id: "booking",   label: "Booking",   icon: Mail },
       { id: "press-kit", label: "Press Kit", icon: FileText },
       { id: "domain",    label: "Domain",    icon: Globe },
@@ -4925,6 +4927,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setPressKitAssets((current) => current.filter((_, i) => i !== index))
   }
 
+  function renderBookings() {
+    return <BookingsSection artistId={artist.id} />
+  }
+
   function renderBooking() {
     const emailInvalid = Boolean(bookingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingEmail))
     const bookingUrlInvalid = Boolean(bookingUrl && !bookingUrl.startsWith("http"))
@@ -7489,6 +7495,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderVideos()
       case "gallery":
         return renderGallery()
+      case "bookings":
+        return renderBookings()
       case "booking":
         return renderBooking()
       case "press-kit":

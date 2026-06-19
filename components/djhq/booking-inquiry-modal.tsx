@@ -408,6 +408,7 @@ export function BookingInquiryModal({
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   const [modalState, setModalState] = useState<ModalState>("idle")
   const [errorMessage, setErrorMessage] = useState("")
+  const [referenceId, setReferenceId] = useState<string | null>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -424,6 +425,7 @@ export function BookingInquiryModal({
       setForm(INITIAL_FORM)
       setModalState("idle")
       setErrorMessage("")
+      setReferenceId(null)
     }
   }
 
@@ -460,7 +462,7 @@ export function BookingInquiryModal({
         }),
       })
 
-      const data = (await response.json()) as { ok?: boolean; error?: string }
+      const data = (await response.json()) as { ok?: boolean; error?: string; referenceId?: string }
 
       if (!response.ok) {
         setErrorMessage(data.error ?? "Could not send inquiry. Please try again.")
@@ -468,6 +470,7 @@ export function BookingInquiryModal({
         return
       }
 
+      if (data.referenceId) setReferenceId(data.referenceId)
       setModalState("success")
     } catch {
       setErrorMessage("Could not send inquiry. Please try again.")
@@ -501,6 +504,7 @@ export function BookingInquiryModal({
               <SuccessScreen
                 artistName={artistName}
                 pressKitUrl={pressKitUrl}
+                referenceId={referenceId}
                 onClose={() => handleOpenChange(false)}
               />
             ) : (
@@ -700,10 +704,12 @@ export function BookingInquiryModal({
 function SuccessScreen({
   artistName,
   pressKitUrl,
+  referenceId,
   onClose,
 }: {
   artistName: string
   pressKitUrl?: string
+  referenceId: string | null
   onClose: () => void
 }) {
   return (
@@ -711,13 +717,18 @@ function SuccessScreen({
       <div className="flex h-14 w-14 items-center justify-center rounded-full border border-accent/20 bg-accent/10">
         <Check className="h-6 w-6 text-accent" />
       </div>
-      <div className="space-y-1.5">
-        <p className="text-base font-semibold uppercase tracking-[0.08em] text-foreground/85">
-          Booking request sent.
+      <div className="space-y-2">
+        <p className="text-base font-semibold text-foreground/85">Request received.</p>
+        <p className="max-w-[300px] text-[13px] leading-relaxed text-muted-foreground/55">
+          Your booking inquiry has been sent directly to the artist&apos;s team.
         </p>
-        <p className="max-w-[300px] text-[13px] leading-relaxed text-muted-foreground/60">
-          We&apos;ll get back to you within 24–48 hours.
-        </p>
+        {referenceId && (
+          <div className="mt-1 space-y-0.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Reference ID</p>
+            <p className="font-mono text-[13px] font-semibold text-accent/70">{referenceId}</p>
+          </div>
+        )}
+        <p className="pt-1 text-[11px] text-muted-foreground/30">Typical response time: 24–48 hours.</p>
       </div>
       <div className="flex flex-col items-center gap-2 pt-2">
         <button

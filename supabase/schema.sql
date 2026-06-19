@@ -460,6 +460,8 @@ create index if not exists admin_invitations_status_idx on public.admin_invitati
 
 -- ── booking_leads ─────────────────────────────────────────────────────────────
 
+create sequence if not exists booking_lead_ref_seq start 1;
+
 create table if not exists public.booking_leads (
   id                        uuid        primary key default gen_random_uuid(),
   artist_id                 uuid        not null references public.artists(id) on delete cascade,
@@ -471,15 +473,18 @@ create table if not exists public.booking_leads (
   event_date                date        not null,
   venue_or_promoter         text        not null,
   event_details             text        not null,
+  reference_id              text        unique not null
+    default 'DJHQ-' || to_char(now(), 'YYYY') || '-' || lpad(nextval('booking_lead_ref_seq')::text, 5, '0'),
   status                    text        not null default 'new',
   email_delivery_status     text        not null default 'pending',
   email_provider            text        null,
   email_provider_message_id text        null,
   email_error               text        null,
   created_at                timestamptz not null default now(),
+  updated_at                timestamptz null,
 
   constraint booking_leads_status_check check (
-    status in ('new', 'contacted', 'qualified', 'declined', 'converted')
+    status in ('new', 'contacted', 'qualified', 'confirmed', 'declined')
   ),
   constraint booking_leads_email_delivery_status_check check (
     email_delivery_status in ('pending', 'sent', 'failed')
@@ -488,6 +493,10 @@ create table if not exists public.booking_leads (
 
 create index if not exists booking_leads_artist_id_idx  on public.booking_leads (artist_id);
 create index if not exists booking_leads_created_at_idx on public.booking_leads (created_at desc);
+
+create or replace trigger booking_leads_updated_at
+  before update on public.booking_leads
+  for each row execute function public.set_updated_at();
 
 -- ── Row Level Security ───────────────────────────────────────────────────────
 -- Enable RLS on all tables

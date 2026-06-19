@@ -84,6 +84,7 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
 
     const bookingLeads: DbBookingLead[] = (leadRows ?? []).map((row) => ({
       id:                     row.id as string,
+      referenceId:            (row.reference_id as string) ?? "",
       artistId:               row.artist_id as string,
       artistHandle:           row.artist_handle as string,
       fullName:               row.full_name as string,
@@ -98,6 +99,7 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
       emailProviderMessageId: (row.email_provider_message_id as string) ?? null,
       emailError:             (row.email_error as string) ?? null,
       createdAt:              (row.created_at as string).slice(0, 10),
+      updatedAt:              row.updated_at ? (row.updated_at as string).slice(0, 10) : null,
     }))
 
     return {

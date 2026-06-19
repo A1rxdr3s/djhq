@@ -65,7 +65,7 @@ export const MOCK_BOOKING_LEADS: AdminBookingLead[] = [
   { id: "bl3", artistName: "NOCTURNO", requesterName: "Lucia Bertini", email: "lucia@club42.it", city: "Milan", eventType: "Club", eventDate: "2026-07-04", venueOrPromoter: "Club 42", status: "qualified", createdAt: "2026-06-10" },
   { id: "bl4", artistName: "PRIYA SHARMA", requesterName: "James Park", email: "james@roofkings.sg", city: "Singapore", eventType: "Rooftop", eventDate: "2026-07-19", venueOrPromoter: "Roof Kings SG", status: "new", createdAt: "2026-06-16" },
   { id: "bl5", artistName: "ANDRES:HERRERA", requesterName: "Carlos F.", email: "cfa@vip.ae", city: "Dubai", eventType: "Beach Club", eventDate: "2026-12-31", venueOrPromoter: "INDULGE Dubai", status: "declined", createdAt: "2026-06-01" },
-  { id: "bl6", artistName: "DELVAUX", requesterName: "Marie Collin", email: "m.collin@fuse.be", city: "Brussels", eventType: "Club", eventDate: "2026-08-02", venueOrPromoter: "Fuse Brussels", status: "converted", createdAt: "2026-05-28" },
+  { id: "bl6", artistName: "DELVAUX", requesterName: "Marie Collin", email: "m.collin@fuse.be", city: "Brussels", eventType: "Club", eventDate: "2026-08-02", venueOrPromoter: "Fuse Brussels", status: "confirmed", createdAt: "2026-05-28" },
 ]
 
 export const MOCK_PRESS_KIT_ACTIVITY: AdminPressKitActivity[] = [

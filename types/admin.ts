@@ -50,6 +50,7 @@ export type EmailDeliveryStatus = "pending" | "sent" | "failed"
 
 export interface DbBookingLead {
   id: string
+  referenceId: string
   artistId: string
   artistHandle: string
   fullName: string
@@ -64,6 +65,7 @@ export interface DbBookingLead {
   emailProviderMessageId: string | null
   emailError: string | null
   createdAt: string
+  updatedAt: string | null
 }
 
 export interface AdminRealData {
@@ -85,7 +87,7 @@ export type AdminPublishStatus = "published" | "draft" | "suspended"
 export type AdminInvitationStatus = "pending" | "accepted" | "expired" | "revoked"
 export type AdminSubscriptionStatus = "active" | "trialing" | "past_due" | "canceled" | "paused"
 export type AdminPaymentStatus = "paid" | "failed" | "refunded" | "pending"
-export type AdminBookingLeadStatus = "new" | "contacted" | "qualified" | "declined" | "converted"
+export type AdminBookingLeadStatus = "new" | "contacted" | "qualified" | "confirmed" | "declined"
 export type AdminTicketStatus = "open" | "in_progress" | "resolved"
 export type AdminTicketType = "payment_failed" | "upload_failed" | "profile_error" | "domain_issue" | "suspicious_activity" | "account_issue"
 
