@@ -3017,97 +3017,149 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Map + stop list */}
             <div className="flex flex-1">
               {/* 2D SVG map */}
-              <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "#070908", minHeight: 295 }}>
-                {/* Dot-grid texture */}
-                <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
+              <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "#06090a", minHeight: 295 }}>
+                {/* Single SVG layer: Europe silhouette + route overlay */}
+                <svg
+                  className="absolute inset-0 h-full w-full"
+                  viewBox="0 0 480 280"
+                  preserveAspectRatio="xMidYMid meet"
+                  aria-hidden="true"
+                >
                   <defs>
-                    <pattern id="tc-map-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                      <circle cx="1" cy="1" r="0.7" fill="rgba(100,215,140,0.06)" />
+                    <pattern id="tc-grid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+                      <circle cx="1" cy="1" r="0.6" fill="rgba(100,215,140,0.05)" />
                     </pattern>
+                    <filter id="tc-city-glow" x="-80%" y="-80%" width="260%" height="260%">
+                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                    </filter>
+                    <filter id="tc-route-glow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="2" result="blur" />
+                      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                    </filter>
                   </defs>
-                  <rect width="100%" height="100%" fill="url(#tc-map-dots)" />
-                </svg>
 
-                {/* Route visualization */}
-                {routePts.length > 0 ? (
-                  <svg
-                    className="absolute inset-0 h-full w-full"
-                    viewBox={`0 0 ${mapVbW} ${mapVbH}`}
-                    preserveAspectRatio="xMidYMid meet"
-                    aria-hidden="true"
-                  >
-                    {routePts.slice(0, -1).map((pt, i) => {
-                      const next = routePts[i + 1]!
-                      const cpx = (pt.x + next.x) / 2
-                      const cpy = Math.min(pt.y, next.y) - 30
-                      return (
-                        <path
-                          key={`rp-${pt.id}`}
-                          d={`M ${pt.x} ${pt.y} Q ${cpx} ${cpy} ${next.x} ${next.y}`}
-                          stroke={pt.isPast && next.isPast ? "rgba(255,255,255,0.06)" : "rgba(100,215,140,0.28)"}
-                          strokeWidth="1.5"
-                          strokeDasharray="8 5"
-                          fill="none"
-                        />
-                      )
-                    })}
-                    {routePts.map((pt) => (
-                      <g key={`rn-${pt.id}`}>
-                        {pt.isNext && (
-                          <circle cx={pt.x} cy={pt.y} r="16" fill="rgba(100,215,140,0.08)" />
-                        )}
-                        <circle
-                          cx={pt.x}
-                          cy={pt.y}
-                          r="5"
-                          fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.50)"}
-                          style={pt.isNext ? { filter: "drop-shadow(0 0 9px rgba(100,215,140,0.75))" } : {}}
-                        />
-                        <text
-                          x={pt.x}
-                          y={pt.y - 12}
-                          textAnchor="middle"
-                          fontSize="7.5"
-                          fontFamily="ui-monospace,monospace"
-                          fontWeight="700"
-                          letterSpacing="0.05em"
-                          fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.58)"}
-                        >
-                          {pt.city}
-                        </text>
-                      </g>
-                    ))}
-                  </svg>
-                ) : (
-                  /* Phantom map — no tour data */
-                  <svg
-                    className="absolute inset-0 h-full w-full"
-                    viewBox={`0 0 ${mapVbW} ${mapVbH}`}
-                    preserveAspectRatio="xMidYMid meet"
-                    aria-hidden="true"
-                  >
-                    {([
-                      [55, 78], [145, 44], [240, 108], [335, 54], [428, 98],
-                    ] as [number, number][]).map(([px, py], i, arr) => {
-                      const next = arr[i + 1]
-                      return (
-                        <g key={i}>
-                          <circle cx={px} cy={py} r="4" fill="rgba(255,255,255,0.05)" />
-                          {next && (
-                            <path
-                              d={`M ${px} ${py} Q ${(px + next[0]) / 2} ${Math.min(py, next[1]) - 22} ${next[0]} ${next[1]}`}
-                              stroke="rgba(255,255,255,0.04)"
-                              strokeWidth="1"
-                              strokeDasharray="5 4"
-                              fill="none"
-                            />
-                          )}
-                          <rect x={px - 10} y={py - 19} width="20" height="6" rx="1.5" fill="rgba(255,255,255,0.04)" />
-                        </g>
-                      )
-                    })}
-                  </svg>
-                )}
+                  {/* Dot-grid texture */}
+                  <rect width="480" height="280" fill="url(#tc-grid)" />
+
+                  {/* Europe silhouette — continental mainland */}
+                  <path
+                    d="M 34 250 Q 26 228 30 206 Q 36 188 42 182 L 68 180 L 99 183 Q 112 181 118 188 Q 126 182 135 177 L 157 176 Q 170 172 183 185 Q 198 182 212 175 Q 222 170 230 175 Q 242 179 246 193 Q 254 208 260 232 L 264 252 Q 268 253 274 242 L 285 205 Q 294 188 300 170 Q 308 158 316 150 Q 322 142 326 128 Q 326 116 316 112 Q 305 106 292 108 Q 280 94 268 88 Q 254 80 240 78 Q 226 72 215 64 Q 200 60 185 66 Q 174 72 162 82 L 148 102 Q 140 106 132 114 Q 112 114 95 128 Q 78 132 76 148 Q 78 162 80 174 Q 75 186 65 196 L 50 212 Q 40 228 34 250 Z"
+                    fill="#0d1511"
+                    stroke="rgba(255,255,255,0.07)"
+                    strokeWidth="0.8"
+                  />
+
+                  {/* Jutland peninsula */}
+                  <path
+                    d="M 215 64 Q 218 52 226 44 L 240 38 Q 250 42 258 52 Q 264 62 260 74 Q 252 78 240 78 Q 228 76 215 64 Z"
+                    fill="#0d1511"
+                    stroke="rgba(255,255,255,0.07)"
+                    strokeWidth="0.8"
+                  />
+
+                  {/* UK island */}
+                  <path
+                    d="M 140 103 Q 130 90 132 68 Q 128 50 118 42 Q 106 38 96 48 Q 85 55 80 68 Q 75 82 78 96 Q 82 108 92 118 Q 104 120 120 112 Q 132 108 140 103 Z"
+                    fill="#0d1511"
+                    stroke="rgba(255,255,255,0.07)"
+                    strokeWidth="0.8"
+                  />
+
+                  {/* Ireland */}
+                  <path
+                    d="M 86 78 Q 76 75 70 86 Q 65 97 70 108 Q 78 118 88 112 Q 96 106 93 95 Q 91 85 86 78 Z"
+                    fill="#0d1511"
+                    stroke="rgba(255,255,255,0.07)"
+                    strokeWidth="0.8"
+                  />
+
+                  {/* Route lines */}
+                  {routePts.length > 0 && routePts.slice(0, -1).map((pt, i) => {
+                    const next = routePts[i + 1]!
+                    const cpx = (pt.x + next.x) / 2
+                    const cpy = Math.min(pt.y, next.y) - 22
+                    const isPastSeg = pt.isPast && next.isPast
+                    return (
+                      <path
+                        key={`rp-${pt.id}`}
+                        d={`M ${pt.x} ${pt.y} Q ${cpx} ${cpy} ${next.x} ${next.y}`}
+                        stroke={isPastSeg ? "rgba(255,255,255,0.06)" : "oklch(0.75 0.18 160)"}
+                        strokeWidth={isPastSeg ? "1" : "1.5"}
+                        strokeDasharray="7 5"
+                        fill="none"
+                        filter={isPastSeg ? undefined : "url(#tc-route-glow)"}
+                        style={{ opacity: isPastSeg ? 0.4 : 0.65 }}
+                      />
+                    )
+                  })}
+
+                  {/* City markers */}
+                  {routePts.length > 0 && routePts.map((pt) => (
+                    <g key={`rn-${pt.id}`}>
+                      {pt.isNext && (
+                        <>
+                          <circle cx={pt.x} cy={pt.y} r="8" fill="none" stroke="oklch(0.75 0.18 160)" strokeWidth="0.8">
+                            <animate attributeName="r" values="8;22;8" dur="2.8s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.45;0;0.45" dur="2.8s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx={pt.x} cy={pt.y} r="14" fill="rgba(100,215,140,0.07)" />
+                        </>
+                      )}
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={pt.isNext ? 5.5 : 4}
+                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.40)"}
+                        filter={pt.isNext ? "url(#tc-city-glow)" : undefined}
+                      />
+                      <text
+                        x={pt.x}
+                        y={pt.y - 10}
+                        textAnchor="middle"
+                        fontSize="7"
+                        fontFamily="ui-monospace,monospace"
+                        fontWeight="700"
+                        letterSpacing="0.06em"
+                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.55)"}
+                      >
+                        {pt.city}
+                      </text>
+                    </g>
+                  ))}
+
+                  {/* Phantom city dots — shown when no tour is active */}
+                  {routePts.length === 0 && (
+                    <g style={{ opacity: 0.14 }}>
+                      {([
+                        [146, 231, "IBZ"],
+                        [155, 206, "BCN"],
+                        [157, 131, "PAR"],
+                        [184, 96,  "AMS"],
+                        [130, 105, "LON"],
+                      ] as [number, number, string][]).map(([px, py, label], i, arr) => {
+                        const next = arr[i + 1]
+                        return (
+                          <g key={label}>
+                            <circle cx={px} cy={py} r="3.5" fill="rgba(255,255,255,0.30)" />
+                            {next && (
+                              <path
+                                d={`M ${px} ${py} Q ${(px + next[0]) / 2} ${Math.min(py, next[1]) - 16} ${next[0]} ${next[1]}`}
+                                stroke="rgba(255,255,255,0.10)"
+                                strokeWidth="1"
+                                strokeDasharray="5 4"
+                                fill="none"
+                              />
+                            )}
+                            <text x={px} y={py - 8} textAnchor="middle" fontSize="6.5" fontFamily="ui-monospace,monospace" fontWeight="700" fill="rgba(255,255,255,0.35)">
+                              {label}
+                            </text>
+                          </g>
+                        )
+                      })}
+                    </g>
+                  )}
+                </svg>
 
                 {/* Zoom controls (decorative) */}
                 <div className="absolute bottom-3 left-3 flex flex-col gap-1" style={{ opacity: 0.28 }}>
@@ -3124,14 +3176,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 )}
                 {toursLoaded && !displayTour && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6">
-                    <Route className="h-7 w-7" style={{ color: "rgba(255,255,255,0.10)" }} />
-                    <p className="text-center text-[11px]" style={{ color: "rgba(255,255,255,0.22)" }}>
-                      No active tour<br />Create one to plot your route
+                  <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-1.5">
+                    <p className="text-center text-[10px]" style={{ color: "rgba(255,255,255,0.20)" }}>
+                      No active tour · Create one to plot your route
                     </p>
                   </div>
                 )}
               </div>
+
 
               {/* Stop list — right column */}
               {displayTour && tourShows.length > 0 && (
