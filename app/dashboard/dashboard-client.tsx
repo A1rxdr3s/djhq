@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, X, Youtube } from "lucide-react"
+import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -1198,6 +1198,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [importingDjSetIndex, setImportingDjSetIndex] = useState<number | null>(null)
   const [importingVideoIndex, setImportingVideoIndex] = useState<number | null>(null)
   const [uploadingVideoThumbnailIndex, setUploadingVideoThumbnailIndex] = useState<number | null>(null)
+  const [uploadingDjSetCoverIndex, setUploadingDjSetCoverIndex] = useState<number | null>(null)
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
   const [heroUploadStatus, setHeroUploadStatus] = useState<"idle" | "compressing" | "uploading">("idle")
   const isUploadingHeroImage = heroUploadStatus !== "idle"
@@ -1997,6 +1998,45 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setSaveMessage(message)
     } finally {
       setUploadingVideoThumbnailIndex(null)
+    }
+  }
+
+  async function handleUploadDjSetCover(index: number, file: File) {
+    const set = djSets[index]
+    if (!set) return
+
+    setUploadingDjSetCoverIndex(index)
+    setSaveMessage("")
+
+    try {
+      const compressedBlob = await compressGalleryImage(file)
+
+      const params = new URLSearchParams({ artistId: artist.id, setId: set.id })
+      const signedUrlResponse = await fetch(`/api/artists/set-cover?${params.toString()}`)
+      const signedUrlResult = await parseJsonResponse<{ error?: string; signedUrl?: string; token?: string; filePath?: string }>(signedUrlResponse)
+
+      if (!signedUrlResponse.ok || !signedUrlResult.signedUrl || !signedUrlResult.token || !signedUrlResult.filePath) {
+        throw new Error(signedUrlResult.error ?? "Unable to get upload URL.")
+      }
+
+      const { supabase: supabaseClient } = await import("@/lib/supabase/client")
+      const { error: uploadError } = await supabaseClient.storage
+        .from("artist-gallery")
+        .uploadToSignedUrl(signedUrlResult.filePath, signedUrlResult.token, compressedBlob, { contentType: "image/webp" })
+
+      if (uploadError) throw new Error(uploadError.message)
+
+      const { data: { publicUrl } } = supabaseClient.storage.from("artist-gallery").getPublicUrl(signedUrlResult.filePath)
+
+      setDjSets((current) =>
+        current.map((item, i) => (i === index ? { ...item, imageUrl: publicUrl } : item)),
+      )
+      setSaveMessage("Cover uploaded. Save to apply.")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to upload cover."
+      setSaveMessage(message)
+    } finally {
+      setUploadingDjSetCoverIndex(null)
     }
   }
 
@@ -3780,7 +3820,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
   function renderDjSets() {
-    const busy = isSaving || isPublishing || importingDjSetIndex !== null
+    const busy = isSaving || isPublishing || importingDjSetIndex !== null || uploadingDjSetCoverIndex !== null
 
     function formatDjSetDate(value: string): string {
       if (!value) return ""
@@ -4101,128 +4141,94 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
 
               {/* ── Scrollable body ────────────────────────────────────── */}
-              <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-                <div className="space-y-4">
+              <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-6">
+                <div className="space-y-8">
 
-                  {/* Performance type */}
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Type</p>
-                    <div className="flex w-fit flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
-                      {performanceTypes.map((type) => (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => handleTypeChange(expandedSetIdx, type)}
-                          disabled={busy}
-                          className={cn(
-                            "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
-                            expandedSet.performanceType === type
-                              ? "bg-secondary text-foreground/75"
-                              : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                  {/* ── Cover & Source ─────────────────────────────────── */}
+                  <div className="space-y-4">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Cover & Source</p>
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
+                      {/* Cover preview */}
+                      <div className="relative shrink-0">
+                        <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-secondary sm:h-[148px] sm:w-[148px]">
+                          {expandedSet.imageUrl?.trim() ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={expandedSet.imageUrl}
+                              alt="Set cover"
+                              className="h-full w-full object-cover object-top"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
+                              <Headphones className="h-7 w-7 text-muted-foreground/15" />
+                              <p className="text-center text-[10px] leading-tight text-muted-foreground/30">No cover selected</p>
+                            </div>
                           )}
-                        >
-                          {PERFORMANCE_TYPE_LABELS[type]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Artists */}
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</p>
-                    <div className="space-y-2">
-                      {expandedSet.performanceArtists.map((name, ai) => (
-                        <div key={ai} className="flex gap-2">
-                          <Input
-                            value={name}
-                            placeholder="Artist name"
-                            onChange={(e) => {
-                              const next = [...expandedSet.performanceArtists]
-                              next[ai] = e.target.value
-                              updateSet(expandedSetIdx, { performanceArtists: next })
-                            }}
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const next = expandedSet.performanceArtists.filter((_, j) => j !== ai)
-                              updateSet(expandedSetIdx, { performanceArtists: next.length > 0 ? next : [""] })
-                            }}
-                            disabled={expandedSet.performanceArtists.length <= 1 || busy}
-                            className="h-9 w-9 shrink-0 p-0 text-muted-foreground/40 hover:text-destructive"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {uploadingDjSetCoverIndex === expandedSetIdx && (
+                            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50">
+                              <Loader2 className="h-6 w-6 animate-spin text-white/80" />
+                            </div>
+                          )}
                         </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => updateSet(expandedSetIdx, { performanceArtists: [...expandedSet.performanceArtists, ""] })}
-                        disabled={busy}
-                        className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add artist
-                      </button>
-                    </div>
-                  </div>
+                      </div>
 
-                  {/* Custom type */}
-                  {expandedSet.performanceType === "other" && (
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Type</label>
-                      <Input
-                        value={expandedSet.customPerformanceType}
-                        placeholder="Radio show, podcast, guest mix…"
-                        onChange={(e) => updateSet(expandedSetIdx, { customPerformanceType: e.target.value })}
-                      />
-                    </div>
-                  )}
+                      {/* Cover controls */}
+                      <div className="flex min-w-0 flex-1 flex-col gap-3">
+                        {artist.plan === "pro" ? (
+                          <label className={cn(
+                            "flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-[11px] font-medium text-foreground/70 transition-colors hover:bg-secondary/80 hover:text-foreground",
+                            (uploadingDjSetCoverIndex !== null || busy) && "pointer-events-none opacity-50",
+                          )}>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) void handleUploadDjSetCover(expandedSetIdx, file)
+                                e.target.value = ""
+                              }}
+                              disabled={uploadingDjSetCoverIndex !== null || busy}
+                            />
+                            {uploadingDjSetCoverIndex === expandedSetIdx ? (
+                              <><Loader2 className="h-3.5 w-3.5 animate-spin" />Uploading…</>
+                            ) : (
+                              <><Upload className="h-3.5 w-3.5" />{expandedSet.imageUrl?.trim() ? "Replace Cover" : "Upload Cover"}</>
+                            )}
+                          </label>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-muted-foreground/35">Upload cover</span>
+                            <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-accent/50">PRO</span>
+                          </div>
+                        )}
 
-                  {/* Date · Venue · City · Event */}
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Date</label>
-                      <DatePicker
-                        value={expandedSet.setDate ?? ""}
-                        onChange={(v) => updateSet(expandedSetIdx, { setDate: v })}
-                        allowClear
-                        triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Venue</label>
-                      <VenueAutocomplete
-                        value={expandedSet.venue}
-                        onChange={(v) => updateSet(expandedSetIdx, { venue: v })}
-                        onSelect={(entry) => updateSet(expandedSetIdx, { venue: entry.name })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">City</label>
-                      <Input
-                        value={expandedSet.city}
-                        placeholder="Santiago, Berlin…"
-                        onChange={(e) => updateSet(expandedSetIdx, { city: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Event</label>
-                      <Input
-                        value={expandedSet.event}
-                        placeholder="MISA, Boiler Room…"
-                        onChange={(e) => updateSet(expandedSetIdx, { event: e.target.value })}
-                      />
-                    </div>
-                  </div>
+                        {expandedSet.imageUrl?.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => updateSet(expandedSetIdx, { imageUrl: "" })}
+                            className="flex w-fit items-center gap-1.5 text-[11px] text-muted-foreground/30 transition-colors hover:text-destructive/60"
+                          >
+                            <X className="h-3 w-3" />
+                            Remove cover
+                          </button>
+                        )}
 
-                  {/* Platform URL · Cover Image */}
-                  <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Cover Image URL</label>
+                          <Input
+                            value={expandedSet.imageUrl ?? ""}
+                            placeholder="https://…"
+                            onChange={(e) => updateSet(expandedSetIdx, { imageUrl: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Platform URL + Import */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Platform URL</label>
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Platform URL</label>
                       <div className="flex gap-2">
                         <Input
                           value={expandedSet.platformUrl}
@@ -4240,51 +4246,170 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           {importingDjSetIndex === expandedSetIdx ? "Fetching…" : "Import"}
                         </Button>
                       </div>
+                      <p className="text-[10px] text-muted-foreground/30">Import fetches cover image, title and metadata from the URL.</p>
                     </div>
+                  </div>
+
+                  {/* ── Set Details ─────────────────────────────────────── */}
+                  <div className="space-y-4 border-t border-border pt-7">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Set Details</p>
+
+                    {/* Type */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Cover Image URL</label>
-                      <Input
-                        value={expandedSet.imageUrl ?? ""}
-                        placeholder="https://…"
-                        onChange={(e) => updateSet(expandedSetIdx, { imageUrl: e.target.value })}
-                      />
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Type</p>
+                      <div className="flex w-fit flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
+                        {performanceTypes.map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => handleTypeChange(expandedSetIdx, type)}
+                            disabled={busy}
+                            className={cn(
+                              "rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
+                              expandedSet.performanceType === type
+                                ? "bg-secondary text-foreground/75"
+                                : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                            )}
+                          >
+                            {PERFORMANCE_TYPE_LABELS[type]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom type */}
+                    {expandedSet.performanceType === "other" && (
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Type</label>
+                        <Input
+                          value={expandedSet.customPerformanceType}
+                          placeholder="Radio show, podcast, guest mix…"
+                          onChange={(e) => updateSet(expandedSetIdx, { customPerformanceType: e.target.value })}
+                        />
+                      </div>
+                    )}
+
+                    {/* Artists */}
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</p>
+                      <div className="space-y-2">
+                        {expandedSet.performanceArtists.map((name, ai) => (
+                          <div key={ai} className="flex gap-2">
+                            <Input
+                              value={name}
+                              placeholder="Artist name"
+                              onChange={(e) => {
+                                const next = [...expandedSet.performanceArtists]
+                                next[ai] = e.target.value
+                                updateSet(expandedSetIdx, { performanceArtists: next })
+                              }}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const next = expandedSet.performanceArtists.filter((_, j) => j !== ai)
+                                updateSet(expandedSetIdx, { performanceArtists: next.length > 0 ? next : [""] })
+                              }}
+                              disabled={expandedSet.performanceArtists.length <= 1 || busy}
+                              className="h-9 w-9 shrink-0 p-0 text-muted-foreground/40 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => updateSet(expandedSetIdx, { performanceArtists: [...expandedSet.performanceArtists, ""] })}
+                          disabled={busy}
+                          className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add artist
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Date · Venue · City · Event */}
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Date</label>
+                        <DatePicker
+                          value={expandedSet.setDate ?? ""}
+                          onChange={(v) => updateSet(expandedSetIdx, { setDate: v })}
+                          allowClear
+                          triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Venue</label>
+                        <VenueAutocomplete
+                          value={expandedSet.venue}
+                          onChange={(v) => updateSet(expandedSetIdx, { venue: v })}
+                          onSelect={(entry) => updateSet(expandedSetIdx, { venue: entry.name })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">City</label>
+                        <Input
+                          value={expandedSet.city}
+                          placeholder="Santiago, Berlin…"
+                          onChange={(e) => updateSet(expandedSetIdx, { city: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Event</label>
+                        <Input
+                          value={expandedSet.event}
+                          placeholder="MISA, Boiler Room…"
+                          onChange={(e) => updateSet(expandedSetIdx, { event: e.target.value })}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Published toggle */}
-                  <div className="flex items-center gap-3 border-t border-border pt-3">
-                    <label className="relative inline-flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={expandedSet.isPublished}
-                        onChange={(e) => updateSet(expandedSetIdx, { isPublished: e.target.checked })}
-                        className="sr-only"
-                      />
-                      <span className={cn(
-                        "flex h-4 w-7 items-center rounded-full p-0.5 transition-colors duration-150",
-                        expandedSet.isPublished ? "bg-accent/70" : "bg-secondary",
-                      )}>
+                  {/* ── Visibility ──────────────────────────────────────── */}
+                  <div className="border-t border-border pt-7">
+                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Visibility</p>
+                    <div className="rounded-lg border border-border bg-secondary/30 px-4 py-3">
+                      <label className="relative inline-flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={expandedSet.isPublished}
+                          onChange={(e) => updateSet(expandedSetIdx, { isPublished: e.target.checked })}
+                          className="sr-only"
+                        />
                         <span className={cn(
-                          "h-3 w-3 rounded-full bg-white/80 transition-transform duration-150",
-                          expandedSet.isPublished ? "translate-x-3" : "translate-x-0",
-                        )} />
-                      </span>
-                      <span className="text-[11px] text-muted-foreground/55">Show on public profile</span>
-                    </label>
+                          "flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150",
+                          expandedSet.isPublished ? "bg-accent/70" : "bg-border",
+                        )}>
+                          <span className={cn(
+                            "h-3 w-3 rounded-full bg-white/90 shadow-sm transition-transform duration-150",
+                            expandedSet.isPublished ? "translate-x-3" : "translate-x-0",
+                          )} />
+                        </span>
+                        <div>
+                          <p className="text-[12px] font-medium text-foreground/80">Show on public profile</p>
+                          <p className="text-[10px] text-muted-foreground/40">Controls whether this set appears on your public artist page.</p>
+                        </div>
+                      </label>
+                    </div>
                   </div>
 
-                  {/* Advanced: Title Override */}
-                  <div className="border-t border-border pt-3">
+                  {/* ── Advanced ────────────────────────────────────────── */}
+                  <div className="border-t border-border pt-5">
                     <button
                       type="button"
                       onClick={() => toggleAdvanced(expandedSet.id)}
-                      className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/35 hover:text-muted-foreground/55"
+                      className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30 transition-colors hover:text-muted-foreground/55"
                     >
                       <ChevronDown className={cn("h-3 w-3 transition-transform", advancedOpenIds.has(expandedSet.id) && "rotate-180")} />
                       Advanced
                     </button>
                     {advancedOpenIds.has(expandedSet.id) && (
-                      <div className="mt-3 space-y-1.5">
+                      <div className="mt-4 space-y-1.5">
                         <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
                           Title Override
                         </label>
