@@ -2676,308 +2676,398 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         </div>
 
-        {/* ── COMMAND GRID — 2-column dense module layout ─────────────── */}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {/* ── COMMAND LAYOUT — intentionally composed rows ─────────── */}
+        <div className="space-y-3">
 
-          {/* ── 1. NEXT SHOW COMMAND MODULE ───────────────────────────── */}
+        {/* ROW 1: Next Show hero (65%) + Booking Desk (35%) */}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
+
+          {/* ── 1. NEXT SHOW — dominant cinematic hero ────────────────── */}
           <button
             type="button"
             onClick={() => setActiveSection("shows")}
-            className={cn(panelCls, "group relative flex min-h-[260px] flex-col justify-between p-0 text-left")}
-            style={panelSty}
+            className={cn(panelCls, "group relative flex flex-col justify-end overflow-hidden p-0 text-left")}
+            style={{ ...panelSty, minHeight: 300 }}
           >
-            {/* Full bleed image header */}
-            <div className="relative h-[140px] w-full overflow-hidden">
-              {showBgSrc ? (
-                <>
-                  <Image
-                    src={showBgSrc}
-                    alt=""
-                    fill
-                    className="object-cover object-center opacity-40 transition-opacity duration-500 group-hover:opacity-50"
-                    sizes="640px"
-                  />
-                  {/* Gradient: fade to bottom panel */}
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(16,16,16,0.95) 100%)" }}
-                  />
-                </>
-              ) : (
-                /* No image — dark scanline texture */
-                <div className="absolute inset-0" style={{ backgroundColor: "#0a0a0a" }}>
-                  <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <pattern id="scan" width="1" height="4" patternUnits="userSpaceOnUse">
-                        <rect width="1" height="1" fill="rgba(255,255,255,0.025)" />
-                      </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#scan)" />
-                  </svg>
-                </div>
-              )}
-              {/* Module label in image area */}
-              <div className="absolute left-4 top-4 flex items-center gap-2">
-                <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
-                  Next Show
-                </p>
-                {nextShow && daysUntilShow !== null && daysUntilShow <= 30 && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em]"
-                    style={{ backgroundColor: "rgba(100,215,140,0.14)", border: "1px solid rgba(100,215,140,0.22)", color: "oklch(0.75 0.18 160)" }}
-                  >
-                    <span className="animate-pulse" style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
-                    {daysUntilShow === 0 ? "Today" : `${daysUntilShow}d`}
-                  </span>
-                )}
+            {/* Full-bleed background: show flyer → artist hero → scanline */}
+            {showBgSrc ? (
+              <>
+                <Image
+                  src={showBgSrc}
+                  alt=""
+                  fill
+                  className="object-cover object-center opacity-45 transition-opacity duration-700 group-hover:opacity-55"
+                  sizes="900px"
+                  priority
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: "linear-gradient(to top, #101010 0%, rgba(16,16,16,0.85) 40%, rgba(0,0,0,0.25) 100%)" }}
+                />
+              </>
+            ) : (
+              <div className="absolute inset-0" style={{ backgroundColor: "#080808" }}>
+                {/* Cinematic grain texture when no image */}
+                <svg className="absolute inset-0 h-full w-full opacity-60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <defs>
+                    <pattern id="grain" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
+                      <rect x="0" y="0" width="1" height="1" fill="rgba(255,255,255,0.018)" />
+                      <rect x="2" y="1" width="1" height="1" fill="rgba(255,255,255,0.012)" />
+                      <rect x="1" y="2" width="1" height="1" fill="rgba(255,255,255,0.022)" />
+                    </pattern>
+                    <radialGradient id="vign" cx="50%" cy="40%" r="70%">
+                      <stop offset="0%" stopColor="rgba(100,215,140,0.04)" />
+                      <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+                    </radialGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#grain)" />
+                  <rect width="100%" height="100%" fill="url(#vign)" />
+                </svg>
               </div>
+            )}
+
+            {/* Module label + countdown */}
+            <div className="absolute left-4 top-4 flex items-center gap-2">
+              <span className="text-[8px] font-black uppercase tracking-[0.30em]" style={dimLabelSty}>
+                Next Show
+              </span>
+              {nextShow && daysUntilShow !== null && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em]"
+                  style={
+                    daysUntilShow <= 7
+                      ? { backgroundColor: "rgba(100,215,140,0.16)", border: "1px solid rgba(100,215,140,0.28)", color: "oklch(0.75 0.18 160)" }
+                      : { backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.55)" }
+                  }
+                >
+                  {daysUntilShow <= 7 && (
+                    <span className="animate-pulse" style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
+                  )}
+                  {daysUntilShow === 0 ? "Tonight" : `${daysUntilShow}d`}
+                </span>
+              )}
             </div>
 
-            {/* Show info panel */}
-            <div className="flex flex-1 flex-col justify-between p-4">
+            {/* Content at bottom */}
+            <div className="relative p-5 pt-20">
               {nextShow ? (
                 <>
-                  <div>
-                    <h2 className="text-[22px] font-black leading-tight text-white">
-                      {nextShow.eventName ?? nextShow.venue}
-                    </h2>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      <span className="flex items-center gap-1.5 text-[11px]">
-                        <Calendar className="h-3 w-3" />
-                        {fmtShort(nextShow.date)}
-                      </span>
-                      {nextShow.eventName && nextShow.venue && (
-                        <span className="flex items-center gap-1.5 text-[11px]">{nextShow.venue}</span>
-                      )}
-                      {nextShow.city && (
-                        <span className="flex items-center gap-1 text-[11px]">
-                          <MapPin className="h-2.5 w-2.5" />
-                          {nextShow.city}, {nextShow.country}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-3">
+                  <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    {fmtShort(nextShow.date)}{nextShow.city ? ` · ${nextShow.city}, ${nextShow.country}` : ""}
+                  </p>
+                  <h2 className="text-[28px] font-black leading-[1.0] tracking-tight text-white sm:text-[34px]">
+                    {nextShow.eventName ?? nextShow.venue}
+                  </h2>
+                  {nextShow.eventName && nextShow.venue && (
+                    <p className="mt-1.5 text-[12px]" style={{ color: "rgba(255,255,255,0.42)" }}>
+                      <MapPin className="mr-1 inline h-3 w-3" />
+                      {nextShow.venue}
+                    </p>
+                  )}
+                  <div className="mt-5 flex items-center gap-4">
                     <span
-                      className="rounded-md px-3 py-1.5 text-[11px] font-bold transition-all group-hover:brightness-110"
-                      style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#0a0a0a" }}
+                      className="rounded-lg px-4 py-2 text-[12px] font-bold transition-all group-hover:brightness-110"
+                      style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#060606" }}
                     >
                       View Shows →
                     </span>
                     {futureShows.length > 1 && (
-                      <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                        +{futureShows.length - 1} more
+                      <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.28)" }}>
+                        +{futureShows.length - 1} more scheduled
                       </span>
                     )}
                   </div>
                 </>
               ) : (
-                <div className="flex flex-1 flex-col items-start justify-center">
-                  <p className="text-[16px] font-semibold" style={{ color: "rgba(255,255,255,0.20)" }}>
+                <>
+                  <p className="text-[18px] font-semibold" style={{ color: "rgba(255,255,255,0.18)" }}>
                     No upcoming shows scheduled
                   </p>
-                  <p className="mt-2 text-[11px] font-medium transition-opacity group-hover:opacity-80" style={{ color: "rgba(255,255,255,0.18)" }}>
-                    Add Show →
+                  <p className="mt-4 text-[12px] font-semibold transition-opacity group-hover:opacity-80" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    Add your first show →
                   </p>
-                </div>
+                </>
               )}
             </div>
           </button>
 
-          {/* ── 2. BOOKING PIPELINE ───────────────────────────────────── */}
-          <button
-            type="button"
-            onClick={() => setActiveSection("bookings")}
-            className={cn(panelCls, "flex flex-col p-5 text-left")}
+          {/* ── 2. BOOKING DESK — compact operational inbox ───────────── */}
+          <div
+            className={cn(panelCls, "flex flex-col p-0")}
             style={panelSty}
           >
-            <div className="mb-4 flex items-center justify-between">
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            >
               <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
-                Booking Pipeline
+                Booking Desk
               </p>
               {homeBooking !== "loading" && homeLeads.length > 0 && (
-                <span className="text-[9px] font-bold" style={{ color: "rgba(255,255,255,0.22)" }}>
-                  {homeLeads.length} total
+                <span className="text-[9px] font-bold tabular-nums" style={{ color: "rgba(255,255,255,0.22)" }}>
+                  {homeLeads.length}
                 </span>
               )}
             </div>
 
-            {/* Pipeline always visible — shows counts whether loaded or not */}
-            <div
-              className="mb-4 grid grid-cols-4 overflow-hidden rounded-lg"
-              style={{ border: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              {([
-                { key: "new",       label: "New",       count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
-                { key: "contacted", label: "Contacted", count: bookingCounts.contacted, color: "#60a5fa" },
-                { key: "qualified", label: "Qualified", count: bookingCounts.qualified, color: "#fbbf24" },
-                { key: "confirmed", label: "Confirmed", count: bookingCounts.confirmed, color: "#34d399" },
-              ] as const).map((s, i) => (
-                <div
-                  key={s.key}
-                  className={`px-2.5 py-3${i > 0 ? " border-l" : ""}`}
-                  style={{ borderColor: "rgba(255,255,255,0.06)", position: "relative" }}
-                >
-                  {/* Active indicator bar at top */}
-                  {s.count > 0 && (
-                    <div
-                      className="absolute inset-x-0 top-0 h-[2px]"
-                      style={{ backgroundColor: s.color, opacity: 0.6 }}
-                    />
-                  )}
-                  <div
-                    className="text-[20px] font-black tabular-nums leading-none"
-                    style={{ color: homeBooking === "loading" ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.90)" }}
-                  >
-                    {homeBooking === "loading" ? "—" : s.count}
-                  </div>
-                  <div
-                    className="mt-1.5 text-[7px] font-bold uppercase tracking-[0.16em]"
-                    style={{ color: s.count > 0 && homeBooking !== "loading" ? s.color : "rgba(255,255,255,0.18)" }}
-                  >
-                    {s.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Recent leads or empty state */}
-            <div className="flex-1">
+            <div className="flex flex-1 flex-col px-4 py-3">
               {homeBooking === "loading" ? (
-                <div className="space-y-1.5 py-1">
+                <div className="space-y-2 py-2">
                   {[1, 2, 3].map((n) => (
-                    <div key={n} className="h-8 rounded-lg animate-pulse" style={{ backgroundColor: "rgba(255,255,255,0.03)" }} />
+                    <div key={n} className="h-7 animate-pulse rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.03)" }} />
                   ))}
                 </div>
-              ) : recentLeads.length > 0 ? (
-                <div className="space-y-1">
-                  {recentLeads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2"
-                      style={{ backgroundColor: "rgba(255,255,255,0.025)" }}
-                    >
-                      {/* Status dot */}
-                      <span
-                        style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", flexShrink: 0, backgroundColor: leadStatusColor(lead.status) }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.78)" }}>
-                          {lead.fullName}
+              ) : homeLeads.length > 0 ? (
+                <>
+                  {/* Pipeline counts — compact horizontal */}
+                  <div className="mb-3 flex gap-0 overflow-hidden rounded-md" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                    {([
+                      { key: "new",       label: "New",  count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
+                      { key: "contacted", label: "Cntd", count: bookingCounts.contacted, color: "#60a5fa" },
+                      { key: "qualified", label: "Qual", count: bookingCounts.qualified, color: "#fbbf24" },
+                      { key: "confirmed", label: "Conf", count: bookingCounts.confirmed, color: "#34d399" },
+                    ] as const).map((s, i) => (
+                      <div
+                        key={s.key}
+                        className={`flex flex-1 flex-col items-center py-2${i > 0 ? " border-l" : ""}`}
+                        style={{ borderColor: "rgba(255,255,255,0.06)", position: "relative" }}
+                      >
+                        {s.count > 0 && (
+                          <div className="absolute inset-x-0 top-0 h-[2px]" style={{ backgroundColor: s.color, opacity: 0.65 }} />
+                        )}
+                        <span className="text-[16px] font-black tabular-nums leading-none" style={{ color: "rgba(255,255,255,0.88)" }}>
+                          {s.count}
                         </span>
-                        <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                          {[lead.city, lead.eventDate].filter(Boolean).join(" · ")}
+                        <span className="mt-1 text-[7px] font-bold uppercase tracking-[0.12em]" style={{ color: s.count > 0 ? s.color : "rgba(255,255,255,0.18)" }}>
+                          {s.label}
                         </span>
                       </div>
-                      <span
-                        className="shrink-0 text-[8px] font-black uppercase tracking-[0.12em]"
-                        style={{ color: leadStatusColor(lead.status) }}
+                    ))}
+                  </div>
+                  {/* Latest leads */}
+                  <div className="flex-1 space-y-1">
+                    {recentLeads.slice(0, 3).map((lead) => (
+                      <button
+                        key={lead.id}
+                        type="button"
+                        onClick={() => setActiveSection("bookings")}
+                        className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-white/[0.02]"
                       >
-                        {lead.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                        <span
+                          style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", flexShrink: 0, backgroundColor: leadStatusColor(lead.status) }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>
+                            {lead.fullName}
+                          </span>
+                          <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.26)" }}>
+                            {[lead.city, lead.eventDate].filter(Boolean).join(" · ")}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("bookings")}
+                    className="mt-3 text-[10px] font-semibold transition-opacity hover:opacity-70"
+                    style={{ color: "rgba(255,255,255,0.22)" }}
+                  >
+                    View all requests →
+                  </button>
+                </>
               ) : (
-                <div className="flex flex-col items-start gap-2 py-2">
-                  <p className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.20)" }}>
-                    No booking requests yet
-                  </p>
-                  <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.14)" }}>
-                    Share your profile link to start receiving inquiries
-                  </p>
+                /* Compact empty state — no big zero boxes */
+                <div className="flex flex-1 flex-col justify-between">
+                  <div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                      >
+                        <Inbox className="h-4 w-4" style={{ color: "rgba(255,255,255,0.22)" }} />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold" style={{ color: "rgba(255,255,255,0.40)" }}>
+                          No inquiries yet
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.22)" }}>
+                      Share your public profile or booking form to start receiving requests.
+                    </p>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <a
+                      href={publicProfileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "rgba(100,215,140,0.07)", color: "rgba(255,255,255,0.60)", border: "1px solid rgba(100,215,140,0.13)" }}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.75 }} />
+                      View Site
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("bookings")}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-70"
+                      style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.06)" }}
+                    >
+                      <Briefcase className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.22)" }} />
+                      Booking Settings
+                    </button>
+                    {artist.bookingInfo.email && (
+                      <button
+                        type="button"
+                        onClick={() => { void navigator.clipboard.writeText(artist.bookingInfo.email) }}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-70"
+                        style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.06)" }}
+                      >
+                        <Copy className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.22)" }} />
+                        Copy booking email
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
-            <div className="mt-4 text-[10px]" style={{ color: "rgba(255,255,255,0.22)" }}>
-              View all requests →
-            </div>
-          </button>
+          </div>
 
-          {/* ── 3. TOUR ROUTING CONTROL ───────────────────────────────── */}
+        </div>{/* end ROW 1 */}
+
+        {/* ROW 2: Tour Control + Content Studio */}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+
+          {/* ── 3. TOUR CONTROL — mini-map routing module ─────────────── */}
           <button
             type="button"
             onClick={() => setActiveSection("tours")}
             className={cn(panelCls, "flex flex-col p-0 text-left")}
             style={panelSty}
           >
-            {/* Route visualization header */}
+            {/* Mini-map visualization header */}
             <div
               className="relative overflow-hidden"
-              style={{ height: 80, borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ height: 120, borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              {/* Dot grid texture */}
-              <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              {/* Map grid texture — subtle geographic feel */}
+              <svg
+                className="absolute inset-0 h-full w-full"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                viewBox="0 0 400 120"
+                preserveAspectRatio="xMidYMid slice"
+              >
                 <defs>
-                  <pattern id="hq-route-dots" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
-                    <circle cx="1" cy="1" r="0.9" fill="rgba(255,255,255,0.055)" />
+                  {/* Grid lines for map feel */}
+                  <pattern id="map-grid" x="0" y="0" width="40" height="30" patternUnits="userSpaceOnUse">
+                    <path d="M40 0L0 0 0 30" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
                   </pattern>
+                  {/* Dot overlay */}
+                  <pattern id="map-dots" x="20" y="15" width="40" height="30" patternUnits="userSpaceOnUse">
+                    <circle cx="0" cy="0" r="0.7" fill="rgba(255,255,255,0.07)" />
+                  </pattern>
+                  <radialGradient id="map-vgn" cx="50%" cy="50%" r="60%">
+                    <stop offset="0%" stopColor="rgba(100,215,140,0.05)" />
+                    <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
+                  </radialGradient>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#hq-route-dots)" />
+                <rect width="400" height="120" fill="#080808" />
+                <rect width="400" height="120" fill="url(#map-grid)" />
+                <rect width="400" height="120" fill="url(#map-dots)" />
+                <rect width="400" height="120" fill="url(#map-vgn)" />
+
+                {/* Dynamic route based on real stops, or phantom placeholder */}
+                {(() => {
+                  // Node positions spread across the SVG plane with y-variance for map feel
+                  const stops = routeStops.length > 0 ? routeStops : null
+                  const nodeCount = stops ? Math.min(stops.length, 6) : 5
+                  // y positions: vary to look like a geographic route (not a timeline)
+                  const yVariance = [55, 35, 65, 30, 50, 40]
+                  const xStep = 360 / Math.max(nodeCount - 1, 1)
+
+                  const nodes: { x: number; y: number; label: string; active: boolean }[] = []
+                  for (let i = 0; i < nodeCount; i++) {
+                    nodes.push({
+                      x: 20 + i * xStep,
+                      y: yVariance[i % yVariance.length],
+                      label: stops ? stops[i].city.split(/[\s,]/)[0].slice(0, 3).toUpperCase() : "",
+                      active: stops ? stops[i].visibilityStatus === "announced" : false,
+                    })
+                  }
+
+                  return (
+                    <>
+                      {/* Dashed route path through nodes */}
+                      {nodes.slice(0, -1).map((n, i) => (
+                        <line
+                          key={`route-${i}`}
+                          x1={n.x} y1={n.y}
+                          x2={nodes[i + 1].x} y2={nodes[i + 1].y}
+                          stroke={stops ? "rgba(100,215,140,0.30)" : "rgba(255,255,255,0.10)"}
+                          strokeWidth="1"
+                          strokeDasharray="4 3"
+                        />
+                      ))}
+                      {/* City nodes */}
+                      {nodes.map((n, i) => (
+                        <g key={`node-${i}`}>
+                          {/* Glow ring */}
+                          <circle
+                            cx={n.x} cy={n.y} r="7"
+                            fill={stops && n.active ? "rgba(100,215,140,0.10)" : "rgba(255,255,255,0.04)"}
+                          />
+                          {/* Core dot */}
+                          <circle
+                            cx={n.x} cy={n.y} r="3"
+                            fill={stops && n.active ? "oklch(0.75 0.18 160)" : stops ? "rgba(100,215,140,0.40)" : "rgba(255,255,255,0.20)"}
+                          />
+                          {/* City label */}
+                          {n.label && (
+                            <text
+                              x={n.x} y={n.y + 16}
+                              textAnchor="middle"
+                              fontSize="6.5"
+                              fontFamily="monospace"
+                              fontWeight="700"
+                              fill="rgba(255,255,255,0.35)"
+                              letterSpacing="0.08em"
+                            >
+                              {n.label}
+                            </text>
+                          )}
+                        </g>
+                      ))}
+                    </>
+                  )
+                })()}
               </svg>
 
-              {/* Route line with city stops */}
-              <div className="absolute inset-0 flex items-center px-5">
-                {(routeStops.length > 0 ? routeStops : [null, null, null]).map((stop, i, arr) => (
-                  <div key={stop ? stop.id : i} className="flex min-w-0 flex-1 items-center">
-                    {/* Stop node */}
-                    <div className="flex flex-col items-center gap-1">
-                      <div
-                        className={stop ? "" : ""}
-                        style={{
-                          width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                          backgroundColor: stop ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.12)",
-                          boxShadow: stop ? "0 0 8px oklch(0.75 0.18 160 / 0.55)" : "none",
-                          opacity: stop?.visibilityStatus !== "announced" ? 0.45 : 1,
-                        }}
-                      />
-                      {stop && (
-                        <span
-                          className="text-[7px] font-bold uppercase tracking-wider"
-                          style={{ color: "rgba(255,255,255,0.38)" }}
-                        >
-                          {stop.city.split(/[\s,]/)[0].slice(0, 3)}
-                        </span>
-                      )}
-                    </div>
-                    {/* Connecting dashed line (not after last) */}
-                    {i < arr.length - 1 && (
-                      <div
-                        className="mx-1 flex-1"
-                        style={{
-                          height: 1,
-                          borderTop: "1.5px dashed",
-                          borderColor: stop ? "rgba(100,215,140,0.25)" : "rgba(255,255,255,0.07)",
-                          marginBottom: stop ? 14 : 0,
-                        }}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Tour label + badge */}
-              <div className="absolute right-4 top-3 flex items-center gap-2">
+              {/* Tour label + status badge overlay */}
+              <div className="absolute left-3 top-3 flex items-center gap-2">
                 <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
                   {activeTour ? "Tour Control" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
                 </p>
-                {activeTour && (
+              </div>
+              <div className="absolute right-3 top-3">
+                {activeTour ? (
                   <span
-                    className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.12em]"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.12em]"
                     style={{ backgroundColor: "rgba(100,215,140,0.12)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.20)" }}
                   >
                     <span className="animate-pulse" style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
                     Live
                   </span>
-                )}
-                {!activeTour && nearestUpcomingTour && (
+                ) : nearestUpcomingTour ? (
                   <span
-                    className="rounded-full px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.12em]"
-                    style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.30)" }}
+                    className="rounded-full px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.12em]"
+                    style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.32)" }}
                   >
                     Routing
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -3003,10 +3093,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           style={{ backgroundColor: "rgba(255,255,255,0.022)" }}
                         >
                           <span
-                            className="w-9 shrink-0 text-[9px] font-bold tabular-nums"
+                            className="w-9 shrink-0 font-mono text-[9px] font-bold tabular-nums"
                             style={{ color: "oklch(0.75 0.18 160)", opacity: 0.68 }}
                           >
-                            {fmtShort(show.date).replace(" ", " ")}
+                            {fmtShort(show.date)}
                           </span>
                           <div className="min-w-0 flex-1">
                             <span className="block truncate text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>
