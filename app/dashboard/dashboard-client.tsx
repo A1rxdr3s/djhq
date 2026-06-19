@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, X, Youtube } from "lucide-react"
+import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, User, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -376,7 +376,7 @@ const navGroups: NavGroup[] = [
     label: "Business",
     items: [
       { id: "bookings",  label: "Bookings",  icon: Inbox },
-      { id: "booking",   label: "Booking",   icon: Mail },
+      { id: "booking",   label: "Booking Settings",   icon: Mail },
       { id: "press-kit", label: "Press Kit", icon: FileText },
       { id: "domain",    label: "Domain",    icon: Globe },
       { id: "footer",    label: "Footer",    icon: PanelBottom },
@@ -1317,8 +1317,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const isDjSetsDirty = JSON.stringify(djSets) !== JSON.stringify(initialDjSets)
   const isVideosDirty = JSON.stringify(videos) !== JSON.stringify(initialVideos)
   const isBookingDirty =
-    bookingEmail !== artist.bookingInfo.email ||
-    bookingUrl !== (artist.bookingInfo.bookingUrl ?? "")
+    bookingEmail !== artist.bookingInfo.email
   const isPressKitDirty =
     pressKitEnabled !== artist.pressKit.enabled ||
     pressKitUrl !== artist.pressKit.downloadUrl ||
@@ -4932,21 +4931,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderBooking() {
-    const emailInvalid = Boolean(bookingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingEmail))
-    const bookingUrlInvalid = Boolean(bookingUrl && !bookingUrl.startsWith("http"))
+    const emailEmpty   = !bookingEmail.trim()
+    const emailInvalid = Boolean(bookingEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingEmail.trim()))
 
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Booking</h2>
+          <h2 className="text-base font-semibold text-foreground">Booking Settings</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">
-            Contact details shown to promoters and venues.
+            Configure where booking requests are delivered.
           </p>
         </div>
 
-        {/* Booking contact */}
-        <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
-          <div className="grid gap-5 md:grid-cols-2">
+        <div className="max-w-[640px] space-y-4">
+          {emailEmpty && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400/70" />
+              <p className="text-[12px] leading-snug text-amber-400/70">
+                Booking requests cannot be sent until a booking email is configured.
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-4 rounded-xl border border-border bg-card/40 p-5 sm:p-6">
             <div className="space-y-1.5">
               <label htmlFor="bookingEmail" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                 Booking Email
@@ -4958,23 +4965,21 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onChange={(e) => setBookingEmail(e.target.value)}
                 placeholder="booking@artist.com"
               />
-              {emailInvalid && (
-                <p className="text-[10px] text-amber-400/60">Enter a valid email address.</p>
+              {emailInvalid ? (
+                <p className="text-[11px] text-amber-400/70">Enter a valid email address.</p>
+              ) : (
+                <p className="text-[11px] text-muted-foreground/40">
+                  Booking requests from your public profile will be sent to this email.
+                </p>
               )}
             </div>
-            <div className="space-y-1.5">
-              <label htmlFor="bookingUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Booking URL
-              </label>
-              <Input
-                id="bookingUrl"
-                value={bookingUrl}
-                onChange={(e) => setBookingUrl(e.target.value)}
-                placeholder="https://artist.com/booking"
-              />
-              {bookingUrlInvalid && (
-                <p className="text-[10px] text-amber-400/60">Should start with https://</p>
-              )}
+
+            <div className="rounded-lg border border-border/50 bg-secondary/40 px-3.5 py-2.5">
+              <p className="text-[11px] leading-relaxed text-muted-foreground/35">
+                Emails are sent from{" "}
+                <span className="font-mono text-muted-foreground/50">DJHQ Booking &lt;booking@djhq.app&gt;</span>{" "}
+                with the requester set as reply-to.
+              </p>
             </div>
           </div>
         </div>
