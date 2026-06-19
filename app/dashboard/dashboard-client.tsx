@@ -3467,92 +3467,96 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
           </div>
 
-          {/* ── 6. COMMAND DOCK ───────────────────────────────────────── */}
+          {/* ── 6. COMMAND STRIP ──────────────────────────────────────── */}
           <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
             <div
-              className="px-4 py-3"
+              className="flex items-center justify-between px-4 py-2.5"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
-                Command Dock
-              </p>
-            </div>
-            <div className="flex-1 p-3">
-              {/* Primary actions row */}
-              <div className="mb-2 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("shows")}
-                  className="flex items-center gap-2 rounded-lg px-3 py-3 text-left text-[12px] font-bold transition-all hover:brightness-110"
-                  style={{ backgroundColor: "rgba(100,215,140,0.08)", color: "rgba(255,255,255,0.80)", border: "1px solid rgba(100,215,140,0.14)" }}
-                >
-                  <Calendar className="h-4 w-4 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.8 }} />
-                  Add Show
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("tours")}
-                  className="flex items-center gap-2 rounded-lg px-3 py-3 text-left text-[12px] font-bold transition-all hover:brightness-110"
-                  style={{ backgroundColor: "rgba(100,215,140,0.08)", color: "rgba(255,255,255,0.80)", border: "1px solid rgba(100,215,140,0.14)" }}
-                >
-                  <Route className="h-4 w-4 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.8 }} />
-                  Create Tour
-                </button>
-              </div>
-
-              {/* Content actions */}
-              <div className="mb-2 grid grid-cols-3 gap-1.5">
-                {([
-                  { label: "Add Set",     Icon: Headphones, sec: "sets"     },
-                  { label: "Add Video",   Icon: Play,       sec: "media"    },
-                  { label: "Add Release", Icon: Disc3,      sec: "releases" },
-                ] as const).map(({ label, Icon, sec }) => (
-                  <button
-                    key={sec}
-                    type="button"
-                    onClick={() => setActiveSection(sec)}
-                    className="flex flex-col items-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition-opacity hover:opacity-70"
-                    style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.06)" }}
-                  >
-                    <Icon className="h-4 w-4" style={{ color: "rgba(255,255,255,0.28)" }} />
-                    <span className="text-[10px] font-semibold leading-tight">{label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Management row */}
-              <div className="mb-2 grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("profile")}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-70"
-                  style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <User className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.22)" }} />
-                  Edit Profile
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("press-kit")}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-70"
-                  style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <FileText className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.22)" }} />
-                  Press Kit
-                </button>
-              </div>
-
-              {/* CTA: View Site */}
+              <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+                Actions
+              </span>
               <a
                 href={publicProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[11px] font-bold transition-all hover:brightness-105"
-                style={{ backgroundColor: "rgba(100,215,140,0.07)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(100,215,140,0.14)" }}
+                className="inline-flex items-center gap-1 text-[9px] font-semibold transition-opacity hover:opacity-70"
+                style={{ color: "oklch(0.75 0.18 160)" }}
               >
-                <ExternalLink className="h-3.5 w-3.5 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.75 }} />
-                View Live Site
+                <ExternalLink className="h-3 w-3" />
+                View Site
               </a>
+            </div>
+
+            {/* Primary actions — Shows + Tours as the main operations */}
+            <div className="flex gap-1.5 p-3 pb-0">
+              <button
+                type="button"
+                onClick={() => setActiveSection("shows")}
+                className="flex flex-1 items-center gap-2 rounded-md px-3 py-2.5 text-left transition-all hover:brightness-110"
+                style={{ backgroundColor: "rgba(100,215,140,0.09)", color: "rgba(255,255,255,0.82)", border: "1px solid rgba(100,215,140,0.16)" }}
+              >
+                <Calendar className="h-4 w-4 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.85 }} />
+                <div>
+                  <p className="text-[11px] font-bold">Add Show</p>
+                  <p className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.38)" }}>{futureShows.length} scheduled</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSection("tours")}
+                className="flex flex-1 items-center gap-2 rounded-md px-3 py-2.5 text-left transition-all hover:brightness-110"
+                style={{ backgroundColor: "rgba(100,215,140,0.09)", color: "rgba(255,255,255,0.82)", border: "1px solid rgba(100,215,140,0.16)" }}
+              >
+                <Route className="h-4 w-4 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.85 }} />
+                <div>
+                  <p className="text-[11px] font-bold">Tour</p>
+                  <p className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.38)" }}>{displayTour ? displayTour.name.slice(0, 16) : "No active"}</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Content action strip — horizontal compact toolbar */}
+            <div
+              className="mx-3 mt-2 flex overflow-hidden rounded-md"
+              style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              {([
+                { label: "Set",     Icon: Headphones, sec: "sets"     },
+                { label: "Release", Icon: Disc3,      sec: "releases" },
+                { label: "Video",   Icon: Play,       sec: "media"    },
+              ] as const).map(({ label, Icon, sec }, i) => (
+                <button
+                  key={sec}
+                  type="button"
+                  onClick={() => setActiveSection(sec)}
+                  className={`flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors hover:bg-white/[0.03]${i > 0 ? " border-l" : ""}`}
+                  style={{ borderColor: "rgba(255,255,255,0.06)" }}
+                >
+                  <Icon className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.28)" }} />
+                  <span className="text-[9px] font-semibold" style={{ color: "rgba(255,255,255,0.40)" }}>+ {label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Utility strip — manage + settings */}
+            <div className="flex gap-1 p-3 pt-2">
+              {([
+                { label: "Profile",   Icon: User,     sec: "profile"   },
+                { label: "Press Kit", Icon: FileText, sec: "press-kit" },
+                { label: "Bookings",  Icon: Briefcase, sec: "bookings" },
+              ] as const).map(({ label, Icon, sec }) => (
+                <button
+                  key={sec}
+                  type="button"
+                  onClick={() => setActiveSection(sec)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[9.5px] font-medium transition-opacity hover:opacity-70"
+                  style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.32)", border: "1px solid rgba(255,255,255,0.05)" }}
+                >
+                  <Icon className="h-3 w-3 shrink-0" style={{ color: "rgba(255,255,255,0.20)" }} />
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
