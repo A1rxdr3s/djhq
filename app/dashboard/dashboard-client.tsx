@@ -2624,442 +2624,379 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
 
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-3">
 
-        {/* ── IDENTITY HEADER ─────────────────────────────────────────── */}
+        {/* ═══ ARTIST COMMAND HEADER ════════════════════════════════════ */}
         <div
-          className="flex items-start justify-between gap-4 pb-5"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+          className="relative overflow-hidden rounded-xl"
+          style={{ backgroundColor: "#080808", border: "1px solid rgba(255,255,255,0.08)", minHeight: 192 }}
         >
-          <div>
-            <h1 className="text-[36px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[44px]">
-              {artist.artistName}
-            </h1>
-            <div className="mt-2.5 flex flex-wrap items-center gap-3">
-              <span
-                className="inline-flex items-center gap-1.5 text-[11px] font-bold"
-                style={{ color: artist.isPublished ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.28)" }}
-              >
-                <span
-                  className={artist.isPublished ? "animate-pulse" : ""}
-                  style={{
-                    display: "inline-block",
-                    width: 6, height: 6, borderRadius: "50%",
-                    backgroundColor: artist.isPublished ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.18)",
-                  }}
-                />
-                {artist.isPublished ? "Published" : "Draft"}
-              </span>
-              {hasActiveDomain && activeDomain && (
-                <>
-                  <span style={{ color: "rgba(255,255,255,0.14)" }}>·</span>
-                  <span
-                    className="inline-flex items-center gap-1.5 text-[11px] font-medium"
-                    style={{ color: "oklch(0.75 0.18 160)", opacity: 0.70 }}
-                  >
-                    <span
-                      className="animate-pulse"
-                      style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }}
-                    />
-                    Site live
-                  </span>
-                  <span style={{ color: "rgba(255,255,255,0.14)" }}>·</span>
-                  <span className="font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>
-                    {activeDomain.domain}
-                  </span>
-                </>
-              )}
-              {!hasActiveDomain && (
-                <>
-                  <span style={{ color: "rgba(255,255,255,0.14)" }}>·</span>
-                  <span className="font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                    /{artist.handle}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
+          {/* Hero image — full bleed, fades left for text readability */}
+          {artist.heroImageUrl && (
+            <>
+              <Image
+                src={artist.heroImageUrl}
+                alt=""
+                fill
+                className="object-cover object-center"
+                style={{ opacity: 0.20 }}
+                sizes="100vw"
+                priority
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(100deg, rgba(8,8,8,1) 30%, rgba(8,8,8,0.60) 65%, rgba(8,8,8,0.12) 100%)" }}
+              />
+            </>
+          )}
 
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <a
-              href={publicProfileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors hover:opacity-80"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.06)",
-                color: "rgba(255,255,255,0.55)",
-                border: "1px solid rgba(255,255,255,0.09)",
-              }}
+          <div className="relative z-10">
+            {/* Identity (left) + stats (right) */}
+            <div className="flex items-start justify-between gap-6 px-6 pt-5 pb-4">
+              <div className="min-w-0 flex-1">
+                <p
+                  className="mb-2 text-[7px] font-black uppercase tracking-[0.34em]"
+                  style={{ color: "oklch(0.75 0.18 160)" }}
+                >
+                  Artist Command Center
+                </p>
+                <h1 className="text-[38px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[48px]">
+                  {artist.artistName}
+                </h1>
+                <p className="mt-1.5 font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.32)" }}>
+                  /{artist.handle}
+                </p>
+              </div>
+
+              {/* 4 stat blocks */}
+              <div className="hidden shrink-0 items-start gap-7 lg:flex">
+                {([
+                  {
+                    Icon: Calendar,
+                    value: futureShows.length,
+                    label: "Upcoming\nShows",
+                    sub: futureShows.length > 0 && futureShows[0] ? fmtShort(futureShows[0].date) : "None",
+                    active: futureShows.length > 0,
+                    sec: "shows" as const,
+                  },
+                  {
+                    Icon: Route,
+                    value: activeTourCount,
+                    label: "Active\nTour",
+                    sub: displayTour ? displayTour.name.slice(0, 14) : "No tour",
+                    active: activeTourCount > 0,
+                    sec: "tours" as const,
+                  },
+                  {
+                    Icon: Inbox,
+                    value: openBookings,
+                    label: "Booking\nRequests",
+                    sub: bookingCounts.new > 0 ? `${bookingCounts.new} new` : "None open",
+                    active: openBookings > 0,
+                    sec: "bookings" as const,
+                  },
+                  {
+                    Icon: Disc3,
+                    value: liveReleases,
+                    label: "Live\nReleases",
+                    sub: liveReleases > 0 ? "Published" : "None yet",
+                    active: liveReleases > 0,
+                    sec: "releases" as const,
+                  },
+                ] as const).map((stat) => (
+                  <button
+                    key={stat.label}
+                    type="button"
+                    onClick={() => setActiveSection(stat.sec)}
+                    className="flex flex-col items-center text-center transition-opacity hover:opacity-80"
+                  >
+                    <stat.Icon
+                      className="mb-1.5 h-3.5 w-3.5"
+                      style={{ color: stat.active ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.18)" }}
+                    />
+                    <span
+                      className="text-[32px] font-black tabular-nums leading-none"
+                      style={{ color: stat.active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.16)" }}
+                    >
+                      {stat.value}
+                    </span>
+                    <span
+                      className="mt-1 whitespace-pre text-center text-[6.5px] font-black uppercase leading-[1.4] tracking-[0.18em]"
+                      style={{ color: "rgba(255,255,255,0.30)" }}
+                    >
+                      {stat.label}
+                    </span>
+                    <span
+                      className="mt-0.5 text-[9px]"
+                      style={{ color: stat.active ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.14)" }}
+                    >
+                      {stat.sub}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Status + action strip */}
+            <div
+              className="flex items-center justify-between gap-4 px-6 py-2.5"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <ExternalLink className="h-3 w-3" />
-              View Site
-            </a>
-            {isSaveDirty && (
-              <button
-                type="button"
-                onClick={() => void handleSaveChanges()}
-                className="flex items-center gap-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
-                style={{ color: "#fbbf24" }}
-              >
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
-                Unsaved — save now
-              </button>
-            )}
+              <div className="flex flex-wrap items-center gap-3">
+                <span
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold"
+                  style={{ color: artist.isPublished ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.28)" }}
+                >
+                  <span
+                    className={artist.isPublished ? "animate-pulse" : ""}
+                    style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: artist.isPublished ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.16)" }}
+                  />
+                  {artist.isPublished ? "Published" : "Draft"}
+                </span>
+                {hasActiveDomain && activeDomain && (
+                  <>
+                    <span style={{ color: "rgba(255,255,255,0.10)" }}>·</span>
+                    <span
+                      className="inline-flex items-center gap-1.5 text-[10px] font-medium"
+                      style={{ color: "oklch(0.75 0.18 160)", opacity: 0.70 }}
+                    >
+                      <span className="animate-pulse" style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
+                      Site Live
+                    </span>
+                    <span style={{ color: "rgba(255,255,255,0.10)" }}>·</span>
+                    <span className="font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                      {activeDomain.domain}
+                    </span>
+                  </>
+                )}
+                {!hasActiveDomain && (
+                  <>
+                    <span style={{ color: "rgba(255,255,255,0.10)" }}>·</span>
+                    <span className="font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.25)" }}>
+                      /{artist.handle}
+                    </span>
+                  </>
+                )}
+                {displayTour && (
+                  <>
+                    <span style={{ color: "rgba(255,255,255,0.10)" }}>·</span>
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8.5px] font-bold"
+                      style={{ backgroundColor: "rgba(100,215,140,0.10)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.20)" }}
+                    >
+                      <span className="animate-pulse" style={{ display: "inline-block", width: 3, height: 3, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
+                      {activeTour ? "Active Tour" : "Upcoming Tour"}: {displayTour.name}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={publicProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10.5px] font-semibold transition hover:opacity-80"
+                  style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.50)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View Site
+                </a>
+                {isSaveDirty && (
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveChanges()}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10.5px] font-bold transition hover:opacity-90"
+                    style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#050505" }}
+                  >
+                    Save Changes
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── COMMAND LAYOUT ─────────────────────────────────────────── */}
-        <div className="space-y-2">
+        {/* ═══ MAIN ROW: Next Show | Tour Control | Booking Desk ═══════ */}
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[4fr_7fr_4fr]">
 
-          {/* ── ARTIST PULSE — full-width operational summary ─────────── */}
-          <div
-            className="overflow-hidden rounded-xl"
-            style={{ backgroundColor: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)" }}
+          {/* ── NEXT SHOW ─────────────────────────────────────────────── */}
+          <button
+            type="button"
+            onClick={() => setActiveSection("shows")}
+            className="group relative flex flex-col overflow-hidden rounded-xl text-left"
+            style={{ backgroundColor: "#080808", border: "1px solid rgba(255,255,255,0.07)", minHeight: 340 }}
           >
-            <div className="grid grid-cols-2 divide-x divide-y sm:grid-cols-4 sm:divide-y-0" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-              {([
-                {
-                  label: "Upcoming Shows",
-                  value: futureShows.length,
-                  sub: futureShows.length > 0 ? `Next: ${fmtShort(futureShows[0].date)}` : "None scheduled",
-                  active: futureShows.length > 0,
-                  onClick: () => setActiveSection("shows"),
-                },
-                {
-                  label: "Active Tour",
-                  value: activeTourCount,
-                  sub: displayTour ? displayTour.name : "No active tour",
-                  active: activeTourCount > 0,
-                  onClick: () => setActiveSection("tours"),
-                },
-                {
-                  label: "Booking Requests",
-                  value: homeBooking === "loading" ? "—" : openBookings,
-                  sub: bookingCounts.new > 0 ? `${bookingCounts.new} new` : "No open requests",
-                  active: openBookings > 0,
-                  onClick: () => setActiveSection("bookings"),
-                },
-                {
-                  label: "Live Releases",
-                  value: liveReleases,
-                  sub: releases.length > liveReleases ? `${releases.length - liveReleases} in draft` : "All published",
-                  active: liveReleases > 0,
-                  onClick: () => setActiveSection("releases"),
-                },
-              ] as const).map((stat, i) => (
-                <button
-                  key={stat.label}
-                  type="button"
-                  onClick={stat.onClick}
-                  className="group flex flex-col px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
-                >
-                  <span className="mb-2 text-[7px] font-black uppercase tracking-[0.22em]" style={dimLabelSty}>
-                    {stat.label}
-                  </span>
-                  <span
-                    className="text-[28px] font-black tabular-nums leading-none"
-                    style={{ color: stat.active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.18)" }}
-                  >
-                    {stat.value}
-                  </span>
-                  <span className="mt-1.5 text-[10px]" style={{ color: stat.active ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.20)" }}>
-                    {stat.sub}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ROW 1: Next Show (wide) + Booking Desk (compact) */}
-          <div className="grid grid-cols-1 items-start gap-2 lg:grid-cols-[3fr_2fr]">
-
-            {/* ── 1. NEXT SHOW — horizontal command card ───────────────── */}
-            <button
-              type="button"
-              onClick={() => setActiveSection("shows")}
-              className={cn(panelCls, "group relative flex overflow-hidden p-0 text-left")}
-              style={{ ...panelSty, minHeight: 280, backgroundColor: "#0a0a0a" }}
-            >
-              {/* Info panel — left */}
-              <div className="relative z-10 flex flex-1 flex-col justify-between p-5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.45)" }}>
-                    Next Show
-                  </span>
-                  {nextShow && daysUntilShow !== null && (
-                    <span
-                      className="shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black tabular-nums"
-                      style={
-                        daysUntilShow <= 7
-                          ? { backgroundColor: "rgba(100,215,140,0.16)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.28)" }
-                          : { backgroundColor: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.60)", border: "1px solid rgba(255,255,255,0.12)" }
-                      }
-                    >
-                      {daysUntilShow === 0 ? "Tonight" : `${daysUntilShow}d`}
-                    </span>
-                  )}
-                </div>
-
-                {nextShow ? (
-                  <div className="flex flex-1 flex-col justify-center py-4">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.20em]" style={{ color: "rgba(255,255,255,0.42)" }}>
-                      {fmtShort(nextShow.date)}{nextShow.city ? ` · ${nextShow.city}` : ""}
-                    </p>
-                    <h2 className="mt-2 text-[26px] font-black leading-tight text-white">
-                      {nextShow.eventName ?? nextShow.venue}
-                    </h2>
-                    {nextShow.eventName && nextShow.venue && (
-                      <p className="mt-1 text-[13px]" style={{ color: "rgba(255,255,255,0.50)" }}>
-                        {nextShow.venue}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-1 flex-col justify-center py-4">
-                    <p className="text-[16px] font-semibold" style={{ color: "rgba(255,255,255,0.20)" }}>
-                      No shows scheduled
-                    </p>
-                    <p className="mt-1.5 text-[11px]" style={{ color: "rgba(255,255,255,0.14)" }}>
-                      Add your first show →
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                  <span
-                    className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all group-hover:brightness-110"
-                    style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#050505" }}
-                  >
-                    View Shows →
-                  </span>
-                  {futureShows.length > 1 && (
-                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.32)" }}>
-                      +{futureShows.length - 1} more
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Flyer/image — right side, visible with left gradient fade */}
-              {showBgSrc ? (
-                <div className="relative hidden shrink-0 overflow-hidden sm:block" style={{ width: 220 }}>
-                  <Image
-                    src={showBgSrc}
-                    alt=""
-                    fill
-                    className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.04]"
-                    style={{ opacity: 0.65 }}
-                    sizes="220px"
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: "linear-gradient(to right, rgba(10,10,10,1) 0%, rgba(10,10,10,0.35) 38%, rgba(10,10,10,0) 70%)" }}
-                  />
-                </div>
-              ) : (
+            {showBgSrc ? (
+              <>
+                <Image
+                  src={showBgSrc}
+                  alt=""
+                  fill
+                  className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.03]"
+                  style={{ opacity: 0.55 }}
+                  sizes="(max-width: 1024px) 100vw, 28vw"
+                />
                 <div
-                  className="hidden shrink-0 items-center justify-center sm:flex"
-                  style={{ width: 160, borderLeft: "1px solid rgba(255,255,255,0.05)", backgroundColor: "rgba(255,255,255,0.01)" }}
-                >
-                  <Calendar className="h-10 w-10" style={{ color: "rgba(255,255,255,0.05)" }} />
-                </div>
-              )}
-            </button>
-
-            {/* ── 3. BOOKING DESK ────────────────────────────────────────── */}
-            {homeBooking === "loading" ? (
-              <div className={cn(panelCls, "p-4")} style={panelSty}>
-                <div className="space-y-2">
-                  {[1, 2].map((n) => (
-                    <div key={n} className="h-7 animate-pulse rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.03)" }} />
-                  ))}
-                </div>
-              </div>
-            ) : homeLeads.length === 0 ? (
-              /* Compact empty strip */
-              <div className={cn(panelCls, "flex flex-col")} style={panelSty}>
-                <div
-                  className="flex items-center justify-between px-4 py-2.5"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-                >
-                  <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.42)" }}>
-                    Booking Desk
-                  </span>
-                  <a
-                    href={publicProfileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[9px] font-semibold transition-opacity hover:opacity-70"
-                    style={{ color: "rgba(255,255,255,0.28)" }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    View Site ↗
-                  </a>
-                </div>
-                <div className="flex flex-col gap-3 px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <Inbox className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.28)" }} />
-                    <span className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.48)" }}>
-                      No inquiries yet
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("bookings")}
-                      className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-70"
-                      style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.48)", border: "1px solid rgba(255,255,255,0.08)" }}
-                    >
-                      <Briefcase className="h-3 w-3" />
-                      Settings
-                    </button>
-                    {artist.bookingInfo.email && (
-                      <button
-                        type="button"
-                        onClick={() => { void navigator.clipboard.writeText(artist.bookingInfo.email) }}
-                        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-70"
-                        style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.48)", border: "1px solid rgba(255,255,255,0.08)" }}
-                      >
-                        <Copy className="h-3 w-3" />
-                        Copy email
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+                  className="absolute inset-0"
+                  style={{ background: "linear-gradient(180deg, rgba(8,8,8,0.30) 0%, rgba(8,8,8,0.55) 40%, rgba(8,8,8,0.97) 88%)" }}
+                />
+              </>
             ) : (
-              /* Expanded pipeline when leads exist */
-              <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
+              <div className="absolute inset-0" style={{ backgroundColor: "#0d0d0d" }}>
                 <div
-                  className="flex items-center justify-between px-4 py-2.5"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-                >
-                  <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.42)" }}>
-                    Booking Desk
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("bookings")}
-                    className="text-[9px] font-semibold transition-opacity hover:opacity-70"
-                    style={{ color: "rgba(255,255,255,0.28)" }}
-                  >
-                    {homeLeads.length} requests →
-                  </button>
-                </div>
-                <div className="flex flex-1 flex-col px-4 py-3">
-                  <div className="mb-2.5 flex gap-0 overflow-hidden rounded-md" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
-                    {([
-                      { key: "new",       label: "New",  count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
-                      { key: "contacted", label: "Cntd", count: bookingCounts.contacted, color: "#60a5fa" },
-                      { key: "qualified", label: "Qual", count: bookingCounts.qualified, color: "#fbbf24" },
-                      { key: "confirmed", label: "Conf", count: bookingCounts.confirmed, color: "#34d399" },
-                    ] as const).map((s, i) => (
-                      <div
-                        key={s.key}
-                        className={`flex flex-1 flex-col items-center py-2${i > 0 ? " border-l" : ""}`}
-                        style={{ borderColor: "rgba(255,255,255,0.06)", position: "relative" }}
-                      >
-                        {s.count > 0 && (
-                          <div className="absolute inset-x-0 top-0 h-[2px]" style={{ backgroundColor: s.color, opacity: 0.65 }} />
-                        )}
-                        <span className="text-[15px] font-black tabular-nums leading-none" style={{ color: "rgba(255,255,255,0.88)" }}>
-                          {s.count}
-                        </span>
-                        <span className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.10em]" style={{ color: s.count > 0 ? s.color : "rgba(255,255,255,0.18)" }}>
-                          {s.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-0.5">
-                    {recentLeads.slice(0, 3).map((lead) => (
-                      <button
-                        key={lead.id}
-                        type="button"
-                        onClick={() => setActiveSection("bookings")}
-                        className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
-                      >
-                        <span
-                          style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", flexShrink: 0, backgroundColor: leadStatusColor(lead.status) }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <span className="block truncate text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>
-                            {lead.fullName}
-                          </span>
-                          <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                            {[lead.city, lead.eventDate].filter(Boolean).join(" · ")}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  className="absolute inset-0"
+                  style={{ backgroundImage: "radial-gradient(circle at 60% 40%, rgba(100,215,140,0.04) 0%, transparent 70%)" }}
+                />
               </div>
             )}
 
-          </div>{/* end ROW 1 */}
-
-          {/* ROW 2: Tour Control (2D map) + Content Studio */}
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[3fr_2fr]">
-
-            {/* ── 2. TOUR CONTROL — 2D routing map panel ───────────────── */}
-            <button
-              type="button"
-              onClick={() => setActiveSection("tours")}
-              className={cn(panelCls, "flex flex-col p-0 text-left")}
-              style={panelSty}
-            >
-              {/* Header bar */}
-              <div
-                className="flex items-center justify-between px-4 py-2.5"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.45)" }}>
-                    {activeTour ? "Tour Control" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
-                  </span>
-                  {activeTour && (
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[6.5px] font-black uppercase tracking-[0.14em]"
-                      style={{ backgroundColor: "rgba(100,215,140,0.12)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.22)" }}
-                    >
-                      <span className="animate-pulse" style={{ display: "inline-block", width: 3, height: 3, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
-                      Live
-                    </span>
-                  )}
-                  {!activeTour && nearestUpcomingTour && (
-                    <span
-                      className="rounded-full px-1.5 py-0.5 text-[6.5px] font-black uppercase tracking-[0.14em]"
-                      style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.32)" }}
-                    >
-                      Routing
-                    </span>
-                  )}
-                </div>
-                {displayTour && (
-                  <span className="font-mono text-[8px]" style={{ color: "rgba(255,255,255,0.32)" }}>
-                    {displayTour.name.slice(0, 22)} · {routeStops.length} stops
+            <div className="relative z-10 flex flex-1 flex-col justify-between p-5">
+              <div className="flex items-start justify-between">
+                <span className="text-[7px] font-black uppercase tracking-[0.30em]" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  Next Show
+                </span>
+                {nextShow && daysUntilShow !== null && (
+                  <span
+                    className="rounded-full px-2.5 py-1 text-[8.5px] font-black uppercase tracking-[0.08em]"
+                    style={
+                      daysUntilShow === 0
+                        ? { backgroundColor: "oklch(0.75 0.18 160)", color: "#050505" }
+                        : daysUntilShow <= 7
+                        ? { backgroundColor: "rgba(100,215,140,0.16)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.28)" }
+                        : { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.40)", border: "1px solid rgba(255,255,255,0.09)" }
+                    }
+                  >
+                    {daysUntilShow === 0 ? "Tonight" : `${daysUntilShow}d`}
                   </span>
                 )}
               </div>
 
-              {/* ── 2D ROUTE MAP ── */}
-              <div
-                className="relative overflow-hidden"
-                style={{ height: 190, backgroundColor: "#070908", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-              >
-                {/* Dot texture */}
-                <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              {nextShow ? (
+                <div className="flex flex-col justify-end">
+                  <h2 className="mb-3 text-[26px] font-black leading-tight text-white">
+                    {nextShow.eventName ?? nextShow.venue}
+                  </h2>
+                  <div className="mb-4 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3 w-3 shrink-0" style={{ color: "oklch(0.75 0.18 160)" }} />
+                      <span className="font-mono text-[10.5px]" style={{ color: "rgba(255,255,255,0.60)" }}>
+                        {fmtShort(nextShow.date)}
+                      </span>
+                    </div>
+                    {nextShow.venue && nextShow.eventName && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3 w-3 shrink-0" style={{ color: "oklch(0.75 0.18 160)" }} />
+                        <span className="text-[10.5px]" style={{ color: "rgba(255,255,255,0.60)" }}>{nextShow.venue}</span>
+                      </div>
+                    )}
+                    {nextShow.city && (
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-3 w-3 shrink-0" style={{ color: "oklch(0.75 0.18 160)" }} />
+                        <span className="text-[10.5px]" style={{ color: "rgba(255,255,255,0.60)" }}>
+                          {nextShow.city}{nextShow.country ? `, ${nextShow.country}` : ""}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Countdown timer */}
+                  {daysUntilShow !== null && daysUntilShow >= 0 && (
+                    <div className="mb-4 flex gap-4">
+                      {([
+                        { value: showCountdown.days,  label: "DAYS" },
+                        { value: showCountdown.hours, label: "HRS"  },
+                        { value: showCountdown.mins,  label: "MINS" },
+                      ] as const).map(({ value, label }) => (
+                        <div key={label} className="flex flex-col">
+                          <span className="text-[30px] font-black tabular-nums leading-none text-white">
+                            {String(value).padStart(2, "0")}
+                          </span>
+                          <span className="mt-0.5 text-[6.5px] font-bold uppercase tracking-[0.16em]" style={{ color: "rgba(255,255,255,0.32)" }}>
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="rounded-lg px-4 py-2 text-[11px] font-bold transition group-hover:brightness-110"
+                      style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#050505" }}
+                    >
+                      View Show →
+                    </span>
+                    {futureShows.length > 1 && (
+                      <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                        +{futureShows.length - 1} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col justify-center">
+                  <p className="text-[16px] font-semibold" style={{ color: "rgba(255,255,255,0.18)" }}>
+                    No shows scheduled
+                  </p>
+                  <p className="mt-1 text-[11px]" style={{ color: "rgba(255,255,255,0.10)" }}>
+                    Add your first show to get started
+                  </p>
+                  <span className="mt-4 text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    + Add Show
+                  </span>
+                </div>
+              )}
+            </div>
+          </button>
+
+          {/* ── TOUR CONTROL ──────────────────────────────────────────── */}
+          <button
+            type="button"
+            onClick={() => setActiveSection("tours")}
+            className="group relative flex flex-col overflow-hidden rounded-xl text-left"
+            style={{ backgroundColor: "#090a09", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            {/* Header bar */}
+            <div
+              className="flex shrink-0 items-center justify-between px-4 py-2.5"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[7px] font-black uppercase tracking-[0.30em]" style={{ color: "rgba(255,255,255,0.40)" }}>
+                  {activeTour ? "Tour Control" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
+                </span>
+                {activeTour && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.14em]"
+                    style={{ backgroundColor: "rgba(100,215,140,0.12)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.22)" }}
+                  >
+                    <span className="animate-pulse" style={{ display: "inline-block", width: 3, height: 3, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
+                    Live
+                  </span>
+                )}
+              </div>
+              {displayTour && (
+                <span className="font-mono text-[7.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
+                  {fmtDateRange(displayTour.startDate, displayTour.endDate)} · {tourShows.length} shows
+                </span>
+              )}
+            </div>
+
+            {/* Map + stop list */}
+            <div className="flex flex-1">
+              {/* 2D SVG map */}
+              <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "#070908", minHeight: 295 }}>
+                {/* Dot-grid texture */}
+                <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
                   <defs>
                     <pattern id="tc-map-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                      <circle cx="1" cy="1" r="0.8" fill="rgba(100,215,140,0.07)" />
+                      <circle cx="1" cy="1" r="0.7" fill="rgba(100,215,140,0.06)" />
                     </pattern>
                   </defs>
                   <rect width="100%" height="100%" fill="url(#tc-map-dots)" />
                 </svg>
 
-                {/* Route SVG — real stops */}
+                {/* Route visualization */}
                 {routePts.length > 0 ? (
                   <svg
                     className="absolute inset-0 h-full w-full"
@@ -3067,436 +3004,561 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     preserveAspectRatio="xMidYMid meet"
                     aria-hidden="true"
                   >
-                    {/* Bezier paths */}
                     {routePts.slice(0, -1).map((pt, i) => {
                       const next = routePts[i + 1]!
                       const cpx = (pt.x + next.x) / 2
-                      const cpy = Math.min(pt.y, next.y) - 26
-                      const pastSeg = pt.isPast && next.isPast
+                      const cpy = Math.min(pt.y, next.y) - 30
                       return (
                         <path
-                          key={`path-${pt.id}`}
+                          key={`rp-${pt.id}`}
                           d={`M ${pt.x} ${pt.y} Q ${cpx} ${cpy} ${next.x} ${next.y}`}
-                          stroke={pastSeg ? "rgba(255,255,255,0.07)" : "rgba(100,215,140,0.28)"}
+                          stroke={pt.isPast && next.isPast ? "rgba(255,255,255,0.06)" : "rgba(100,215,140,0.28)"}
                           strokeWidth="1.5"
-                          strokeDasharray="6 5"
+                          strokeDasharray="8 5"
                           fill="none"
                         />
                       )
                     })}
-
-                    {/* City nodes */}
                     {routePts.map((pt) => (
-                      <g key={`node-${pt.id}`}>
+                      <g key={`rn-${pt.id}`}>
                         {pt.isNext && (
-                          <circle cx={pt.x} cy={pt.y} r="14" fill="rgba(100,215,140,0.10)" />
+                          <circle cx={pt.x} cy={pt.y} r="16" fill="rgba(100,215,140,0.08)" />
                         )}
                         <circle
                           cx={pt.x}
                           cy={pt.y}
                           r="5"
-                          fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.52)"}
-                          style={pt.isNext ? { filter: "drop-shadow(0 0 8px rgba(100,215,140,0.65))" } : {}}
+                          fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.50)"}
+                          style={pt.isNext ? { filter: "drop-shadow(0 0 9px rgba(100,215,140,0.75))" } : {}}
                         />
                         <text
                           x={pt.x}
                           y={pt.y - 12}
                           textAnchor="middle"
-                          fontSize="8.5"
-                          fontFamily="ui-monospace, SFMono-Regular, monospace"
+                          fontSize="7.5"
+                          fontFamily="ui-monospace,monospace"
                           fontWeight="700"
-                          letterSpacing="1"
-                          fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.65)"}
+                          letterSpacing="0.05em"
+                          fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.58)"}
                         >
                           {pt.city}
-                        </text>
-                        <text
-                          x={pt.x}
-                          y={pt.y + 18}
-                          textAnchor="middle"
-                          fontSize="7"
-                          fontFamily="ui-monospace, SFMono-Regular, monospace"
-                          fill={pt.isPast ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.30)"}
-                        >
-                          {pt.date}
                         </text>
                       </g>
                     ))}
                   </svg>
                 ) : (
-                  /* Phantom map — no tour */
+                  /* Phantom map — no tour data */
                   <svg
                     className="absolute inset-0 h-full w-full"
                     viewBox={`0 0 ${mapVbW} ${mapVbH}`}
                     preserveAspectRatio="xMidYMid meet"
                     aria-hidden="true"
                   >
-                    {[0, 1, 2, 3, 4].map((i) => {
-                      const phantomX = [50, 145, 240, 335, 430]
-                      const phantomY = [78, 42, 112, 55, 100]
-                      const px = phantomX[i] ?? 0
-                      const py = phantomY[i] ?? 78
-                      const nextPy = phantomY[i + 1] ?? py
+                    {([
+                      [55, 78], [145, 44], [240, 108], [335, 54], [428, 98],
+                    ] as [number, number][]).map(([px, py], i, arr) => {
+                      const next = arr[i + 1]
                       return (
                         <g key={i}>
-                          <circle cx={px} cy={py} r="4.5" fill="rgba(255,255,255,0.06)" />
-                          {i < 4 && (
+                          <circle cx={px} cy={py} r="4" fill="rgba(255,255,255,0.05)" />
+                          {next && (
                             <path
-                              d={`M ${px} ${py} Q ${px + 47} ${Math.min(py, nextPy) - 24} ${px + 95} ${nextPy}`}
+                              d={`M ${px} ${py} Q ${(px + next[0]) / 2} ${Math.min(py, next[1]) - 22} ${next[0]} ${next[1]}`}
                               stroke="rgba(255,255,255,0.04)"
                               strokeWidth="1"
                               strokeDasharray="5 4"
                               fill="none"
                             />
                           )}
-                          <rect x={px - 12} y={py - 20} width="24" height="7" rx="2" fill="rgba(255,255,255,0.04)" />
+                          <rect x={px - 10} y={py - 19} width="20" height="6" rx="1.5" fill="rgba(255,255,255,0.04)" />
                         </g>
                       )
                     })}
                   </svg>
                 )}
 
+                {/* Zoom controls (decorative) */}
+                <div className="absolute bottom-3 left-3 flex flex-col gap-1" style={{ opacity: 0.28 }}>
+                  {["+", "−"].map((s) => (
+                    <div key={s} className="flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>
+                      {s}
+                    </div>
+                  ))}
+                </div>
+
                 {!toursLoaded && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>Loading…</span>
+                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>Loading…</span>
                   </div>
                 )}
                 {toursLoaded && !displayTour && (
-                  <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                      No active tour — create one to plot your route
-                    </span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6">
+                    <Route className="h-7 w-7" style={{ color: "rgba(255,255,255,0.10)" }} />
+                    <p className="text-center text-[11px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                      No active tour<br />Create one to plot your route
+                    </p>
                   </div>
                 )}
               </div>
 
-              {/* Tour itinerary */}
+              {/* Stop list — right column */}
+              {displayTour && tourShows.length > 0 && (
+                <div
+                  className="flex w-[200px] shrink-0 flex-col overflow-y-auto"
+                  style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <div className="px-3 py-2.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <p className="truncate text-[12px] font-black leading-tight text-white">{displayTour.name}</p>
+                  </div>
+                  <div className="flex-1 divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+                    {tourShows.slice(0, 6).map((show, idx) => {
+                      const isNextStop = show.date >= today && (idx === 0 || (tourShows[idx - 1]?.date ?? "") < today)
+                      const dateParts = fmtShort(show.date).split(" ")
+                      return (
+                        <div
+                          key={show.id}
+                          className="flex items-center gap-2 px-3 py-2"
+                          style={{
+                            backgroundColor: isNextStop ? "rgba(100,215,140,0.05)" : "transparent",
+                            borderLeft: `2px solid ${isNextStop ? "oklch(0.75 0.18 160)" : "transparent"}`,
+                          }}
+                        >
+                          <div className="flex w-8 shrink-0 flex-col items-center">
+                            <span className="font-mono text-[6.5px] font-bold uppercase" style={{ color: isNextStop ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.26)" }}>
+                              {dateParts[0]}
+                            </span>
+                            <span className="font-mono text-[13px] font-black tabular-nums leading-tight" style={{ color: isNextStop ? "oklch(0.75 0.18 160)" : show.date < today ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.72)" }}>
+                              {dateParts[1]}
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[10.5px] font-semibold" style={{ color: show.date < today ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.82)" }}>
+                              {show.city}
+                            </p>
+                            <p className="truncate text-[8.5px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                              {show.venue}
+                            </p>
+                          </div>
+                          <span
+                            className="shrink-0 rounded px-1 py-0.5 text-[6px] font-black uppercase tracking-[0.06em]"
+                            style={
+                              show.visibilityStatus === "announced"
+                                ? { backgroundColor: "rgba(52,211,153,0.10)", color: "#34d399" }
+                                : { color: "rgba(255,255,255,0.18)" }
+                            }
+                          >
+                            {show.visibilityStatus === "announced" ? "Conf" : "TBA"}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div
+                    className="flex items-center gap-2 px-3 py-2"
+                    style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+                  >
+                    <span className="text-[9px] font-semibold" style={{ color: "rgba(255,255,255,0.25)" }}>View Tour →</span>
+                    <span style={{ color: "rgba(255,255,255,0.10)" }}>·</span>
+                    <span className="text-[9px] font-semibold" style={{ color: "rgba(255,255,255,0.25)" }}>Planner</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </button>
+
+          {/* ── BOOKING DESK ──────────────────────────────────────────── */}
+          <div
+            className="flex flex-col overflow-hidden rounded-xl"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div
+              className="flex shrink-0 items-center justify-between px-4 py-2.5"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <span className="text-[7px] font-black uppercase tracking-[0.30em]" style={{ color: "rgba(255,255,255,0.40)" }}>
+                Booking Desk
+              </span>
+              {homeLeads.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("bookings")}
+                  className="text-[8.5px] font-semibold transition hover:opacity-70"
+                  style={{ color: "rgba(255,255,255,0.22)" }}
+                >
+                  Open →
+                </button>
+              )}
+            </div>
+
+            {homeBooking === "loading" ? (
+              <div className="flex flex-1 flex-col gap-2 p-4">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="h-7 animate-pulse rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.04)" }} />
+                ))}
+              </div>
+            ) : homeLeads.length === 0 ? (
+              /* Polished empty state */
+              <div className="flex flex-1 flex-col items-center px-5 py-7 text-center">
+                <div
+                  className="mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: "rgba(100,215,140,0.08)",
+                    border: "1px solid rgba(100,215,140,0.16)",
+                    boxShadow: "0 0 28px rgba(100,215,140,0.07)",
+                  }}
+                >
+                  <Mail className="h-7 w-7" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.78 }} />
+                </div>
+                <p className="text-[13px] font-bold" style={{ color: "rgba(255,255,255,0.65)" }}>
+                  No open inquiries yet
+                </p>
+                <p className="mt-1.5 max-w-[180px] text-[10px] leading-relaxed" style={{ color: "rgba(255,255,255,0.28)" }}>
+                  Your booking channel is live. Inquiries from your site will appear here.
+                </p>
+                <div className="mt-5 flex w-full flex-col gap-2">
+                  <a
+                    href={publicProfileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[10px] font-semibold transition hover:opacity-75"
+                    style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.50)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    <ExternalLink className="h-3 w-3" /> View Site
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("bookings")}
+                    className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[10px] font-semibold transition hover:opacity-75"
+                    style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.50)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    <Briefcase className="h-3 w-3" /> Booking Settings
+                  </button>
+                  {artist.bookingInfo.email && (
+                    <button
+                      type="button"
+                      onClick={() => { void navigator.clipboard.writeText(artist.bookingInfo.email) }}
+                      className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[10px] font-semibold transition hover:opacity-75"
+                      style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.50)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    >
+                      <Copy className="h-3 w-3" /> Copy Booking Email
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Has leads — pipeline bar + recent list */
               <div className="flex flex-1 flex-col p-4">
-                {!toursLoaded ? (
-                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.20)" }}>Loading…</p>
-                ) : displayTour ? (
-                  <>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-[16px] font-black leading-tight text-white">{displayTour.name}</h3>
-                      <span className="shrink-0 text-[9px] tabular-nums" style={{ color: "rgba(255,255,255,0.32)" }}>
-                        {fmtDateRange(displayTour.startDate, displayTour.endDate)}
+                <div
+                  className="mb-3 flex gap-0 overflow-hidden rounded-lg"
+                  style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  {([
+                    { key: "new",       label: "New",  count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
+                    { key: "contacted", label: "Cntd", count: bookingCounts.contacted, color: "#60a5fa" },
+                    { key: "qualified", label: "Qual", count: bookingCounts.qualified, color: "#fbbf24" },
+                    { key: "confirmed", label: "Conf", count: bookingCounts.confirmed, color: "#34d399" },
+                  ] as const).map((s, i) => (
+                    <div
+                      key={s.key}
+                      className={`relative flex flex-1 flex-col items-center py-2${i > 0 ? " border-l" : ""}`}
+                      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+                    >
+                      {s.count > 0 && (
+                        <div className="absolute inset-x-0 top-0 h-[2px]" style={{ backgroundColor: s.color, opacity: 0.65 }} />
+                      )}
+                      <span className="text-[14px] font-black tabular-nums leading-none" style={{ color: "rgba(255,255,255,0.88)" }}>
+                        {s.count}
+                      </span>
+                      <span
+                        className="mt-0.5 text-[6.5px] font-bold uppercase tracking-[0.10em]"
+                        style={{ color: s.count > 0 ? s.color : "rgba(255,255,255,0.16)" }}
+                      >
+                        {s.label}
                       </span>
                     </div>
-
-                    {tourShows.length > 0 && (
-                      <div className="mt-2.5 space-y-px">
-                        {tourShows.slice(0, 5).map((show, idx) => {
-                          const isNextStop = show.date >= today && (idx === 0 || (tourShows[idx - 1]?.date ?? "") < today)
-                          return (
-                            <div
-                              key={show.id}
-                              className="flex items-center gap-2 rounded-md px-2.5 py-1.5"
-                              style={{
-                                backgroundColor: isNextStop ? "rgba(100,215,140,0.06)" : "rgba(255,255,255,0.018)",
-                                borderLeft: isNextStop ? "2px solid oklch(0.75 0.18 160)" : "2px solid transparent",
-                              }}
-                            >
-                              <span
-                                className="w-[38px] shrink-0 font-mono text-[8.5px] font-bold tabular-nums"
-                                style={{ color: isNextStop ? "oklch(0.75 0.18 160)" : show.date < today ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.48)" }}
-                              >
-                                {fmtShort(show.date)}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <span
-                                  className="block truncate text-[11px] font-semibold"
-                                  style={{ color: show.date < today ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.82)" }}
-                                >
-                                  {show.city}
-                                </span>
-                                <span className="truncate text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                                  {show.venue}
-                                </span>
-                              </div>
-                              <span
-                                className="shrink-0 rounded-sm px-1 py-0.5 text-[6.5px] font-black uppercase tracking-[0.10em]"
-                                style={
-                                  show.visibilityStatus === "announced"
-                                    ? { backgroundColor: "rgba(52,211,153,0.10)", color: "#34d399" }
-                                    : { color: "rgba(255,255,255,0.22)" }
-                                }
-                              >
-                                {show.visibilityStatus === "announced" ? "Confirmed" : (show.visibilityStatus ?? "TBA")}
-                              </span>
-                            </div>
-                          )
-                        })}
+                  ))}
+                </div>
+                <div className="flex-1 space-y-0.5">
+                  {recentLeads.map((lead) => (
+                    <button
+                      key={lead.id}
+                      type="button"
+                      onClick={() => setActiveSection("bookings")}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-white/[0.02]"
+                    >
+                      <span
+                        style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", flexShrink: 0, backgroundColor: leadStatusColor(lead.status) }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[10.5px] font-semibold" style={{ color: "rgba(255,255,255,0.72)" }}>
+                          {lead.fullName}
+                        </span>
+                        <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.26)" }}>
+                          {[lead.city, lead.eventDate].filter(Boolean).join(" · ")}
+                        </span>
                       </div>
-                    )}
-
-                    <div className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                      View full tour →
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-1 flex-col justify-center">
-                    <p className="text-[14px] font-semibold" style={{ color: "rgba(255,255,255,0.22)" }}>
-                      No active tour
-                    </p>
-                    <p className="mt-1 text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>
-                      Create a tour to plan shows and routing
-                    </p>
-                    <span className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                      Create Tour →
-                    </span>
-                  </div>
-                )}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("bookings")}
+                  className="mt-2 text-left text-[8.5px] font-semibold"
+                  style={{ color: "rgba(255,255,255,0.25)" }}
+                >
+                  {homeLeads.length} total requests →
+                </button>
               </div>
-            </button>
+            )}
+          </div>
 
-          {/* ── 4. CONTENT STUDIO ─────────────────────────────────────── */}
-          <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
-            {/* Header with inventory strip */}
+        </div>{/* end MAIN ROW */}
+
+        {/* ═══ BOTTOM ROW: Content Studio | Publish Status | Actions ═══ */}
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[5fr_3fr_2fr]">
+
+          {/* ── CONTENT STUDIO — horizontal editorial shelf ──────────── */}
+          <div
+            className="flex flex-col overflow-hidden rounded-xl"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
             <div
-              className="flex items-center justify-between px-4 py-2.5"
+              className="flex shrink-0 items-center justify-between px-4 py-2.5"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+              <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.40)" }}>
                 Content Studio
               </span>
-              <button
-                type="button"
-                onClick={() => setActiveSection(homeContentTab)}
-                className="text-[9px] font-semibold transition-opacity hover:opacity-70"
-                style={{ color: "rgba(255,255,255,0.22)" }}
-              >
-                Open →
-              </button>
-            </div>
-
-            {/* Inventory bar — compact count chips */}
-            <div
-              className="flex items-center gap-0 overflow-x-auto px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              {([
-                { label: "Releases", count: releases.length,      key: "releases", dot: "oklch(0.75 0.18 160)" },
-                { label: "Shows",    count: upcomingGigs.length,  key: "shows",    dot: "rgba(96,165,250,0.8)" },
-                { label: "Sets",     count: djSets.length,        key: "sets",     dot: "rgba(192,132,252,0.8)" },
-                { label: "Videos",   count: videos.length,        key: "media",    dot: "rgba(251,146,60,0.8)"  },
-                { label: "Photos",   count: galleryImages.length, key: "gallery",  dot: "rgba(248,113,113,0.7)" },
-              ] as const).map((tab, i) => (
+              <div className="flex items-center gap-1">
+                {([
+                  { label: "Releases", count: releases.length,      key: "releases", dot: "oklch(0.75 0.18 160)" },
+                  { label: "Shows",    count: upcomingGigs.length,  key: "shows",    dot: "rgba(96,165,250,0.8)" },
+                  { label: "Sets",     count: djSets.length,        key: "sets",     dot: "rgba(192,132,252,0.8)" },
+                  { label: "Videos",   count: videos.length,        key: "media",    dot: "rgba(251,146,60,0.8)"  },
+                  { label: "Photos",   count: galleryImages.length, key: "gallery",  dot: "rgba(248,113,113,0.7)" },
+                ] as const).map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setHomeContentTab(tab.key)}
+                    className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 transition-colors"
+                    style={
+                      homeContentTab === tab.key
+                        ? { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.82)" }
+                        : { color: "rgba(255,255,255,0.26)" }
+                    }
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tab.dot, opacity: homeContentTab === tab.key ? 1 : 0.40 }} />
+                    <span className="text-[8.5px] font-semibold">{tab.label}</span>
+                    <span className="tabular-nums text-[7.5px]" style={{ opacity: 0.50 }}>{tab.count}</span>
+                  </button>
+                ))}
                 <button
-                  key={tab.key}
                   type="button"
-                  onClick={() => setHomeContentTab(tab.key)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors${i > 0 ? " ml-1" : ""}`}
-                  style={
-                    homeContentTab === tab.key
-                      ? { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.80)" }
-                      : { color: "rgba(255,255,255,0.28)" }
-                  }
+                  onClick={() => setActiveSection(homeContentTab)}
+                  className="ml-1 text-[8.5px] font-semibold transition hover:opacity-70"
+                  style={{ color: "rgba(255,255,255,0.22)" }}
                 >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tab.dot, opacity: homeContentTab === tab.key ? 1 : 0.45 }} />
-                  <span className="text-[9px] font-semibold">{tab.label}</span>
-                  <span className="tabular-nums text-[8px]" style={{ opacity: 0.55 }}>{tab.count}</span>
+                  Open →
                 </button>
-              ))}
+              </div>
             </div>
 
-            {/* Content list — tight rows */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Horizontal card shelf */}
+            <div className="flex-1 overflow-hidden px-3 py-3">
               {homeContentTab === "releases" && (
-                releases.length > 0
-                  ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {releases.slice(0, 7).map((r) => (
-                        <button
-                          key={r.id}
-                          type="button"
-                          onClick={() => setActiveSection("releases")}
-                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
-                        >
-                          {r.artworkUrl ? (
-                            <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded">
-                              <Image src={r.artworkUrl} alt={r.title} fill className="object-cover" sizes="28px" />
-                            </div>
-                          ) : (
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
-                              <Disc3 className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.18)" }} />
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>{r.title}</span>
-                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                              {r.type} · {r.releaseDate?.slice(0, 4) ?? "—"}
-                            </span>
+                releases.length > 0 ? (
+                  <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {releases.slice(0, 10).map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setActiveSection("releases")}
+                        className="group shrink-0 w-[90px] text-left transition-opacity hover:opacity-80"
+                      >
+                        {r.artworkUrl ? (
+                          <div className="relative h-[90px] w-[90px] overflow-hidden rounded-lg">
+                            <Image src={r.artworkUrl} alt={r.title} fill className="object-cover" sizes="90px" />
                           </div>
-                          {r.isFeatured && (
-                            <Star className="h-2.5 w-2.5 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.75 }} />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  : <div className="px-4 py-5 text-center">
-                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No releases yet</p>
-                    </div>
+                        ) : (
+                          <div className="flex h-[90px] w-[90px] items-center justify-center rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+                            <Disc3 className="h-7 w-7" style={{ color: "rgba(255,255,255,0.12)" }} />
+                          </div>
+                        )}
+                        <p className="mt-1.5 truncate text-[10px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>{r.title}</p>
+                        <p className="truncate text-[8.5px]" style={{ color: "rgba(255,255,255,0.32)" }}>{r.type} · {r.releaseDate?.slice(0, 4) ?? "—"}</p>
+                        {r.isFeatured && (
+                          <div className="mt-0.5 flex items-center gap-1">
+                            <span className="h-1 w-1 rounded-full" style={{ backgroundColor: "oklch(0.75 0.18 160)" }} />
+                            <span className="text-[7.5px]" style={{ color: "oklch(0.75 0.18 160)" }}>Featured</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No releases yet</p>
+                  </div>
+                )
               )}
               {homeContentTab === "shows" && (
-                upcomingGigs.length > 0
-                  ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {upcomingGigs.slice(0, 7).map((g) => (
-                        <button
-                          key={g.id}
-                          type="button"
-                          onClick={() => setActiveSection("shows")}
-                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
-                        >
-                          <span className="w-10 shrink-0 font-mono text-[8px] font-bold tabular-nums" style={{ color: "rgba(96,165,250,0.75)" }}>
-                            {fmtShort(g.date)}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
-                              {g.eventName ?? g.venue}
-                            </span>
-                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>{g.city}</span>
+                upcomingGigs.length > 0 ? (
+                  <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {upcomingGigs.slice(0, 10).map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => setActiveSection("shows")}
+                        className="group shrink-0 w-[90px] text-left transition-opacity hover:opacity-80"
+                      >
+                        {g.flyerUrl ? (
+                          <div className="relative h-[90px] w-[90px] overflow-hidden rounded-lg">
+                            <Image src={g.flyerUrl} alt={g.eventName ?? g.venue} fill className="object-cover" sizes="90px" />
                           </div>
-                          {g.visibilityStatus === "announced" && (
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: "#34d399", opacity: 0.7 }} />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  : <div className="px-4 py-5 text-center">
-                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No shows yet</p>
-                    </div>
+                        ) : (
+                          <div className="flex h-[90px] w-[90px] flex-col items-center justify-center rounded-lg" style={{ backgroundColor: "rgba(96,165,250,0.06)" }}>
+                            <Calendar className="h-6 w-6" style={{ color: "rgba(96,165,250,0.40)" }} />
+                            <span className="mt-1 font-mono text-[7px] font-bold" style={{ color: "rgba(96,165,250,0.55)" }}>{fmtShort(g.date)}</span>
+                          </div>
+                        )}
+                        <p className="mt-1.5 truncate text-[10px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>{g.eventName ?? g.venue}</p>
+                        <p className="truncate text-[8.5px]" style={{ color: "rgba(255,255,255,0.32)" }}>{g.city}</p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No shows yet</p>
+                  </div>
+                )
               )}
               {homeContentTab === "sets" && (
-                djSets.length > 0
-                  ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {djSets.slice(0, 7).map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => setActiveSection("sets")}
-                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
-                        >
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded" style={{ backgroundColor: "rgba(192,132,252,0.08)" }}>
-                            <Headphones className="h-3.5 w-3.5" style={{ color: "rgba(192,132,252,0.55)" }} />
+                djSets.length > 0 ? (
+                  <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {djSets.slice(0, 10).map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setActiveSection("sets")}
+                        className="group shrink-0 w-[90px] text-left transition-opacity hover:opacity-80"
+                      >
+                        {s.imageUrl ? (
+                          <div className="relative h-[90px] w-[90px] overflow-hidden rounded-lg">
+                            <Image src={s.imageUrl} alt={s.titleOverride || s.event || "Set"} fill className="object-cover opacity-80" sizes="90px" />
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
-                              {s.titleOverride || s.event || s.venue || s.city || "DJ Set"}
-                            </span>
-                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                              {[s.setDate?.slice(0, 4), s.city || s.venue].filter(Boolean).join(" · ")}
-                            </span>
+                        ) : (
+                          <div className="flex h-[90px] w-[90px] items-center justify-center rounded-lg" style={{ backgroundColor: "rgba(192,132,252,0.07)" }}>
+                            <Headphones className="h-7 w-7" style={{ color: "rgba(192,132,252,0.40)" }} />
                           </div>
-                          <span
-                            className="shrink-0 text-[7px] font-bold uppercase tracking-wide"
-                            style={{ color: s.isPublished ? "rgba(192,132,252,0.5)" : "rgba(255,255,255,0.12)" }}
-                          >
-                            {s.isPublished ? "Live" : "Draft"}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  : <div className="px-4 py-5 text-center">
-                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No sets yet</p>
-                    </div>
+                        )}
+                        <p className="mt-1.5 truncate text-[10px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
+                          {s.titleOverride || s.event || s.venue || "DJ Set"}
+                        </p>
+                        <p className="truncate text-[8.5px]" style={{ color: "rgba(255,255,255,0.32)" }}>
+                          {[s.setDate?.slice(0, 4), s.city].filter(Boolean).join(" · ")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No sets yet</p>
+                  </div>
+                )
               )}
               {homeContentTab === "media" && (
-                videos.length > 0
-                  ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {videos.slice(0, 7).map((v) => (
-                        <button
-                          key={v.id}
-                          type="button"
-                          onClick={() => setActiveSection("media")}
-                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
-                        >
-                          {(v.customThumbnailUrl || v.thumbnailUrl) ? (
-                            <div className="relative h-7 w-11 shrink-0 overflow-hidden rounded">
-                              <Image
-                                src={v.customThumbnailUrl ?? v.thumbnailUrl ?? ""}
-                                alt={v.videoEvent || "Video"}
-                                fill
-                                className="object-cover opacity-80"
-                                sizes="44px"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex h-7 w-11 shrink-0 items-center justify-center rounded" style={{ backgroundColor: "rgba(251,146,60,0.07)" }}>
-                              <Play className="h-3.5 w-3.5" style={{ color: "rgba(251,146,60,0.45)" }} />
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
-                              {v.videoEvent || v.venue || v.videoCity || v.title || "Video"}
-                            </span>
-                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                              {[v.videoDate?.slice(0, 4), v.videoCity].filter(Boolean).join(" · ")}
-                            </span>
-                          </div>
-                          <span
-                            className="shrink-0 text-[7px] font-bold uppercase tracking-wide"
-                            style={{ color: v.isPublished ? "rgba(251,146,60,0.55)" : "rgba(255,255,255,0.12)" }}
-                          >
-                            {v.isPublished ? "Live" : "Draft"}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  : <div className="px-4 py-5 text-center">
-                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No videos yet</p>
-                    </div>
-              )}
-              {homeContentTab === "gallery" && (
-                galleryImages.length > 0
-                  ? (
-                      <div className="grid grid-cols-5 gap-0.5 p-2">
-                        {galleryImages.slice(0, 10).map((img) => (
-                          <button
-                            key={img.id}
-                            type="button"
-                            onClick={() => setActiveSection("gallery")}
-                            className="relative aspect-square overflow-hidden rounded transition-opacity hover:opacity-80"
-                          >
+                videos.length > 0 ? (
+                  <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {videos.slice(0, 10).map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setActiveSection("media")}
+                        className="group shrink-0 w-[112px] text-left transition-opacity hover:opacity-80"
+                      >
+                        {(v.customThumbnailUrl || v.thumbnailUrl) ? (
+                          <div className="relative h-[63px] w-[112px] overflow-hidden rounded-lg">
                             <Image
-                              src={img.imageUrl}
-                              alt={img.altText}
+                              src={v.customThumbnailUrl ?? v.thumbnailUrl ?? ""}
+                              alt={v.videoEvent || "Video"}
                               fill
                               className="object-cover"
-                              style={{ opacity: 0.72 }}
-                              sizes="70px"
+                              style={{ opacity: 0.80 }}
+                              sizes="112px"
                             />
-                          </button>
-                        ))}
-                      </div>
-                    )
-                  : <div className="px-4 py-5 text-center">
-                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No photos yet</p>
-                    </div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(0,0,0,0.45)" }}>
+                                <Play className="h-3 w-3 text-white" />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex h-[63px] w-[112px] items-center justify-center rounded-lg" style={{ backgroundColor: "rgba(251,146,60,0.06)" }}>
+                            <Play className="h-6 w-6" style={{ color: "rgba(251,146,60,0.35)" }} />
+                          </div>
+                        )}
+                        <p className="mt-1.5 truncate text-[10px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
+                          {v.videoEvent || v.venue || v.videoCity || v.title || "Video"}
+                        </p>
+                        <p className="truncate text-[8.5px]" style={{ color: "rgba(255,255,255,0.32)" }}>
+                          {[v.videoDate?.slice(0, 4), v.videoCity].filter(Boolean).join(" · ")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No videos yet</p>
+                  </div>
+                )
+              )}
+              {homeContentTab === "gallery" && (
+                galleryImages.length > 0 ? (
+                  <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {galleryImages.slice(0, 12).map((img) => (
+                      <button
+                        key={img.id}
+                        type="button"
+                        onClick={() => setActiveSection("gallery")}
+                        className="group relative h-[90px] w-[90px] shrink-0 overflow-hidden rounded-lg transition-opacity hover:opacity-80"
+                      >
+                        <Image
+                          src={img.imageUrl}
+                          alt={img.altText}
+                          fill
+                          className="object-cover"
+                          style={{ opacity: 0.75 }}
+                          sizes="90px"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No photos yet</p>
+                  </div>
+                )
               )}
             </div>
           </div>
 
-        </div>{/* end ROW 2 */}
-
-        {/* ROW 3: Publish Status + Command Dock */}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-
-          {/* ── 5. PUBLISH SIGNAL BOARD ───────────────────────────────── */}
-          <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
+          {/* ── PUBLISH STATUS — signal board ─────────────────────────── */}
+          <div
+            className="flex flex-col overflow-hidden rounded-xl"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
             <div
-              className="flex items-center justify-between px-4 py-3"
+              className="flex shrink-0 items-center justify-between px-4 py-2.5"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+              <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.40)" }}>
                 Publish Status
-              </p>
-              {/* All-good signal */}
+              </span>
               {publishChecks.every((c) => c.ok) && (
-                <span
-                  className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.14em]"
-                  style={{ color: "oklch(0.75 0.18 160)" }}
-                >
-                  <span className="animate-pulse" style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
-                  All systems go
+                <span className="inline-flex items-center gap-1 text-[7.5px] font-black uppercase tracking-[0.12em]" style={{ color: "oklch(0.75 0.18 160)" }}>
+                  <span className="animate-pulse" style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
+                  All good
                 </span>
               )}
             </div>
@@ -3504,141 +3566,84 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {publishChecks.map((item) => (
                 <div
                   key={item.label}
-                  className="flex items-center gap-3 px-4 py-3"
+                  className="flex items-center gap-2.5 px-3 py-2.5"
                   style={{
-                    borderLeft: `3px solid ${item.ok ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.06)"}`,
+                    borderLeft: `2px solid ${item.ok ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.05)"}`,
                     backgroundColor: item.ok ? "rgba(100,215,140,0.02)" : "transparent",
                   }}
                 >
-                  {/* Signal indicator */}
                   <div
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
                     style={{ backgroundColor: item.ok ? "rgba(100,215,140,0.14)" : "rgba(255,255,255,0.05)" }}
                   >
                     {item.ok ? (
-                      <Check className="h-3 w-3" style={{ color: "oklch(0.75 0.18 160)" }} />
+                      <Check className="h-2.5 w-2.5" style={{ color: "oklch(0.75 0.18 160)" }} />
                     ) : (
-                      <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.16)" }} />
+                      <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.14)" }} />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p
-                      className="text-[12px] font-semibold leading-tight"
-                      style={{ color: item.ok ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.32)" }}
-                    >
+                    <p className="text-[10.5px] font-semibold leading-tight" style={{ color: item.ok ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.28)" }}>
                       {item.label}
                     </p>
-                    <p className="mt-0.5 truncate text-[10px] leading-tight" style={{ color: "rgba(255,255,255,0.24)" }}>
+                    <p className="mt-0.5 truncate text-[8.5px]" style={{ color: "rgba(255,255,255,0.22)" }}>
                       {item.sub}
                     </p>
-                  </div>
-                  <div
-                    className="shrink-0 text-[7px] font-black uppercase tracking-[0.16em]"
-                    style={{ color: item.ok ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.16)" }}
-                  >
-                    {item.ok ? "✓" : "—"}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ── 6. COMMAND STRIP ──────────────────────────────────────── */}
-          <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
+          {/* ── COMMAND ACTIONS — icon grid launcher ───────────────────── */}
+          <div
+            className="flex flex-col overflow-hidden rounded-xl"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
             <div
-              className="flex items-center justify-between px-4 py-2.5"
+              className="px-4 py-2.5"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
-                Actions
+              <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.40)" }}>
+                Quick Actions
               </span>
+            </div>
+            <div className="flex flex-1 flex-col gap-3 p-3">
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { label: "Add Show",     Icon: Calendar,    sec: "shows"    },
+                  { label: "Add Set",      Icon: Headphones,  sec: "sets"     },
+                  { label: "Add Video",    Icon: Play,        sec: "media"    },
+                  { label: "Add Release",  Icon: Disc3,       sec: "releases" },
+                  { label: "Create Tour",  Icon: Route,       sec: "tours"    },
+                  { label: "Edit Profile", Icon: User,        sec: "profile"  },
+                ] as const).map(({ label, Icon, sec }) => (
+                  <button
+                    key={sec}
+                    type="button"
+                    onClick={() => setActiveSection(sec)}
+                    className="flex flex-col items-center gap-1 rounded-lg py-2.5 transition hover:bg-white/[0.04]"
+                    style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <Icon className="h-4 w-4" style={{ color: "rgba(255,255,255,0.40)" }} />
+                    <span className="text-center text-[7.5px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.40)" }}>{label}</span>
+                  </button>
+                ))}
+              </div>
               <a
                 href={publicProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[9px] font-semibold transition-opacity hover:opacity-70"
-                style={{ color: "oklch(0.75 0.18 160)" }}
+                className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[9.5px] font-semibold transition hover:opacity-75"
+                style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.42)", border: "1px solid rgba(255,255,255,0.07)" }}
               >
-                <ExternalLink className="h-3 w-3" />
-                View Site
+                <ExternalLink className="h-3 w-3" /> View Site
               </a>
-            </div>
-
-            {/* Primary actions — Shows + Tours as the main operations */}
-            <div className="flex gap-1.5 p-3 pb-0">
-              <button
-                type="button"
-                onClick={() => setActiveSection("shows")}
-                className="flex flex-1 items-center gap-2 rounded-md px-3 py-2.5 text-left transition-all hover:brightness-110"
-                style={{ backgroundColor: "rgba(100,215,140,0.09)", color: "rgba(255,255,255,0.82)", border: "1px solid rgba(100,215,140,0.16)" }}
-              >
-                <Calendar className="h-4 w-4 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.85 }} />
-                <div>
-                  <p className="text-[11px] font-bold">Add Show</p>
-                  <p className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.38)" }}>{futureShows.length} scheduled</p>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveSection("tours")}
-                className="flex flex-1 items-center gap-2 rounded-md px-3 py-2.5 text-left transition-all hover:brightness-110"
-                style={{ backgroundColor: "rgba(100,215,140,0.09)", color: "rgba(255,255,255,0.82)", border: "1px solid rgba(100,215,140,0.16)" }}
-              >
-                <Route className="h-4 w-4 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.85 }} />
-                <div>
-                  <p className="text-[11px] font-bold">Tour</p>
-                  <p className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.38)" }}>{displayTour ? displayTour.name.slice(0, 16) : "No active"}</p>
-                </div>
-              </button>
-            </div>
-
-            {/* Content action strip — horizontal compact toolbar */}
-            <div
-              className="mx-3 mt-2 flex overflow-hidden rounded-md"
-              style={{ border: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              {([
-                { label: "Set",     Icon: Headphones, sec: "sets"     },
-                { label: "Release", Icon: Disc3,      sec: "releases" },
-                { label: "Video",   Icon: Play,       sec: "media"    },
-              ] as const).map(({ label, Icon, sec }, i) => (
-                <button
-                  key={sec}
-                  type="button"
-                  onClick={() => setActiveSection(sec)}
-                  className={`flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors hover:bg-white/[0.03]${i > 0 ? " border-l" : ""}`}
-                  style={{ borderColor: "rgba(255,255,255,0.06)" }}
-                >
-                  <Icon className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.28)" }} />
-                  <span className="text-[9px] font-semibold" style={{ color: "rgba(255,255,255,0.40)" }}>+ {label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Utility strip — manage + settings */}
-            <div className="flex gap-1 p-3 pt-2">
-              {([
-                { label: "Profile",   Icon: User,     sec: "profile"   },
-                { label: "Press Kit", Icon: FileText, sec: "press-kit" },
-                { label: "Bookings",  Icon: Briefcase, sec: "bookings" },
-              ] as const).map(({ label, Icon, sec }) => (
-                <button
-                  key={sec}
-                  type="button"
-                  onClick={() => setActiveSection(sec)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[9.5px] font-medium transition-opacity hover:opacity-70"
-                  style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.32)", border: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <Icon className="h-3 w-3 shrink-0" style={{ color: "rgba(255,255,255,0.20)" }} />
-                  {label}
-                </button>
-              ))}
             </div>
           </div>
 
-        </div>{/* end ROW 3 */}
+        </div>{/* end BOTTOM ROW */}
 
-        </div>{/* end command layout */}
       </div>
     )
   }
