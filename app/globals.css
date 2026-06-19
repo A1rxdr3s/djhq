@@ -168,8 +168,7 @@ body:has(.djhq-dashboard) {
 
 /* Structural backgrounds — override any inlined utility values */
 .djhq-dashboard { background-color: #ffffff; color: oklch(0.10 0 0); }
-.djhq-dashboard header  { background-color: rgba(255,255,255,0.92); color: oklch(0.10 0 0); }
-.djhq-dashboard aside   { background-color: #f8f8f8; }
+.djhq-dashboard header  { background-color: rgba(255,255,255,0.95); color: oklch(0.10 0 0); }
 
 /* Foreground / muted text — direct color, no token ambiguity */
 .djhq-dashboard .text-foreground    { color: oklch(0.10 0 0); }
@@ -202,6 +201,47 @@ body:has(.djhq-dashboard) {
 .djhq-dashboard .border-border\/40 { border-color: rgba(234,234,234,0.40); }
 .djhq-dashboard .border-border\/60 { border-color: rgba(234,234,234,0.60); }
 .djhq-dashboard .border-border\/70 { border-color: rgba(234,234,234,0.70); }
+
+/* ── HQ Control Spine ─────────────────────────────────────────────────────────
+   The spine and its header cap live on a near-black surface, isolated from the
+   warm-paper main canvas. These rules are plain CSS so they're never overridden
+   by the .djhq-dashboard token cascade. */
+
+.hq-nav-item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 450;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.34);
+  letter-spacing: 0.005em;
+  transition: color 100ms ease, background-color 100ms ease;
+}
+.hq-nav-item:hover {
+  color: rgba(255, 255, 255, 0.64);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.hq-nav-item--active {
+  color: oklch(0.84 0.20 160);
+  font-weight: 600;
+  background-color: rgba(100, 215, 140, 0.07);
+}
+.hq-nav-item--active::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 12px;
+  width: 2.5px;
+  background: oklch(0.75 0.18 160);
+  border-radius: 2px;
+}
 
 /* Lighter dialog backdrop when the HQ dashboard is the active page.
    Radix Dialog portals render into <body>, which is a descendant of <html>.
