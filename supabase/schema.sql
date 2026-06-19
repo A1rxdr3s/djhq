@@ -417,7 +417,6 @@ create index if not exists gigs_artist_idx             on public.gigs (artist_id
 create index if not exists dj_sets_artist_idx          on public.dj_sets (artist_id);
 create index if not exists videos_artist_idx           on public.videos (artist_id);
 create index if not exists gallery_images_artist_idx   on public.gallery_images (artist_id);
-create index if not exists custom_domains_artist_idx   on public.custom_domains (artist_id);
 create index if not exists venues_name_idx             on public.venues (name);
 create index if not exists brand_source_files_artist_idx on public.brand_source_files (artist_id);
 create index if not exists brand_assets_artist_idx     on public.brand_assets (artist_id);
@@ -549,127 +548,378 @@ alter table public.gallery_images enable row level security;
 alter table public.custom_domains enable row level security;
 alter table public.venues        enable row level security;
 
--- Public read policies (profiles must be published)
-drop policy if exists "artists_public_read"       on public.artists;
-create policy "artists_public_read"
-  on public.artists for select
-  using (is_published = true);
+-- ── RLS Policies ─────────────────────────────────────────────────────────────
+-- Consolidated: one SELECT policy per table (public OR owner) + explicit write
+-- policies per operation. auth.uid() / auth.role() wrapped in (select ...) so
+-- the planner evaluates them once per query (not once per row).
 
-drop policy if exists "social_links_public_read"  on public.social_links;
-create policy "social_links_public_read"
-  on public.social_links for select
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
-
-drop policy if exists "releases_public_read"      on public.releases;
-create policy "releases_public_read"
-  on public.releases for select
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
-
-drop policy if exists "gigs_public_read"          on public.gigs;
-create policy "gigs_public_read"
-  on public.gigs for select
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
-
-drop policy if exists "dj_sets_public_read"       on public.dj_sets;
-create policy "dj_sets_public_read"
-  on public.dj_sets for select
-  using (is_published = true and exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
-
-drop policy if exists "videos_public_read"        on public.videos;
-create policy "videos_public_read"
-  on public.videos for select
-  using (is_published = true and exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
-
-drop policy if exists "gallery_images_public_read" on public.gallery_images;
-create policy "gallery_images_public_read"
-  on public.gallery_images for select
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
-
-drop policy if exists "venues_public_read"        on public.venues;
+-- venues: fully public
+drop policy if exists "venues_public_read" on public.venues;
 create policy "venues_public_read"
   on public.venues for select using (true);
 
--- Owner write policies (service role manages via API, so these cover dashboard API auth)
-drop policy if exists "artists_owner_all"         on public.artists;
-create policy "artists_owner_all"
-  on public.artists for all
-  using (owner_user_id = auth.uid())
-  with check (owner_user_id = auth.uid());
+-- artists
+drop policy if exists "artists_public_read"   on public.artists;
+drop policy if exists "artists_owner_all"      on public.artists;
+drop policy if exists "artists_select"         on public.artists;
+drop policy if exists "artists_owner_insert"   on public.artists;
+drop policy if exists "artists_owner_update"   on public.artists;
+drop policy if exists "artists_owner_delete"   on public.artists;
 
-drop policy if exists "social_links_owner_all"    on public.social_links;
-create policy "social_links_owner_all"
-  on public.social_links for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "releases_owner_all"        on public.releases;
-create policy "releases_owner_all"
-  on public.releases for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "gigs_owner_all"            on public.gigs;
-create policy "gigs_owner_all"
-  on public.gigs for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "dj_sets_owner_all"         on public.dj_sets;
-create policy "dj_sets_owner_all"
-  on public.dj_sets for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "videos_owner_all"          on public.videos;
-create policy "videos_owner_all"
-  on public.videos for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "gallery_images_owner_all"  on public.gallery_images;
-create policy "gallery_images_owner_all"
-  on public.gallery_images for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "custom_domains_owner_all"  on public.custom_domains;
-create policy "custom_domains_owner_all"
-  on public.custom_domains for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "brand_source_files_owner_all" on public.brand_source_files;
-create policy "brand_source_files_owner_all"
-  on public.brand_source_files for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "brand_assets_owner_all" on public.brand_assets;
-create policy "brand_assets_owner_all"
-  on public.brand_assets for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "brand_asset_assignments_owner_all" on public.brand_asset_assignments;
-create policy "brand_asset_assignments_owner_all"
-  on public.brand_asset_assignments for all
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = auth.uid()));
-
-drop policy if exists "brand_asset_assignments_public_read" on public.brand_asset_assignments;
-create policy "brand_asset_assignments_public_read"
-  on public.brand_asset_assignments for select
-  using (exists (select 1 from public.artists a where a.id = artist_id and a.is_published = true));
-
-drop policy if exists "artist_tours_public_read" on public.artist_tours;
-create policy "artist_tours_public_read"
-  on public.artist_tours for select
+create policy "artists_select"
+  on public.artists for select
   using (
     is_published = true
-    and exists (
-      select 1 from public.artists a
-      where a.id = artist_id and a.is_published = true
-    )
+    or owner_user_id = (select auth.uid())
   );
 
-drop policy if exists "artist_tours_owner_all" on public.artist_tours;
-create policy "artist_tours_owner_all"
-  on public.artist_tours for all
+create policy "artists_owner_insert"
+  on public.artists for insert
+  with check (owner_user_id = (select auth.uid()));
+
+create policy "artists_owner_update"
+  on public.artists for update
+  using (owner_user_id = (select auth.uid()))
+  with check (owner_user_id = (select auth.uid()));
+
+create policy "artists_owner_delete"
+  on public.artists for delete
+  using (owner_user_id = (select auth.uid()));
+
+-- social_links
+drop policy if exists "social_links_public_read"    on public.social_links;
+drop policy if exists "social_links_owner_all"       on public.social_links;
+drop policy if exists "social_links_select"          on public.social_links;
+drop policy if exists "social_links_owner_insert"    on public.social_links;
+drop policy if exists "social_links_owner_update"    on public.social_links;
+drop policy if exists "social_links_owner_delete"    on public.social_links;
+
+create policy "social_links_select"
+  on public.social_links for select
   using (
     exists (
       select 1 from public.artists a
-      where a.id = artist_id and a.owner_user_id = auth.uid()
+      where a.id = artist_id
+        and (a.is_published = true or a.owner_user_id = (select auth.uid()))
     )
+  );
+
+create policy "social_links_owner_insert"
+  on public.social_links for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "social_links_owner_update"
+  on public.social_links for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "social_links_owner_delete"
+  on public.social_links for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+-- releases
+drop policy if exists "releases_public_read"  on public.releases;
+drop policy if exists "releases_owner_all"     on public.releases;
+drop policy if exists "releases_select"        on public.releases;
+drop policy if exists "releases_owner_insert"  on public.releases;
+drop policy if exists "releases_owner_update"  on public.releases;
+drop policy if exists "releases_owner_delete"  on public.releases;
+
+create policy "releases_select"
+  on public.releases for select
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id
+        and (a.is_published = true or a.owner_user_id = (select auth.uid()))
+    )
+  );
+
+create policy "releases_owner_insert"
+  on public.releases for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "releases_owner_update"
+  on public.releases for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "releases_owner_delete"
+  on public.releases for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+-- gigs
+drop policy if exists "gigs_public_read"  on public.gigs;
+drop policy if exists "gigs_owner_all"    on public.gigs;
+drop policy if exists "gigs_select"       on public.gigs;
+drop policy if exists "gigs_owner_insert" on public.gigs;
+drop policy if exists "gigs_owner_update" on public.gigs;
+drop policy if exists "gigs_owner_delete" on public.gigs;
+
+create policy "gigs_select"
+  on public.gigs for select
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id
+        and (a.is_published = true or a.owner_user_id = (select auth.uid()))
+    )
+  );
+
+create policy "gigs_owner_insert"
+  on public.gigs for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "gigs_owner_update"
+  on public.gigs for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "gigs_owner_delete"
+  on public.gigs for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+-- dj_sets (own is_published column — public read requires both set and artist published)
+drop policy if exists "dj_sets_public_read"  on public.dj_sets;
+drop policy if exists "dj_sets_owner_all"    on public.dj_sets;
+drop policy if exists "dj_sets_select"       on public.dj_sets;
+drop policy if exists "dj_sets_owner_insert" on public.dj_sets;
+drop policy if exists "dj_sets_owner_update" on public.dj_sets;
+drop policy if exists "dj_sets_owner_delete" on public.dj_sets;
+
+create policy "dj_sets_select"
+  on public.dj_sets for select
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id
+        and (
+          (dj_sets.is_published = true and a.is_published = true)
+          or a.owner_user_id = (select auth.uid())
+        )
+    )
+  );
+
+create policy "dj_sets_owner_insert"
+  on public.dj_sets for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "dj_sets_owner_update"
+  on public.dj_sets for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "dj_sets_owner_delete"
+  on public.dj_sets for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+-- videos (own is_published column — public read requires both video and artist published)
+drop policy if exists "videos_public_read"  on public.videos;
+drop policy if exists "videos_owner_all"    on public.videos;
+drop policy if exists "videos_select"       on public.videos;
+drop policy if exists "videos_owner_insert" on public.videos;
+drop policy if exists "videos_owner_update" on public.videos;
+drop policy if exists "videos_owner_delete" on public.videos;
+
+create policy "videos_select"
+  on public.videos for select
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id
+        and (
+          (videos.is_published = true and a.is_published = true)
+          or a.owner_user_id = (select auth.uid())
+        )
+    )
+  );
+
+create policy "videos_owner_insert"
+  on public.videos for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "videos_owner_update"
+  on public.videos for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "videos_owner_delete"
+  on public.videos for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+-- gallery_images
+drop policy if exists "gallery_images_public_read"  on public.gallery_images;
+drop policy if exists "gallery_images_owner_all"     on public.gallery_images;
+drop policy if exists "gallery_images_select"        on public.gallery_images;
+drop policy if exists "gallery_images_owner_insert"  on public.gallery_images;
+drop policy if exists "gallery_images_owner_update"  on public.gallery_images;
+drop policy if exists "gallery_images_owner_delete"  on public.gallery_images;
+
+create policy "gallery_images_select"
+  on public.gallery_images for select
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id
+        and (a.is_published = true or a.owner_user_id = (select auth.uid()))
+    )
+  );
+
+create policy "gallery_images_owner_insert"
+  on public.gallery_images for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "gallery_images_owner_update"
+  on public.gallery_images for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "gallery_images_owner_delete"
+  on public.gallery_images for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+-- custom_domains
+-- "Artists can read their own custom domains" (migration 007) is redundant with
+-- custom_domains_owner_all — identical SELECT logic. Drop the duplicate.
+drop policy if exists "Artists can read their own custom domains" on public.custom_domains;
+drop policy if exists "custom_domains_owner_all"                  on public.custom_domains;
+
+create policy "custom_domains_owner_all"
+  on public.custom_domains for all
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+-- brand_source_files
+drop policy if exists "brand_source_files_owner_all" on public.brand_source_files;
+
+create policy "brand_source_files_owner_all"
+  on public.brand_source_files for all
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+-- brand_assets
+drop policy if exists "brand_assets_owner_all" on public.brand_assets;
+
+create policy "brand_assets_owner_all"
+  on public.brand_assets for all
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+-- brand_asset_assignments
+drop policy if exists "brand_asset_assignments_public_read" on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_owner_all"   on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_select"       on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_owner_insert" on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_owner_update" on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_owner_delete" on public.brand_asset_assignments;
+
+create policy "brand_asset_assignments_select"
+  on public.brand_asset_assignments for select
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id
+        and (a.is_published = true or a.owner_user_id = (select auth.uid()))
+    )
+  );
+
+create policy "brand_asset_assignments_owner_insert"
+  on public.brand_asset_assignments for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "brand_asset_assignments_owner_update"
+  on public.brand_asset_assignments for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "brand_asset_assignments_owner_delete"
+  on public.brand_asset_assignments for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+-- artist_tours (own is_published column — public read requires both tour and artist published)
+drop policy if exists "artist_tours_public_read"  on public.artist_tours;
+drop policy if exists "artist_tours_owner_all"    on public.artist_tours;
+drop policy if exists "artist_tours_select"       on public.artist_tours;
+drop policy if exists "artist_tours_owner_insert" on public.artist_tours;
+drop policy if exists "artist_tours_owner_update" on public.artist_tours;
+drop policy if exists "artist_tours_owner_delete" on public.artist_tours;
+
+create policy "artist_tours_select"
+  on public.artist_tours for select
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id
+        and (
+          (artist_tours.is_published = true and a.is_published = true)
+          or a.owner_user_id = (select auth.uid())
+        )
+    )
+  );
+
+create policy "artist_tours_owner_insert"
+  on public.artist_tours for insert
+  with check (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "artist_tours_owner_update"
+  on public.artist_tours for update
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
+  );
+
+create policy "artist_tours_owner_delete"
+  on public.artist_tours for delete
+  using (
+    exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 -- ── Storage Buckets ──────────────────────────────────────────────────────────
@@ -684,18 +934,18 @@ INSERT INTO storage.buckets (id, name, public, allowed_mime_types, file_size_lim
 VALUES ('brand-sources', 'brand-sources', TRUE, NULL, 52428800)
 ON CONFLICT (id) DO NOTHING;
 
--- Storage RLS policies for brand-sources (migration 042)
+-- Storage RLS policies for brand-sources (migration 042, optimized in 051)
 DROP POLICY IF EXISTS "brand_sources_insert" ON storage.objects;
 CREATE POLICY "brand_sources_insert"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'brand-sources'
-    AND auth.role() = 'authenticated'
+    AND (select auth.role()) = 'authenticated'
     AND (storage.foldername(name))[1] = 'artists'
     AND EXISTS (
       SELECT 1 FROM public.artists a
       WHERE a.id = ((storage.foldername(name))[2])::uuid
-        AND a.owner_user_id = auth.uid()
+        AND a.owner_user_id = (select auth.uid())
     )
   );
 
@@ -709,11 +959,11 @@ CREATE POLICY "brand_sources_delete"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'brand-sources'
-    AND auth.role() = 'authenticated'
+    AND (select auth.role()) = 'authenticated'
     AND (storage.foldername(name))[1] = 'artists'
     AND EXISTS (
       SELECT 1 FROM public.artists a
       WHERE a.id = ((storage.foldername(name))[2])::uuid
-        AND a.owner_user_id = auth.uid()
+        AND a.owner_user_id = (select auth.uid())
     )
   );
