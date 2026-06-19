@@ -514,14 +514,6 @@ export function BookingsSection({ artistId }: BookingsSectionProps) {
 
   return (
     <div className="space-y-6">
-      {/* Section header */}
-      <div>
-        <h2 className="text-base font-semibold text-foreground">Bookings</h2>
-        <p className="mt-1 text-sm text-muted-foreground/60">
-          Incoming booking requests from your public profile.
-        </p>
-      </div>
-
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-16">
@@ -545,7 +537,7 @@ export function BookingsSection({ artistId }: BookingsSectionProps) {
             Requests submitted from your public profile will appear here.
           </p>
           <p className="mt-3 text-[11px] text-muted-foreground/28">
-            Make sure your booking email is configured in Booking settings.
+            Configure your booking email in the field above.
           </p>
         </div>
       )}

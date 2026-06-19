@@ -376,7 +376,6 @@ const navGroups: NavGroup[] = [
     label: "Business",
     items: [
       { id: "bookings",  label: "Bookings",  icon: Inbox },
-      { id: "booking",   label: "Booking Settings",   icon: Mail },
       { id: "press-kit", label: "Press Kit", icon: FileText },
       { id: "domain",    label: "Domain",    icon: Globe },
       { id: "footer",    label: "Footer",    icon: PanelBottom },
@@ -2356,7 +2355,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const completionItems = [
       { label: "Profile published",  done: artist.isPublished,  section: "publish"   },
       { label: "Custom domain",      done: hasActiveDomain,     section: "domain"    },
-      { label: "Booking configured", done: hasBooking,          section: "booking"   },
+      { label: "Booking configured", done: hasBooking,          section: "bookings"  },
       { label: "Press kit enabled",  done: hasPressKit,         section: "press-kit" },
       { label: "Hero image set",     done: hasHeroImage,        section: "profile"   },
       { label: "Footer configured",  done: hasFooterConfig,     section: "footer"    },
@@ -2377,7 +2376,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       { label: "Profile",   value: artist.isPublished ? "Live" : "Draft",  ok: artist.isPublished,  section: "publish"   },
       { label: "Domain",    value: hasActiveDomain ? "Connected" : "—",     ok: hasActiveDomain,     section: "domain"    },
       { label: "Press Kit", value: hasPressKit ? "Published" : "Off",       ok: hasPressKit,         section: "press-kit" },
-      { label: "Booking",   value: hasBooking ? "Active" : "—",             ok: hasBooking,          section: "booking"   },
+      { label: "Booking",   value: hasBooking ? "Active" : "—",             ok: hasBooking,          section: "bookings"  },
     ]
 
     return (
@@ -4927,62 +4926,53 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderBookings() {
-    return <BookingsSection artistId={artist.id} />
-  }
-
-  function renderBooking() {
     const emailEmpty   = !bookingEmail.trim()
     const emailInvalid = Boolean(bookingEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingEmail.trim()))
 
     return (
       <div className="space-y-6">
+        {/* Section header */}
         <div>
-          <h2 className="text-base font-semibold text-foreground">Booking Settings</h2>
+          <h2 className="text-base font-semibold text-foreground">Bookings</h2>
           <p className="mt-1 text-sm text-muted-foreground/60">
-            Configure where booking requests are delivered.
+            Incoming booking requests from your public profile.
           </p>
         </div>
 
-        <div className="max-w-[640px] space-y-4">
-          {emailEmpty && (
-            <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400/70" />
-              <p className="text-[12px] leading-snug text-amber-400/70">
-                Booking requests cannot be sent until a booking email is configured.
+        {/* Booking email config */}
+        <div className="rounded-xl border border-border bg-card/40 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8">
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold text-foreground/80">Delivery Email</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground/40">
+                Booking requests will be sent to this address.
+                Sent from{" "}
+                <span className="font-mono text-muted-foreground/50">DJHQ Booking &lt;booking@djhq.app&gt;</span>{" "}
+                with the requester as reply-to. Saved with the global Save button.
               </p>
             </div>
-          )}
-
-          <div className="space-y-4 rounded-xl border border-border bg-card/40 p-5 sm:p-6">
-            <div className="space-y-1.5">
-              <label htmlFor="bookingEmail" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                Booking Email
-              </label>
+            <div className="w-full max-w-[320px] shrink-0 space-y-1.5">
               <Input
-                id="bookingEmail"
                 type="email"
                 value={bookingEmail}
                 onChange={(e) => setBookingEmail(e.target.value)}
                 placeholder="booking@artist.com"
               />
-              {emailInvalid ? (
-                <p className="text-[11px] text-amber-400/70">Enter a valid email address.</p>
-              ) : (
-                <p className="text-[11px] text-muted-foreground/40">
-                  Booking requests from your public profile will be sent to this email.
+              {emailEmpty && (
+                <p className="flex items-center gap-1.5 text-[10px] text-amber-400/70">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                  Not configured — requests cannot be delivered.
                 </p>
               )}
-            </div>
-
-            <div className="rounded-lg border border-border/50 bg-secondary/40 px-3.5 py-2.5">
-              <p className="text-[11px] leading-relaxed text-muted-foreground/35">
-                Emails are sent from{" "}
-                <span className="font-mono text-muted-foreground/50">DJHQ Booking &lt;booking@djhq.app&gt;</span>{" "}
-                with the requester set as reply-to.
-              </p>
+              {emailInvalid && (
+                <p className="text-[10px] text-amber-400/70">Enter a valid email address.</p>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Leads */}
+        <BookingsSection artistId={artist.id} />
       </div>
     )
   }
@@ -7502,8 +7492,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderGallery()
       case "bookings":
         return renderBookings()
-      case "booking":
-        return renderBooking()
       case "press-kit":
         return renderPressKit()
       case "domain":        // renamed from "custom-domain"
