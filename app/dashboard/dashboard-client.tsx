@@ -8473,104 +8473,217 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   return (
     <main className="djhq-dashboard min-h-screen">
 
-      {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/96 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-5 sm:px-8">
+      {/* ── HQ Status Bar ───────────────────────────────────────────────
+           Split header: dark spine cap on left (matching control spine) +
+           light status/action area on right. Feels like a cockpit header. */}
+      <header className="sticky top-0 z-40 flex h-14 items-stretch border-b border-border">
+
+        {/* Spine cap — same width as control spine, dark surface */}
+        <div
+          className="hidden w-[196px] shrink-0 items-center gap-3 border-r px-4 lg:flex"
+          style={{ backgroundColor: "#0d0d0d", borderColor: "rgba(255,255,255,0.07)" }}
+        >
           <button
             type="button"
             onClick={() => setActiveSection("home")}
-            className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-70"
+            className="flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100"
           >
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent">
-              <span className="text-[10px] font-black text-accent-foreground">DJ</span>
+            <div className="flex h-6 w-6 items-center justify-center rounded-[5px] bg-accent">
+              <span className="text-[9px] font-black leading-none text-accent-foreground">HQ</span>
             </div>
-            <span className="text-[13px] font-semibold text-foreground/75">{brand.name}</span>
+            <span className="text-[11px] font-bold tracking-[0.1em] text-white/45">DJHQ</span>
           </button>
-          <span className="text-border">·</span>
-          <p className="min-w-0 truncate text-[13px] text-muted-foreground">{artist.artistName}</p>
-          <div className="flex-1" />
-          <div className="flex items-center gap-2">
-            <span className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[4px] text-[11px] font-semibold sm:inline-flex ${
-              artist.isPublished ? "border-accent/25 bg-accent/[0.07] text-accent" : "border-border bg-secondary text-muted-foreground/55"
-            }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/35"}`} />
-              {artist.isPublished ? "Published" : "Draft"}
-            </span>
-            <a href={publicProfileUrl} target="_blank" rel="noopener noreferrer"
-              className="hidden h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12px] font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground sm:inline-flex">
-              <ExternalLink className="h-3.5 w-3.5" />View site
-            </a>
-            <button type="button" onClick={handleSignOut} title="Sign out"
-              className="h-8 rounded-lg px-2 text-[12px] text-muted-foreground/50 transition-colors hover:text-foreground/70">
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
-            <div className="h-4 w-px bg-border" />
-            <Button size="sm" disabled={!isSaveDirty||isSaving||isPublishing||importingSelectedReleaseIndex!==null||importingVideoIndex!==null||isUploadingHeroImage||isUploadingGalleryImage}
-              onClick={handleSaveChanges}
-              className={`relative h-8 rounded-lg px-4 text-[12px] font-semibold shadow-sm transition-all duration-200 ${
-                isSaving ? "bg-accent/55 text-accent-foreground/65"
-                : isSaveDirty ? "bg-accent text-accent-foreground hover:bg-accent/90"
-                : "bg-accent/85 text-accent-foreground hover:bg-accent"
-              }`}>
-              {isSaveDirty&&!isSaving&&<span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-foreground ring-[1.5px] ring-background" />}
-              {savedRecently&&!isSaveDirty&&!isSaving ? <><Check className="h-3.5 w-3.5" /> Saved</> : <><Save className="h-3.5 w-3.5" /> {isSaving?"Saving…":"Save"}</>}
-            </Button>
-          </div>
         </div>
-        {(saveMessage||statusMessage)&&(
-          <div className="border-t border-border bg-secondary/50 px-5 py-1.5 sm:px-8">
-            <p className={`text-[11px] ${saveMessage&&!saveMessage.startsWith("Changes")&&!saveMessage.startsWith("Release")&&!saveMessage.startsWith("DJ set")&&!saveMessage.startsWith("Video")&&!saveMessage.startsWith("Gallery")?"text-destructive/70":"text-muted-foreground"}`}>
-              {saveMessage||statusMessage}
+
+        {/* Status + actions */}
+        <div className="flex flex-1 items-center gap-3 bg-background/96 px-5 backdrop-blur-md sm:px-6">
+
+          {/* Mobile: HQ mark */}
+          <button
+            type="button"
+            onClick={() => setActiveSection("home")}
+            className="flex shrink-0 items-center gap-2 lg:hidden"
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-[5px] bg-accent">
+              <span className="text-[9px] font-black leading-none text-accent-foreground">HQ</span>
+            </div>
+          </button>
+
+          <p className="hidden min-w-0 truncate text-[12px] font-black uppercase tracking-[0.07em] text-foreground/70 sm:block">
+            {artist.artistName}
+          </p>
+          <span className="hidden text-border/60 sm:block">·</span>
+          <p className="hidden font-mono text-[10px] text-muted-foreground/38 md:block">
+            /{artist.handle}
+          </p>
+
+          <div className="flex-1" />
+
+          {(saveMessage || statusMessage) && (
+            <p className={`hidden max-w-[240px] truncate text-[11px] sm:block ${
+              saveMessage && !saveMessage.startsWith("Changes") && !saveMessage.startsWith("Release") && !saveMessage.startsWith("DJ set") && !saveMessage.startsWith("Video") && !saveMessage.startsWith("Gallery")
+                ? "text-destructive/65"
+                : "text-muted-foreground/55"
+            }`}>
+              {saveMessage || statusMessage}
             </p>
-          </div>
-        )}
+          )}
+
+          <span className={`hidden items-center gap-1.5 text-[11px] font-semibold sm:inline-flex ${
+            artist.isPublished ? "text-accent" : "text-muted-foreground/38"
+          }`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "animate-pulse bg-accent" : "bg-muted-foreground/25"}`} />
+            {artist.isPublished ? "Live" : "Draft"}
+          </span>
+
+          <a
+            href={publicProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12px] font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground sm:inline-flex"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            View site
+          </a>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            title="Sign out"
+            className="h-8 rounded-lg px-2 text-muted-foreground/38 transition-colors hover:text-foreground/65"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
+
+          <div className="h-4 w-px bg-border" />
+
+          <Button
+            size="sm"
+            disabled={!isSaveDirty || isSaving || isPublishing || importingSelectedReleaseIndex !== null || importingVideoIndex !== null || isUploadingHeroImage || isUploadingGalleryImage}
+            onClick={handleSaveChanges}
+            className={`relative h-8 rounded-lg px-4 text-[12px] font-semibold shadow-sm transition-all duration-200 ${
+              isSaving
+                ? "bg-accent/55 text-accent-foreground/65"
+                : isSaveDirty
+                ? "bg-accent text-accent-foreground hover:bg-accent/90"
+                : "bg-accent/85 text-accent-foreground hover:bg-accent"
+            }`}
+          >
+            {isSaveDirty && !isSaving && (
+              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-foreground ring-[1.5px] ring-background" />
+            )}
+            {savedRecently && !isSaveDirty && !isSaving ? (
+              <><Check className="h-3.5 w-3.5" /> Saved</>
+            ) : (
+              <><Save className="h-3.5 w-3.5" /> {isSaving ? "Saving…" : "Save"}</>
+            )}
+          </Button>
+        </div>
       </header>
 
-      {/* ── Body ────────────────────────────────────────────── */}
+      {/* ── Body ────────────────────────────────────────────────────── */}
       <div className="mx-auto flex max-w-[1600px]">
 
-        {/* Sidebar */}
-        <aside className="hidden w-[196px] shrink-0 border-r border-border lg:block">
-          <nav className="sticky top-14 flex h-[calc(100vh-56px)] flex-col overflow-y-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="space-y-0.5 px-3">
-              <button type="button" aria-pressed={activeSection==="home"} onClick={()=>setActiveSection("home")}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-all duration-100 ${activeSection==="home"?"bg-accent/[0.08] font-semibold text-accent":"text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
-                <Layers className={`h-[15px] w-[15px] shrink-0 ${activeSection==="home"?"text-accent":"text-muted-foreground/50"}`} />
-                Home
-              </button>
-            </div>
-            {navGroups.map((group,gi)=>(
-              <div key={group.label} className={`${gi===0?"mt-4":"mt-6"} px-3`}>
-                <p className="mb-1 px-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">{group.label}</p>
-                <div className="space-y-0.5">
-                  {group.items.map((item)=>{
-                    const Icon=item.icon
-                    const isActive=activeSection===item.id
-                    return(
-                      <button key={item.id} type="button" aria-pressed={isActive} onClick={()=>setActiveSection(item.id)}
-                        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-all duration-100 ${isActive?"bg-accent/[0.08] font-semibold text-accent":"text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
-                        <Icon className={`h-[15px] w-[15px] shrink-0 ${isActive?"text-accent":"text-muted-foreground/50"}`} />
-                        {item.label}
-                      </button>
-                    )
-                  })}
+        {/* ── Control Spine ───────────────────────────────────────────
+             Dark near-black navigation rail — the studio console aesthetic.
+             Inline style bypasses the .djhq-dashboard token overrides. */}
+        <aside
+          className="hidden w-[196px] shrink-0 flex-col lg:flex"
+          style={{ backgroundColor: "#0d0d0d" }}
+        >
+          <div
+            className="sticky top-14 flex h-[calc(100vh-56px)] flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}
+          >
+
+            {/* Artist identity block */}
+            <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[13px] font-black text-accent"
+                  style={{ backgroundColor: "rgba(100,215,140,0.10)" }}
+                >
+                  {artist.artistName.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[11px] font-bold leading-tight text-white/72">
+                    {artist.artistName}
+                  </p>
+                  <p className="font-mono text-[9px] text-white/28">/{artist.handle}</p>
                 </div>
               </div>
-            ))}
-          </nav>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 px-3 py-3">
+              <button
+                type="button"
+                aria-pressed={activeSection === "home"}
+                onClick={() => setActiveSection("home")}
+                className={`hq-nav-item${activeSection === "home" ? " hq-nav-item--active" : ""}`}
+              >
+                <Layers className="h-[14px] w-[14px] shrink-0" />
+                Command
+              </button>
+
+              {navGroups.map((group, gi) => (
+                <div key={group.label} className={gi === 0 ? "mt-5" : "mt-6"}>
+                  <p
+                    className="mb-1.5 px-3 text-[8px] font-black uppercase tracking-[0.28em]"
+                    style={{ color: "rgba(255,255,255,0.20)" }}
+                  >
+                    {group.label}
+                  </p>
+                  <div className="space-y-px">
+                    {group.items.map((item) => {
+                      const Icon = item.icon
+                      const isActive = activeSection === item.id
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          aria-pressed={isActive}
+                          onClick={() => setActiveSection(item.id)}
+                          className={`hq-nav-item${isActive ? " hq-nav-item--active" : ""}`}
+                        >
+                          <Icon className="h-[14px] w-[14px] shrink-0" />
+                          {item.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+          </div>
         </aside>
 
-        {/* Content */}
-        <div className="min-w-0 flex-1 px-6 py-8 sm:px-10 sm:py-10">
-          {/* Mobile nav chips */}
-          <div className="-mx-5 mb-5 flex gap-1.5 overflow-x-auto border-b border-border px-5 pb-4 [scrollbar-width:none] sm:-mx-8 sm:px-8 lg:hidden [&::-webkit-scrollbar]:hidden">
-            <button type="button" aria-pressed={activeSection==="home"} onClick={()=>setActiveSection("home")}
-              className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors ${activeSection==="home"?"bg-accent/10 text-accent":"bg-secondary text-muted-foreground hover:text-foreground"}`}>
-              Home
+        {/* ── Main Content ─────────────────────────────────────────── */}
+        <div className="min-w-0 flex-1 px-5 py-6 sm:px-8 sm:py-8">
+
+          {/* Mobile nav — scrollable chip row */}
+          <div className="-mx-4 mb-6 flex gap-1.5 overflow-x-auto border-b border-border px-4 pb-4 [scrollbar-width:none] sm:-mx-8 sm:px-8 lg:hidden [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              aria-pressed={activeSection === "home"}
+              onClick={() => setActiveSection("home")}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
+                activeSection === "home" ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Command
             </button>
-            {navGroups.flatMap(g=>g.items).map(item=>(
-              <button key={item.id} type="button" aria-pressed={activeSection===item.id} onClick={()=>setActiveSection(item.id)}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors ${activeSection===item.id?"bg-accent/10 text-accent":"bg-secondary text-muted-foreground hover:text-foreground"}`}>
+            {navGroups.flatMap((g) => g.items).map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={activeSection === item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
+                  activeSection === item.id ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
                 {item.label}
               </button>
             ))}
