@@ -2595,6 +2595,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const activeTourCount = activeTour ? 1 : nearestUpcomingTour ? 1 : 0
     const openBookings = homeLeads.filter((l) => l.status !== "declined").length
 
+    // 2D route map: pre-compute positions for Tour Control SVG
+    const mapVbW = 480
+    const mapVbH = 150
+    const mapYPositions: number[] = [78, 42, 112, 55, 100, 38, 88]
+    const routePts = routeStops.map((stop, i) => ({
+      x: routeStops.length > 1 ? 40 + (i / (routeStops.length - 1)) * (mapVbW - 80) : mapVbW / 2,
+      y: mapYPositions[i % mapYPositions.length] ?? 80,
+      city: (stop.city.split(/[\s,]/)[0] ?? stop.city).slice(0, 3).toUpperCase(),
+      date: fmtShort(stop.date),
+      isNext: stop.date >= today && (i === 0 || (routeStops[i - 1]?.date ?? "") < today),
+      isPast: stop.date < today,
+      id: stop.id,
+    }))
+
     return (
       <div className="space-y-4">
 
