@@ -355,12 +355,12 @@ function recolorToVariant(
 
 const navGroups: NavGroup[] = [
   {
-    label: "Workspace",
+    label: "Identity",
     items: [
       { id: "profile", label: "Profile", icon: User },
-      { id: "links",   label: "Links",   icon: Link2 },
       { id: "brand",   label: "Brand",   icon: Sparkles },
-      { id: "hero",    label: "Hero",    icon: Monitor  },
+      { id: "links",   label: "Links",   icon: Link2 },
+      { id: "hero",    label: "Hero",    icon: Monitor },
     ],
   },
   {
@@ -376,16 +376,16 @@ const navGroups: NavGroup[] = [
   {
     label: "Business",
     items: [
-      { id: "bookings",     label: "Bookings",     icon: Inbox },
-      { id: "tours",        label: "Tour Planner", icon: Route },
-      { id: "press-kit",    label: "Press Kit",    icon: FileText },
-      { id: "domain",       label: "Domain",       icon: Globe },
-      { id: "footer",       label: "Footer",       icon: PanelBottom },
+      { id: "bookings",  label: "Bookings",     icon: Inbox },
+      { id: "tours",     label: "Tour Planner", icon: Route },
+      { id: "press-kit", label: "Press Kit",    icon: FileText },
     ],
   },
   {
     label: "Publish",
     items: [
+      { id: "domain",  label: "Domain",  icon: Globe },
+      { id: "footer",  label: "Footer",  icon: PanelBottom },
       { id: "publish", label: "Publish", icon: Send },
     ],
   },
@@ -2462,122 +2462,229 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   }
 
   function renderHome() {
+    const today = new Date().toISOString().slice(0, 10)
     const hasActiveDomain = customDomains.some((d) => d.status === "active")
-    const hasBooking      = !!artist.bookingInfo.email.trim()
-    const hasPressKit     = pressKitEnabled
-    const hasHeroImage    = !!artist.heroImageUrl && !artist.heroImageUrl.includes("placeholder")
-    const hasFooterConfig = !!(footerLogoUrl.trim() || footerBookingEmail.trim())
+    const hasBooking = !!bookingEmail.trim()
 
-    const completionItems = [
-      { label: "Profile published",  done: artist.isPublished,  section: "publish"   },
-      { label: "Custom domain",      done: hasActiveDomain,     section: "domain"    },
-      { label: "Booking configured", done: hasBooking,          section: "bookings"  },
-      { label: "Press kit enabled",  done: hasPressKit,         section: "press-kit" },
-      { label: "Hero image set",     done: hasHeroImage,        section: "profile"   },
-      { label: "Footer configured",  done: hasFooterConfig,     section: "footer"    },
+    const futureShows = artist.upcomingGigs
+      .filter((g) => g.date >= today && g.visibilityStatus !== "cancelled")
+      .sort((a, b) => a.date.localeCompare(b.date))
+    const nextShow = futureShows[0] ?? null
+
+    function fmtShowDate(dateStr: string): string {
+      const d = new Date(dateStr + "T00:00:00")
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+    }
+
+    const studioItems = [
+      { label: "Releases", count: artist.releases.length,    section: "releases", icon: Disc3      },
+      { label: "Shows",    count: artist.upcomingGigs.length, section: "shows",    icon: Calendar   },
+      { label: "Sets",     count: artist.djSets.length,      section: "sets",     icon: Headphones },
+      { label: "Videos",   count: artist.videos.length,      section: "media",    icon: Play       },
     ]
-    const completionDone = completionItems.filter((c) => c.done).length
-    const completionPct  = Math.round((completionDone / completionItems.length) * 100)
-    const isComplete     = completionDone === completionItems.length
 
     const quickActions = [
-      { label: "Add Release",   icon: Disc3,      section: "releases" },
-      { label: "Add Show",      icon: Calendar,   section: "shows"    },
-      { label: "Upload Set",    icon: Headphones, section: "sets"     },
-      { label: "Add Video",     icon: Play,       section: "media"    },
-      { label: "Upload Photos", icon: Camera,     section: "gallery"  },
-    ]
-
-    const statusItems = [
-      { label: "Profile",   value: artist.isPublished ? "Live" : "Draft",  ok: artist.isPublished,  section: "publish"   },
-      { label: "Domain",    value: hasActiveDomain ? "Connected" : "—",     ok: hasActiveDomain,     section: "domain"    },
-      { label: "Press Kit", value: hasPressKit ? "Published" : "Off",       ok: hasPressKit,         section: "press-kit" },
-      { label: "Booking",   value: hasBooking ? "Active" : "—",             ok: hasBooking,          section: "bookings"  },
+      { label: "+ Add Show",    section: "shows"    },
+      { label: "+ Add Release", section: "releases" },
+      { label: "+ Upload Set",  section: "sets"     },
+      { label: "+ Add Video",   section: "media"    },
+      { label: "Edit Profile",  section: "profile"  },
+      { label: "Create Tour",   section: "tours"    },
     ]
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
 
-        {/* ── Artist identity header ──────────────────────────────────── */}
-        <div className="space-y-2">
-          <h1 className="text-[30px] font-extrabold tracking-[-0.02em] text-foreground leading-none">
-            {artist.artistName}
-          </h1>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-0.5">
-            {statusItems.map(({ label, value, ok, section }) => (
+        {/* ── Identity strip ──────────────────────────────────────── */}
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-[28px] font-black leading-none tracking-[-0.03em] text-foreground">
+                {artist.artistName}
+              </h1>
+              <p className="mt-1.5 font-mono text-[11px] text-muted-foreground/40">/{artist.handle}</p>
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <span className={cn(
+                "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[4px] text-[11px] font-semibold",
+                artist.isPublished
+                  ? "border-accent/25 bg-accent/[0.07] text-accent"
+                  : "border-border bg-secondary text-muted-foreground/55",
+              )}>
+                <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/35"}`} />
+                {artist.isPublished ? "Published" : "Draft"}
+              </span>
+              <a
+                href={publicProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12px] font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground sm:inline-flex"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />View site
+              </a>
+            </div>
+          </div>
+
+          {isSaveDirty && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200/60 bg-amber-50 px-3 py-2">
+              <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-amber-400" />
+              <span className="text-[11px] text-amber-700/80">Unsaved changes</span>
               <button
-                key={label}
+                type="button"
+                onClick={() => void handleSaveChanges()}
+                className="ml-auto text-[11px] font-semibold text-amber-700 hover:text-amber-800"
+              >
+                Save now
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Command grid ────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+          {/* Profile card */}
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
+              Profile
+            </p>
+            <div className="mb-1 flex items-center gap-2">
+              <span className={`h-2 w-2 shrink-0 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/30"}`} />
+              <span className="text-[13px] font-bold text-foreground/80">
+                {artist.isPublished ? "Live" : "Draft"}
+              </span>
+            </div>
+            <p className="font-mono text-[10px] text-muted-foreground/40">{publicProfileUrl}</p>
+            {hasActiveDomain && (
+              <p className="mt-0.5 text-[10px] text-accent/60">Custom domain active</p>
+            )}
+            <div className="mt-4 space-y-1">
+              <a
+                href={publicProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-[11px] text-accent/70 transition-colors hover:text-accent"
+              >
+                <ExternalLink className="h-3 w-3" />
+                View public site
+              </a>
+              <button
+                type="button"
+                onClick={() => setActiveSection("publish")}
+                className="flex items-center gap-1.5 text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60"
+              >
+                <ChevronRight className="h-3 w-3" />
+                Publish settings
+              </button>
+            </div>
+          </div>
+
+          {/* Next Show card */}
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
+              Next Show
+            </p>
+            {nextShow ? (
+              <>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-accent/70">
+                  {fmtShowDate(nextShow.date)}
+                </p>
+                <p className="mt-0.5 text-[14px] font-bold leading-tight text-foreground/85">
+                  {nextShow.eventName || nextShow.venue}
+                </p>
+                {(nextShow.eventName ? nextShow.venue : null) || nextShow.city ? (
+                  <p className="mt-0.5 text-[11px] text-muted-foreground/45">
+                    {[nextShow.eventName ? nextShow.venue : null, nextShow.city].filter(Boolean).join(" · ")}
+                  </p>
+                ) : null}
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("shows")}
+                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                    All shows ({futureShows.length})
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[13px] text-muted-foreground/38">No upcoming shows</p>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("shows")}
+                  className="mt-3 flex items-center gap-1.5 text-[11px] text-accent/60 transition-colors hover:text-accent"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add a show
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Studio card */}
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
+              Content Studio
+            </p>
+            <div className="space-y-0.5">
+              {studioItems.map(({ label, count, section, icon: Icon }) => (
+                <button
+                  key={section}
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary"
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
+                  <span className="flex-1 text-[12px] text-foreground/70">{label}</span>
+                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground/45">{count}</span>
+                </button>
+              ))}
+              <div className="my-1 border-t border-border" />
+              <button
+                type="button"
+                onClick={() => setActiveSection("bookings")}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary"
+              >
+                <Inbox className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35" />
+                <span className="flex-1 text-[12px] text-foreground/70">Bookings</span>
+                {hasBooking ? (
+                  <span className="text-[10px] text-accent/60">Active</span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground/35">—</span>
+                )}
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Quick actions ────────────────────────────────────────── */}
+        <div>
+          <p className="mb-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">
+            Quick Actions
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {quickActions.map(({ label, section }) => (
+              <button
+                key={section}
                 type="button"
                 onClick={() => setActiveSection(section)}
-                className="flex items-center gap-1.5 text-[12px] transition-colors hover:text-foreground/80"
+                className="rounded-lg border border-border bg-card px-3.5 py-2 text-[12px] font-medium text-foreground/65 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
               >
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ok ? "bg-accent" : "bg-muted-foreground/25"}`} />
-                <span className="text-muted-foreground/50">{label}</span>
-                <span className={`font-semibold ${ok ? "text-foreground/65" : "text-muted-foreground/35"}`}>{value}</span>
+                {label}
               </button>
             ))}
             <a
               href={publicProfileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[12px] text-muted-foreground/35 transition-colors hover:text-foreground/60"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-[12px] font-medium text-foreground/65 shadow-sm transition-all hover:bg-secondary hover:text-foreground"
             >
-              <ExternalLink className="h-3 w-3" />
-              View profile
+              View Site <ExternalLink className="h-3 w-3" />
             </a>
           </div>
-        </div>
-
-        {/* ── Two cards ───────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-          {/* Quick Actions */}
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Quick Actions</p>
-            <div className="flex flex-col gap-0.5">
-              {quickActions.map(({ label, icon: Icon, section }) => (
-                <button key={label} type="button" onClick={() => setActiveSection(section)}
-                  className="group flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-secondary">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary group-hover:bg-background">
-                    <Icon className="h-[14px] w-[14px] text-muted-foreground/55" />
-                  </div>
-                  <span className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground">{label}</span>
-                  <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/18 opacity-0 transition-opacity group-hover:opacity-100" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Setup */}
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground/45">Setup</p>
-              <span className={`text-[11px] font-bold tabular-nums ${isComplete ? "text-accent" : "text-muted-foreground/40"}`}>
-                {completionDone}/{completionItems.length}
-              </span>
-            </div>
-            <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-secondary">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${isComplete ? "bg-accent" : "bg-accent/55"}`}
-                style={{ width: `${completionPct}%` }}
-              />
-            </div>
-            <div className="flex flex-col gap-0.5">
-              {completionItems.map(({ label, done, section }) => (
-                <button key={label} type="button" onClick={() => setActiveSection(section)}
-                  className="group flex items-center gap-3 rounded-lg px-2 py-[7px] text-left transition-colors hover:bg-secondary">
-                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                    done ? "border-accent/30 bg-accent/[0.10]" : "border-border bg-transparent group-hover:border-muted-foreground/30"
-                  }`}>
-                    {done && <Check className="h-2.5 w-2.5 text-accent" />}
-                  </span>
-                  <span className={`flex-1 text-[12px] font-medium ${done ? "text-foreground/50" : "text-foreground/75"}`}>{label}</span>
-                  {!done && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/18 opacity-0 transition-opacity group-hover:opacity-100" />}
-                </button>
-              ))}
-            </div>
-          </div>
-
         </div>
 
       </div>
@@ -8349,8 +8456,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </button>
             </div>
             {navGroups.map((group,gi)=>(
-              <div key={group.label} className={`${gi===0?"mt-4":"mt-4"} px-3`}>
-                <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.20em] text-muted-foreground/40">{group.label}</p>
+              <div key={group.label} className={`${gi===0?"mt-4":"mt-6"} px-3`}>
+                <p className="mb-1 px-3 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/28">{group.label}</p>
                 <div className="space-y-0.5">
                   {group.items.map((item)=>{
                     const Icon=item.icon

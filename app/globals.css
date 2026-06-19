@@ -162,7 +162,7 @@
 /* Pull the body/html background to warm paper when dashboard is present */
 html:has(.djhq-dashboard),
 body:has(.djhq-dashboard) {
-  background-color: oklch(1 0 0);
+  background-color: oklch(0.982 0.003 75);
   color: oklch(0.10 0 0);
 }
 
