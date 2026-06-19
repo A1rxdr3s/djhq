@@ -2559,228 +2559,222 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     ]
 
     return (
-      <div className="divide-y divide-border">
+      <div>
 
-        {/* ── Artist Command Header ────────────────────────────────── */}
-        <div className="pb-5">
-          <div className="flex items-start justify-between gap-4">
+        {/* ── IDENTITY HEADER — editorial, direct on canvas, no card ─────── */}
+        <div className="border-b border-border pb-7">
+          <div className="flex items-start justify-between gap-6">
             <div>
-              <h1 className="text-[26px] font-black uppercase leading-none tracking-[0.01em] text-foreground">
+              <h1 className="text-[40px] font-black uppercase leading-[0.9] tracking-[-0.025em] text-foreground sm:text-[52px]">
                 {artist.artistName}
               </h1>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
-                <span className="font-mono text-[11px] text-muted-foreground/40">/{artist.handle}</span>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
+                <span className="font-mono text-[11px] text-muted-foreground/38">/{artist.handle}</span>
                 {hasActiveDomain && activeDomain && (
                   <>
                     <span className="text-muted-foreground/20">·</span>
-                    <span className="font-mono text-[11px] text-accent/45">{activeDomain.domain}</span>
+                    <span className="font-mono text-[11px] text-accent/42">{activeDomain.domain}</span>
                   </>
                 )}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2 pt-0.5">
-              <span
+
+            <div className="shrink-0 text-right">
+              <div
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em]",
-                  artist.isPublished
-                    ? "bg-accent/[0.07] text-accent"
-                    : "bg-secondary text-muted-foreground/40",
+                  "inline-flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.06em]",
+                  artist.isPublished ? "text-accent" : "text-muted-foreground/35",
                 )}
               >
                 <span
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    artist.isPublished ? "animate-pulse bg-accent" : "bg-muted-foreground/30",
+                    "h-2 w-2 rounded-full",
+                    artist.isPublished ? "animate-pulse bg-accent" : "bg-muted-foreground/22",
                   )}
                 />
                 {artist.isPublished ? "Live" : "Draft"}
-              </span>
-              <a
-                href={publicProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border px-2.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <ExternalLink className="h-3 w-3" />
-                View site
-              </a>
+              </div>
+              <div className="mt-1.5">
+                <a
+                  href={publicProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-muted-foreground/32 underline-offset-2 transition-colors hover:text-foreground/55 hover:underline"
+                >
+                  {publicProfileUrl} ↗
+                </a>
+              </div>
+              {isSaveDirty && (
+                <div className="mt-1.5 flex items-center justify-end gap-1.5">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveChanges()}
+                    className="text-[11px] font-semibold text-amber-700/70 hover:text-amber-700 hover:underline"
+                  >
+                    Unsaved — save now
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-          {isSaveDirty && (
-            <div className="mt-3 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-amber-400" />
-              <span className="text-[11px] text-amber-700/70">Unsaved changes</span>
-              <button
-                type="button"
-                onClick={() => void handleSaveChanges()}
-                className="text-[11px] font-semibold text-amber-700 hover:underline"
-              >
-                Save now
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* ── Artist Operations ────────────────────────────────────── */}
-        <div className="py-5">
-          <p className="mb-4 text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+        {/* ── OPERATIONS — 3 modules, NO card/box, just editorial columns ── */}
+        <div className="border-b border-border py-7">
+          <p className="mb-5 text-[8px] font-black uppercase tracking-[0.32em] text-muted-foreground/22">
             Operations
           </p>
-          <div className="overflow-hidden rounded-xl border border-border">
-            <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border">
 
-              {/* Next Show */}
-              <button
-                type="button"
-                onClick={() => setActiveSection("shows")}
-                className="group flex flex-col p-4 text-left transition-colors hover:bg-secondary/50"
-              >
-                <p className="mb-2.5 text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
-                  Next Show
-                </p>
-                {nextShow ? (
-                  <>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent/60">
-                      {fmtDate(nextShow.date)}
+            {/* Next Show */}
+            <button
+              type="button"
+              onClick={() => setActiveSection("shows")}
+              className="group text-left sm:pr-8"
+            >
+              <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em] text-muted-foreground/28">
+                Next Show
+              </p>
+              {nextShow ? (
+                <>
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-accent/65">
+                    {fmtDate(nextShow.date)}
+                  </p>
+                  <p className="mt-1 text-[22px] font-black leading-tight tracking-tight text-foreground/90">
+                    {nextShow.eventName ?? nextShow.venue}
+                  </p>
+                  {(nextShow.eventName ? nextShow.venue : null) ?? nextShow.city ? (
+                    <p className="mt-0.5 text-[12px] text-muted-foreground/38">
+                      {[nextShow.eventName ? nextShow.venue : null, nextShow.city]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
-                    <p className="mt-0.5 text-[15px] font-black leading-tight text-foreground/90">
-                      {nextShow.eventName ?? nextShow.venue}
-                    </p>
-                    {(nextShow.eventName ? nextShow.venue : null) ?? nextShow.city ? (
-                      <p className="mt-0.5 text-[11px] text-muted-foreground/45">
-                        {[nextShow.eventName ? nextShow.venue : null, nextShow.city]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    ) : null}
-                    <p className="mt-auto pt-3 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
-                      {futureShows.length} show{futureShows.length !== 1 ? "s" : ""} scheduled →
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[13px] font-medium text-muted-foreground/30">No upcoming shows</p>
-                    <p className="mt-auto pt-2 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
-                      Add a show →
-                    </p>
-                  </>
-                )}
-              </button>
+                  ) : null}
+                  <p className="mt-5 text-[10px] text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/55">
+                    {futureShows.length} show{futureShows.length !== 1 ? "s" : ""} scheduled →
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[15px] font-medium text-muted-foreground/25">No upcoming shows</p>
+                  <p className="mt-4 text-[10px] text-muted-foreground/22 transition-colors group-hover:text-muted-foreground/50">
+                    Add first show →
+                  </p>
+                </>
+              )}
+            </button>
 
-              {/* Latest Booking */}
-              <button
-                type="button"
-                onClick={() => setActiveSection("bookings")}
-                className="group flex flex-col p-4 text-left transition-colors hover:bg-secondary/50"
-              >
-                <p className="mb-2.5 text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
-                  Latest Booking
-                </p>
-                {homeBooking === "loading" ? (
-                  <p className="text-[13px] font-medium text-muted-foreground/25">Loading…</p>
-                ) : homeBooking && typeof homeBooking === "object" ? (
-                  <>
-                    <p className="text-[15px] font-black leading-tight text-foreground/90">
-                      {homeBooking.fullName}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">
-                      {[homeBooking.city, homeBooking.eventDate].filter(Boolean).join(" · ")}
-                    </p>
-                    <span
-                      className={cn(
-                        "mt-1 text-[9px] font-bold uppercase tracking-[0.12em]",
-                        bookingBadgeClass(homeBooking.status),
-                      )}
-                    >
-                      ● {homeBooking.status}
-                    </span>
-                    <p className="mt-auto pt-3 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
-                      View all bookings →
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[13px] font-medium text-muted-foreground/30">No booking requests</p>
-                    <p className="mt-auto pt-2 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
-                      Configure booking →
-                    </p>
-                  </>
-                )}
-              </button>
-
-              {/* Active / Next Tour */}
-              <button
-                type="button"
-                onClick={() => setActiveSection("tours")}
-                className="group flex flex-col p-4 text-left transition-colors hover:bg-secondary/50"
-              >
-                <p className="mb-2.5 text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
-                  {activeTour ? "Active Tour" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
-                </p>
-                {!toursLoaded ? (
-                  <p className="text-[13px] font-medium text-muted-foreground/25">Loading…</p>
-                ) : displayTour ? (
-                  <>
-                    <p className="text-[15px] font-black leading-tight text-foreground/90">
-                      {displayTour.name}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">
-                      {fmtDateRange(displayTour.startDate, displayTour.endDate)}
-                    </p>
-                    {activeTour && (
-                      <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-accent/60">
-                        ● On tour
-                      </span>
+            {/* Latest Booking */}
+            <button
+              type="button"
+              onClick={() => setActiveSection("bookings")}
+              className="group text-left sm:px-8"
+            >
+              <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em] text-muted-foreground/28">
+                Latest Booking
+              </p>
+              {homeBooking === "loading" ? (
+                <p className="text-[15px] font-medium text-muted-foreground/25">Loading…</p>
+              ) : homeBooking && typeof homeBooking === "object" ? (
+                <>
+                  <p className="text-[22px] font-black leading-tight tracking-tight text-foreground/90">
+                    {homeBooking.fullName}
+                  </p>
+                  <p className="mt-0.5 text-[12px] text-muted-foreground/38">
+                    {[homeBooking.city, homeBooking.eventDate].filter(Boolean).join(" · ")}
+                  </p>
+                  <span
+                    className={cn(
+                      "mt-1.5 inline-flex text-[9px] font-black uppercase tracking-[0.16em]",
+                      bookingBadgeClass(homeBooking.status),
                     )}
-                    <p className="mt-auto pt-3 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
-                      View tour →
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[13px] font-medium text-muted-foreground/30">No active tour</p>
-                    <p className="mt-auto pt-2 text-[10px] text-muted-foreground/28 transition-colors group-hover:text-muted-foreground/55">
-                      Create a tour →
-                    </p>
-                  </>
-                )}
-              </button>
+                  >
+                    ● {homeBooking.status}
+                  </span>
+                  <p className="mt-5 text-[10px] text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/55">
+                    View all bookings →
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[15px] font-medium text-muted-foreground/25">No requests yet</p>
+                  <p className="mt-4 text-[10px] text-muted-foreground/22 transition-colors group-hover:text-muted-foreground/50">
+                    Configure booking →
+                  </p>
+                </>
+              )}
+            </button>
 
-            </div>
+            {/* Active / Next Tour */}
+            <button
+              type="button"
+              onClick={() => setActiveSection("tours")}
+              className="group text-left sm:pl-8"
+            >
+              <p className="mb-3 text-[8px] font-black uppercase tracking-[0.28em] text-muted-foreground/28">
+                {activeTour ? "Active Tour" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
+              </p>
+              {!toursLoaded ? (
+                <p className="text-[15px] font-medium text-muted-foreground/25">Loading…</p>
+              ) : displayTour ? (
+                <>
+                  <p className="text-[22px] font-black leading-tight tracking-tight text-foreground/90">
+                    {displayTour.name}
+                  </p>
+                  <p className="mt-0.5 text-[12px] text-muted-foreground/38">
+                    {fmtDateRange(displayTour.startDate, displayTour.endDate)}
+                  </p>
+                  {activeTour && (
+                    <span className="mt-1.5 inline-flex text-[9px] font-black uppercase tracking-[0.16em] text-accent/65">
+                      ● On tour
+                    </span>
+                  )}
+                  <p className="mt-5 text-[10px] text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/55">
+                    View tour →
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[15px] font-medium text-muted-foreground/25">No active tour</p>
+                  <p className="mt-4 text-[10px] text-muted-foreground/22 transition-colors group-hover:text-muted-foreground/50">
+                    Create a tour →
+                  </p>
+                </>
+              )}
+            </button>
+
           </div>
         </div>
 
-        {/* ── Content Pulse ────────────────────────────────────────── */}
-        <div className="py-5">
-          <p className="mb-3 text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
-            Content
-          </p>
+        {/* ── CONTENT PULSE — editorial counter strip ───────────────────── */}
+        <div className="border-b border-border py-5">
           <div className="flex flex-wrap items-stretch">
             {contentRail.map(({ label, count, section }, i) => (
               <div key={section} className="flex items-center">
                 <button
                   type="button"
                   onClick={() => setActiveSection(section)}
-                  className="flex items-baseline gap-1.5 rounded-lg px-3 py-2 transition-colors hover:bg-secondary"
+                  className="group flex items-baseline gap-1.5 rounded-xl px-4 py-2.5 transition-colors hover:bg-secondary"
                 >
-                  <span className="text-[24px] font-black tabular-nums leading-none text-foreground/85">
+                  <span className="text-[30px] font-black tabular-nums leading-none text-foreground/80">
                     {count}
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/38">
+                  <span className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/32 transition-colors group-hover:text-muted-foreground/60">
                     {label}
                   </span>
                 </button>
                 {i < contentRail.length - 1 && (
-                  <span className="select-none text-muted-foreground/15">·</span>
+                  <span className="select-none text-[20px] leading-none text-muted-foreground/12">·</span>
                 )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Command Dock ─────────────────────────────────────────── */}
+        {/* ── COMMAND DOCK ──────────────────────────────────────────────── */}
         <div className="pt-5">
-          <p className="mb-3 text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/28">
+          <p className="mb-3 text-[8px] font-black uppercase tracking-[0.32em] text-muted-foreground/22">
             Command
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -4164,30 +4158,21 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Sets</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Manage your DJ sets, live recordings and performances.
-            </p>
-            {djSets.length > 0 && (
-              <p className="mt-0.5 text-[11px] text-muted-foreground/32">
-                {djSets.length} set{djSets.length !== 1 ? "s" : ""}
-                {featuredCount > 0 ? " · 1 featured" : ""}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={handleAddDjSet}
-            disabled={busy}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Set
-          </button>
-        </div>
+        <HqPageHeader
+          title="Sets"
+          description={`DJ sets, live recordings and performances.${djSets.length > 0 ? `  ${djSets.length} set${djSets.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 featured" : ""}.` : ""}`}
+          action={
+            <button
+              type="button"
+              onClick={handleAddDjSet}
+              disabled={busy}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Set
+            </button>
+          }
+        />
 
         {/* Empty state */}
         {djSets.length === 0 && (
