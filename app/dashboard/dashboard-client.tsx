@@ -2584,11 +2584,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     // Hero image source — prefer show flyer, fall back to artist hero
     const showBgSrc = nextShow?.flyerUrl || artist.heroImageUrl || null
 
-    // Tour routing stops for visualization (max 6)
-    const routeStops = tourShows.slice(0, 6)
+    // Tour routing stops for visualization (max 7)
+    const routeStops = tourShows.slice(0, 7)
 
     // Content total
     const contentTotal = releases.length + upcomingGigs.length + djSets.length + videos.length + galleryImages.length
+
+    // Artist Pulse counts
+    const liveReleases = releases.length
+    const activeTourCount = activeTour ? 1 : nearestUpcomingTour ? 1 : 0
+    const openBookings = homeLeads.filter((l) => l.status !== "declined").length
 
     return (
       <div className="space-y-4">
@@ -2676,469 +2681,491 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         </div>
 
-        {/* ── COMMAND LAYOUT — intentionally composed rows ─────────── */}
-        <div className="space-y-3">
+        {/* ── COMMAND LAYOUT ─────────────────────────────────────────── */}
+        <div className="space-y-2">
 
-        {/* ROW 1: Next Show hero (65%) + Booking Desk (35%) */}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
-
-          {/* ── 1. NEXT SHOW — dominant cinematic hero ────────────────── */}
-          <button
-            type="button"
-            onClick={() => setActiveSection("shows")}
-            className={cn(panelCls, "group relative flex flex-col justify-end overflow-hidden p-0 text-left")}
-            style={{ ...panelSty, minHeight: 300 }}
-          >
-            {/* Full-bleed background: show flyer → artist hero → scanline */}
-            {showBgSrc ? (
-              <>
-                <Image
-                  src={showBgSrc}
-                  alt=""
-                  fill
-                  className="object-cover object-center opacity-45 transition-opacity duration-700 group-hover:opacity-55"
-                  sizes="900px"
-                  priority
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{ background: "linear-gradient(to top, #101010 0%, rgba(16,16,16,0.85) 40%, rgba(0,0,0,0.25) 100%)" }}
-                />
-              </>
-            ) : (
-              <div className="absolute inset-0" style={{ backgroundColor: "#080808" }}>
-                {/* Cinematic grain texture when no image */}
-                <svg className="absolute inset-0 h-full w-full opacity-60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <defs>
-                    <pattern id="grain" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
-                      <rect x="0" y="0" width="1" height="1" fill="rgba(255,255,255,0.018)" />
-                      <rect x="2" y="1" width="1" height="1" fill="rgba(255,255,255,0.012)" />
-                      <rect x="1" y="2" width="1" height="1" fill="rgba(255,255,255,0.022)" />
-                    </pattern>
-                    <radialGradient id="vign" cx="50%" cy="40%" r="70%">
-                      <stop offset="0%" stopColor="rgba(100,215,140,0.04)" />
-                      <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-                    </radialGradient>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#grain)" />
-                  <rect width="100%" height="100%" fill="url(#vign)" />
-                </svg>
-              </div>
-            )}
-
-            {/* Module label + countdown */}
-            <div className="absolute left-4 top-4 flex items-center gap-2">
-              <span className="text-[8px] font-black uppercase tracking-[0.30em]" style={dimLabelSty}>
-                Next Show
-              </span>
-              {nextShow && daysUntilShow !== null && (
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em]"
-                  style={
-                    daysUntilShow <= 7
-                      ? { backgroundColor: "rgba(100,215,140,0.16)", border: "1px solid rgba(100,215,140,0.28)", color: "oklch(0.75 0.18 160)" }
-                      : { backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.55)" }
-                  }
-                >
-                  {daysUntilShow <= 7 && (
-                    <span className="animate-pulse" style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
-                  )}
-                  {daysUntilShow === 0 ? "Tonight" : `${daysUntilShow}d`}
-                </span>
-              )}
-            </div>
-
-            {/* Content at bottom */}
-            <div className="relative p-5 pt-20">
-              {nextShow ? (
-                <>
-                  <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.22em]" style={{ color: "rgba(255,255,255,0.35)" }}>
-                    {fmtShort(nextShow.date)}{nextShow.city ? ` · ${nextShow.city}, ${nextShow.country}` : ""}
-                  </p>
-                  <h2 className="text-[28px] font-black leading-[1.0] tracking-tight text-white sm:text-[34px]">
-                    {nextShow.eventName ?? nextShow.venue}
-                  </h2>
-                  {nextShow.eventName && nextShow.venue && (
-                    <p className="mt-1.5 text-[12px]" style={{ color: "rgba(255,255,255,0.42)" }}>
-                      <MapPin className="mr-1 inline h-3 w-3" />
-                      {nextShow.venue}
-                    </p>
-                  )}
-                  <div className="mt-5 flex items-center gap-4">
-                    <span
-                      className="rounded-lg px-4 py-2 text-[12px] font-bold transition-all group-hover:brightness-110"
-                      style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#060606" }}
-                    >
-                      View Shows →
-                    </span>
-                    {futureShows.length > 1 && (
-                      <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.28)" }}>
-                        +{futureShows.length - 1} more scheduled
-                      </span>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-[18px] font-semibold" style={{ color: "rgba(255,255,255,0.18)" }}>
-                    No upcoming shows scheduled
-                  </p>
-                  <p className="mt-4 text-[12px] font-semibold transition-opacity group-hover:opacity-80" style={{ color: "rgba(255,255,255,0.22)" }}>
-                    Add your first show →
-                  </p>
-                </>
-              )}
-            </div>
-          </button>
-
-          {/* ── 2. BOOKING DESK — compact operational inbox ───────────── */}
+          {/* ── ARTIST PULSE — full-width operational summary ─────────── */}
           <div
-            className={cn(panelCls, "flex flex-col p-0")}
-            style={panelSty}
+            className="overflow-hidden rounded-xl"
+            style={{ backgroundColor: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)" }}
           >
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
-                Booking Desk
-              </p>
-              {homeBooking !== "loading" && homeLeads.length > 0 && (
-                <span className="text-[9px] font-bold tabular-nums" style={{ color: "rgba(255,255,255,0.22)" }}>
-                  {homeLeads.length}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-1 flex-col px-4 py-3">
-              {homeBooking === "loading" ? (
-                <div className="space-y-2 py-2">
-                  {[1, 2, 3].map((n) => (
-                    <div key={n} className="h-7 animate-pulse rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.03)" }} />
-                  ))}
-                </div>
-              ) : homeLeads.length > 0 ? (
-                <>
-                  {/* Pipeline counts — compact horizontal */}
-                  <div className="mb-3 flex gap-0 overflow-hidden rounded-md" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
-                    {([
-                      { key: "new",       label: "New",  count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
-                      { key: "contacted", label: "Cntd", count: bookingCounts.contacted, color: "#60a5fa" },
-                      { key: "qualified", label: "Qual", count: bookingCounts.qualified, color: "#fbbf24" },
-                      { key: "confirmed", label: "Conf", count: bookingCounts.confirmed, color: "#34d399" },
-                    ] as const).map((s, i) => (
-                      <div
-                        key={s.key}
-                        className={`flex flex-1 flex-col items-center py-2${i > 0 ? " border-l" : ""}`}
-                        style={{ borderColor: "rgba(255,255,255,0.06)", position: "relative" }}
-                      >
-                        {s.count > 0 && (
-                          <div className="absolute inset-x-0 top-0 h-[2px]" style={{ backgroundColor: s.color, opacity: 0.65 }} />
-                        )}
-                        <span className="text-[16px] font-black tabular-nums leading-none" style={{ color: "rgba(255,255,255,0.88)" }}>
-                          {s.count}
-                        </span>
-                        <span className="mt-1 text-[7px] font-bold uppercase tracking-[0.12em]" style={{ color: s.count > 0 ? s.color : "rgba(255,255,255,0.18)" }}>
-                          {s.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Latest leads */}
-                  <div className="flex-1 space-y-1">
-                    {recentLeads.slice(0, 3).map((lead) => (
-                      <button
-                        key={lead.id}
-                        type="button"
-                        onClick={() => setActiveSection("bookings")}
-                        className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-white/[0.02]"
-                      >
-                        <span
-                          style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", flexShrink: 0, backgroundColor: leadStatusColor(lead.status) }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <span className="block truncate text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>
-                            {lead.fullName}
-                          </span>
-                          <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.26)" }}>
-                            {[lead.city, lead.eventDate].filter(Boolean).join(" · ")}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("bookings")}
-                    className="mt-3 text-[10px] font-semibold transition-opacity hover:opacity-70"
-                    style={{ color: "rgba(255,255,255,0.22)" }}
+            <div className="grid grid-cols-2 divide-x divide-y sm:grid-cols-4 sm:divide-y-0" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              {([
+                {
+                  label: "Upcoming Shows",
+                  value: futureShows.length,
+                  sub: futureShows.length > 0 ? `Next: ${fmtShort(futureShows[0].date)}` : "None scheduled",
+                  active: futureShows.length > 0,
+                  onClick: () => setActiveSection("shows"),
+                },
+                {
+                  label: "Active Tour",
+                  value: activeTourCount,
+                  sub: displayTour ? displayTour.name : "No active tour",
+                  active: activeTourCount > 0,
+                  onClick: () => setActiveSection("tours"),
+                },
+                {
+                  label: "Booking Requests",
+                  value: homeBooking === "loading" ? "—" : openBookings,
+                  sub: bookingCounts.new > 0 ? `${bookingCounts.new} new` : "No open requests",
+                  active: openBookings > 0,
+                  onClick: () => setActiveSection("bookings"),
+                },
+                {
+                  label: "Live Releases",
+                  value: liveReleases,
+                  sub: releases.length > liveReleases ? `${releases.length - liveReleases} in draft` : "All published",
+                  active: liveReleases > 0,
+                  onClick: () => setActiveSection("releases"),
+                },
+              ] as const).map((stat, i) => (
+                <button
+                  key={stat.label}
+                  type="button"
+                  onClick={stat.onClick}
+                  className="group flex flex-col px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
+                >
+                  <span className="mb-2 text-[7px] font-black uppercase tracking-[0.22em]" style={dimLabelSty}>
+                    {stat.label}
+                  </span>
+                  <span
+                    className="text-[28px] font-black tabular-nums leading-none"
+                    style={{ color: stat.active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.18)" }}
                   >
-                    View all requests →
-                  </button>
-                </>
-              ) : (
-                /* Compact empty state — no big zero boxes */
-                <div className="flex flex-1 flex-col justify-between">
-                  <div>
-                    <div className="mb-3 flex items-center gap-2">
-                      <div
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                        style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
-                      >
-                        <Inbox className="h-4 w-4" style={{ color: "rgba(255,255,255,0.22)" }} />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-semibold" style={{ color: "rgba(255,255,255,0.40)" }}>
-                          No inquiries yet
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.22)" }}>
-                      Share your public profile or booking form to start receiving requests.
-                    </p>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <a
-                      href={publicProfileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "rgba(100,215,140,0.07)", color: "rgba(255,255,255,0.60)", border: "1px solid rgba(100,215,140,0.13)" }}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.75 }} />
-                      View Site
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("bookings")}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-70"
-                      style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.06)" }}
-                    >
-                      <Briefcase className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.22)" }} />
-                      Booking Settings
-                    </button>
-                    {artist.bookingInfo.email && (
-                      <button
-                        type="button"
-                        onClick={() => { void navigator.clipboard.writeText(artist.bookingInfo.email) }}
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition-opacity hover:opacity-70"
-                        style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.06)" }}
-                      >
-                        <Copy className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.22)" }} />
-                        Copy booking email
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+                    {stat.value}
+                  </span>
+                  <span className="mt-1.5 text-[10px]" style={{ color: stat.active ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.20)" }}>
+                    {stat.sub}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 
-        </div>{/* end ROW 1 */}
+          {/* ROW 1: Next Show compact (40%) + Tour Control dominant (60%) */}
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[2fr_3fr]">
 
-        {/* ROW 2: Tour Control + Content Studio */}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-
-          {/* ── 3. TOUR CONTROL — mini-map routing module ─────────────── */}
-          <button
-            type="button"
-            onClick={() => setActiveSection("tours")}
-            className={cn(panelCls, "flex flex-col p-0 text-left")}
-            style={panelSty}
-          >
-            {/* Mini-map visualization header */}
-            <div
-              className="relative overflow-hidden"
-              style={{ height: 120, borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            {/* ── 1. NEXT SHOW — compact Show Intelligence card ─────────── */}
+            <button
+              type="button"
+              onClick={() => setActiveSection("shows")}
+              className={cn(panelCls, "group relative flex overflow-hidden p-0 text-left")}
+              style={{ ...panelSty, minHeight: 160 }}
             >
-              {/* Map grid texture — subtle geographic feel */}
-              <svg
-                className="absolute inset-0 h-full w-full"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-                viewBox="0 0 400 120"
-                preserveAspectRatio="xMidYMid slice"
+              {/* Narrow image strip on left */}
+              {showBgSrc && (
+                <div className="relative w-20 shrink-0 overflow-hidden">
+                  <Image
+                    src={showBgSrc}
+                    alt=""
+                    fill
+                    className="object-cover opacity-30 transition-opacity duration-500 group-hover:opacity-40"
+                    sizes="80px"
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: "linear-gradient(to right, rgba(16,16,16,0) 0%, rgba(16,16,16,0.9) 100%)" }}
+                  />
+                </div>
+              )}
+              {/* Info — primary content */}
+              <div className="flex flex-1 flex-col justify-between p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+                    Next Show
+                  </span>
+                  {nextShow && daysUntilShow !== null && (
+                    <span
+                      className="shrink-0 rounded-full px-2 py-0.5 text-[8px] font-black tabular-nums"
+                      style={
+                        daysUntilShow <= 7
+                          ? { backgroundColor: "rgba(100,215,140,0.14)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.24)" }
+                          : { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }
+                      }
+                    >
+                      {daysUntilShow === 0 ? "Tonight" : `${daysUntilShow}d`}
+                    </span>
+                  )}
+                </div>
+
+                {nextShow ? (
+                  <>
+                    <div className="mt-2">
+                      <p className="font-mono text-[8.5px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.32)" }}>
+                        {fmtShort(nextShow.date)}{nextShow.city ? ` · ${nextShow.city}` : ""}
+                      </p>
+                      <h2 className="mt-1 text-[17px] font-black leading-tight text-white">
+                        {nextShow.eventName ?? nextShow.venue}
+                      </h2>
+                      {nextShow.eventName && nextShow.venue && (
+                        <p className="mt-0.5 text-[11px]" style={{ color: "rgba(255,255,255,0.38)" }}>
+                          {nextShow.venue}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <span
+                        className="rounded-md px-2.5 py-1 text-[10px] font-bold transition-all group-hover:brightness-110"
+                        style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#060606" }}
+                      >
+                        View Shows →
+                      </span>
+                      {futureShows.length > 1 && (
+                        <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                          +{futureShows.length - 1} more
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-1 flex-col justify-center">
+                    <p className="text-[14px] font-medium" style={{ color: "rgba(255,255,255,0.18)" }}>
+                      No shows scheduled
+                    </p>
+                    <p className="mt-2 text-[10px] transition-opacity group-hover:opacity-80" style={{ color: "rgba(255,255,255,0.20)" }}>
+                      Add Show →
+                    </p>
+                  </div>
+                )}
+              </div>
+            </button>
+
+            {/* ── 2. TOUR CONTROL — routing visualization + itinerary ───── */}
+            <button
+              type="button"
+              onClick={() => setActiveSection("tours")}
+              className={cn(panelCls, "flex flex-col p-0 text-left")}
+              style={panelSty}
+            >
+              {/* Routing strip header */}
+              <div
+                className="relative overflow-hidden"
+                style={{ backgroundColor: "#080a08", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
               >
-                <defs>
-                  {/* Grid lines for map feel */}
-                  <pattern id="map-grid" x="0" y="0" width="40" height="30" patternUnits="userSpaceOnUse">
-                    <path d="M40 0L0 0 0 30" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-                  </pattern>
-                  {/* Dot overlay */}
-                  <pattern id="map-dots" x="20" y="15" width="40" height="30" patternUnits="userSpaceOnUse">
-                    <circle cx="0" cy="0" r="0.7" fill="rgba(255,255,255,0.07)" />
-                  </pattern>
-                  <radialGradient id="map-vgn" cx="50%" cy="50%" r="60%">
-                    <stop offset="0%" stopColor="rgba(100,215,140,0.05)" />
-                    <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
-                  </radialGradient>
-                </defs>
-                <rect width="400" height="120" fill="#080808" />
-                <rect width="400" height="120" fill="url(#map-grid)" />
-                <rect width="400" height="120" fill="url(#map-dots)" />
-                <rect width="400" height="120" fill="url(#map-vgn)" />
+                {/* Grid texture */}
+                <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <defs>
+                    <pattern id="tc-grid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+                      <path d="M24 0H0V24" fill="none" stroke="rgba(100,215,140,0.04)" strokeWidth="0.5" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#tc-grid)" />
+                </svg>
 
-                {/* Dynamic route based on real stops, or phantom placeholder */}
-                {(() => {
-                  // Node positions spread across the SVG plane with y-variance for map feel
-                  const stops = routeStops.length > 0 ? routeStops : null
-                  const nodeCount = stops ? Math.min(stops.length, 6) : 5
-                  // y positions: vary to look like a geographic route (not a timeline)
-                  const yVariance = [55, 35, 65, 30, 50, 40]
-                  const xStep = 360 / Math.max(nodeCount - 1, 1)
-
-                  const nodes: { x: number; y: number; label: string; active: boolean }[] = []
-                  for (let i = 0; i < nodeCount; i++) {
-                    nodes.push({
-                      x: 20 + i * xStep,
-                      y: yVariance[i % yVariance.length],
-                      label: stops ? stops[i].city.split(/[\s,]/)[0].slice(0, 3).toUpperCase() : "",
-                      active: stops ? stops[i].visibilityStatus === "announced" : false,
-                    })
-                  }
-
-                  return (
-                    <>
-                      {/* Dashed route path through nodes */}
-                      {nodes.slice(0, -1).map((n, i) => (
-                        <line
-                          key={`route-${i}`}
-                          x1={n.x} y1={n.y}
-                          x2={nodes[i + 1].x} y2={nodes[i + 1].y}
-                          stroke={stops ? "rgba(100,215,140,0.30)" : "rgba(255,255,255,0.10)"}
-                          strokeWidth="1"
-                          strokeDasharray="4 3"
-                        />
-                      ))}
-                      {/* City nodes */}
-                      {nodes.map((n, i) => (
-                        <g key={`node-${i}`}>
-                          {/* Glow ring */}
-                          <circle
-                            cx={n.x} cy={n.y} r="7"
-                            fill={stops && n.active ? "rgba(100,215,140,0.10)" : "rgba(255,255,255,0.04)"}
-                          />
-                          {/* Core dot */}
-                          <circle
-                            cx={n.x} cy={n.y} r="3"
-                            fill={stops && n.active ? "oklch(0.75 0.18 160)" : stops ? "rgba(100,215,140,0.40)" : "rgba(255,255,255,0.20)"}
-                          />
-                          {/* City label */}
-                          {n.label && (
-                            <text
-                              x={n.x} y={n.y + 16}
-                              textAnchor="middle"
-                              fontSize="6.5"
-                              fontFamily="monospace"
-                              fontWeight="700"
-                              fill="rgba(255,255,255,0.35)"
-                              letterSpacing="0.08em"
-                            >
-                              {n.label}
-                            </text>
-                          )}
-                        </g>
-                      ))}
-                    </>
-                  )
-                })()}
-              </svg>
-
-              {/* Tour label + status badge overlay */}
-              <div className="absolute left-3 top-3 flex items-center gap-2">
-                <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
-                  {activeTour ? "Tour Control" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
-                </p>
-              </div>
-              <div className="absolute right-3 top-3">
-                {activeTour ? (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.12em]"
-                    style={{ backgroundColor: "rgba(100,215,140,0.12)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.20)" }}
-                  >
-                    <span className="animate-pulse" style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
-                    Live
-                  </span>
-                ) : nearestUpcomingTour ? (
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.12em]"
-                    style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.32)" }}
-                  >
-                    Routing
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Tour body */}
-            <div className="flex flex-1 flex-col p-4">
-              {!toursLoaded ? (
-                <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.20)" }}>Loading…</p>
-              ) : displayTour ? (
-                <>
-                  <h3 className="text-[20px] font-black leading-tight text-white">{displayTour.name}</h3>
-                  <p className="mt-0.5 text-[10px]" style={{ color: "rgba(255,255,255,0.36)" }}>
-                    {fmtDateRange(displayTour.startDate, displayTour.endDate)}
-                    {tourShows.length > 0 && (
-                      <> · {tourShows.length} show{tourShows.length !== 1 ? "s" : ""}</>
+                {/* Module label */}
+                <div className="relative flex items-center justify-between px-4 pt-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+                      {activeTour ? "Tour Control" : nearestUpcomingTour ? "Next Tour" : "Tour Planner"}
+                    </span>
+                    {activeTour && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[6.5px] font-black uppercase tracking-[0.14em]"
+                        style={{ backgroundColor: "rgba(100,215,140,0.12)", color: "oklch(0.75 0.18 160)", border: "1px solid rgba(100,215,140,0.22)" }}
+                      >
+                        <span className="animate-pulse" style={{ display: "inline-block", width: 3, height: 3, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
+                        Live
+                      </span>
                     )}
-                  </p>
-                  {tourShows.length > 0 && (
-                    <div className="mt-3 space-y-0.5">
-                      {tourShows.slice(0, 5).map((show) => (
-                        <div
-                          key={show.id}
-                          className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5"
-                          style={{ backgroundColor: "rgba(255,255,255,0.022)" }}
-                        >
-                          <span
-                            className="w-9 shrink-0 font-mono text-[9px] font-bold tabular-nums"
-                            style={{ color: "oklch(0.75 0.18 160)", opacity: 0.68 }}
-                          >
-                            {fmtShort(show.date)}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>
-                              {show.city}
-                            </span>
-                            <span className="truncate text-[9.5px]" style={{ color: "rgba(255,255,255,0.26)" }}>
-                              {show.venue}
-                            </span>
+                    {!activeTour && nearestUpcomingTour && (
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[6.5px] font-black uppercase tracking-[0.14em]"
+                        style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.30)" }}
+                      >
+                        Routing
+                      </span>
+                    )}
+                  </div>
+                  {displayTour && (
+                    <span className="font-mono text-[8px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                      {routeStops.length} {routeStops.length === 1 ? "stop" : "stops"}
+                    </span>
+                  )}
+                </div>
+
+                {/* Route visualization — horizontal itinerary strip */}
+                <div className="relative px-3 pb-3 pt-2">
+                  {(routeStops.length > 0 ? routeStops : null) !== null ? (
+                    /* Real route from tour data */
+                    <div className="flex items-end gap-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {routeStops.map((stop, i) => {
+                        const isFirst = i === 0
+                        const isNext = stop.date >= today && (i === 0 || routeStops[i - 1].date < today)
+                        return (
+                          <div key={stop.id} className="flex shrink-0 items-center">
+                            {/* City node */}
+                            <div className="flex flex-col items-center gap-1">
+                              <span
+                                className="font-mono text-[7px] font-bold uppercase"
+                                style={{ color: isNext ? "rgba(255,255,255,0.70)" : stop.date < today ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.45)" }}
+                              >
+                                {fmtShort(stop.date).split(" ")[1]}
+                              </span>
+                              <div style={{ position: "relative" }}>
+                                {isNext && (
+                                  <div
+                                    style={{
+                                      position: "absolute", inset: -4, borderRadius: "50%",
+                                      backgroundColor: "rgba(100,215,140,0.15)",
+                                    }}
+                                  />
+                                )}
+                                <div
+                                  style={{
+                                    width: 8, height: 8, borderRadius: "50%", position: "relative",
+                                    backgroundColor: isNext
+                                      ? "oklch(0.75 0.18 160)"
+                                      : stop.date < today
+                                        ? "rgba(255,255,255,0.15)"
+                                        : stop.visibilityStatus === "announced"
+                                          ? "rgba(255,255,255,0.55)"
+                                          : "rgba(255,255,255,0.30)",
+                                    boxShadow: isNext ? "0 0 10px oklch(0.75 0.18 160 / 0.6)" : "none",
+                                  }}
+                                />
+                              </div>
+                              <span
+                                className="font-mono text-[7px] font-black uppercase tracking-wide"
+                                style={{ color: isNext ? "oklch(0.75 0.18 160)" : stop.date < today ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.42)" }}
+                              >
+                                {stop.city.split(/[\s,]/)[0].slice(0, 3)}
+                              </span>
+                            </div>
+                            {/* Connector */}
+                            {i < routeStops.length - 1 && (
+                              <div
+                                className="mx-1.5 mb-4"
+                                style={{
+                                  width: 18,
+                                  height: 1,
+                                  borderTop: "1px dashed",
+                                  borderColor: stop.date < today ? "rgba(255,255,255,0.08)" : "rgba(100,215,140,0.25)",
+                                }}
+                              />
+                            )}
                           </div>
-                          <span
-                            className="shrink-0 rounded-sm px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.10em]"
-                            style={
-                              show.visibilityStatus === "announced"
-                                ? { backgroundColor: "rgba(52,211,153,0.10)", color: "#34d399" }
-                                : { backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.24)" }
-                            }
-                          >
-                            {show.visibilityStatus === "announced" ? "Confirmed" : (show.visibilityStatus ?? "TBA")}
-                          </span>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    /* Phantom route — no tour data */
+                    <div className="flex items-center gap-0 py-1">
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex shrink-0 items-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="h-[10px] w-[24px] rounded-sm" style={{ backgroundColor: "rgba(255,255,255,0.04)" }} />
+                            <div style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.08)" }} />
+                            <div className="h-[8px] w-[20px] rounded-sm" style={{ backgroundColor: "rgba(255,255,255,0.04)" }} />
+                          </div>
+                          {i < 4 && (
+                            <div className="mx-1.5 mb-3" style={{ width: 18, height: 1, borderTop: "1px dashed rgba(255,255,255,0.06)" }} />
+                          )}
                         </div>
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.20)" }}>
-                    View full tour →
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-1 flex-col justify-center">
-                  <p className="text-[15px] font-semibold" style={{ color: "rgba(255,255,255,0.18)" }}>
-                    No active tour
-                  </p>
-                  <p className="mt-1.5 text-[11px]" style={{ color: "rgba(255,255,255,0.14)" }}>
-                    Create a tour to plan dates, shows and routing
-                  </p>
-                  <span className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.20)" }}>
-                    Create Tour →
-                  </span>
                 </div>
-              )}
+              </div>
+
+              {/* Tour body — itinerary */}
+              <div className="flex flex-1 flex-col p-4">
+                {!toursLoaded ? (
+                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.20)" }}>Loading…</p>
+                ) : displayTour ? (
+                  <>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <h3 className="text-[16px] font-black leading-tight text-white">{displayTour.name}</h3>
+                      <span className="shrink-0 text-[9px] tabular-nums" style={{ color: "rgba(255,255,255,0.28)" }}>
+                        {fmtDateRange(displayTour.startDate, displayTour.endDate)}
+                      </span>
+                    </div>
+
+                    {tourShows.length > 0 && (
+                      <div className="mt-2.5 space-y-px">
+                        {tourShows.slice(0, 5).map((show, idx) => {
+                          const isNextStop = show.date >= today && (idx === 0 || tourShows[idx - 1].date < today)
+                          return (
+                            <div
+                              key={show.id}
+                              className="flex items-center gap-2 rounded-md px-2.5 py-1.5"
+                              style={{
+                                backgroundColor: isNextStop ? "rgba(100,215,140,0.06)" : "rgba(255,255,255,0.018)",
+                                borderLeft: isNextStop ? "2px solid oklch(0.75 0.18 160)" : "2px solid transparent",
+                              }}
+                            >
+                              <span
+                                className="w-[38px] shrink-0 font-mono text-[8.5px] font-bold tabular-nums"
+                                style={{ color: isNextStop ? "oklch(0.75 0.18 160)" : show.date < today ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.42)" }}
+                              >
+                                {fmtShort(show.date)}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <span
+                                  className="block truncate text-[11px] font-semibold"
+                                  style={{ color: show.date < today ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.78)" }}
+                                >
+                                  {show.city}
+                                </span>
+                                <span className="truncate text-[9px]" style={{ color: "rgba(255,255,255,0.24)" }}>
+                                  {show.venue}
+                                </span>
+                              </div>
+                              <span
+                                className="shrink-0 rounded-sm px-1 py-0.5 text-[6.5px] font-black uppercase tracking-[0.10em]"
+                                style={
+                                  show.visibilityStatus === "announced"
+                                    ? { backgroundColor: "rgba(52,211,153,0.10)", color: "#34d399" }
+                                    : { color: "rgba(255,255,255,0.22)" }
+                                }
+                              >
+                                {show.visibilityStatus === "announced" ? "Confirmed" : (show.visibilityStatus ?? "TBA")}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    <div className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.20)" }}>
+                      View full tour →
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-1 flex-col justify-center">
+                    <p className="text-[14px] font-semibold" style={{ color: "rgba(255,255,255,0.18)" }}>
+                      No active tour
+                    </p>
+                    <p className="mt-1 text-[10px]" style={{ color: "rgba(255,255,255,0.14)" }}>
+                      Create a tour to plan shows and routing
+                    </p>
+                    <span className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                      Create Tour →
+                    </span>
+                  </div>
+                )}
+              </div>
+            </button>
+
+          </div>{/* end ROW 1 */}
+
+          {/* ROW 2: Booking Desk + Content Studio */}
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+
+            {/* ── 3. BOOKING DESK ───────────────────────────────────────── */}
+            <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
+              <div
+                className="flex items-center justify-between px-4 py-2.5"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+                  Booking Desk
+                </span>
+                {homeBooking !== "loading" && homeLeads.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("bookings")}
+                    className="text-[9px] font-semibold transition-opacity hover:opacity-70"
+                    style={{ color: "rgba(255,255,255,0.22)" }}
+                  >
+                    {homeLeads.length} requests →
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-1 flex-col px-4 py-3">
+                {homeBooking === "loading" ? (
+                  <div className="space-y-1.5">
+                    {[1, 2].map((n) => (
+                      <div key={n} className="h-7 animate-pulse rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.03)" }} />
+                    ))}
+                  </div>
+                ) : homeLeads.length > 0 ? (
+                  <>
+                    {/* Pipeline counts strip */}
+                    <div className="mb-2.5 flex gap-0 overflow-hidden rounded-md" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                      {([
+                        { key: "new",       label: "New",  count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
+                        { key: "contacted", label: "Cntd", count: bookingCounts.contacted, color: "#60a5fa" },
+                        { key: "qualified", label: "Qual", count: bookingCounts.qualified, color: "#fbbf24" },
+                        { key: "confirmed", label: "Conf", count: bookingCounts.confirmed, color: "#34d399" },
+                      ] as const).map((s, i) => (
+                        <div
+                          key={s.key}
+                          className={`flex flex-1 flex-col items-center py-2${i > 0 ? " border-l" : ""}`}
+                          style={{ borderColor: "rgba(255,255,255,0.06)", position: "relative" }}
+                        >
+                          {s.count > 0 && (
+                            <div className="absolute inset-x-0 top-0 h-[2px]" style={{ backgroundColor: s.color, opacity: 0.65 }} />
+                          )}
+                          <span className="text-[15px] font-black tabular-nums leading-none" style={{ color: "rgba(255,255,255,0.88)" }}>
+                            {s.count}
+                          </span>
+                          <span className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.10em]" style={{ color: s.count > 0 ? s.color : "rgba(255,255,255,0.18)" }}>
+                            {s.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Latest leads */}
+                    <div className="space-y-0.5">
+                      {recentLeads.slice(0, 3).map((lead) => (
+                        <button
+                          key={lead.id}
+                          type="button"
+                          onClick={() => setActiveSection("bookings")}
+                          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
+                        >
+                          <span
+                            style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", flexShrink: 0, backgroundColor: leadStatusColor(lead.status) }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <span className="block truncate text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.72)" }}>
+                              {lead.fullName}
+                            </span>
+                            <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.24)" }}>
+                              {[lead.city, lead.eventDate].filter(Boolean).join(" · ")}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  /* Tight empty state */
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <Inbox className="h-4 w-4 shrink-0" style={{ color: "rgba(255,255,255,0.18)" }} />
+                      <span className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.32)" }}>
+                        No inquiries yet
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection("bookings")}
+                        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-70"
+                        style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.06)" }}
+                      >
+                        <Briefcase className="h-3 w-3" />
+                        Settings
+                      </button>
+                      {artist.bookingInfo.email && (
+                        <button
+                          type="button"
+                          onClick={() => { void navigator.clipboard.writeText(artist.bookingInfo.email) }}
+                          className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-70"
+                          style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.38)", border: "1px solid rgba(255,255,255,0.06)" }}
+                        >
+                          <Copy className="h-3 w-3" />
+                          Copy email
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </button>
 
           {/* ── 4. CONTENT ARCHIVE ────────────────────────────────────── */}
           <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
