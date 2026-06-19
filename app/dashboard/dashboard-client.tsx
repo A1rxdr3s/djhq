@@ -2595,61 +2595,30 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const activeTourCount = activeTour ? 1 : nearestUpcomingTour ? 1 : 0
     const openBookings = homeLeads.filter((l) => l.status !== "declined").length
 
-    // 2D route map: geographic positions for Tour Control SVG
-    // Bounds: lon -20..22 (span 42°), lat 26..62 (span 36°) → 480×280 viewBox
-    // Expanded W to include Canary Islands naturally; wider lat for N Africa visibility
-    const mapVbW = 480
-    const mapVbH = 280
-    const geoX = (lon: number) => Math.round(((lon + 20) / 42) * 480)
-    const geoY = (lat: number) => Math.round(((62 - lat) / 36) * 280)
-    const cityGeoLookup: Record<string, { x: number; y: number }> = {
-      // Iberian Peninsula
-      ibiza:          { x: 245, y: 180 },
-      barcelona:      { x: 253, y: 160 },
-      madrid:         { x: 186, y: 168 },
-      lisbon:         { x: 124, y: 181 },
-      valencia:       { x: 224, y: 175 },
-      // Canary Islands — show naturally at bottom-left
-      fuerteventura:  { x:  69, y: 264 },
-      tenerife:       { x:  40, y: 262 },
-      "las palmas":   { x:  52, y: 265 },
-      lanzarote:      { x:  73, y: 257 },
-      // Italy
-      sperlonga:      { x: 382, y: 162 },
-      rome:           { x: 371, y: 156 },
-      milan:          { x: 334, y: 129 },
-      naples:         { x: 392, y: 165 },
-      napoli:         { x: 392, y: 165 },
-      // France
-      paris:          { x: 255, y: 102 },
-      marseille:      { x: 290, y: 145 },
-      lyon:           { x: 284, y: 127 },
-      // Benelux / Germany
-      amsterdam:      { x: 285, y:  75 },
-      brussels:       { x: 278, y:  87 },
-      hamburg:        { x: 343, y:  66 },
-      berlin:         { x: 382, y:  74 },
-      munich:         { x: 361, y: 108 },
-      frankfurt:      { x: 328, y:  93 },
-      cologne:        { x: 308, y:  86 },
-      // UK
-      london:         { x: 227, y:  82 },
-      // Central Europe
-      vienna:         { x: 416, y: 107 },
-      prague:         { x: 394, y:  93 },
-      zurich:         { x: 326, y: 114 },
-      // Scandinavia
-      stockholm:      { x: 435, y:  21 },
-      copenhagen:     { x: 372, y:  49 },
-      oslo:           { x: 351, y:  16 },
-    }
-    const mapYPositions: number[] = [175, 145, 190, 130, 165, 110, 155]
-    const routePts = routeStops.map((stop, i) => {
-      const cityKey = (stop.city.split(/[\s,]/)[0] ?? stop.city).toLowerCase()
-      const geo = cityGeoLookup[cityKey]
+    // Tactical routing grid — Tour Control
+    // Positions computed dynamically: no static city coords, works for any stop count
+    const TC_VBW = 480
+    const TC_VBH = 215
+    const tcMaxVisible = 6
+    const tcVisible = Math.min(routeStops.length, tcMaxVisible)
+    const tcMoreCount = routeStops.length - tcVisible
+    const tcPadX = 52          // left/right margin inside viewBox
+    const tcCenterY = TC_VBH / 2  // 107.5
+
+    const routePts = routeStops.slice(0, tcVisible).map((stop, i) => {
+      let x: number, y: number
+      if (tcVisible <= 1) {
+        x = TC_VBW / 2
+        y = tcCenterY
+      } else {
+        x = Math.round(tcPadX + (i / (tcVisible - 1)) * (TC_VBW - 2 * tcPadX))
+        // Tactical zigzag — amplitude narrows for longer route lists
+        const amp = tcVisible <= 3 ? 52 : tcVisible <= 5 ? 44 : 34
+        y = Math.round(tcCenterY + (i % 2 === 0 ? -amp : amp))
+      }
       return {
-        x: geo?.x ?? (routeStops.length > 1 ? 40 + (i / (routeStops.length - 1)) * (mapVbW - 80) : mapVbW / 2),
-        y: geo?.y ?? (mapYPositions[i % mapYPositions.length] ?? 155),
+        x,
+        y,
         city: (stop.city.split(/[\s,]/)[0] ?? stop.city).slice(0, 3).toUpperCase(),
         date: fmtShort(stop.date),
         isNext: stop.date >= today && (i === 0 || (routeStops[i - 1]?.date ?? "") < today),
@@ -2657,7 +2626,6 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         id: stop.id,
       }
     })
-
 
     // Countdown to next show (days/hours/mins from end of show day)
     let showCountdown = { days: 0, hours: 0, mins: 0 }
@@ -3034,280 +3002,187 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             {/* Map + stop list */}
             <div className="flex flex-1">
-              {/* 2D SVG map */}
-              <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "#050a07", minHeight: 295 }}>
-                {/*
-                  Geographic map — W Mediterranean + Canary Islands
-                  Coordinate system: lon -20..22, lat 26..62 → 480×280 px viewBox
-                  Key positions (pre-computed):
-                    Ibiza (1.43°E 38.9°N) → (245,180)   Barcelona (2.16°E 41.4°N) → (253,160)
-                    Sperlonga (13.4°E 41.3°N) → (382,162)  Fuerteventura (14°W 28.1°N) → (69,264)
-                    Tenerife (16.5°W 28.3°N) → (40,262)   London (0.12°W 51.5°N) → (227,82)
-                */}
+              {/* Tactical routing grid */}
+              <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "#080a08", minHeight: 295 }}>
                 <svg
                   className="absolute inset-0 h-full w-full"
-                  viewBox="0 0 480 280"
+                  viewBox="0 0 480 215"
                   preserveAspectRatio="xMidYMid meet"
                   aria-hidden="true"
                 >
                   <defs>
-                    {/* Subtle dot-grid texture */}
-                    <pattern id="tc-grid2" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                      <circle cx="1" cy="1" r="0.55" fill="rgba(100,215,140,0.045)" />
+                    {/* Stop glow */}
+                    <filter id="tc-sg" x="-100%" y="-100%" width="300%" height="300%">
+                      <feGaussianBlur stdDeviation="4.5" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    {/* Line glow */}
+                    <filter id="tc-lg" x="-20%" y="-80%" width="140%" height="260%">
+                      <feGaussianBlur stdDeviation="2" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    {/* Dot-grid pattern */}
+                    <pattern id="tc-dots" width="80" height="54" patternUnits="userSpaceOnUse">
+                      <circle cx="40" cy="27" r="1.1" fill="rgba(100,215,140,0.07)" />
                     </pattern>
-                    {/* Glow for active city */}
-                    <filter id="tc-cg" x="-100%" y="-100%" width="300%" height="300%">
-                      <feGaussianBlur stdDeviation="4" result="blur" />
-                      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                    </filter>
-                    {/* Glow for active route segment */}
-                    <filter id="tc-rg" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="2.2" result="blur" />
-                      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                    </filter>
                   </defs>
 
-                  {/* ── Background grid ── */}
-                  <rect width="480" height="280" fill="url(#tc-grid2)" />
+                  {/* Dot-grid texture */}
+                  <rect width="480" height="215" fill="url(#tc-dots)" />
 
-                  {/* ── N Africa coastline strip (very faint — orients the Strait of Gibraltar) ── */}
-                  {/*
-                    Morocco coast:
-                      Tangier (5.8°W 35.8°N) → (162,204)   Casablanca (7.6°W 33.6°N) → (142,221)
-                      SW Morocco (9.6°W 30°N) → (119,247)
-                    Algeria: Oran (0.6°W 35.7°N) → (222,204)  Algiers (3°E 36.8°N) → (263,195)
-                    Tunisia: Tunis (10.2°E 36.8°N) → (347,195)
-                  */}
-                  <path
-                    d="M 60 265 Q 100 248 119 247 Q 130 226 142 221 Q 152 213 162 204 Q 192 202 222 204 Q 248 197 263 195 Q 310 192 347 195 Q 390 200 430 212 L 430 280 L 0 280 L 0 265 Z"
-                    fill="#0e1812"
-                    stroke="rgba(255,255,255,0.045)"
-                    strokeWidth="0.7"
-                  />
+                  {/* Sparse grid lines */}
+                  <line x1="80"  y1="0" x2="80"  y2="215" stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
+                  <line x1="160" y1="0" x2="160" y2="215" stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
+                  <line x1="240" y1="0" x2="240" y2="215" stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
+                  <line x1="320" y1="0" x2="320" y2="215" stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
+                  <line x1="400" y1="0" x2="400" y2="215" stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
+                  <line x1="0" y1="55"  x2="480" y2="55"  stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
+                  <line x1="0" y1="107" x2="480" y2="107" stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
+                  <line x1="0" y1="160" x2="480" y2="160" stroke="rgba(100,215,140,0.04)" strokeWidth="0.7" />
 
-                  {/* ── Iberian Peninsula ── */}
-                  {/*
-                    Clockwise from SW Portugal:
-                    SW Portugal (9°W 37°N) → (126,194)
-                    Gibraltar (5.3°W 36°N) → (168,202)
-                    SE Spain/Almería (2°W 36.7°N) → (206,197)
-                    Valencia coast (0.4°W 39.5°N) → (224,175)
-                    Barcelona (2.16°E 41.39°N) → (253,160)
-                    Pyrenees E coast (3°E 42.5°N) → (263,152)
-                    [Pyrenees ridge inland] → Bilbao (2.9°W 43.4°N) → (195,145)
-                    N Spain/Galicia cape (9.3°W 42.9°N) → (122,149)
-                    Porto (8.7°W 41.15°N) → (129,162)
-                    Lisbon (9.14°W 38.72°N) → (124,181)
-                    back to SW Portugal (126,194)
-                  */}
-                  <path
-                    d="M 126 194 Q 145 200 168 202 Q 190 194 206 197 Q 218 186 224 175 Q 240 166 253 160 Q 260 155 263 152 Q 244 148 218 145 Q 208 144 195 145 Q 172 142 148 141 L 122 149 Q 125 156 129 162 Q 125 172 124 181 Q 124 188 126 194 Z"
-                    fill="#111e16"
-                    stroke="rgba(255,255,255,0.09)"
-                    strokeWidth="0.8"
-                  />
+                  {/* Corner brackets — tactical frame */}
+                  <path d="M 8 22 L 8 8 L 22 8"     stroke="rgba(100,215,140,0.22)" strokeWidth="1" fill="none" />
+                  <path d="M 458 8 L 472 8 L 472 22"  stroke="rgba(100,215,140,0.22)" strokeWidth="1" fill="none" />
+                  <path d="M 8 193 L 8 207 L 22 207"  stroke="rgba(100,215,140,0.22)" strokeWidth="1" fill="none" />
+                  <path d="M 458 207 L 472 207 L 472 193" stroke="rgba(100,215,140,0.22)" strokeWidth="1" fill="none" />
 
-                  {/* ── Balearic Islands (Mallorca, Ibiza area) ── */}
-                  {/*
-                    Mallorca center (2.87°E 39.7°N) → (262,174)
-                    Ibiza center (1.43°E 38.9°N) → (245,180)
-                    Menorca (4°E 39.8°N) → (274,173)
-                  */}
-                  <ellipse cx="262" cy="174" rx="8" ry="4" fill="#111e16" stroke="rgba(255,255,255,0.08)" strokeWidth="0.7" />
-                  <ellipse cx="245" cy="180" rx="5" ry="3" fill="#111e16" stroke="rgba(255,255,255,0.08)" strokeWidth="0.7" />
-                  <ellipse cx="274" cy="173" rx="5" ry="3" fill="#111e16" stroke="rgba(255,255,255,0.08)" strokeWidth="0.7" />
+                  {/* Phantom route — shown only when no tour data */}
+                  {routePts.length === 0 && (
+                    <g style={{ opacity: 0.11 }}>
+                      {([
+                        [80, 55, 210, 160],
+                        [210, 160, 340, 55],
+                        [340, 55, 430, 160],
+                      ] as [number, number, number, number][]).map(([x1, y1, x2, y2], i) => (
+                        <path
+                          key={`ppl${i}`}
+                          d={`M ${x1} ${y1} C ${x1 + (x2 - x1) * 0.45} ${y1} ${x1 + (x2 - x1) * 0.55} ${y2} ${x2} ${y2}`}
+                          stroke="rgba(255,255,255,0.6)"
+                          strokeWidth="1"
+                          strokeDasharray="5 4"
+                          fill="none"
+                        />
+                      ))}
+                      {([[80, 55], [210, 160], [340, 55], [430, 160]] as [number, number][]).map(([px, py], i) => (
+                        <circle key={`ppn${i}`} cx={px} cy={py} r="4" fill="rgba(255,255,255,0.3)" />
+                      ))}
+                    </g>
+                  )}
 
-                  {/* ── Continental Europe (France + Benelux + N Germany + Alpine arc) ── */}
-                  {/*
-                    Clockwise from Calais area:
-                    Calais (1.8°E 51°N) → (240,88)   Netherlands N (4.5°E 53°N) → (269,73)
-                    Hamburg (10°E 53.5°N) → (343,66)  Baltic E limit → (430,80)
-                    Eastern cut going S → (430,148)
-                    Vienna area (16.4°E 48.2°N) → (416,107)  Adriatic N/Trieste (13.8°E 45.6°N) → (382,128)
-                    Genoa/Italian border (8.9°E 44.4°N) → (330,137)
-                    Nice/Riviera (7.3°E 43.7°N) → (312,142)  Marseille (5.37°E 43.3°N) → (290,146)
-                    Narbonne (3°E 43.2°N) → (263,146)   Pyrenees E (3°E 42.5°N) → (263,152)
-                    [Pyrenees ridge] → (195,145) Bilbao area
-                    Basque France (1.5°W 43.5°N) → (210,143)
-                    Atlantic coast N → Bordeaux (0.5°W 44.8°N) → (222,134)
-                    Loire/Nantes (1.5°W 47.2°N) → (209,115)
-                    Brittany tip (4.8°W 48.4°N) → (172,107)
-                    Normandy (1.5°W 49.5°N) → (209,99)
-                    Calais (1.8°E 51°N) → (240,88) close
-                  */}
-                  <path
-                    d="M 240 88 Q 256 86 269 73 Q 306 67 343 66 Q 370 68 400 74 L 430 80 L 430 148 Q 420 140 416 122 Q 410 112 406 107 Q 396 120 390 130 Q 380 132 370 128 Q 360 125 349 132 Q 340 136 330 137 Q 314 140 312 142 Q 298 144 290 146 Q 275 147 263 146 Q 263 149 263 152 Q 244 148 218 145 Q 208 144 195 145 Q 200 143 210 143 Q 216 139 222 134 Q 216 125 210 118 Q 208 115 209 115 Q 200 113 188 110 Q 178 108 172 107 Q 162 107 156 111 Q 164 105 174 100 Q 192 96 209 99 Q 224 95 240 88 Z"
-                    fill="#111e16"
-                    stroke="rgba(255,255,255,0.08)"
-                    strokeWidth="0.8"
-                  />
-
-                  {/* ── Italy (boot shape) ── */}
-                  {/*
-                    Clockwise from Genoa:
-                    Genoa (8.9°E 44.4°N) → (330,137)
-                    Livorno (10.3°E 43.5°N) → (346,144)
-                    Rome coast (12.3°E 41.9°N) → (363,155)
-                    Sperlonga/Napoli area (13.4°E 41.25°N) → (382,162)
-                    Napoli (14.3°E 40.8°N) → (392,165)
-                    Boot toe (15.6°E 38.1°N) → (407,183)
-                    Heel/Brindisi (17.9°E 40.6°N) → (433,165)
-                    Adriatic N / Venice (12.3°E 45.5°N) → (369,129)
-                    Trieste (13.8°E 45.6°N) → (382,128)
-                    NE Italy back to Genoa
-                  */}
-                  <path
-                    d="M 330 137 Q 338 141 346 144 Q 357 150 363 155 Q 374 159 382 162 Q 390 163 392 165 Q 400 174 407 183 L 410 186 Q 418 180 425 171 Q 430 168 433 165 Q 425 155 414 150 Q 402 143 395 140 Q 386 136 378 133 Q 370 128 369 129 Q 378 127 382 128 Q 380 132 370 132 Q 357 133 345 134 Q 338 135 330 137 Z"
-                    fill="#111e16"
-                    stroke="rgba(255,255,255,0.09)"
-                    strokeWidth="0.8"
-                  />
-
-                  {/* ── Corsica (8.8°E 42°N → ~329,156) ── */}
-                  <ellipse cx="318" cy="156" rx="5" ry="10" fill="#111e16" stroke="rgba(255,255,255,0.07)" strokeWidth="0.7" transform="rotate(-10 318 156)" />
-
-                  {/* ── Sardinia (9°E 40°N → ~331,172) ── */}
-                  <ellipse cx="332" cy="170" rx="5" ry="9" fill="#111e16" stroke="rgba(255,255,255,0.07)" strokeWidth="0.7" />
-
-                  {/* ── Sicily (14°E 37.5°N → ~392,188) ── */}
-                  <ellipse cx="396" cy="190" rx="9" ry="5" fill="#111e16" stroke="rgba(255,255,255,0.07)" strokeWidth="0.7" />
-
-                  {/* ── UK island ── */}
-                  {/*
-                    London (0.12°W 51.5°N) → (227,82)
-                    SE England/Kent (1.3°E 51.2°N) → (241,84)
-                    NE England (1°W 55°N) → (217,54)
-                    N Scotland (3°W 58.5°N) → (194,27)
-                    NW Scotland (5°W 57.5°N) → (171,34)
-                    W coast (5.1°W 56°N) → (171,46)
-                    Wales/Cornwall (5.1°W 50.1°N) → (171,90)
-                    S coast (0.5°E 50.8°N) → (232,84)
-                  */}
-                  <path
-                    d="M 241 84 Q 236 76 230 71 Q 222 63 217 54 Q 208 44 196 37 Q 183 27 171 27 Q 164 31 165 40 Q 168 48 170 56 Q 172 67 173 76 Q 173 84 171 90 Q 185 88 200 87 Q 216 86 232 84 Q 237 84 241 84 Z"
-                    fill="#111e16"
-                    stroke="rgba(255,255,255,0.09)"
-                    strokeWidth="0.8"
-                  />
-
-                  {/* ── Ireland ── */}
-                  {/* Dublin (6.26°W 53.35°N) → (157,67) */}
-                  <path
-                    d="M 150 60 Q 141 58 136 66 Q 133 74 138 82 Q 146 89 156 83 Q 163 77 160 68 Q 156 61 150 60 Z"
-                    fill="#111e16"
-                    stroke="rgba(255,255,255,0.07)"
-                    strokeWidth="0.7"
-                  />
-
-                  {/* ── Canary Islands cluster (bottom-left) ── */}
-                  {/*
-                    Tenerife center (16.5°W 28.3°N) → (40,262)   size ~1.5°W × 0.6°N
-                    Gran Canaria center (15.6°W 28°N) → (52,265)  size ~0.8° diameter
-                    Fuerteventura center (14°W 28.1°N) → (69,264)  elongated N-S
-                    Lanzarote center (13.6°W 29°N) → (73,257)
-                  */}
-                  <ellipse cx="40" cy="262" rx="8" ry="4" fill="#111e16" stroke="rgba(255,255,255,0.10)" strokeWidth="0.8" />
-                  <ellipse cx="52" cy="265" rx="5" ry="5" fill="#111e16" stroke="rgba(255,255,255,0.10)" strokeWidth="0.8" />
-                  <ellipse cx="69" cy="264" rx="4" ry="6" fill="#111e16" stroke="rgba(255,255,255,0.10)" strokeWidth="0.8" />
-                  <ellipse cx="74" cy="257" rx="3" ry="4" fill="#111e16" stroke="rgba(255,255,255,0.10)" strokeWidth="0.8" />
-                  {/* Canary Islands label */}
-                  <text x="57" y="276" textAnchor="middle" fontSize="5.5" fontFamily="ui-monospace,monospace" fontWeight="700" letterSpacing="0.08em" fill="rgba(255,255,255,0.20)">CANARY IS.</text>
-
-                  {/* ── Strait of Gibraltar label ── */}
-                  <text x="168" y="208" textAnchor="middle" fontSize="5" fontFamily="ui-monospace,monospace" fill="rgba(255,255,255,0.12)" letterSpacing="0.05em">STRAIT</text>
-
-                  {/* ── Route lines ── */}
-                  {routePts.length > 0 && routePts.slice(0, -1).map((pt, i) => {
+                  {/* Route segments with directional chevrons */}
+                  {routePts.length > 1 && routePts.slice(0, -1).map((pt, i) => {
                     const next = routePts[i + 1]!
-                    const midX = (pt.x + next.x) / 2
-                    const midY = (pt.y + next.y) / 2 - 18
+                    const c1x = pt.x + (next.x - pt.x) * 0.45
+                    const c2x = pt.x + (next.x - pt.x) * 0.55
                     const isPastSeg = pt.isPast && next.isPast
+                    const mx = (pt.x + next.x) / 2
+                    const my = (pt.y + next.y) / 2
+                    const angleDeg = Math.atan2(next.y - pt.y, next.x - pt.x) * (180 / Math.PI)
                     return (
-                      <path
-                        key={`rp-${pt.id}`}
-                        d={`M ${pt.x} ${pt.y} Q ${midX} ${midY} ${next.x} ${next.y}`}
-                        stroke={isPastSeg ? "rgba(255,255,255,0.07)" : "oklch(0.75 0.18 160)"}
-                        strokeWidth={isPastSeg ? "1" : "1.6"}
-                        strokeDasharray="7 5"
-                        fill="none"
-                        filter={isPastSeg ? undefined : "url(#tc-rg)"}
-                        style={{ opacity: isPastSeg ? 0.4 : 0.72 }}
-                      />
+                      <g key={`seg-${pt.id}`}>
+                        <path
+                          d={`M ${pt.x} ${pt.y} C ${c1x} ${pt.y} ${c2x} ${next.y} ${next.x} ${next.y}`}
+                          stroke={isPastSeg ? "rgba(255,255,255,0.07)" : "oklch(0.75 0.18 160)"}
+                          strokeWidth={isPastSeg ? "1" : "1.5"}
+                          strokeDasharray="7 5"
+                          fill="none"
+                          filter={isPastSeg ? undefined : "url(#tc-lg)"}
+                          style={{ opacity: isPastSeg ? 0.5 : 0.72 }}
+                        />
+                        {!isPastSeg && (
+                          <polygon
+                            points="-4,-2.5 4,0 -4,2.5"
+                            transform={`translate(${mx},${my}) rotate(${angleDeg})`}
+                            fill="oklch(0.75 0.18 160)"
+                            style={{ opacity: 0.52 }}
+                          />
+                        )}
+                      </g>
                     )
                   })}
 
-                  {/* ── City markers ── */}
-                  {routePts.length > 0 && routePts.map((pt) => (
-                    <g key={`rn-${pt.id}`}>
+                  {/* Stop markers */}
+                  {routePts.map((pt, i) => (
+                    <g key={`stop-${pt.id}`}>
                       {pt.isNext && (
                         <>
+                          <circle cx={pt.x} cy={pt.y} r="12" fill="rgba(100,215,140,0.06)" />
                           <circle cx={pt.x} cy={pt.y} r="8" fill="none" stroke="oklch(0.75 0.18 160)" strokeWidth="0.8">
-                            <animate attributeName="r" values="7;20;7" dur="2.6s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" values="0.5;0;0.5" dur="2.6s" repeatCount="indefinite" />
+                            <animate attributeName="r" values="8;20;8" dur="2.5s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.55;0;0.55" dur="2.5s" repeatCount="indefinite" />
                           </circle>
-                          <circle cx={pt.x} cy={pt.y} r="12" fill="rgba(100,215,140,0.07)" />
                         </>
                       )}
                       <circle
-                        cx={pt.x} cy={pt.y}
+                        cx={pt.x}
+                        cy={pt.y}
                         r={pt.isNext ? 5.5 : 4}
-                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.38)"}
-                        filter={pt.isNext ? "url(#tc-cg)" : undefined}
+                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.28)"}
+                        filter={pt.isNext ? "url(#tc-sg)" : undefined}
                       />
+                      {!pt.isNext && !pt.isPast && (
+                        <circle cx={pt.x} cy={pt.y} r="1.5" fill="rgba(255,255,255,0.55)" />
+                      )}
+                      {/* City label — above dot */}
                       <text
-                        x={pt.x} y={pt.y - 10}
+                        x={pt.x}
+                        y={pt.y - 11}
                         textAnchor="middle"
-                        fontSize="7"
+                        fontSize="7.5"
                         fontFamily="ui-monospace,monospace"
-                        fontWeight="700"
-                        letterSpacing="0.06em"
-                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.55)"}
+                        fontWeight="800"
+                        letterSpacing="0.10em"
+                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.52)"}
                       >
                         {pt.city}
+                      </text>
+                      {/* Date label — below dot */}
+                      <text
+                        x={pt.x}
+                        y={pt.y + 17}
+                        textAnchor="middle"
+                        fontSize="6"
+                        fontFamily="ui-monospace,monospace"
+                        letterSpacing="0.04em"
+                        fill={pt.isNext ? "rgba(100,215,140,0.75)" : pt.isPast ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.26)"}
+                      >
+                        {pt.date}
+                      </text>
+                      {/* Stop index */}
+                      <text
+                        x={pt.x + 8}
+                        y={pt.y - 5}
+                        fontSize="5.5"
+                        fontFamily="ui-monospace,monospace"
+                        fontWeight="700"
+                        fill={pt.isNext ? "rgba(100,215,140,0.48)" : "rgba(255,255,255,0.14)"}
+                      >
+                        {i + 1}
                       </text>
                     </g>
                   ))}
 
-                  {/* ── Phantom markers (no tour active) ── */}
-                  {routePts.length === 0 && (
-                    <g style={{ opacity: 0.16 }}>
-                      {([
-                        [245, 180, "IBZ"],  // Ibiza
-                        [382, 162, "SPL"],  // Sperlonga
-                        [ 69, 264, "FUE"],  // Fuerteventura
-                        [ 40, 262, "TFN"],  // Tenerife
-                      ] as [number, number, string][]).map(([px, py, label], i, arr) => {
-                        const next = arr[i + 1]
-                        return (
-                          <g key={label}>
-                            <circle cx={px} cy={py} r="3.5" fill="rgba(255,255,255,0.28)" />
-                            {next && (
-                              <path
-                                d={`M ${px} ${py} Q ${(px + next[0]) / 2} ${Math.min(py, next[1]) - 16} ${next[0]} ${next[1]}`}
-                                stroke="rgba(255,255,255,0.09)"
-                                strokeWidth="1"
-                                strokeDasharray="5 4"
-                                fill="none"
-                              />
-                            )}
-                            <text x={px} y={py - 8} textAnchor="middle" fontSize="6.5" fontFamily="ui-monospace,monospace" fontWeight="700" fill="rgba(255,255,255,0.32)">
-                              {label}
-                            </text>
-                          </g>
-                        )
-                      })}
-                    </g>
+                  {/* +N more indicator */}
+                  {tcMoreCount > 0 && (
+                    <text
+                      x={469}
+                      y={107}
+                      textAnchor="end"
+                      fontSize="7"
+                      fontFamily="ui-monospace,monospace"
+                      letterSpacing="0.04em"
+                      fill="rgba(255,255,255,0.24)"
+                    >
+                      +{tcMoreCount}
+                    </text>
                   )}
                 </svg>
-
-                {/* Zoom controls (decorative) */}
-                <div className="absolute bottom-3 right-3 flex flex-col gap-1" style={{ opacity: 0.25 }}>
-                  {["+", "−"].map((s) => (
-                    <div key={s} className="flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.5)" }}>
-                      {s}
-                    </div>
-                  ))}
-                </div>
 
                 {!toursLoaded && (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -3315,13 +3190,38 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 )}
                 {toursLoaded && !displayTour && (
-                  <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-1.5">
-                    <p className="text-center text-[10px]" style={{ color: "rgba(255,255,255,0.20)" }}>
-                      No active tour · Create one to plot your route
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6">
+                    <p
+                      className="text-[9.5px] font-black uppercase tracking-[0.20em]"
+                      style={{ color: "rgba(255,255,255,0.18)" }}
+                    >
+                      No active tour
                     </p>
+                    <p
+                      className="text-center text-[9px] leading-relaxed"
+                      style={{ color: "rgba(255,255,255,0.11)" }}
+                    >
+                      Create a tour to plan routing,<br />shows and travel windows.
+                    </p>
+                    <div className="mt-1 flex items-center gap-2.5">
+                      <span
+                        className="rounded px-2 py-0.5 text-[7.5px] font-bold uppercase tracking-[0.10em]"
+                        style={{
+                          backgroundColor: "rgba(100,215,140,0.07)",
+                          color: "oklch(0.75 0.18 160)",
+                          border: "1px solid rgba(100,215,140,0.16)",
+                        }}
+                      >
+                        Create Tour
+                      </span>
+                      <span className="text-[8px] font-semibold" style={{ color: "rgba(255,255,255,0.22)" }}>
+                        View Shows →
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
+
 
 
               {/* Stop list — right column */}
