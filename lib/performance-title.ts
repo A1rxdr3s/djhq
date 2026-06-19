@@ -1,12 +1,12 @@
 /**
  * Shared helper for generating editorial video performance titles from structured metadata.
  *
- * Title generation rules (matching the DJ Sets editorial convention):
- *   Multiple artists + event: "ARTIST b2b ARTIST × EVENT"
- *   Single artist + event:    "ARTIST × EVENT"
- *   Venue only:               "Live at VENUE"
- *   Event only:               "ARTIST × EVENT"
- *   No context:               null (caller falls back to stored title)
+ * Title generation rules:
+ *   Event present: show event name only (no artist prefix)
+ *   Venue only:    "Live at VENUE"
+ *   No context:    null (caller falls back to stored title)
+ *
+ * Artist attribution is handled separately at the call site via the `attribution` field.
  */
 export function computeVideoTitle(
   videoArtists: string[],
@@ -14,12 +14,14 @@ export function computeVideoTitle(
   venue: string | undefined,
   fallbackArtistName: string,
 ): string | null {
-  const filled = videoArtists.filter(Boolean)
-  const artistDisplay = filled.length > 0 ? filled.join(" b2b ") : fallbackArtistName
+  // Unused but kept in signature for backwards compat with call sites.
+  void videoArtists
+  void fallbackArtistName
+
   const eventName = event?.trim()
   const venueName = venue?.trim()
 
-  if (eventName) return `${artistDisplay} × ${eventName}`
+  if (eventName) return eventName
   if (venueName) return `Live at ${venueName}`
 
   return null
