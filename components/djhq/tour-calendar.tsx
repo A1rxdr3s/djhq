@@ -184,7 +184,7 @@ export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props
                                   )}
                                   title={[gig.eventName, gig.venue, gig.city].filter(Boolean).join(" · ")}
                                 >
-                                  {gig.eventName || gig.venue}
+                                  {gig.eventName || gig.city || gig.venue}
                                 </div>
                               ))}
                               {dayGigs.length > 2 && (
@@ -209,68 +209,66 @@ export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props
         {gigs.length === 0 && <div className="mt-6">{emptyState}</div>}
       </div>
 
-      {/* ── Mobile: chronological list ───────────────────────── */}
+      {/* ── Mobile: agenda list (one row per show) ──────────────── */}
       <div className="sm:hidden">
-        {gigDateEntries.length === 0 ? (
+        {gigs.length === 0 ? (
           emptyState
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {months.map(({ year, month }) => {
               const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`
               const monthEntries = gigDateEntries.filter(({ date }) => date.startsWith(monthStr))
-              if (monthEntries.length === 0) return null
               return (
                 <div key={`mob-${year}-${month}`}>
                   <p className={cn(
-                    "mb-2 text-[9px] font-bold uppercase tracking-[0.18em]",
+                    "mb-2.5 text-[9px] font-bold uppercase tracking-[0.18em]",
                     isPublic ? "text-white/28" : "text-muted-foreground/32",
                   )}>
                     {MONTH_NAMES[month]} {year}
                   </p>
-                  <div className="space-y-1">
-                    {monthEntries.map(({ date, gigs: dg }) => (
-                      <div
-                        key={date}
-                        className={cn(
-                          "flex items-start gap-3 rounded-lg px-3 py-2.5",
-                          isPublic ? "bg-white/[0.04]" : "bg-secondary/30",
-                        )}
-                      >
-                        <span className={cn(
-                          "w-7 shrink-0 text-right text-[13px] font-bold tabular-nums",
-                          isPublic ? "text-accent/70" : "text-accent",
-                        )}>
-                          {parseInt(date.slice(8))}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          {dg.map((gig, gi) => (
-                            <div key={gi} className={gi > 0 ? "mt-1.5" : ""}>
-                              <p className={cn(
-                                "truncate text-[12px] font-semibold",
-                                isPublic ? "text-white/85" : "text-foreground/85",
-                              )}>
-                                {gig.eventName || gig.venue}
+                  {monthEntries.length === 0 ? (
+                    <p className={cn(
+                      "text-[11px]",
+                      isPublic ? "text-white/18" : "text-muted-foreground/28",
+                    )}>
+                      No shows scheduled.
+                    </p>
+                  ) : (
+                    <div className="space-y-1">
+                      {monthEntries.map(({ date, gigs: dg }) => (
+                        <div
+                          key={date}
+                          className={cn(
+                            "flex items-start gap-3 rounded-lg px-3 py-2.5",
+                            isPublic ? "bg-white/[0.04]" : "bg-secondary/30",
+                          )}
+                        >
+                          {/* "Jul 18" date label */}
+                          <span className={cn(
+                            "w-12 shrink-0 text-[11px] font-bold tabular-nums",
+                            isPublic ? "text-accent/65" : "text-accent",
+                          )}>
+                            {formatDate(date)}
+                          </span>
+                          {/* Show(s) on this date */}
+                          <div className="min-w-0 flex-1">
+                            {dg.map((gig, gi) => (
+                              <p
+                                key={gi}
+                                className={cn(
+                                  "truncate text-[12px] font-semibold",
+                                  gi > 0 ? "mt-1" : "",
+                                  isPublic ? "text-white/85" : "text-foreground/85",
+                                )}
+                              >
+                                {gig.eventName || gig.city || gig.venue}
                               </p>
-                              {(gig.eventName && gig.venue) || gig.city ? (
-                                <p className={cn(
-                                  "mt-px truncate text-[10px]",
-                                  isPublic ? "text-white/32" : "text-muted-foreground/45",
-                                )}>
-                                  {[gig.eventName ? gig.venue : null, gig.city].filter(Boolean).join(" · ")}
-                                </p>
-                              ) : null}
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                        <span className={cn(
-                          "shrink-0 text-[9px] uppercase tracking-[0.1em]",
-                          isPublic ? "text-white/20" : "text-muted-foreground/30",
-                        )}>
-                          {formatDate(date)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}

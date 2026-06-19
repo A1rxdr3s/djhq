@@ -42,6 +42,13 @@ type GigRow = {
   visibility_status: string | null
 }
 
+// Relative paths like /placeholder-user.jpg resolve correctly on djhq.app but
+// 404 on custom domains (andresherrera.music/placeholder-user.jpg doesn't exist).
+// Only use image URLs that are absolute (Supabase storage URLs, CDN URLs, etc.).
+function isAbsoluteUrl(url: string | null | undefined): url is string {
+  return typeof url === "string" && url.startsWith("http")
+}
+
 function formatTourDateRange(start: string, end: string): string {
   const s = new Date(start + "T00:00:00")
   const e = new Date(end + "T00:00:00")
@@ -135,12 +142,12 @@ export default async function TourPage({ params }: PageProps) {
       <div
         className="relative overflow-hidden border-b border-white/[0.06]"
         style={{
-          background: artist.hero_image_url
+          background: isAbsoluteUrl(artist.hero_image_url)
             ? undefined
             : "radial-gradient(ellipse at 50% -20%, hsl(var(--accent)/0.18) 0%, transparent 55%), linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%)",
         }}
       >
-        {artist.hero_image_url && (
+        {isAbsoluteUrl(artist.hero_image_url) && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={artist.hero_image_url}
@@ -153,7 +160,7 @@ export default async function TourPage({ params }: PageProps) {
         <div className="relative mx-auto max-w-5xl px-5 pb-12 pt-14 sm:px-8 sm:pt-20 sm:pb-16">
           {/* Artist identity */}
           <div className="mb-8 flex items-center gap-3">
-            {artist.avatar_url && (
+            {isAbsoluteUrl(artist.avatar_url) && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={artist.avatar_url}
