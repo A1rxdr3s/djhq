@@ -3167,29 +3167,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
 
-          {/* ── 4. CONTENT ARCHIVE ────────────────────────────────────── */}
+          {/* ── 4. CONTENT STUDIO ─────────────────────────────────────── */}
           <div className={cn(panelCls, "flex flex-col p-0")} style={panelSty}>
-            {/* Archive header */}
+            {/* Header with inventory strip */}
             <div
-              className="flex items-center justify-between px-4 py-3"
+              className="flex items-center justify-between px-4 py-2.5"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              <div className="flex items-center gap-3">
-                <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
-                  Content Studio
-                </p>
-                {contentTotal > 0 && (
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[8px] font-bold tabular-nums"
-                    style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.30)" }}
-                  >
-                    {contentTotal} items
-                  </span>
-                )}
-              </div>
+              <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={dimLabelSty}>
+                Content Studio
+              </span>
               <button
                 type="button"
-                onClick={() => setActiveSection(homeContentTab)}
+                onClick={() => setActiveSection(homeContentTab === "recent" ? "releases" : homeContentTab)}
                 className="text-[9px] font-semibold transition-opacity hover:opacity-70"
                 style={{ color: "rgba(255,255,255,0.22)" }}
               >
@@ -3197,204 +3187,208 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </button>
             </div>
 
-            {/* Category tabs */}
+            {/* Inventory bar — compact count chips */}
             <div
-              className="flex gap-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex items-center gap-0 overflow-x-auto px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
               {([
-                { label: "Releases", count: releases.length,      key: "releases" },
-                { label: "Shows",    count: upcomingGigs.length,  key: "shows"    },
-                { label: "Sets",     count: djSets.length,        key: "sets"     },
-                { label: "Videos",   count: videos.length,        key: "media"    },
-                { label: "Gallery",  count: galleryImages.length, key: "gallery"  },
-              ] as const).map((tab) => (
+                { label: "Releases", count: releases.length,      key: "releases", dot: "oklch(0.75 0.18 160)" },
+                { label: "Shows",    count: upcomingGigs.length,  key: "shows",    dot: "rgba(96,165,250,0.8)" },
+                { label: "Sets",     count: djSets.length,        key: "sets",     dot: "rgba(192,132,252,0.8)" },
+                { label: "Videos",   count: videos.length,        key: "media",    dot: "rgba(251,146,60,0.8)"  },
+                { label: "Photos",   count: galleryImages.length, key: "gallery",  dot: "rgba(248,113,113,0.7)" },
+              ] as const).map((tab, i) => (
                 <button
                   key={tab.key}
                   type="button"
                   onClick={() => setHomeContentTab(tab.key)}
-                  className="shrink-0 px-4 py-2.5 text-[10px] font-semibold transition-colors"
+                  className={`flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors${i > 0 ? " ml-1" : ""}`}
                   style={
                     homeContentTab === tab.key
-                      ? { color: "oklch(0.75 0.18 160)", borderBottom: "2px solid oklch(0.75 0.18 160)", marginBottom: -1 }
-                      : { color: "rgba(255,255,255,0.30)", borderBottom: "2px solid transparent", marginBottom: -1 }
+                      ? { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.80)" }
+                      : { color: "rgba(255,255,255,0.28)" }
                   }
                 >
-                  {tab.label}
-                  <span className="ml-1.5 text-[9px]" style={{ opacity: 0.55 }}>{tab.count}</span>
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tab.dot, opacity: homeContentTab === tab.key ? 1 : 0.45 }} />
+                  <span className="text-[9px] font-semibold">{tab.label}</span>
+                  <span className="tabular-nums text-[8px]" style={{ opacity: 0.55 }}>{tab.count}</span>
                 </button>
               ))}
             </div>
 
-            {/* Content list */}
+            {/* Content list — tight rows */}
             <div className="flex-1 overflow-y-auto">
               {homeContentTab === "releases" && (
                 releases.length > 0
                   ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {releases.slice(0, 5).map((r) => (
+                      {releases.slice(0, 7).map((r) => (
                         <button
                           key={r.id}
                           type="button"
                           onClick={() => setActiveSection("releases")}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.02]"
+                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
                         >
                           {r.artworkUrl ? (
-                            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md">
-                              <Image src={r.artworkUrl} alt={r.title} fill className="object-cover" sizes="36px" />
+                            <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded">
+                              <Image src={r.artworkUrl} alt={r.title} fill className="object-cover" sizes="28px" />
                             </div>
                           ) : (
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
-                              <Disc3 className="h-4 w-4" style={{ color: "rgba(255,255,255,0.18)" }} />
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+                              <Disc3 className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.18)" }} />
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.78)" }}>{r.title}</span>
-                            <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.28)" }}>
-                              {r.type.toUpperCase()} · {r.releaseDate?.slice(0, 4)}
+                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>{r.title}</span>
+                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
+                              {r.type} · {r.releaseDate?.slice(0, 4) ?? "—"}
                             </span>
                           </div>
                           {r.isFeatured && (
-                            <Star className="h-3 w-3 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.8 }} />
+                            <Star className="h-2.5 w-2.5 shrink-0" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.75 }} />
                           )}
                         </button>
                       ))}
                     </div>
-                  : <p className="px-4 py-6 text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>No releases added yet</p>
+                  : <div className="px-4 py-5 text-center">
+                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No releases yet</p>
+                    </div>
               )}
               {homeContentTab === "shows" && (
                 upcomingGigs.length > 0
                   ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {upcomingGigs.slice(0, 5).map((g) => (
+                      {upcomingGigs.slice(0, 7).map((g) => (
                         <button
                           key={g.id}
                           type="button"
                           onClick={() => setActiveSection("shows")}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.02]"
+                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
                         >
-                          <span className="w-12 shrink-0 text-[9px] font-bold tabular-nums" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.70 }}>
+                          <span className="w-10 shrink-0 font-mono text-[8px] font-bold tabular-nums" style={{ color: "rgba(96,165,250,0.75)" }}>
                             {fmtShort(g.date)}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.78)" }}>
+                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
                               {g.eventName ?? g.venue}
                             </span>
-                            <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.28)" }}>{g.city}, {g.country}</span>
+                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>{g.city}</span>
                           </div>
-                          <span
-                            className="shrink-0 rounded-sm px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.10em]"
-                            style={
-                              g.visibilityStatus === "announced"
-                                ? { backgroundColor: "rgba(52,211,153,0.08)", color: "#34d399" }
-                                : { color: "rgba(255,255,255,0.22)" }
-                            }
-                          >
-                            {g.visibilityStatus ?? "TBA"}
-                          </span>
+                          {g.visibilityStatus === "announced" && (
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: "#34d399", opacity: 0.7 }} />
+                          )}
                         </button>
                       ))}
                     </div>
-                  : <p className="px-4 py-6 text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>No shows added yet</p>
+                  : <div className="px-4 py-5 text-center">
+                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No shows yet</p>
+                    </div>
               )}
               {homeContentTab === "sets" && (
                 djSets.length > 0
                   ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {djSets.slice(0, 5).map((s) => (
+                      {djSets.slice(0, 7).map((s) => (
                         <button
                           key={s.id}
                           type="button"
                           onClick={() => setActiveSection("sets")}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.02]"
+                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
                         >
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
-                            <Headphones className="h-4 w-4" style={{ color: "rgba(255,255,255,0.22)" }} />
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded" style={{ backgroundColor: "rgba(192,132,252,0.08)" }}>
+                            <Headphones className="h-3.5 w-3.5" style={{ color: "rgba(192,132,252,0.55)" }} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.78)" }}>
+                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
                               {s.titleOverride || s.event || s.venue || s.city || "DJ Set"}
                             </span>
-                            <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
                               {[s.setDate?.slice(0, 4), s.city || s.venue].filter(Boolean).join(" · ")}
                             </span>
                           </div>
                           <span
-                            className="shrink-0 text-[8px] font-bold uppercase"
-                            style={{ color: s.isPublished ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.12)" }}
+                            className="shrink-0 text-[7px] font-bold uppercase tracking-wide"
+                            style={{ color: s.isPublished ? "rgba(192,132,252,0.5)" : "rgba(255,255,255,0.12)" }}
                           >
                             {s.isPublished ? "Live" : "Draft"}
                           </span>
                         </button>
                       ))}
                     </div>
-                  : <p className="px-4 py-6 text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>No sets added yet</p>
+                  : <div className="px-4 py-5 text-center">
+                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No sets yet</p>
+                    </div>
               )}
               {homeContentTab === "media" && (
                 videos.length > 0
                   ? <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                      {videos.slice(0, 5).map((v) => (
+                      {videos.slice(0, 7).map((v) => (
                         <button
                           key={v.id}
                           type="button"
                           onClick={() => setActiveSection("media")}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.02]"
+                          className="flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors hover:bg-white/[0.02]"
                         >
                           {(v.customThumbnailUrl || v.thumbnailUrl) ? (
-                            <div className="relative h-9 w-14 shrink-0 overflow-hidden rounded-md">
+                            <div className="relative h-7 w-11 shrink-0 overflow-hidden rounded">
                               <Image
                                 src={v.customThumbnailUrl ?? v.thumbnailUrl ?? ""}
                                 alt={v.videoEvent || "Video"}
                                 fill
-                                className="object-cover"
-                                sizes="56px"
+                                className="object-cover opacity-80"
+                                sizes="44px"
                               />
                             </div>
                           ) : (
-                            <div className="flex h-9 w-14 shrink-0 items-center justify-center rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
-                              <Play className="h-4 w-4" style={{ color: "rgba(255,255,255,0.18)" }} />
+                            <div className="flex h-7 w-11 shrink-0 items-center justify-center rounded" style={{ backgroundColor: "rgba(251,146,60,0.07)" }}>
+                              <Play className="h-3.5 w-3.5" style={{ color: "rgba(251,146,60,0.45)" }} />
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[12px] font-semibold" style={{ color: "rgba(255,255,255,0.78)" }}>
+                            <span className="block truncate text-[11px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.78)" }}>
                               {v.videoEvent || v.venue || v.videoCity || v.title || "Video"}
                             </span>
-                            <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                            <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
                               {[v.videoDate?.slice(0, 4), v.videoCity].filter(Boolean).join(" · ")}
                             </span>
                           </div>
                           <span
-                            className="shrink-0 text-[8px] font-bold uppercase"
-                            style={{ color: v.isPublished ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.12)" }}
+                            className="shrink-0 text-[7px] font-bold uppercase tracking-wide"
+                            style={{ color: v.isPublished ? "rgba(251,146,60,0.55)" : "rgba(255,255,255,0.12)" }}
                           >
                             {v.isPublished ? "Live" : "Draft"}
                           </span>
                         </button>
                       ))}
                     </div>
-                  : <p className="px-4 py-6 text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>No videos added yet</p>
+                  : <div className="px-4 py-5 text-center">
+                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No videos yet</p>
+                    </div>
               )}
               {homeContentTab === "gallery" && (
                 galleryImages.length > 0
                   ? (
-                      <div className="grid grid-cols-4 gap-1 p-3">
-                        {galleryImages.slice(0, 8).map((img) => (
+                      <div className="grid grid-cols-5 gap-0.5 p-2">
+                        {galleryImages.slice(0, 10).map((img) => (
                           <button
                             key={img.id}
                             type="button"
                             onClick={() => setActiveSection("gallery")}
-                            className="relative aspect-square overflow-hidden rounded-md transition-opacity hover:opacity-80"
+                            className="relative aspect-square overflow-hidden rounded transition-opacity hover:opacity-80"
                           >
                             <Image
                               src={img.imageUrl}
                               alt={img.altText}
                               fill
                               className="object-cover"
-                              style={{ opacity: 0.75 }}
-                              sizes="80px"
+                              style={{ opacity: 0.72 }}
+                              sizes="70px"
                             />
                           </button>
                         ))}
                       </div>
                     )
-                  : <p className="px-4 py-6 text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>No gallery images yet</p>
+                  : <div className="px-4 py-5 text-center">
+                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>No photos yet</p>
+                    </div>
               )}
             </div>
           </div>
