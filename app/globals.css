@@ -112,32 +112,32 @@
    Uses warm paper neutrals rather than pure white — closer to Notion / Linear. */
 .djhq-dashboard {
   color-scheme: light;
-  --background:       oklch(1     0     0);    /* #FFFFFF pure white           */
-  --foreground:       oklch(0.10  0     0);    /* #111 near-black              */
-  --card:             oklch(1     0     0);    /* #FFF white card              */
+  --background:       oklch(0.982 0.003 75);   /* warm paper — not stark white  */
+  --foreground:       oklch(0.10  0     0);    /* #111 near-black               */
+  --card:             oklch(1     0     0);    /* white cards pop against paper */
   --card-foreground:  oklch(0.10  0     0);
   --popover:          oklch(1     0     0);
   --popover-foreground: oklch(0.10 0    0);
-  --primary:          oklch(0.75  0.18  160);  /* DJHQ green                   */
+  --primary:          oklch(0.75  0.18  160);  /* DJHQ green                    */
   --primary-foreground: oklch(0.08 0    0);
-  --secondary:        oklch(0.96  0     0);    /* #F5F5F5 neutral gray         */
+  --secondary:        oklch(0.958 0.003 75);   /* warm secondary surface        */
   --secondary-foreground: oklch(0.10 0  0);
-  --muted:            oklch(0.965 0     0);    /* #F7F7F7 neutral muted        */
-  --muted-foreground: oklch(0.446 0     0);    /* #666666 secondary text       */
-  --accent:           oklch(0.75  0.18  160);  /* keep DJHQ green              */
+  --muted:            oklch(0.962 0.003 75);   /* warm muted surface            */
+  --muted-foreground: oklch(0.446 0     0);    /* #666666 secondary text        */
+  --accent:           oklch(0.75  0.18  160);  /* keep DJHQ green               */
   --accent-foreground: oklch(0.08 0     0);
   --destructive:      oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.97 0   0);
-  --border:           oklch(0.926 0     0);    /* #EAEAEA neutral border       */
+  --border:           oklch(0.912 0.004 75);   /* warm border                   */
   --input:            oklch(1     0     0);
   --ring:             oklch(0.75  0.18  160);
-  --sidebar:          oklch(0.974 0     0);    /* #F8F8F8 neutral sidebar      */
+  --sidebar:          oklch(0.972 0.003 75);   /* warm sidebar                  */
   --sidebar-foreground: oklch(0.10 0    0);
   --sidebar-primary:  oklch(0.75  0.18  160);
   --sidebar-primary-foreground: oklch(0.08 0  0);
   --sidebar-accent:   oklch(0.94  0.003 80);
   --sidebar-accent-foreground: oklch(0.10 0   0);
-  --sidebar-border:   oklch(0.926 0     0);
+  --sidebar-border:   oklch(0.912 0.004 75);   /* warm sidebar border           */
   --sidebar-ring:     oklch(0.75  0.18  160);
 }
 
