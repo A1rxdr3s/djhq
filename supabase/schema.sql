@@ -413,7 +413,8 @@ create index if not exists artists_handle_idx          on public.artists (handle
 create index if not exists artists_owner_idx           on public.artists (owner_user_id);
 create index if not exists social_links_artist_idx     on public.social_links (artist_id);
 create index if not exists releases_artist_idx         on public.releases (artist_id);
-create index if not exists gigs_artist_idx             on public.gigs (artist_id);
+create index if not exists gigs_artist_idx          on public.gigs (artist_id);
+create index if not exists gigs_global_venue_id_idx on public.gigs (global_venue_id);
 create index if not exists dj_sets_artist_idx          on public.dj_sets (artist_id);
 create index if not exists videos_artist_idx           on public.videos (artist_id);
 create index if not exists gallery_images_artist_idx   on public.gallery_images (artist_id);
@@ -421,7 +422,8 @@ create index if not exists venues_name_idx             on public.venues (name);
 create index if not exists brand_source_files_artist_idx on public.brand_source_files (artist_id);
 create index if not exists brand_assets_artist_idx     on public.brand_assets (artist_id);
 create index if not exists brand_assets_source_idx     on public.brand_assets (source_file_id);
-create index if not exists brand_asset_assignments_artist_idx on public.brand_asset_assignments (artist_id);
+create index if not exists brand_asset_assignments_artist_idx         on public.brand_asset_assignments (artist_id);
+create index if not exists brand_asset_assignments_brand_asset_id_idx on public.brand_asset_assignments (brand_asset_id);
 
 -- ── Admin Invitations ────────────────────────────────────────────────────────
 
@@ -453,9 +455,10 @@ create table if not exists public.admin_invitations (
   )
 );
 
-create index if not exists admin_invitations_email_idx  on public.admin_invitations (email);
-create index if not exists admin_invitations_token_idx  on public.admin_invitations (token);
-create index if not exists admin_invitations_status_idx on public.admin_invitations (status);
+create index if not exists admin_invitations_email_idx     on public.admin_invitations (email);
+create index if not exists admin_invitations_token_idx     on public.admin_invitations (token);
+create index if not exists admin_invitations_status_idx    on public.admin_invitations (status);
+create index if not exists admin_invitations_artist_id_idx on public.admin_invitations (artist_id);
 
 -- ── booking_leads ─────────────────────────────────────────────────────────────
 
