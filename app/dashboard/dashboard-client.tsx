@@ -1252,7 +1252,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     id: string; referenceId: string; fullName: string
     city: string; eventDate: string; status: string
   } | null | "loading"
+  type HomeLead = { id: string; fullName: string; city: string; eventDate: string; status: string }
   const [homeBooking, setHomeBooking] = useState<HomeBooking>("loading")
+  const [homeLeads, setHomeLeads] = useState<HomeLead[]>([])
+  const [homeContentTab, setHomeContentTab] = useState("releases")
   const homeBookingFetchedRef = useRef(false)
 
   useLayoutEffect(() => {
@@ -1376,6 +1379,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     homeBookingFetchedRef.current = true
     void hqListBookingLeads(artist.id)
       .then((leads) => {
+        setHomeLeads(leads.map((l) => ({ id: l.id, fullName: l.fullName, city: l.city, eventDate: l.eventDate, status: l.status })))
         const first = leads[0]
         setHomeBooking(
           first

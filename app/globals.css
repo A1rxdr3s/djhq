@@ -202,6 +202,29 @@ body:has(.djhq-dashboard) {
 .djhq-dashboard .border-border\/60 { border-color: rgba(234,234,234,0.60); }
 .djhq-dashboard .border-border\/70 { border-color: rgba(234,234,234,0.70); }
 
+/* ── HQ Dark Shell ────────────────────────────────────────────────────────────
+   Dark near-black HQ operating surface. Replaces the old warm-paper .djhq-dashboard
+   context — everything stays on dark root tokens. */
+
+.djhq-hq {
+  color-scheme: dark;
+}
+html:has(.djhq-hq),
+body:has(.djhq-hq) {
+  background-color: oklch(0.08 0 0);
+  color: #F5F5F3;
+}
+/* Darker dialog backdrop matches the dark shell */
+body:has(.djhq-hq) [data-slot="dialog-overlay"] {
+  background-color: rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+/* Scrollbar — dark HQ */
+.djhq-hq ::-webkit-scrollbar-track { background: oklch(0.10 0 0); }
+.djhq-hq ::-webkit-scrollbar-thumb { background: oklch(0.22 0 0); }
+.djhq-hq ::-webkit-scrollbar-thumb:hover { background: oklch(0.28 0 0); }
+
 /* ── HQ Control Spine ─────────────────────────────────────────────────────────
    The spine and its header cap live on a near-black surface, isolated from the
    warm-paper main canvas. These rules are plain CSS so they're never overridden
