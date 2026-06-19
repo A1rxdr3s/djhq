@@ -2609,6 +2609,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       id: stop.id,
     }))
 
+    // Countdown to next show (days/hours/mins from end of show day)
+    let showCountdown = { days: 0, hours: 0, mins: 0 }
+    if (nextShow?.date && daysUntilShow !== null && daysUntilShow >= 0) {
+      const endOfDayMs = new Date(nextShow.date + "T23:59:59").getTime()
+      const nowMs = new Date().getTime()
+      const diffMs = Math.max(0, endOfDayMs - nowMs)
+      const totalMins = Math.floor(diffMs / 60000)
+      showCountdown = {
+        days: Math.floor(totalMins / 1440),
+        hours: Math.floor((totalMins % 1440) / 60),
+        mins: totalMins % 60,
+      }
+    }
+
     return (
       <div className="space-y-4">
 
