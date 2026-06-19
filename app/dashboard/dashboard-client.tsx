@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
+import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -18,6 +18,7 @@ import { GigCard } from "@/components/dashboard/gig-card"
 import { ShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { BookingsSection } from "@/components/dashboard/bookings-section"
+import { TourCalendar, type TourCalendarGig } from "@/components/djhq/tour-calendar"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { brand } from "@/lib/brand"
@@ -375,10 +376,11 @@ const navGroups: NavGroup[] = [
   {
     label: "Business",
     items: [
-      { id: "bookings",  label: "Bookings",  icon: Inbox },
-      { id: "press-kit", label: "Press Kit", icon: FileText },
-      { id: "domain",    label: "Domain",    icon: Globe },
-      { id: "footer",    label: "Footer",    icon: PanelBottom },
+      { id: "bookings",     label: "Bookings",     icon: Inbox },
+      { id: "tours",        label: "Tour Planner", icon: Route },
+      { id: "press-kit",    label: "Press Kit",    icon: FileText },
+      { id: "domain",       label: "Domain",       icon: Globe },
+      { id: "footer",       label: "Footer",       icon: PanelBottom },
     ],
   },
   {
@@ -1221,6 +1223,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [isVerifyingDomainId, setIsVerifyingDomainId] = useState<string | null>(null)
   const [isCheckingConnectionId, setIsCheckingConnectionId] = useState<string | null>(null)
   const [isRemovingDomainId, setIsRemovingDomainId] = useState<string | null>(null)
+
+  // ── Tour Planner ─────────────────────────────────────────────────────────
+  type TourRecord = {
+    id: string; name: string; slug: string
+    startDate: string; endDate: string
+    isPublished: boolean; createdAt: string
+  }
+  const [tours, setTours] = useState<TourRecord[]>([])
+  const [toursLoaded, setToursLoaded] = useState(false)
+  const [selectedTourId, setSelectedTourId] = useState<string | null>(null)
+  const [tourFormOpen, setTourFormOpen] = useState(false)
+  const [tourFormMode, setTourFormMode] = useState<"create" | "edit">("create")
+  const [tourName, setTourName] = useState("")
+  const [tourSlug, setTourSlug] = useState("")
+  const [tourStartDate, setTourStartDate] = useState("")
+  const [tourEndDate, setTourEndDate] = useState("")
+  const [tourIsPublished, setTourIsPublished] = useState(true)
+  const [tourSaving, setTourSaving] = useState(false)
+  const [tourError, setTourError] = useState("")
+  const [tourUrlCopied, setTourUrlCopied] = useState(false)
+  const [tourDeleting, setTourDeleting] = useState(false)
+  const [tourDeleteConfirm, setTourDeleteConfirm] = useState(false)
+
   useLayoutEffect(() => {
     const el = previewContainerRef.current
     if (!el) return
@@ -1318,6 +1343,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       document.body.style.overflow = ""
     }
   }, [expandedVideoId])
+
+  // Tour Planner: load tours once when section is first visited
+  useEffect(() => {
+    if (activeSection !== "tours" || toursLoaded) return
+    void (async () => {
+      try {
+        const res = await fetch(`/api/artists/tours?artistId=${artist.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setTours(data.tours ?? [])
+        }
+      } finally {
+        setToursLoaded(true)
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection])
 
   const publicProfileUrl = `/${artist.handle}`
   const isProfileDirty =
@@ -5252,6 +5294,405 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setPressKitAssets((current) => current.filter((_, i) => i !== index))
   }
 
+  function renderTourPlanner() {
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function slugify(name: string): string {
+      return name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "")
+        .trim()
+        .slice(0, 50)
+    }
+
+    function formatRange(start: string, end: string): string {
+      if (!start || !end) return ""
+      const s = new Date(start + "T00:00:00")
+      const e = new Date(end + "T00:00:00")
+      const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
+      const sf = s.toLocaleDateString("en-US", opts)
+      const ef = e.toLocaleDateString("en-US", { ...opts, year: "numeric" })
+      return s.getFullYear() === e.getFullYear() ? `${sf} – ${ef}` : `${s.toLocaleDateString("en-US", { ...opts, year: "numeric" })} – ${ef}`
+    }
+
+    async function handleCreateTour() {
+      if (!tourName.trim() || !tourSlug.trim() || !tourStartDate || !tourEndDate) {
+        setTourError("All fields are required.")
+        return
+      }
+      setTourSaving(true)
+      setTourError("")
+      try {
+        const res = await fetch("/api/artists/tours", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ artistId: artist.id, name: tourName, slug: tourSlug, startDate: tourStartDate, endDate: tourEndDate, isPublished: tourIsPublished }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setTourError(data.error ?? "Failed to create tour."); return }
+        setTours((prev) => [...prev, data.tour])
+        setSelectedTourId(data.tour.id)
+        setTourFormOpen(false)
+        setTourDeleteConfirm(false)
+      } catch { setTourError("Failed to create tour.") }
+      finally { setTourSaving(false) }
+    }
+
+    async function handleUpdateTour() {
+      if (!selectedTourId) return
+      if (!tourName.trim() || !tourSlug.trim() || !tourStartDate || !tourEndDate) {
+        setTourError("All fields are required.")
+        return
+      }
+      setTourSaving(true)
+      setTourError("")
+      try {
+        const res = await fetch("/api/artists/tours", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tourId: selectedTourId, artistId: artist.id, name: tourName, slug: tourSlug, startDate: tourStartDate, endDate: tourEndDate, isPublished: tourIsPublished }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setTourError(data.error ?? "Failed to update tour."); return }
+        setTours((prev) => prev.map((t) => t.id === selectedTourId ? data.tour : t))
+        setTourFormOpen(false)
+        setTourDeleteConfirm(false)
+      } catch { setTourError("Failed to update tour.") }
+      finally { setTourSaving(false) }
+    }
+
+    async function handleDeleteTour() {
+      if (!selectedTourId) return
+      setTourDeleting(true)
+      try {
+        await fetch(`/api/artists/tours?tourId=${selectedTourId}&artistId=${artist.id}`, { method: "DELETE" })
+        setTours((prev) => prev.filter((t) => t.id !== selectedTourId))
+        setSelectedTourId(null)
+        setTourDeleteConfirm(false)
+        setTourFormOpen(false)
+      } catch { /* ignore */ }
+      finally { setTourDeleting(false) }
+    }
+
+    function openCreateForm() {
+      setTourFormMode("create")
+      setTourName(""); setTourSlug(""); setTourStartDate(""); setTourEndDate("")
+      setTourIsPublished(true); setTourError("")
+      setTourFormOpen(true); setTourDeleteConfirm(false)
+    }
+
+    function openEditForm(tour: { id: string; name: string; slug: string; startDate: string; endDate: string; isPublished: boolean }) {
+      setTourFormMode("edit")
+      setTourName(tour.name); setTourSlug(tour.slug)
+      setTourStartDate(tour.startDate); setTourEndDate(tour.endDate)
+      setTourIsPublished(tour.isPublished); setTourError("")
+      setTourFormOpen(true); setTourDeleteConfirm(false)
+    }
+
+    // ── Derived ──────────────────────────────────────────────────────────────
+    const selectedTour = selectedTourId ? tours.find((t) => t.id === selectedTourId) ?? null : null
+
+    const gigsInTour: TourCalendarGig[] = selectedTour
+      ? upcomingGigs
+          .filter((g) => g.date && g.visibilityStatus !== "cancelled" && g.date >= selectedTour.startDate && g.date <= selectedTour.endDate)
+          .map((g) => ({ id: g.id, date: g.date, eventName: g.eventName, venue: g.venue, city: g.city || undefined }))
+      : []
+
+    const publicTourUrl = selectedTour
+      ? `${typeof window !== "undefined" ? window.location.origin : ""}/${artist.handle}/tours/${selectedTour.slug}`
+      : ""
+
+    const isPublicTourUrlPath = selectedTour ? `/${artist.handle}/tours/${selectedTour.slug}` : ""
+
+    // ── View: Edit/Create form ────────────────────────────────────────────────
+    if (tourFormOpen) {
+      const isEdit = tourFormMode === "edit"
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => { setTourFormOpen(false); setTourDeleteConfirm(false) }} className="text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60">
+              ← Back
+            </button>
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-foreground">{isEdit ? "Edit Tour" : "Create Tour"}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground/55">
+              {isEdit ? "Update tour name, dates or slug." : "Give your tour a name and set the date range."}
+            </p>
+          </div>
+
+          <div className="max-w-[560px] space-y-5 rounded-xl border border-border bg-card/40 p-5">
+            {/* Name */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Tour Name</label>
+              <input
+                type="text"
+                value={tourName}
+                placeholder="Euro Tour 2026"
+                onChange={(e) => {
+                  setTourName(e.target.value)
+                  if (tourFormMode === "create") setTourSlug(slugify(e.target.value))
+                }}
+                className="h-9 w-full rounded-lg border border-border bg-secondary px-3 text-sm text-foreground placeholder:text-muted-foreground/35 focus:outline-none focus:ring-1 focus:ring-accent/50"
+              />
+            </div>
+
+            {/* Slug */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">URL Slug</label>
+              <input
+                type="text"
+                value={tourSlug}
+                placeholder="eurotour2026"
+                onChange={(e) => setTourSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50))}
+                className="h-9 w-full rounded-lg border border-border bg-secondary px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/35 focus:outline-none focus:ring-1 focus:ring-accent/50"
+              />
+              {tourSlug && (
+                <p className="text-[10px] text-muted-foreground/38">
+                  Public URL: <span className="font-mono text-muted-foreground/55">/{artist.handle}/tours/{tourSlug}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Date range */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Start Date</label>
+                <DatePicker value={tourStartDate} onChange={setTourStartDate} allowClear triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">End Date</label>
+                <DatePicker value={tourEndDate} onChange={setTourEndDate} allowClear triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3" />
+              </div>
+            </div>
+
+            {/* Published toggle */}
+            <div className="flex items-center gap-3 border-t border-border pt-4">
+              <label className="relative inline-flex cursor-pointer items-center gap-3">
+                <input type="checkbox" checked={tourIsPublished} onChange={(e) => setTourIsPublished(e.target.checked)} className="sr-only" />
+                <span className={cn("flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors", tourIsPublished ? "bg-accent/70" : "bg-border")}>
+                  <span className={cn("h-3 w-3 rounded-full bg-white/90 shadow-sm transition-transform", tourIsPublished ? "translate-x-3" : "translate-x-0")} />
+                </span>
+                <span className="text-[12px] text-foreground/70">Published (public page active)</span>
+              </label>
+            </div>
+
+            {tourError && <p className="text-[11px] text-destructive/70">{tourError}</p>}
+
+            {/* Actions */}
+            <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+              {isEdit && (
+                <div>
+                  {!tourDeleteConfirm ? (
+                    <button type="button" onClick={() => setTourDeleteConfirm(true)} className="text-[11px] text-muted-foreground/35 transition-colors hover:text-destructive/60">
+                      Delete tour
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground/50">Delete permanently?</span>
+                      <button type="button" onClick={() => setTourDeleteConfirm(false)} className="text-[11px] text-muted-foreground/40 hover:text-foreground/60">Cancel</button>
+                      <button type="button" disabled={tourDeleting} onClick={() => void handleDeleteTour()} className="text-[11px] font-medium text-destructive/70 hover:text-destructive disabled:opacity-40">
+                        {tourDeleting ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className={cn("flex items-center gap-2", !isEdit && "ml-auto")}>
+                <button type="button" onClick={() => { setTourFormOpen(false); setTourDeleteConfirm(false) }} className="rounded-lg border border-border bg-secondary px-4 py-2 text-[12px] font-medium text-foreground/70 transition-colors hover:bg-secondary/80">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={tourSaving || !tourName.trim() || !tourSlug.trim() || !tourStartDate || !tourEndDate}
+                  onClick={() => isEdit ? void handleUpdateTour() : void handleCreateTour()}
+                  className="rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-40"
+                >
+                  {tourSaving ? "Saving…" : isEdit ? "Save Changes" : "Create Tour"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // ── View: Tour detail ────────────────────────────────────────────────────
+    if (selectedTour) {
+      return (
+        <div className="space-y-6">
+          {/* Breadcrumb + edit */}
+          <div className="flex items-center justify-between gap-4">
+            <button type="button" onClick={() => { setSelectedTourId(null); setTourDeleteConfirm(false) }} className="text-[11px] text-muted-foreground/40 transition-colors hover:text-foreground/60">
+              ← All tours
+            </button>
+            <button type="button" onClick={() => openEditForm(selectedTour)} className="rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-[11px] font-medium text-foreground/65 transition-colors hover:bg-secondary/60 hover:text-foreground">
+              Edit settings
+            </button>
+          </div>
+
+          {/* Tour header */}
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground">{selectedTour.name}</h2>
+              {!selectedTour.isPublished && (
+                <span className="rounded-full border border-border bg-secondary px-2 py-px text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                  Draft
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-[13px] text-muted-foreground/55">{formatRange(selectedTour.startDate, selectedTour.endDate)}</p>
+          </div>
+
+          {/* Public URL card */}
+          <div className="rounded-xl border border-border bg-card/40 p-4">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Public URL</p>
+            <div className="flex items-center gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-md bg-secondary px-3 py-2 text-[12px] font-mono text-foreground/70">
+                {isPublicTourUrlPath}
+              </code>
+              <a
+                href={isPublicTourUrlPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 rounded-lg border border-border bg-secondary/30 p-2 text-muted-foreground/40 transition-colors hover:text-foreground"
+                title="Open public page"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(publicTourUrl)
+                  setTourUrlCopied(true)
+                  setTimeout(() => setTourUrlCopied(false), 2000)
+                }}
+                className="shrink-0 rounded-lg border border-border bg-secondary/30 p-2 transition-colors hover:text-foreground"
+                title="Copy URL"
+              >
+                {tourUrlCopied ? <Check className="h-3.5 w-3.5 text-accent" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground/40" />}
+              </button>
+            </div>
+            {!selectedTour.isPublished && (
+              <p className="mt-2 flex items-center gap-1.5 text-[10px] text-amber-400/60">
+                <AlertTriangle className="h-3 w-3" />
+                This tour is unpublished — the public page returns 404 until published.
+              </p>
+            )}
+          </div>
+
+          {/* Show count */}
+          <div className="flex items-center gap-3">
+            <p className="text-[12px] text-muted-foreground/55">
+              <span className="font-semibold text-foreground/80">{gigsInTour.length}</span>{" "}
+              show{gigsInTour.length !== 1 ? "s" : ""} scheduled in this tour range
+            </p>
+          </div>
+
+          {/* Calendar preview */}
+          <div>
+            <p className="mb-4 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">
+              Tour Schedule
+            </p>
+            <TourCalendar
+              startDate={selectedTour.startDate}
+              endDate={selectedTour.endDate}
+              gigs={gigsInTour}
+              variant="hq"
+            />
+          </div>
+        </div>
+      )
+    }
+
+    // ── View: Tour list (default) ─────────────────────────────────────────────
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Tour Planner</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground/55">
+              Plan and publish date-range pages around your tours.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={openCreateForm}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all hover:border-border hover:text-foreground"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Create Tour
+          </button>
+        </div>
+
+        {/* Empty state */}
+        {!toursLoaded && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground/40">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          </div>
+        )}
+
+        {toursLoaded && tours.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
+            <Route className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
+            <p className="text-sm font-medium text-foreground/55">No tours yet.</p>
+            <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
+              Create a tour plan to organize shows across a date range and generate a public tour page.
+            </p>
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all hover:text-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create Tour
+            </button>
+          </div>
+        )}
+
+        {/* Tour list */}
+        {toursLoaded && tours.length > 0 && (
+          <div className="space-y-2">
+            {tours.map((tour) => {
+              const tourGigCount = upcomingGigs.filter(
+                (g) => g.date && g.visibilityStatus !== "cancelled" && g.date >= tour.startDate && g.date <= tour.endDate,
+              ).length
+              return (
+                <button
+                  key={tour.id}
+                  type="button"
+                  onClick={() => { setSelectedTourId(tour.id); setTourDeleteConfirm(false) }}
+                  className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card/35 px-4 py-4 text-left transition-all hover:border-border hover:bg-card/60"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-[14px] font-semibold text-foreground/85">{tour.name}</p>
+                      {!tour.isPublished && (
+                        <span className="shrink-0 rounded-full border border-border bg-secondary px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/40">
+                          Draft
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">{formatRange(tour.startDate, tour.endDate)}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground/32">
+                      {tourGigCount} show{tourGigCount !== 1 ? "s" : ""} in range
+                      <span className="mx-1.5 text-muted-foreground/20">·</span>
+                      <span className="font-mono">/{artist.handle}/tours/{tour.slug}</span>
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/25 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground/50" />
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   function renderBookings() {
     const emailEmpty   = !bookingEmail.trim()
     const emailInvalid = Boolean(bookingEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingEmail.trim()))
@@ -7819,6 +8260,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderGallery()
       case "bookings":
         return renderBookings()
+      case "tours":
+        return renderTourPlanner()
       case "press-kit":
         return renderPressKit()
       case "domain":        // renamed from "custom-domain"

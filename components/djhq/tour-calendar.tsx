@@ -1,0 +1,282 @@
+import { cn } from "@/lib/utils"
+
+export type TourCalendarGig = {
+  id: string
+  date: string // YYYY-MM-DD
+  eventName?: string
+  venue: string
+  city?: string
+}
+
+type Props = {
+  startDate: string // YYYY-MM-DD
+  endDate: string   // YYYY-MM-DD
+  gigs: TourCalendarGig[]
+  variant?: "hq" | "public"
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+]
+const DAY_ABBREVS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+function getMonthsInRange(start: Date, end: Date): Array<{ year: number; month: number }> {
+  const months: Array<{ year: number; month: number }> = []
+  let cur = new Date(start.getFullYear(), start.getMonth(), 1)
+  const endMonth = new Date(end.getFullYear(), end.getMonth(), 1)
+  while (cur <= endMonth) {
+    months.push({ year: cur.getFullYear(), month: cur.getMonth() })
+    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1)
+  }
+  return months
+}
+
+// Returns an array of YYYY-MM-DD strings (or null for empty cells) filling complete weeks
+function generateCells(year: number, month: number): (string | null)[] {
+  const firstDow = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const cells: (string | null)[] = Array(firstDow).fill(null)
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(
+      `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+    )
+  }
+  while (cells.length % 7 !== 0) cells.push(null)
+  return cells
+}
+
+function formatDate(dateStr: string): string {
+  const [, mm, dd] = dateStr.split("-")
+  const month = MONTH_NAMES[parseInt(mm) - 1]?.slice(0, 3) ?? ""
+  return `${month} ${parseInt(dd)}`
+}
+
+export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props) {
+  const startD = new Date(startDate + "T00:00:00")
+  const endD = new Date(endDate + "T00:00:00")
+  const months = getMonthsInRange(startD, endD)
+  const isPublic = variant === "public"
+
+  // Build date → gigs lookup
+  const gigsByDate = new Map<string, TourCalendarGig[]>()
+  for (const gig of gigs) {
+    if (!gigsByDate.has(gig.date)) gigsByDate.set(gig.date, [])
+    gigsByDate.get(gig.date)!.push(gig)
+  }
+
+  // Sorted gig dates for mobile list
+  const gigDateEntries: Array<{ date: string; gigs: TourCalendarGig[] }> = []
+  for (const [date, dg] of gigsByDate.entries()) {
+    gigDateEntries.push({ date, gigs: dg })
+  }
+  gigDateEntries.sort((a, b) => a.date.localeCompare(b.date))
+
+  if (months.length === 0) {
+    return (
+      <p className={isPublic ? "text-sm text-white/40" : "text-sm text-muted-foreground/50"}>
+        Invalid date range.
+      </p>
+    )
+  }
+
+  const emptyState = (
+    <p className={cn("text-sm", isPublic ? "text-white/30" : "text-muted-foreground/40")}>
+      No shows scheduled in this tour range yet.
+    </p>
+  )
+
+  return (
+    <div>
+      {/* ── Desktop: month grid ──────────────────────────────── */}
+      <div className="hidden sm:block">
+        <div className="space-y-10">
+          {months.map(({ year, month }) => {
+            const cells = generateCells(year, month)
+            const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`
+            const hasGigsThisMonth = gigDateEntries.some(({ date }) => date.startsWith(monthStr))
+
+            return (
+              <div key={`${year}-${month}`}>
+                {/* Month header */}
+                <div className="mb-3 flex items-baseline gap-2">
+                  <h3 className={cn(
+                    "text-[13px] font-bold uppercase tracking-[0.1em]",
+                    isPublic ? "text-white/80" : "text-foreground/80",
+                  )}>
+                    {MONTH_NAMES[month]}
+                  </h3>
+                  <span className={cn(
+                    "text-[11px]",
+                    isPublic ? "text-white/25" : "text-muted-foreground/35",
+                  )}>
+                    {year}
+                  </span>
+                  {hasGigsThisMonth && (
+                    <span className={cn(
+                      "ml-auto text-[10px] font-semibold",
+                      isPublic ? "text-accent/60" : "text-accent/70",
+                    )}>
+                      {gigDateEntries.filter(({ date }) => date.startsWith(monthStr)).reduce((n, { gigs: g }) => n + g.length, 0)} show
+                      {gigDateEntries.filter(({ date }) => date.startsWith(monthStr)).reduce((n, { gigs: g }) => n + g.length, 0) !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+
+                {/* Weekday headers */}
+                <div className="mb-1 grid grid-cols-7">
+                  {DAY_ABBREVS.map((d) => (
+                    <div
+                      key={d}
+                      className={cn(
+                        "py-1 text-center text-[9px] font-semibold uppercase tracking-[0.14em]",
+                        isPublic ? "text-white/20" : "text-muted-foreground/25",
+                      )}
+                    >
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Day grid */}
+                <div className="grid grid-cols-7 gap-px">
+                  {cells.map((date, i) => {
+                    const dayGigs = date ? (gigsByDate.get(date) ?? []) : []
+                    const hasGigs = dayGigs.length > 0
+                    const dayNum = date ? parseInt(date.slice(8)) : null
+
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "min-h-[56px] rounded p-1",
+                          date === null && "pointer-events-none",
+                          hasGigs
+                            ? isPublic
+                              ? "bg-accent/[0.10] ring-1 ring-inset ring-accent/20"
+                              : "bg-accent/[0.07] ring-1 ring-inset ring-accent/18"
+                            : date !== null
+                              ? isPublic
+                                ? "bg-white/[0.025]"
+                                : "bg-secondary/20"
+                              : "",
+                        )}
+                      >
+                        {date && (
+                          <>
+                            <span className={cn(
+                              "block text-right text-[10px] font-medium leading-none",
+                              hasGigs
+                                ? isPublic ? "text-accent/80" : "text-accent"
+                                : isPublic ? "text-white/22" : "text-muted-foreground/28",
+                            )}>
+                              {dayNum}
+                            </span>
+                            <div className="mt-0.5 space-y-px">
+                              {dayGigs.slice(0, 2).map((gig, gi) => (
+                                <div
+                                  key={gi}
+                                  className={cn(
+                                    "truncate rounded px-1 py-px text-[7.5px] font-semibold leading-tight",
+                                    isPublic
+                                      ? "bg-accent/20 text-accent/90"
+                                      : "bg-accent/12 text-accent",
+                                  )}
+                                  title={[gig.eventName, gig.venue, gig.city].filter(Boolean).join(" · ")}
+                                >
+                                  {gig.eventName || gig.venue}
+                                </div>
+                              ))}
+                              {dayGigs.length > 2 && (
+                                <div className={cn(
+                                  "px-1 text-[7px] font-medium",
+                                  isPublic ? "text-accent/50" : "text-accent/60",
+                                )}>
+                                  +{dayGigs.length - 2} more
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        {gigs.length === 0 && <div className="mt-6">{emptyState}</div>}
+      </div>
+
+      {/* ── Mobile: chronological list ───────────────────────── */}
+      <div className="sm:hidden">
+        {gigDateEntries.length === 0 ? (
+          emptyState
+        ) : (
+          <div className="space-y-5">
+            {months.map(({ year, month }) => {
+              const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`
+              const monthEntries = gigDateEntries.filter(({ date }) => date.startsWith(monthStr))
+              if (monthEntries.length === 0) return null
+              return (
+                <div key={`mob-${year}-${month}`}>
+                  <p className={cn(
+                    "mb-2 text-[9px] font-bold uppercase tracking-[0.18em]",
+                    isPublic ? "text-white/28" : "text-muted-foreground/32",
+                  )}>
+                    {MONTH_NAMES[month]} {year}
+                  </p>
+                  <div className="space-y-1">
+                    {monthEntries.map(({ date, gigs: dg }) => (
+                      <div
+                        key={date}
+                        className={cn(
+                          "flex items-start gap-3 rounded-lg px-3 py-2.5",
+                          isPublic ? "bg-white/[0.04]" : "bg-secondary/30",
+                        )}
+                      >
+                        <span className={cn(
+                          "w-7 shrink-0 text-right text-[13px] font-bold tabular-nums",
+                          isPublic ? "text-accent/70" : "text-accent",
+                        )}>
+                          {parseInt(date.slice(8))}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          {dg.map((gig, gi) => (
+                            <div key={gi} className={gi > 0 ? "mt-1.5" : ""}>
+                              <p className={cn(
+                                "truncate text-[12px] font-semibold",
+                                isPublic ? "text-white/85" : "text-foreground/85",
+                              )}>
+                                {gig.eventName || gig.venue}
+                              </p>
+                              {(gig.eventName && gig.venue) || gig.city ? (
+                                <p className={cn(
+                                  "mt-px truncate text-[10px]",
+                                  isPublic ? "text-white/32" : "text-muted-foreground/45",
+                                )}>
+                                  {[gig.eventName ? gig.venue : null, gig.city].filter(Boolean).join(" · ")}
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                        <span className={cn(
+                          "shrink-0 text-[9px] uppercase tracking-[0.1em]",
+                          isPublic ? "text-white/20" : "text-muted-foreground/30",
+                        )}>
+                          {formatDate(date)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
