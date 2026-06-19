@@ -2595,48 +2595,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const activeTourCount = activeTour ? 1 : nearestUpcomingTour ? 1 : 0
     const openBookings = homeLeads.filter((l) => l.status !== "declined").length
 
-    // Routing Timeline — Tour Control
-    const TC_VBW = 580
-    const TC_VBH = 240
-    const tcMaxVisible = 5
-    const tcVisible = Math.min(routeStops.length, tcMaxVisible)
-    const tcMoreCount = routeStops.length - tcVisible
-    const tcPadX = 65
-    const tcCenterY = 120
-    const tcCardW = tcVisible <= 4 ? 118 : 92
-    const tcCardH = tcVisible <= 4 ? 56 : 44
-    const tcIsCompact = tcVisible >= 5
-
-    // Tour metadata derived from current data
+    // Route strip — Tour Control (horizontal indicator, no zigzag)
     const tourDuration = displayTour?.startDate && displayTour?.endDate
       ? Math.round((new Date(displayTour.endDate).getTime() - new Date(displayTour.startDate).getTime()) / 86400000) + 1
       : null
     const tourConfirmed = tourShows.filter(s => s.visibilityStatus === "announced").length
     const tourPending = tourShows.length - tourConfirmed
 
-    const routePts = routeStops.slice(0, tcVisible).map((stop, i) => {
-      let x: number, y: number
-      if (tcVisible <= 1) {
-        x = TC_VBW / 2
-        y = tcCenterY
-      } else {
-        x = Math.round(tcPadX + (i / (tcVisible - 1)) * (TC_VBW - 2 * tcPadX))
-        // Even index → lower position; odd → upper (first stop sits at bottom of timeline)
-        const amp = tcVisible <= 3 ? 60 : 52
-        y = Math.round(tcCenterY + (i % 2 === 0 ? amp : -amp))
-      }
-      return {
-        x,
-        y,
-        city: (stop.city.split(",")[0] ?? stop.city).trim(),
-        date: fmtShort(stop.date),
-        venue: ((stop.venue ?? "") as string).slice(0, 20),
-        visibilityStatus: (stop.visibilityStatus ?? "tba") as string,
-        isNext: stop.date >= today && (i === 0 || (routeStops[i - 1]?.date ?? "") < today),
-        isPast: stop.date < today,
-        id: stop.id,
-      }
-    })
+    const tcStripPts = routeStops.slice(0, 7).map((stop, i, arr) => ({
+      city: (stop.city.split(",")[0] ?? stop.city).trim().slice(0, 3).toUpperCase(),
+      isNext: stop.date >= today && (i === 0 || (arr[i - 1]?.date ?? "") < today),
+      isPast: stop.date < today,
+      id: stop.id,
+    }))
+    const tcMoreCount = routeStops.length - tcStripPts.length
+    const tcNextIdx = tcStripPts.findIndex(p => p.isNext)
+    const tcXOf = (i: number) =>
+      tcStripPts.length <= 1 ? 240 : 24 + (i / (tcStripPts.length - 1)) * 432
 
     // Countdown to next show (days/hours/mins from end of show day)
     let showCountdown = { days: 0, hours: 0, mins: 0 }
@@ -2985,7 +2960,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           >
             {/* ── Header ── */}
             <div
-              className="flex shrink-0 items-start justify-between gap-4 px-5 py-3.5"
+              className="flex shrink-0 items-start justify-between gap-4 px-4 py-3"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
             >
               <div className="min-w-0 flex-1">
@@ -2994,7 +2969,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="text-[7px] font-black uppercase tracking-[0.28em]"
                     style={{ color: "rgba(255,255,255,0.35)" }}
                   >
-                    DJHQ Tour Control
+                    Tour Control
                   </span>
                   {activeTour && (
                     <span
@@ -3009,12 +2984,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </span>
                   )}
                 </div>
-                <h2 className="truncate text-[18px] font-black leading-tight text-white">
+                <p className="truncate text-[15px] font-black leading-tight text-white">
                   {displayTour?.name ?? "No active tour"}
-                </h2>
+                </p>
                 {displayTour && (
-                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                    <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0">
+                    <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.32)" }}>
                       {fmtDateRange(displayTour.startDate, displayTour.endDate)}
                     </span>
                     {[
@@ -3024,8 +2999,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       tourPending > 0 ? `${tourPending} Pending` : null,
                     ].filter(Boolean).map((item, idx) => (
                       <span key={idx} className="inline-flex items-center gap-1.5">
-                        <span style={{ color: "rgba(255,255,255,0.18)" }}>•</span>
-                        <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>{item}</span>
+                        <span style={{ color: "rgba(255,255,255,0.16)" }}>·</span>
+                        <span className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.32)" }}>{item}</span>
                       </span>
                     ))}
                   </div>
@@ -3034,470 +3009,214 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <button
                 type="button"
                 onClick={() => setActiveSection("tours")}
-                className="mt-0.5 shrink-0 rounded-lg px-3 py-1.5 text-[9px] font-semibold transition hover:opacity-75"
-                style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.40)", border: "1px solid rgba(255,255,255,0.06)" }}
+                className="mt-0.5 shrink-0 rounded px-2.5 py-1 text-[8px] font-semibold transition hover:opacity-75"
+                style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}
               >
                 Tour Planner
               </button>
             </div>
 
-            {/* ── Main: timeline + sidebar ── */}
-            <div className="flex min-h-0 flex-1">
-
-              {/* ── Routing Timeline SVG ── */}
-              <div
-                className="relative flex-1 overflow-hidden"
-                style={{ backgroundColor: "#07090a", minHeight: 280 }}
+            {/* ── Route strip — horizontal indicator ── */}
+            <div className="shrink-0 px-4 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <svg
+                className="w-full"
+                viewBox="0 0 480 38"
+                preserveAspectRatio="none"
+                style={{ height: 38 }}
+                aria-hidden="true"
               >
-                <svg
-                  className="absolute inset-0 h-full w-full"
-                  viewBox={`0 0 ${TC_VBW} ${TC_VBH}`}
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  <defs>
-                    <filter id="tc-ag" x="-80%" y="-80%" width="260%" height="260%">
-                      <feGaussianBlur stdDeviation="5" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                    <filter id="tc-rlg" x="-20%" y="-60%" width="140%" height="220%">
-                      <feGaussianBlur stdDeviation="2" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
+                {/* Empty state skeleton */}
+                {tcStripPts.length === 0 && (
+                  <>
+                    <line x1="24" y1="15" x2="456" y2="15" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="5 4" />
+                    {([24, 168, 312, 456] as number[]).map((x, i) => (
+                      <circle key={i} cx={x} cy={15} r="3" fill="transparent" stroke="rgba(255,255,255,0.09)" strokeWidth="0.8" />
+                    ))}
+                  </>
+                )}
 
-                  {/* Phantom route — empty state skeleton */}
-                  {routePts.length === 0 && (
-                    <g style={{ opacity: 0.10 }}>
-                      {([[65, 180, 208, 60], [208, 60, 352, 180], [352, 180, 515, 60]] as [number, number, number, number][]).map(([x1, y1, x2, y2], i) => (
-                        <path
-                          key={`ppl${i}`}
-                          d={`M ${x1} ${y1} C ${x1 + (x2 - x1) * 0.45} ${y1} ${x1 + (x2 - x1) * 0.55} ${y2} ${x2} ${y2}`}
-                          stroke="rgba(255,255,255,0.7)"
-                          strokeWidth="1.5"
-                          strokeDasharray="7 5"
-                          fill="none"
-                        />
-                      ))}
-                      {([[65, 180], [208, 60], [352, 180], [515, 60]] as [number, number][]).map(([px, py], i) => (
-                        <circle key={`ppn${i}`} cx={px} cy={py} r="8" fill="transparent" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
-                      ))}
-                    </g>
-                  )}
+                {/* Base route line */}
+                {tcStripPts.length > 1 && (
+                  <line
+                    x1={tcXOf(0)} y1={15}
+                    x2={tcXOf(tcStripPts.length - 1)} y2={15}
+                    stroke="rgba(255,255,255,0.09)"
+                    strokeWidth="1"
+                  />
+                )}
 
-                  {/* Route segments */}
-                  {routePts.length > 1 && routePts.slice(0, -1).map((pt, i) => {
-                    const next = routePts[i + 1]!
-                    const c1x = pt.x + (next.x - pt.x) * 0.45
-                    const c2x = pt.x + (next.x - pt.x) * 0.55
-                    const isPastSeg = pt.isPast && next.isPast
-                    return (
-                      <path
-                        key={`seg-${pt.id}`}
-                        d={`M ${pt.x} ${pt.y} C ${c1x} ${pt.y} ${c2x} ${next.y} ${next.x} ${next.y}`}
-                        stroke={isPastSeg ? "rgba(255,255,255,0.06)" : "oklch(0.75 0.18 160)"}
-                        strokeWidth={isPastSeg ? "1.5" : "2"}
-                        fill="none"
-                        filter={isPastSeg ? undefined : "url(#tc-rlg)"}
-                        style={{ opacity: isPastSeg ? 0.35 : 0.55 }}
+                {/* Progress overlay — green segment up to active stop */}
+                {tcStripPts.length > 1 && tcNextIdx > 0 && (
+                  <line
+                    x1={tcXOf(0)} y1={15}
+                    x2={tcXOf(tcNextIdx)} y2={15}
+                    stroke="oklch(0.75 0.18 160)"
+                    strokeWidth="1"
+                    style={{ opacity: 0.40 }}
+                  />
+                )}
+
+                {/* Stop dots + city codes */}
+                {tcStripPts.map((pt, i) => {
+                  const x = tcXOf(i)
+                  return (
+                    <g key={pt.id}>
+                      {pt.isNext && (
+                        <circle cx={x} cy={15} r="11" fill="rgba(100,215,140,0.07)">
+                          <animate attributeName="r" values="11;17;11" dur="2.5s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.55;0;0.55" dur="2.5s" repeatCount="indefinite" />
+                        </circle>
+                      )}
+                      <circle
+                        cx={x} cy={15}
+                        r={pt.isNext ? 5 : 3}
+                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.22)"}
                       />
-                    )
-                  })}
-
-                  {/* Stop cards + nodes */}
-                  {routePts.map((pt, i) => {
-                    const isLower = pt.y > tcCenterY
-                    const nodeR = pt.isNext ? 10 : 8
-                    const hw = tcCardW / 2
-                    const cardX = pt.x - hw
-                    const cardY = isLower
-                      ? pt.y - nodeR - 13 - tcCardH
-                      : pt.y + nodeR + 13
-                    const connY1 = isLower ? cardY + tcCardH + 1 : pt.y + nodeR
-                    const connY2 = isLower ? pt.y - nodeR - 1 : cardY - 1
-                    const green = "oklch(0.75 0.18 160)"
-
-                    return (
-                      <g key={`stop-${pt.id}`}>
-                        {/* Connector */}
-                        <line
-                          x1={pt.x} y1={connY1}
-                          x2={pt.x} y2={connY2}
-                          stroke={pt.isNext ? "rgba(100,215,140,0.22)" : "rgba(255,255,255,0.07)"}
-                          strokeWidth="0.8"
-                          strokeDasharray="3 2"
-                        />
-
-                        {/* Card background */}
-                        <rect
-                          x={cardX} y={cardY}
-                          width={tcCardW} height={tcCardH}
-                          rx="5"
-                          fill="#0e1411"
-                          stroke={pt.isNext ? "rgba(100,215,140,0.18)" : "rgba(255,255,255,0.07)"}
-                          strokeWidth="0.8"
-                        />
-
-                        {/* Number badge */}
-                        <circle
-                          cx={cardX + 15} cy={cardY + 15}
-                          r="9"
-                          fill={pt.isNext ? "rgba(100,215,140,0.12)" : pt.isPast ? "transparent" : "rgba(255,255,255,0.04)"}
-                          stroke={pt.isNext ? green : pt.isPast ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.18)"}
-                          strokeWidth="0.8"
-                        />
-                        <text
-                          x={cardX + 15} y={cardY + 19}
-                          textAnchor="middle"
-                          fontSize="7" fontFamily="ui-monospace,monospace" fontWeight="800"
-                          fill={pt.isNext ? green : pt.isPast ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.48)"}
-                        >
-                          {i + 1}
-                        </text>
-
-                        {/* City name */}
-                        <text
-                          x={cardX + 28} y={cardY + 15}
-                          textAnchor="start"
-                          fontSize={tcIsCompact ? "7.5" : "8.5"}
-                          fontFamily="system-ui,sans-serif"
-                          fontWeight="900"
-                          letterSpacing="0.05em"
-                          fill={pt.isNext ? green : pt.isPast ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.85)"}
-                        >
-                          {pt.city.slice(0, tcIsCompact ? 9 : 13).toUpperCase()}
-                        </text>
-
-                        {/* Date */}
-                        <text
-                          x={cardX + 28} y={cardY + 27}
-                          textAnchor="start"
-                          fontSize="7" fontFamily="ui-monospace,monospace"
-                          fill={pt.isNext ? "rgba(100,215,140,0.80)" : "rgba(255,255,255,0.35)"}
-                        >
-                          {pt.date}
-                        </text>
-
-                        {!tcIsCompact && (
-                          <>
-                            {/* Venue */}
-                            <text
-                              x={cardX + 6} y={cardY + 40}
-                              textAnchor="start"
-                              fontSize="7" fontFamily="system-ui,sans-serif"
-                              fill="rgba(255,255,255,0.27)"
-                            >
-                              {pt.venue.slice(0, 16)}
-                            </text>
-
-                            {/* Status badge */}
-                            <rect
-                              x={cardX + 6} y={cardY + 43}
-                              width={pt.visibilityStatus === "announced" ? 27 : 20}
-                              height="9" rx="1.5"
-                              fill={pt.visibilityStatus === "announced" ? "rgba(52,211,153,0.10)" : "rgba(255,255,255,0.04)"}
-                              stroke={pt.visibilityStatus === "announced" ? "rgba(52,211,153,0.20)" : "rgba(255,255,255,0.08)"}
-                              strokeWidth="0.5"
-                            />
-                            <text
-                              x={pt.visibilityStatus === "announced" ? cardX + 19.5 : cardX + 16}
-                              y={cardY + 50}
-                              textAnchor="middle"
-                              fontSize="5.5" fontFamily="ui-monospace,monospace" fontWeight="700"
-                              letterSpacing="0.06em"
-                              fill={pt.visibilityStatus === "announced" ? "#34d399" : "rgba(255,255,255,0.28)"}
-                            >
-                              {pt.visibilityStatus === "announced" ? "CONF" : "TBA"}
-                            </text>
-                          </>
-                        )}
-
-                        {/* Active stop pulse rings */}
-                        {pt.isNext && (
-                          <>
-                            <circle cx={pt.x} cy={pt.y} r="18" fill="rgba(100,215,140,0.05)" />
-                            <circle cx={pt.x} cy={pt.y} r="13" fill="none" stroke={green} strokeWidth="0.7">
-                              <animate attributeName="r" values="13;23;13" dur="2.5s" repeatCount="indefinite" />
-                              <animate attributeName="opacity" values="0.45;0;0.45" dur="2.5s" repeatCount="indefinite" />
-                            </circle>
-                          </>
-                        )}
-
-                        {/* Node circle */}
-                        <circle
-                          cx={pt.x} cy={pt.y} r={nodeR}
-                          fill={pt.isNext ? "rgba(100,215,140,0.15)" : pt.isPast ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.06)"}
-                          stroke={pt.isNext ? green : pt.isPast ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.22)"}
-                          strokeWidth="1.5"
-                          filter={pt.isNext ? "url(#tc-ag)" : undefined}
-                        />
-
-                        {/* Node number */}
-                        <text
-                          x={pt.x} y={pt.y + 3.5}
-                          textAnchor="middle"
-                          fontSize="6.5" fontFamily="ui-monospace,monospace" fontWeight="800"
-                          fill={pt.isNext ? green : pt.isPast ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.48)"}
-                        >
-                          {i + 1}
-                        </text>
-                      </g>
-                    )
-                  })}
-
-                  {/* +N more */}
-                  {tcMoreCount > 0 && (
-                    <text
-                      x="572" y="228"
-                      textAnchor="end" fontSize="7.5"
-                      fontFamily="ui-monospace,monospace"
-                      fill="rgba(255,255,255,0.28)"
-                    >
-                      +{tcMoreCount} more stops
-                    </text>
-                  )}
-                </svg>
-
-                {/* Loading */}
-                {!toursLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>Loading…</span>
-                  </div>
-                )}
-
-                {/* Empty state overlay */}
-                {toursLoaded && !displayTour && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                    <p
-                      className="text-[9px] font-black uppercase tracking-[0.22em]"
-                      style={{ color: "rgba(255,255,255,0.20)" }}
-                    >
-                      No active tour
-                    </p>
-                    <p className="text-center text-[9.5px]" style={{ color: "rgba(255,255,255,0.14)" }}>
-                      Create and manage upcoming routing,<br />dates, and venues from one place.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("tours")}
-                      className="mt-1 rounded-lg px-5 py-2 text-[9px] font-black uppercase tracking-[0.14em] transition hover:opacity-90"
-                      style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#060908" }}
-                    >
-                      Create Tour
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Stop list sidebar ── */}
-              <div
-                className="flex w-[200px] shrink-0 flex-col"
-                style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
-              >
-                {/* Sidebar header */}
-                <div
-                  className="flex shrink-0 items-center justify-between px-3.5 py-2.5"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <span
-                    className="text-[7.5px] font-black uppercase tracking-[0.22em]"
-                    style={{ color: "rgba(255,255,255,0.30)" }}
-                  >
-                    {tourShows.length > 0 ? `${tourShows.length} Stop${tourShows.length !== 1 ? "s" : ""}` : "0 Stops"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("tours")}
-                    className="text-[7.5px] font-semibold transition hover:opacity-75"
-                    style={{ color: "rgba(255,255,255,0.22)" }}
-                  >
-                    View Full Tour ↗
-                  </button>
-                </div>
-
-                {/* Stop rows */}
-                <div className="flex-1 divide-y overflow-y-auto" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-                  {tourShows.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-2 px-4 py-8">
-                      <p className="text-center text-[9px] font-semibold" style={{ color: "rgba(255,255,255,0.22)" }}>
-                        No scheduled stops yet
-                      </p>
-                      <p className="text-center text-[8px]" style={{ color: "rgba(255,255,255,0.12)" }}>
-                        Add dates manually or import from a file.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection("shows")}
-                        className="mt-1 rounded px-3 py-1 text-[7.5px] font-bold transition hover:opacity-75"
-                        style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.40)" }}
+                      <text
+                        x={x} y={33}
+                        textAnchor="middle"
+                        fontSize="6.5" fontFamily="ui-monospace,monospace" fontWeight="700"
+                        letterSpacing="0.04em"
+                        fill={pt.isNext ? "oklch(0.75 0.18 160)" : pt.isPast ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.28)"}
                       >
-                        Import Dates
-                      </button>
-                    </div>
-                  ) : (
-                    tourShows.map((show, idx) => {
-                      const isNextStop = show.date >= today && (idx === 0 || (tourShows[idx - 1]?.date ?? "") < today)
-                      return (
-                        <div
-                          key={show.id}
-                          className="flex items-center gap-2.5 px-3.5 py-2.5"
-                          style={{
-                            backgroundColor: isNextStop ? "rgba(100,215,140,0.04)" : "transparent",
-                            borderLeft: `2px solid ${isNextStop ? "oklch(0.75 0.18 160)" : "transparent"}`,
-                          }}
-                        >
-                          {/* Stop number */}
-                          <div
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[7px] font-black"
-                            style={{
-                              backgroundColor: isNextStop ? "rgba(100,215,140,0.12)" : "rgba(255,255,255,0.05)",
-                              border: `1px solid ${isNextStop ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.12)"}`,
-                              color: isNextStop ? "oklch(0.75 0.18 160)" : show.date < today ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.50)",
-                            }}
-                          >
-                            {idx + 1}
-                          </div>
+                        {pt.city}
+                      </text>
+                    </g>
+                  )
+                })}
 
-                          {/* City + venue */}
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className="truncate text-[10px] font-bold leading-tight"
-                              style={{ color: isNextStop ? "rgba(255,255,255,0.92)" : show.date < today ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.78)" }}
-                            >
-                              {show.city}
-                            </p>
-                            <p className="truncate text-[8px]" style={{ color: "rgba(255,255,255,0.26)" }}>
-                              {show.venue}
-                            </p>
-                          </div>
-
-                          {/* Date + status */}
-                          <div className="flex shrink-0 flex-col items-end gap-0.5">
-                            <span
-                              className="font-mono text-[8px] font-semibold tabular-nums"
-                              style={{ color: isNextStop ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.30)" }}
-                            >
-                              {fmtShort(show.date)}
-                            </span>
-                            <span
-                              className="rounded px-1 py-0.5 text-[6px] font-black uppercase tracking-[0.06em]"
-                              style={
-                                show.visibilityStatus === "announced"
-                                  ? { backgroundColor: "rgba(52,211,153,0.10)", color: "#34d399" }
-                                  : { color: "rgba(255,255,255,0.18)" }
-                              }
-                            >
-                              {show.visibilityStatus === "announced" ? "Conf" : "TBA"}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-
-                {/* Sidebar footer */}
-                <div
-                  className="flex shrink-0 items-center justify-between px-3.5 py-2.5"
-                  style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("tours")}
-                    className="text-[8px] font-semibold transition hover:opacity-75"
-                    style={{ color: "rgba(255,255,255,0.28)" }}
-                  >
-                    Export Tour
-                  </button>
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ backgroundColor: activeTour ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.20)" }}
-                    />
-                    <span className="text-[7.5px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                      Tour Status: {activeTour ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                {/* +N more */}
+                {tcMoreCount > 0 && (
+                  <text x="474" y="18" textAnchor="end" fontSize="6" fontFamily="ui-monospace,monospace" fill="rgba(255,255,255,0.22)">
+                    +{tcMoreCount}
+                  </text>
+                )}
+              </svg>
             </div>
 
-            {/* ── Bottom status bar ── */}
+            {/* ── Stop list ── */}
             <div
-              className="flex shrink-0 items-center gap-3 px-5 py-3"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
+              className="flex-1 divide-y overflow-y-auto"
+              style={{ borderColor: "rgba(255,255,255,0.04)", minHeight: 100 }}
             >
-              {/* Status dot */}
-              <div
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{
-                  backgroundColor: nextShow ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.20)",
-                  boxShadow: nextShow ? "0 0 6px oklch(0.75 0.18 160 / 0.6)" : "none",
-                }}
-              />
-
-              {/* Next stop */}
-              <div className="flex flex-col">
-                <span
-                  className="text-[6.5px] font-black uppercase tracking-[0.20em]"
-                  style={{ color: "rgba(255,255,255,0.28)" }}
-                >
-                  Next Stop
-                </span>
-                <span className="text-[12px] font-black leading-tight text-white">
-                  {nextShow ? `${nextShow.city} · ${fmtShort(nextShow.date)}` : "—"}
-                </span>
-              </div>
-
-              {/* Divider */}
-              <div
-                className="mx-1 h-8 w-px shrink-0"
-                style={{ backgroundColor: "rgba(255,255,255,0.07)" }}
-              />
-
-              {/* Days to go */}
-              <div className="flex flex-col">
-                <span
-                  className="text-[6.5px] font-black uppercase tracking-[0.20em]"
-                  style={{ color: "rgba(255,255,255,0.28)" }}
-                >
-                  Days to Go
-                </span>
-                <span className="text-[12px] font-black leading-tight text-white">
-                  {daysUntilShow !== null && daysUntilShow >= 0 ? `${daysUntilShow} Days` : "—"}
-                </span>
-              </div>
-
-              <div className="flex-1" />
-
-              {/* CTA */}
-              {nextShow ? (
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("shows")}
-                  className="shrink-0 rounded-lg px-4 py-2 text-[9.5px] font-black uppercase tracking-[0.10em] transition hover:opacity-90"
-                  style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#060908" }}
-                >
-                  View Next Show →
-                </button>
+              {!toursLoaded ? (
+                <div className="flex items-center justify-center py-8">
+                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>Loading…</span>
+                </div>
+              ) : tourShows.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2.5 py-8">
+                  <p
+                    className="text-[9px] font-black uppercase tracking-[0.18em]"
+                    style={{ color: "rgba(255,255,255,0.18)" }}
+                  >
+                    No active tour
+                  </p>
+                  <p className="text-center text-[9px]" style={{ color: "rgba(255,255,255,0.12)" }}>
+                    Create a tour to plan your routing and shows.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("tours")}
+                    className="mt-1 rounded px-4 py-1.5 text-[8.5px] font-bold uppercase tracking-[0.10em] transition hover:opacity-90"
+                    style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#060908" }}
+                  >
+                    Create Tour
+                  </button>
+                </div>
               ) : (
+                tourShows.map((show, idx) => {
+                  const isNextStop = show.date >= today && (idx === 0 || (tourShows[idx - 1]?.date ?? "") < today)
+                  const dateParts = fmtShort(show.date).split(" ")
+                  return (
+                    <div
+                      key={show.id}
+                      className="flex items-center gap-3 px-4 py-2"
+                      style={{
+                        backgroundColor: isNextStop ? "rgba(100,215,140,0.04)" : "transparent",
+                        borderLeft: `2px solid ${isNextStop ? "oklch(0.75 0.18 160)" : "transparent"}`,
+                      }}
+                    >
+                      {/* Stop number */}
+                      <div
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[7px] font-black"
+                        style={{
+                          backgroundColor: isNextStop ? "rgba(100,215,140,0.10)" : "rgba(255,255,255,0.05)",
+                          border: `1px solid ${isNextStop ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.10)"}`,
+                          color: isNextStop ? "oklch(0.75 0.18 160)" : show.date < today ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.45)",
+                        }}
+                      >
+                        {idx + 1}
+                      </div>
+
+                      {/* City + venue */}
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="truncate text-[10.5px] font-bold leading-tight"
+                          style={{ color: isNextStop ? "rgba(255,255,255,0.92)" : show.date < today ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.78)" }}
+                        >
+                          {show.city}
+                        </p>
+                        <p className="truncate text-[8px]" style={{ color: "rgba(255,255,255,0.24)" }}>
+                          {show.venue}
+                        </p>
+                      </div>
+
+                      {/* Date */}
+                      <div className="flex shrink-0 flex-col items-center">
+                        <span
+                          className="font-mono text-[6px] font-bold uppercase"
+                          style={{ color: isNextStop ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.22)" }}
+                        >
+                          {dateParts[0]}
+                        </span>
+                        <span
+                          className="font-mono text-[12px] font-black tabular-nums leading-none"
+                          style={{ color: isNextStop ? "oklch(0.75 0.18 160)" : show.date < today ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.68)" }}
+                        >
+                          {dateParts[1]}
+                        </span>
+                      </div>
+
+                      {/* Status */}
+                      <span
+                        className="shrink-0 rounded px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.06em]"
+                        style={
+                          show.visibilityStatus === "announced"
+                            ? { backgroundColor: "rgba(52,211,153,0.10)", color: "#34d399" }
+                            : { color: "rgba(255,255,255,0.18)" }
+                        }
+                      >
+                        {show.visibilityStatus === "announced" ? "Conf" : "TBA"}
+                      </span>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* ── Subtle footer ── */}
+            {toursLoaded && displayTour && (
+              <div
+                className="flex shrink-0 items-center justify-between px-4 py-2"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+              >
+                <span className="text-[8px]" style={{ color: "rgba(255,255,255,0.20)" }}>
+                  {tourShows.length} stop{tourShows.length !== 1 ? "s" : ""} · {activeTour ? "Active" : "Upcoming"}
+                </span>
                 <button
                   type="button"
                   onClick={() => setActiveSection("tours")}
-                  className="shrink-0 rounded-lg px-4 py-2 text-[9.5px] font-black uppercase tracking-[0.10em] transition hover:opacity-75"
-                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}
+                  className="text-[8px] font-semibold transition hover:opacity-75"
+                  style={{ color: "rgba(255,255,255,0.28)" }}
                 >
-                  View Shows →
+                  View full tour →
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
+
+
+
 
 
           {/* ── BOOKING DESK ──────────────────────────────────────────── */}
