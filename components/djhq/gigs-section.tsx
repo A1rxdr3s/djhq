@@ -217,7 +217,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 border-t border-white/[0.05] px-2 py-2.5 xl:px-3",
+        "flex items-center gap-2 border-t border-white/[0.05] px-2 py-2 xl:px-3",
         "transition-colors duration-150",
         isPast ? "hover:bg-white/[0.012]" : "hover:bg-white/[0.025]",
       )}
@@ -371,14 +371,14 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
 
   // Scenario A — 0 future shows: display up to 4 most recent past shows as primary content
   // Scenario B — 1-4 future shows: display all upcoming
-  // Scenario C — 5+ future shows: display first 4 (1 featured + 3 compact), with "View All" expansion
+  // Scenario C — 6+ future shows: display first 5 (1 featured + 4 compact), with "View All" expansion
   const scenarioA = futureGigs.length === 0
-  const scenarioC = futureGigs.length > 4
+  const scenarioC = futureGigs.length > 5
 
   const primaryRows: Gig[] = scenarioA
-    ? pastGigs.slice(0, 4)
+    ? pastGigs.slice(0, 5)
     : scenarioC && !showAllFuture
-    ? futureGigs.slice(0, 4)
+    ? futureGigs.slice(0, 5)
     : futureGigs
 
   const primaryIsPast = scenarioA
