@@ -1408,7 +1408,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         rel="noopener noreferrer"
                         className="group block overflow-hidden rounded-[16px] bg-white/[0.04]"
                       >
-                        <div className="relative aspect-video w-full bg-secondary">
+                        <div className="relative aspect-[19/9] w-full bg-secondary">
                           {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -1425,7 +1425,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             </div>
                           </div>
                         </div>
-                        <div className="px-4 py-3 sm:px-5 sm:py-4">
+                        <div className="px-4 py-2.5 sm:px-5 sm:py-3.5">
                           <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/75">
                             LIVE PERFORMANCE
                           </p>
@@ -1518,7 +1518,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         rel="noopener noreferrer"
                         className="group block overflow-hidden rounded-[16px] bg-white/[0.04]"
                       >
-                        <div className="relative aspect-video w-full bg-secondary">
+                        <div className="relative aspect-[19/9] w-full bg-secondary">
                           {featuredSet.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -1535,7 +1535,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             </div>
                           </div>
                         </div>
-                        <div className="px-4 py-3 sm:px-5 sm:py-4">
+                        <div className="px-4 py-2.5 sm:px-5 sm:py-3.5">
                           <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/75">
                             DJ SET
                           </p>
