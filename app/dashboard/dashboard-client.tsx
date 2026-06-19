@@ -19,6 +19,7 @@ import { ShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { BookingsSection } from "@/components/dashboard/bookings-section"
 import { TourCalendar, type TourCalendarGig } from "@/components/djhq/tour-calendar"
+import { HqPageHeader } from "@/components/djhq/hq-page-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
 import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { brand } from "@/lib/brand"
@@ -2696,10 +2697,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-6">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Profile</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Your public artist identity.</p>
-        </div>
+        <HqPageHeader title="Profile" description="Your public artist identity." />
 
         {/* Artist */}
         <div className="rounded-xl border border-border bg-card/40 p-5 sm:p-6">
@@ -3672,22 +3670,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       <div className="space-y-6">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Shows</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Manage your artist schedule and career history.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleAddGig}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Show
-          </button>
-        </div>
+        <HqPageHeader
+          title="Shows"
+          description="Manage your artist schedule and career history."
+          action={
+            <button
+              type="button"
+              onClick={handleAddGig}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Show
+            </button>
+          }
+        />
 
         {/* ── Career stats ────────────────────────────────────────────────── */}
         {totalShows > 0 && (
@@ -5718,22 +5714,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Tour Planner</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Plan and publish date-range pages around your tours.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all hover:border-border hover:text-foreground"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Create Tour
-          </button>
-        </div>
+        <HqPageHeader
+          title="Tour Planner"
+          description="Plan and publish date-range pages around your tours."
+          action={
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all hover:border-border hover:text-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create Tour
+            </button>
+          }
+        />
 
         {/* Empty state */}
         {!toursLoaded && (
@@ -5807,12 +5801,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
         {/* Section header */}
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Bookings</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">
-            Incoming booking requests from your public profile.
-          </p>
-        </div>
+        <HqPageHeader title="Bookings" description="Incoming booking requests from your public profile." />
 
         {/* Booking email config */}
         <div className="rounded-xl border border-border bg-card/40 p-4 sm:p-5">
