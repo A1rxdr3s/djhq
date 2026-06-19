@@ -2595,19 +2595,51 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const activeTourCount = activeTour ? 1 : nearestUpcomingTour ? 1 : 0
     const openBookings = homeLeads.filter((l) => l.status !== "declined").length
 
-    // 2D route map: pre-compute positions for Tour Control SVG
+    // 2D route map: geographic positions for Tour Control SVG (lon -12..32, lat 34..62 → 480×280 viewBox)
     const mapVbW = 480
-    const mapVbH = 150
-    const mapYPositions: number[] = [78, 42, 112, 55, 100, 38, 88]
-    const routePts = routeStops.map((stop, i) => ({
-      x: routeStops.length > 1 ? 40 + (i / (routeStops.length - 1)) * (mapVbW - 80) : mapVbW / 2,
-      y: mapYPositions[i % mapYPositions.length] ?? 80,
-      city: (stop.city.split(/[\s,]/)[0] ?? stop.city).slice(0, 3).toUpperCase(),
-      date: fmtShort(stop.date),
-      isNext: stop.date >= today && (i === 0 || (routeStops[i - 1]?.date ?? "") < today),
-      isPast: stop.date < today,
-      id: stop.id,
-    }))
+    const mapVbH = 280
+    const geoX = (lon: number) => Math.round(((lon + 12) / 44) * 480)
+    const geoY = (lat: number) => Math.round(((62 - lat) / 28) * 280)
+    const cityGeoLookup: Record<string, { x: number; y: number }> = {
+      ibiza:      { x: geoX(1.43),   y: geoY(38.90) },
+      barcelona:  { x: geoX(2.16),   y: geoY(41.39) },
+      madrid:     { x: geoX(-3.70),  y: geoY(40.42) },
+      paris:      { x: geoX(2.35),   y: geoY(48.87) },
+      amsterdam:  { x: geoX(4.90),   y: geoY(52.37) },
+      london:     { x: geoX(-0.12),  y: geoY(51.51) },
+      berlin:     { x: geoX(13.40),  y: geoY(52.52) },
+      milan:      { x: geoX(9.19),   y: geoY(45.47) },
+      rome:       { x: geoX(12.50),  y: geoY(41.90) },
+      vienna:     { x: geoX(16.37),  y: geoY(48.21) },
+      brussels:   { x: geoX(4.35),   y: geoY(50.85) },
+      hamburg:    { x: geoX(9.99),   y: geoY(53.55) },
+      munich:     { x: geoX(11.58),  y: geoY(48.14) },
+      lisbon:     { x: geoX(-9.14),  y: geoY(38.72) },
+      prague:     { x: geoX(14.43),  y: geoY(50.08) },
+      zurich:     { x: geoX(8.54),   y: geoY(47.38) },
+      valencia:   { x: geoX(-0.38),  y: geoY(39.47) },
+      marseille:  { x: geoX(5.37),   y: geoY(43.30) },
+      lyon:       { x: geoX(4.83),   y: geoY(45.75) },
+      frankfurt:  { x: geoX(8.68),   y: geoY(50.11) },
+      cologne:    { x: geoX(6.96),   y: geoY(50.94) },
+      stockholm:  { x: geoX(18.07),  y: geoY(59.33) },
+      copenhagen: { x: geoX(12.57),  y: geoY(55.68) },
+      oslo:       { x: geoX(10.75),  y: geoY(59.91) },
+    }
+    const mapYPositions: number[] = [140, 100, 175, 115, 160, 90, 145]
+    const routePts = routeStops.map((stop, i) => {
+      const cityKey = (stop.city.split(/[\s,]/)[0] ?? stop.city).toLowerCase()
+      const geo = cityGeoLookup[cityKey]
+      return {
+        x: geo?.x ?? (routeStops.length > 1 ? 40 + (i / (routeStops.length - 1)) * (mapVbW - 80) : mapVbW / 2),
+        y: geo?.y ?? (mapYPositions[i % mapYPositions.length] ?? 140),
+        city: (stop.city.split(/[\s,]/)[0] ?? stop.city).slice(0, 3).toUpperCase(),
+        date: fmtShort(stop.date),
+        isNext: stop.date >= today && (i === 0 || (routeStops[i - 1]?.date ?? "") < today),
+        isPast: stop.date < today,
+        id: stop.id,
+      }
+    })
 
     // Countdown to next show (days/hours/mins from end of show day)
     let showCountdown = { days: 0, hours: 0, mins: 0 }
