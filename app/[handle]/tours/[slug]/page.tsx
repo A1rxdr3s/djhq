@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { PublicTourSchedule, type TourScheduleGig, type TourScheduleStay } from "@/components/djhq/public-tour-schedule"
+import { TourCalendar, type TourCalendarGig, type TourCalendarStay } from "@/components/djhq/tour-calendar"
 
 // Reuse the anon read client pattern from the artist profile page
 function createSupabaseReadClient() {
@@ -56,6 +56,22 @@ function isAbsoluteUrl(url: string | null | undefined): url is string {
   return typeof url === "string" && url.startsWith("http")
 }
 
+function formatTourDateRange(start: string, end: string): string {
+  const s = new Date(start + "T00:00:00")
+  const e = new Date(end + "T00:00:00")
+  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
+  const sFmt = s.toLocaleDateString("en-US", opts)
+  const eFmt = e.toLocaleDateString("en-US", { ...opts, year: "numeric" })
+  if (s.getFullYear() === e.getFullYear()) {
+    return `${sFmt} – ${eFmt}`
+  }
+  return `${s.toLocaleDateString("en-US", { ...opts, year: "numeric" })} – ${eFmt}`
+}
+
+function formatShortDate(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00")
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { handle, slug } = await params
@@ -81,7 +97,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${tour.name} — ${artist.artist_name}`,
-    description: `${artist.artist_name} · ${tour.name} · ${tour.start_date} – ${tour.end_date}`,
+    description: `${artist.artist_name} · ${tour.name} · ${formatTourDateRange(tour.start_date, tour.end_date)}`,
   }
 }
 
@@ -121,7 +137,7 @@ export default async function TourPage({ params }: PageProps) {
     .order("date", { ascending: true })
     .returns<GigRow[]>()
 
-  const gigs: TourScheduleGig[] = (gigRows ?? []).map((g) => ({
+  const gigs: TourCalendarGig[] = (gigRows ?? []).map((g) => ({
     id: g.id,
     date: g.date,
     eventName: g.event_name ?? undefined,
@@ -138,7 +154,7 @@ export default async function TourPage({ params }: PageProps) {
     .order("starts_on", { ascending: true })
     .returns<StayRow[]>()
 
-  const stays: TourScheduleStay[] = (stayRows ?? []).map((s) => ({
+  const stays: TourCalendarStay[] = (stayRows ?? []).map((s) => ({
     id: s.id,
     city: s.city,
     startsOn: s.starts_on,
@@ -146,16 +162,234 @@ export default async function TourPage({ params }: PageProps) {
     color: s.color,
   }))
 
+  const dateRange = formatTourDateRange(tour.start_date, tour.end_date)
+  const showCount = gigs.length
+
+  // ── 5. Tour intelligence (overview block) ──────────────────────────────────
+  const today = new Date().toISOString().slice(0, 10)
+  const sortedGigs = [...gigs].sort((a, b) => a.date.slice(0, 10).localeCompare(b.date.slice(0, 10)))
+  const nextShow = sortedGigs.find(g => g.date.slice(0, 10) >= today) ?? null
+
+  const sortedStays = [...stays].sort((a, b) => a.startsOn.localeCompare(b.startsOn))
+  const currentStay = sortedStays.find(s => s.startsOn <= today && today <= s.endsOn) ?? null
+  const nextUpcomingStay = !currentStay
+    ? sortedStays.find(s => s.startsOn > today) ?? null
+    : null
+
+  // Unique cities in routing order (deduplicated by name while preserving order)
+  const seenCities = new Set<string>()
+  const routingCities = sortedStays.filter(s => {
+    if (seenCities.has(s.city)) return false
+    seenCities.add(s.city)
+    return true
+  })
+  const cityCount = routingCities.length
+
   return (
-    <PublicTourSchedule
-      tourName={tour.name}
-      artistName={artist.artist_name}
-      startDate={tour.start_date}
-      endDate={tour.end_date}
-      gigs={gigs}
-      stays={stays}
-      heroImageUrl={isAbsoluteUrl(artist.hero_image_url) ? artist.hero_image_url : null}
-      handle={handle}
-    />
+    <div className="min-h-screen bg-background text-foreground">
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <div
+        className="relative overflow-hidden border-b border-white/[0.06]"
+        style={{
+          background: isAbsoluteUrl(artist.hero_image_url)
+            ? undefined
+            : "radial-gradient(ellipse at 50% -20%, hsl(var(--accent)/0.18) 0%, transparent 55%), linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%)",
+        }}
+      >
+        {isAbsoluteUrl(artist.hero_image_url) && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={artist.hero_image_url}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-[0.12] blur-sm"
+            aria-hidden
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/70 to-background" />
+        <div className="relative mx-auto max-w-5xl px-5 pb-12 pt-14 sm:px-8 sm:pt-20 sm:pb-16">
+          {/* Artist identity */}
+          <div className="mb-8 flex items-center gap-3">
+            {isAbsoluteUrl(artist.avatar_url) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={artist.avatar_url}
+                alt={artist.artist_name}
+                className="h-9 w-9 rounded-full object-cover ring-1 ring-white/[0.12]"
+              />
+            )}
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/45">
+              {artist.artist_name}
+            </p>
+          </div>
+
+          {/* Tour name */}
+          <h1 className="text-balance text-[32px] font-black uppercase leading-none tracking-[-0.025em] text-foreground sm:text-[48px] lg:text-[60px]">
+            {tour.name}
+          </h1>
+
+          {/* Date range + show count */}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <p className="text-[13px] font-medium uppercase tracking-[0.14em] text-foreground/45">
+              {dateRange}
+            </p>
+            {showCount > 0 && (
+              <>
+                <span className="text-foreground/20">·</span>
+                <p className="text-[13px] font-medium text-accent/70">
+                  {showCount} show{showCount !== 1 ? "s" : ""}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tour overview ──────────────────────────────────────────────────── */}
+      {(showCount > 0 || stays.length > 0) && (
+        <div className="mx-auto max-w-5xl px-5 pt-8 sm:px-8 sm:pt-10">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6">
+            {/* Stats row */}
+            <div className="flex flex-wrap gap-x-8 gap-y-4">
+              {/* Next show */}
+              {nextShow && (
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-foreground/28">
+                    Next show
+                  </p>
+                  <p className="mt-1 text-[13px] font-semibold text-foreground/90">
+                    {nextShow.eventName || nextShow.city || nextShow.venue}
+                  </p>
+                  <p className="text-[11px] text-foreground/38">
+                    {formatShortDate(nextShow.date.slice(0, 10))}
+                    {(nextShow.city) && ` · ${nextShow.city}`}
+                  </p>
+                </div>
+              )}
+
+              {/* Current or next city */}
+              {(currentStay || nextUpcomingStay) && (() => {
+                const active = currentStay ?? nextUpcomingStay!
+                return (
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-foreground/28">
+                      {currentStay ? "Now in" : "Next city"}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: active.color }}
+                      />
+                      <p className="text-[13px] font-semibold text-foreground/90">{active.city}</p>
+                    </div>
+                    <p className="text-[11px] text-foreground/38">
+                      {formatShortDate(active.startsOn)}
+                      {active.endsOn !== active.startsOn && ` – ${formatShortDate(active.endsOn)}`}
+                    </p>
+                  </div>
+                )
+              })()}
+
+              {/* Shows count */}
+              {showCount > 0 && (
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-foreground/28">
+                    Shows
+                  </p>
+                  <p className="mt-1 text-[22px] font-black leading-none text-foreground">
+                    {showCount}
+                  </p>
+                </div>
+              )}
+
+              {/* City count */}
+              {cityCount > 1 && (
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-foreground/28">
+                    Cities
+                  </p>
+                  <p className="mt-1 text-[22px] font-black leading-none text-foreground">
+                    {cityCount}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Routing strip */}
+            {routingCities.length > 1 && (
+              <div className="mt-5 border-t border-white/[0.05] pt-4">
+                <p className="mb-2.5 text-[9px] font-bold uppercase tracking-[0.20em] text-foreground/28">
+                  Route
+                </p>
+                <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+                  {routingCities.map((stay, i) => (
+                    <div key={stay.id} className="flex items-center gap-1">
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ background: stay.color }}
+                      />
+                      <span className="text-[11px] font-medium text-foreground/55">
+                        {stay.city}
+                      </span>
+                      {i < routingCities.length - 1 && (
+                        <span className="ml-0.5 text-[10px] text-foreground/18">→</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Calendar ──────────────────────────────────────────────────────── */}
+      <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-foreground/30">
+            Tour Schedule
+          </p>
+          {/* City color legend */}
+          {stays.length > 0 && (
+            <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1.5">
+              {routingCities.map((stay) => (
+                <div key={stay.id} className="flex items-center gap-1.5">
+                  <span
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: stay.color }}
+                  />
+                  <span className="text-[10px] font-medium text-foreground/40">
+                    {stay.city}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {showCount === 0 && stays.length === 0 ? (
+          <p className="text-[13px] text-muted-foreground/40">
+            Schedule coming soon.
+          </p>
+        ) : (
+          <TourCalendar
+            startDate={tour.start_date}
+            endDate={tour.end_date}
+            gigs={gigs}
+            stays={stays}
+            variant="public"
+          />
+        )}
+      </div>
+
+      {/* ── Back link ─────────────────────────────────────────────────────── */}
+      <div className="mx-auto max-w-5xl border-t border-white/[0.05] px-5 py-8 sm:px-8">
+        <a
+          href={`/${handle}`}
+          className="text-[11px] font-medium uppercase tracking-[0.14em] text-foreground/30 transition-colors hover:text-foreground/60"
+        >
+          ← {artist.artist_name}
+        </a>
+      </div>
+    </div>
   )
 }
