@@ -6464,6 +6464,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       return s.getFullYear() === e.getFullYear() ? `${sf} – ${ef}` : `${s.toLocaleDateString("en-US", { ...opts, year: "numeric" })} – ${ef}`
     }
 
+    function formatDate(dateStr: string): string {
+      if (!dateStr) return ""
+      const d = new Date(dateStr + "T00:00:00")
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    }
+
     async function handleCreateTour() {
       if (!tourName.trim() || !tourSlug.trim() || !tourStartDate || !tourEndDate) {
         setTourError("All fields are required.")
@@ -6842,8 +6848,265 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               startDate={selectedTour.startDate}
               endDate={selectedTour.endDate}
               gigs={gigsInTour}
+              stays={tourStays.map(s => ({ id: s.id, city: s.city, startsOn: s.startsOn, endsOn: s.endsOn, color: s.color }))}
               variant="hq"
             />
+          </div>
+
+          {/* ── City Stays ─────────────────────────────────────────────────────── */}
+          <div className="space-y-3">
+            {/* Section header */}
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-muted-foreground/30">
+                City Stays / Route
+              </p>
+              {tourStays.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { void handleGenerateStays() }}
+                  disabled={stayGenerating}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-2.5 py-1 text-[10px] font-medium text-muted-foreground/55 transition-colors hover:text-foreground disabled:opacity-40"
+                >
+                  {stayGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Route className="h-3 w-3" />}
+                  Regenerate from shows
+                </button>
+              )}
+            </div>
+
+            {/* Error */}
+            {stayError && (
+              <p className="text-[11px] text-red-400/80">{stayError}</p>
+            )}
+
+            {/* Empty state */}
+            {staysLoaded && tourStays.length === 0 && !stayFormOpen && (
+              <div className="rounded-xl border border-dashed border-border bg-secondary/20 px-5 py-6 text-center">
+                <Route className="mx-auto mb-2 h-5 w-5 text-muted-foreground/20" />
+                <p className="text-[12px] font-medium text-foreground/50">No city stays yet.</p>
+                <p className="mx-auto mt-1 max-w-xs text-[11px] leading-[1.6] text-muted-foreground/32">
+                  Define the cities you'll be in during this tour, or generate from your shows.
+                </p>
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { void handleGenerateStays() }}
+                    disabled={stayGenerating}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-3 text-[11px] font-medium text-foreground/55 transition-all hover:text-foreground disabled:opacity-40"
+                  >
+                    {stayGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Route className="h-3 w-3" />}
+                    Generate from Shows
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openAddStay}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-3 text-[11px] font-medium text-foreground/55 transition-all hover:text-foreground"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add Manually
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Stays list */}
+            {tourStays.length > 0 && (
+              <div className="space-y-1.5">
+                {tourStays.map((stay) => {
+                  const isEditing = editingStayId === stay.id
+                  return (
+                    <div key={stay.id} className="rounded-xl border border-border overflow-hidden">
+                      {/* Stay row */}
+                      <div className={cn(
+                        "flex items-center gap-3 px-3 py-2.5",
+                        isEditing ? "bg-secondary/50" : "bg-card/30",
+                      )}>
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ background: stay.color }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-semibold text-foreground/85">{stay.city}</p>
+                          <p className="text-[10px] text-muted-foreground/45">
+                            {stay.startsOn && stay.endsOn
+                              ? stay.startsOn === stay.endsOn
+                                ? formatDate(stay.startsOn)
+                                : `${formatDate(stay.startsOn)} – ${formatDate(stay.endsOn)}`
+                              : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => isEditing ? closeStayForm() : openEditStay(stay)}
+                          className="shrink-0 rounded-lg border border-border bg-secondary/30 px-2.5 py-1 text-[10px] font-medium text-muted-foreground/55 transition-colors hover:text-foreground"
+                        >
+                          {isEditing ? "Cancel" : "Edit"}
+                        </button>
+                        {!isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => { void handleDeleteStay(stay.id) }}
+                            className="shrink-0 rounded-lg border border-border bg-secondary/30 p-1.5 text-muted-foreground/35 transition-colors hover:text-red-400"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Inline edit form */}
+                      {isEditing && (
+                        <div className="border-t border-border bg-secondary/20 p-4 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">City *</label>
+                              <Input value={stayCity} onChange={(e) => setStayCity(e.target.value)} placeholder="e.g. Ibiza" className="h-8 text-[12px]" />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Country</label>
+                              <Input value={stayCountry} onChange={(e) => setStayCountry(e.target.value)} placeholder="e.g. Spain" className="h-8 text-[12px]" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Venue / Area</label>
+                            <Input value={stayVenueOrArea} onChange={(e) => setStayVenueOrArea(e.target.value)} placeholder="e.g. Playa d'en Bossa" className="h-8 text-[12px]" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Start date *</label>
+                              <DatePicker value={stayStartsOn} onChange={(v) => setStayStartsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">End date *</label>
+                              <DatePicker value={stayEndsOn} onChange={(v) => setStayEndsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/55">Color *</label>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {STAY_COLORS.map((c) => (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => setStayColor(c)}
+                                  className={cn(
+                                    "h-5 w-5 rounded-full border-2 transition-all",
+                                    stayColor === c ? "border-foreground/60 scale-110" : "border-transparent hover:scale-105",
+                                  )}
+                                  style={{ background: c }}
+                                  title={c}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Notes</label>
+                            <Textarea value={stayNotes} onChange={(e) => setStayNotes(e.target.value)} placeholder="Optional notes..." rows={2} className="resize-none text-[12px]" />
+                          </div>
+                          {stayError && <p className="text-[11px] text-red-400/80">{stayError}</p>}
+                          <div className="flex items-center gap-2 justify-end">
+                            <button type="button" onClick={closeStayForm} className="rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-[11px] font-medium text-muted-foreground/55 hover:text-foreground">
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { void handleSaveStay() }}
+                              disabled={staySaving}
+                              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[11px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+                            >
+                              {staySaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Add new stay form */}
+            {stayFormOpen && !editingStayId && (
+              <div className="rounded-xl border border-border bg-card/30 overflow-hidden">
+                <div className="border-b border-border bg-secondary/30 px-4 py-2.5">
+                  <p className="text-[11px] font-semibold text-foreground/70">Add City Stay</p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">City *</label>
+                      <Input value={stayCity} onChange={(e) => setStayCity(e.target.value)} placeholder="e.g. Ibiza" className="h-8 text-[12px]" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Country</label>
+                      <Input value={stayCountry} onChange={(e) => setStayCountry(e.target.value)} placeholder="e.g. Spain" className="h-8 text-[12px]" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Venue / Area</label>
+                    <Input value={stayVenueOrArea} onChange={(e) => setStayVenueOrArea(e.target.value)} placeholder="e.g. Playa d'en Bossa" className="h-8 text-[12px]" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Start date *</label>
+                      <DatePicker value={stayStartsOn} onChange={(v) => setStayStartsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">End date *</label>
+                      <DatePicker value={stayEndsOn} onChange={(v) => setStayEndsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/55">Color *</label>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {STAY_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setStayColor(c)}
+                          className={cn(
+                            "h-5 w-5 rounded-full border-2 transition-all",
+                            stayColor === c ? "border-foreground/60 scale-110" : "border-transparent hover:scale-105",
+                          )}
+                          style={{ background: c }}
+                          title={c}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Notes</label>
+                    <Textarea value={stayNotes} onChange={(e) => setStayNotes(e.target.value)} placeholder="Optional notes..." rows={2} className="resize-none text-[12px]" />
+                  </div>
+                  {stayError && <p className="text-[11px] text-red-400/80">{stayError}</p>}
+                  <div className="flex items-center gap-2 justify-end">
+                    <button type="button" onClick={closeStayForm} className="rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-[11px] font-medium text-muted-foreground/55 hover:text-foreground">
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { void handleSaveStay() }}
+                      disabled={staySaving}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[11px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
+                      {staySaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                      Save Stay
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Add stay button */}
+            {tourStays.length > 0 && !stayFormOpen && !editingStayId && (
+              <button
+                type="button"
+                onClick={openAddStay}
+                className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-dashed border-border px-3 text-[11px] font-medium text-muted-foreground/40 transition-colors hover:border-border hover:text-muted-foreground/70"
+              >
+                <Plus className="h-3 w-3" />
+                Add City Stay
+              </button>
+            )}
           </div>
         </div>
       )

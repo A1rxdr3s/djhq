@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { TourCalendar, type TourCalendarGig } from "@/components/djhq/tour-calendar"
+import { TourCalendar, type TourCalendarGig, type TourCalendarStay } from "@/components/djhq/tour-calendar"
 import { cn } from "@/lib/utils"
 
 // Reuse the anon read client pattern from the artist profile page
@@ -40,6 +40,14 @@ type GigRow = {
   city: string
   country: string
   visibility_status: string | null
+}
+
+type StayRow = {
+  id: string
+  city: string
+  starts_on: string
+  ends_on: string
+  color: string
 }
 
 // Relative paths like /placeholder-user.jpg resolve correctly on djhq.app but
@@ -133,6 +141,23 @@ export default async function TourPage({ params }: PageProps) {
     city: g.city || undefined,
   }))
 
+  // ── 4. City stays ──────────────────────────────────────────────────────────
+  const { data: stayRows } = await supabase
+    .from("artist_tour_stays")
+    .select("id, city, starts_on, ends_on, color")
+    .eq("tour_id", tour.id)
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("starts_on", { ascending: true })
+    .returns<StayRow[]>()
+
+  const stays: TourCalendarStay[] = (stayRows ?? []).map((s) => ({
+    id: s.id,
+    city: s.city,
+    startsOn: s.starts_on,
+    endsOn: s.ends_on,
+    color: s.color,
+  }))
+
   const dateRange = formatTourDateRange(tour.start_date, tour.end_date)
   const showCount = gigs.length
 
@@ -211,6 +236,7 @@ export default async function TourPage({ params }: PageProps) {
           startDate={tour.start_date}
           endDate={tour.end_date}
           gigs={gigs}
+          stays={stays}
           variant="public"
         />
       </div>
