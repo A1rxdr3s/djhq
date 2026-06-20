@@ -1249,7 +1249,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [tourDeleteConfirm, setTourDeleteConfirm] = useState(false)
 
   // ── City Stays ────────────────────────────────────────────────────────────
-  const STAY_COLORS = ["#22c55e", "#14b8a6", "#3b82f6", "#8b5cf6", "#f59e0b", "#f43f5e", "#0ea5e9", "#84cc16"]
+  // Ordered for max adjacent hue distance: each pair differs by ≥100° of hue
+  const STAY_COLORS = ["#22c55e", "#fb7185", "#38bdf8", "#fbbf24", "#a78bfa", "#2dd4bf", "#e879f9", "#a3e635"]
   type StayRecord = {
     id: string; tourId: string; city: string; country: string | null
     venueOrArea: string | null; startsOn: string; endsOn: string

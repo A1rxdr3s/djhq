@@ -182,8 +182,16 @@ export function TourCalendar({ startDate, endDate, gigs, stays, variant = "hq" }
                     if (cellStays.length === 1) {
                       stayBg = { background: hexToRgba(cellStays[0].color, isPublic ? 0.13 : 0.10) }
                     } else if (cellStays.length >= 2) {
+                      // 2px dark diagonal separator makes the split clearly legible
                       stayBg = {
-                        background: `linear-gradient(135deg, ${hexToRgba(cellStays[0].color, 0.18)} 50%, ${hexToRgba(cellStays[1].color, 0.18)} 50%)`,
+                        background: [
+                          `linear-gradient(135deg,`,
+                          `  ${hexToRgba(cellStays[0].color, 0.22)} calc(50% - 1px),`,
+                          `  rgba(0,0,0,0.35) calc(50% - 1px),`,
+                          `  rgba(0,0,0,0.35) calc(50% + 1px),`,
+                          `  ${hexToRgba(cellStays[1].color, 0.22)} calc(50% + 1px)`,
+                          `)`,
+                        ].join(" "),
                       }
                     }
 

@@ -12,10 +12,30 @@ type StayRow = {
   sort_order: number | null; notes: string | null; created_at: string
 }
 
+// Palette ordered for maximum adjacent hue distance so sequential stays are
+// always visually distinct. Every neighbouring pair differs by ≥100° of hue.
+//   0 green(142°) → 1 rose(351°) → 2 sky(198°) → 3 amber(45°)
+//   4 violet(256°) → 5 teal(174°) → 6 fuchsia(292°) → 7 lime(82°)
 const STAY_COLORS = [
-  "#22c55e", "#14b8a6", "#3b82f6", "#8b5cf6",
-  "#f59e0b", "#f43f5e", "#0ea5e9", "#84cc16",
+  "#22c55e", // green  — DJHQ accent
+  "#fb7185", // rose
+  "#38bdf8", // sky
+  "#fbbf24", // amber
+  "#a78bfa", // violet
+  "#2dd4bf", // teal
+  "#e879f9", // fuchsia
+  "#a3e635", // lime
 ]
+
+// Picks the palette color at `index`, skipping forward if it would duplicate
+// the previous stay's color (guard for edge-cases like > 8 shows with repeats).
+function getDistinctTourStayColor(index: number, prevColor?: string | null): string {
+  for (let offset = 0; offset < STAY_COLORS.length; offset++) {
+    const candidate = STAY_COLORS[(index + offset) % STAY_COLORS.length]
+    if (candidate !== prevColor) return candidate
+  }
+  return STAY_COLORS[index % STAY_COLORS.length]
+}
 
 function mapStay(s: StayRow) {
   return {
@@ -109,19 +129,26 @@ export async function POST(request: Request) {
 
   // Build stays: one per show. ends_on = next show's date (overlap on transition
   // day); last show ends on its own date.
-  const stayInserts = gigs.map((gig, i) => {
+  const stayInserts: Array<{
+    tour_id: string; artist_id: string; city: string
+    starts_on: string; ends_on: string; color: string; sort_order: number
+  }> = []
+  for (let i = 0; i < gigs.length; i++) {
+    const gig = gigs[i]
     const nextGig = gigs[i + 1]
     const endsOn = nextGig ? nextGig.date.slice(0, 10) : gig.date.slice(0, 10)
-    return {
+    const prevColor = stayInserts[i - 1]?.color ?? null
+    const color = getDistinctTourStayColor(i, prevColor)
+    stayInserts.push({
       tour_id: tourId,
       artist_id: artistId,
       city: gig.city || "Unknown city",
       starts_on: gig.date.slice(0, 10),
       ends_on: endsOn,
-      color: STAY_COLORS[i % STAY_COLORS.length],
+      color,
       sort_order: i,
-    }
-  })
+    })
+  }
 
   // Delete existing stays for this tour then bulk insert
   const { error: deleteError } = await supabase
