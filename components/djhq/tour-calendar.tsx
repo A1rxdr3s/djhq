@@ -8,10 +8,19 @@ export type TourCalendarGig = {
   city?: string
 }
 
+export type TourCalendarStay = {
+  id: string
+  city: string
+  startsOn: string // YYYY-MM-DD
+  endsOn: string   // YYYY-MM-DD
+  color: string    // hex e.g. "#22c55e"
+}
+
 type Props = {
   startDate: string // YYYY-MM-DD
   endDate: string   // YYYY-MM-DD
   gigs: TourCalendarGig[]
+  stays?: TourCalendarStay[]
   variant?: "hq" | "public"
 }
 
@@ -59,11 +68,20 @@ function toDateKey(raw: string): string {
   return raw.slice(0, 10)
 }
 
-export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props) {
+// Convert a 6-char hex color to rgba for inline style backgrounds
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+export function TourCalendar({ startDate, endDate, gigs, stays, variant = "hq" }: Props) {
   const startD = new Date(startDate + "T00:00:00")
   const endD = new Date(endDate + "T00:00:00")
   const months = getMonthsInRange(startD, endD)
   const isPublic = variant === "public"
+  const stayList = stays ?? []
 
   // Build date → gigs lookup (normalize to YYYY-MM-DD in case of timestamp suffix)
   const gigsByDate = new Map<string, TourCalendarGig[]>()
@@ -153,21 +171,41 @@ export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props
                     const hasGigs = dayGigs.length > 0
                     const dayNum = date ? parseInt(date.slice(8)) : null
 
+                    // Find stays covering this date
+                    const cellStays = date
+                      ? stayList.filter(s => s.startsOn <= date && date <= s.endsOn)
+                      : []
+                    const hasStays = cellStays.length > 0
+
+                    // Compute background style from stays
+                    let stayBg: React.CSSProperties = {}
+                    if (cellStays.length === 1) {
+                      stayBg = { background: hexToRgba(cellStays[0].color, isPublic ? 0.13 : 0.10) }
+                    } else if (cellStays.length >= 2) {
+                      stayBg = {
+                        background: `linear-gradient(135deg, ${hexToRgba(cellStays[0].color, 0.18)} 50%, ${hexToRgba(cellStays[1].color, 0.18)} 50%)`,
+                      }
+                    }
+
                     return (
                       <div
                         key={i}
+                        style={hasStays ? stayBg : undefined}
                         className={cn(
                           "min-h-[56px] rounded p-1",
                           date === null && "pointer-events-none",
-                          hasGigs
-                            ? isPublic
-                              ? "bg-accent/[0.10] ring-1 ring-inset ring-accent/20"
-                              : "bg-accent/[0.07] ring-1 ring-inset ring-accent/18"
-                            : date !== null
+                          !hasStays && (
+                            hasGigs
                               ? isPublic
-                                ? "bg-white/[0.025]"
-                                : "bg-secondary/20"
-                              : "",
+                                ? "bg-accent/[0.10] ring-1 ring-inset ring-accent/20"
+                                : "bg-accent/[0.07] ring-1 ring-inset ring-accent/18"
+                              : date !== null
+                                ? isPublic
+                                  ? "bg-white/[0.025]"
+                                  : "bg-secondary/20"
+                                : ""
+                          ),
+                          hasStays && hasGigs && "ring-1 ring-inset ring-accent/18",
                         )}
                       >
                         {date && (
@@ -180,6 +218,23 @@ export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props
                             )}>
                               {dayNum}
                             </span>
+
+                            {/* City stay labels */}
+                            {cellStays.length > 0 && (
+                              <div className="mt-0.5 space-y-px">
+                                {cellStays.slice(0, 2).map((s, si) => (
+                                  <p
+                                    key={si}
+                                    className="truncate text-[7px] font-medium leading-tight"
+                                    style={{ color: s.color, opacity: 0.8 }}
+                                  >
+                                    {s.city}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Show labels */}
                             <div className="mt-0.5 space-y-px">
                               {dayGigs.slice(0, 2).map((gig, gi) => (
                                 <div
@@ -214,18 +269,26 @@ export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props
             )
           })}
         </div>
-        {gigs.length === 0 && <div className="mt-6">{emptyState}</div>}
+        {gigs.length === 0 && stayList.length === 0 && <div className="mt-6">{emptyState}</div>}
       </div>
 
-      {/* ── Mobile: agenda list (one row per show) ──────────────── */}
+      {/* ── Mobile: agenda list ──────────────────────────────────── */}
       <div className="sm:hidden">
-        {gigs.length === 0 ? (
+        {gigs.length === 0 && stayList.length === 0 ? (
           emptyState
         ) : (
           <div className="space-y-6">
             {months.map(({ year, month }) => {
               const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`
-              const monthEntries = gigDateEntries.filter(({ date }) => date.startsWith(monthStr))
+              const monthGigEntries = gigDateEntries.filter(({ date }) => date.startsWith(monthStr))
+
+              // Stays that overlap this month
+              const monthStays = stayList.filter(s => {
+                const stayMonth = s.startsOn.slice(0, 7)
+                const endMonth = s.endsOn.slice(0, 7)
+                return stayMonth <= monthStr && endMonth >= monthStr
+              })
+
               return (
                 <div key={`mob-${year}-${month}`}>
                   <p className={cn(
@@ -234,16 +297,89 @@ export function TourCalendar({ startDate, endDate, gigs, variant = "hq" }: Props
                   )}>
                     {MONTH_NAMES[month]} {year}
                   </p>
-                  {monthEntries.length === 0 ? (
+
+                  {/* Route / stays summary for this month */}
+                  {monthStays.length > 0 && (
+                    <div className="mb-3 space-y-1">
+                      {monthStays.map((stay) => {
+                        // Check if this stay's endsOn is another stay's startsOn (transition)
+                        const incomingStay = stayList.find(
+                          s => s.id !== stay.id && s.startsOn === stay.endsOn
+                        )
+                        const isTransition = !!incomingStay
+
+                        return (
+                          <div
+                            key={stay.id}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg px-3 py-2",
+                              isPublic ? "bg-white/[0.03]" : "bg-secondary/20",
+                            )}
+                          >
+                            {/* Color dot */}
+                            {isTransition && incomingStay ? (
+                              <div className="flex shrink-0 items-center gap-1">
+                                <span
+                                  className="h-2 w-2 rounded-full shrink-0"
+                                  style={{ background: stay.color }}
+                                />
+                                <span className={cn(
+                                  "text-[9px]",
+                                  isPublic ? "text-white/30" : "text-muted-foreground/40",
+                                )}>→</span>
+                                <span
+                                  className="h-2 w-2 rounded-full shrink-0"
+                                  style={{ background: incomingStay.color }}
+                                />
+                              </div>
+                            ) : (
+                              <span
+                                className="h-2 w-2 rounded-full shrink-0"
+                                style={{ background: stay.color }}
+                              />
+                            )}
+
+                            <div className="min-w-0 flex-1">
+                              {isTransition && incomingStay ? (
+                                <p className={cn(
+                                  "text-[11px] font-semibold",
+                                  isPublic ? "text-white/70" : "text-foreground/70",
+                                )}>
+                                  {stay.city} → {incomingStay.city}
+                                </p>
+                              ) : (
+                                <p className={cn(
+                                  "text-[11px] font-semibold",
+                                  isPublic ? "text-white/70" : "text-foreground/70",
+                                )}>
+                                  {stay.city}
+                                </p>
+                              )}
+                              <p className={cn(
+                                "text-[10px]",
+                                isPublic ? "text-white/28" : "text-muted-foreground/38",
+                              )}>
+                                {formatDate(stay.startsOn)}
+                                {stay.endsOn !== stay.startsOn ? ` – ${formatDate(stay.endsOn)}` : ""}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Show entries */}
+                  {monthGigEntries.length === 0 && monthStays.length === 0 ? (
                     <p className={cn(
                       "text-[11px]",
                       isPublic ? "text-white/18" : "text-muted-foreground/28",
                     )}>
                       No shows scheduled.
                     </p>
-                  ) : (
+                  ) : monthGigEntries.length === 0 ? null : (
                     <div className="space-y-1">
-                      {monthEntries.map(({ date, gigs: dg }) => (
+                      {monthGigEntries.map(({ date, gigs: dg }) => (
                         <div
                           key={date}
                           className={cn(

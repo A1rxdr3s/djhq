@@ -18,7 +18,7 @@ import { GigCard } from "@/components/dashboard/gig-card"
 import { ShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { BookingsSection } from "@/components/dashboard/bookings-section"
-import { TourCalendar, type TourCalendarGig } from "@/components/djhq/tour-calendar"
+import { TourCalendar, type TourCalendarGig, type TourCalendarStay } from "@/components/djhq/tour-calendar"
 import { hqListBookingLeads } from "@/app/actions/booking-lead-actions"
 import { HqPageHeader } from "@/components/djhq/hq-page-header"
 import { HeroIdentity } from "@/components/djhq/hero-identity"
@@ -1248,6 +1248,28 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [tourDeleting, setTourDeleting] = useState(false)
   const [tourDeleteConfirm, setTourDeleteConfirm] = useState(false)
 
+  // ── City Stays ────────────────────────────────────────────────────────────
+  const STAY_COLORS = ["#22c55e", "#14b8a6", "#3b82f6", "#8b5cf6", "#f59e0b", "#f43f5e", "#0ea5e9", "#84cc16"]
+  type StayRecord = {
+    id: string; tourId: string; city: string; country: string | null
+    venueOrArea: string | null; startsOn: string; endsOn: string
+    color: string; sortOrder: number | null; notes: string | null
+  }
+  const [tourStays, setTourStays] = useState<StayRecord[]>([])
+  const [staysLoaded, setStaysLoaded] = useState(false)
+  const [stayFormOpen, setStayFormOpen] = useState(false)
+  const [editingStayId, setEditingStayId] = useState<string | null>(null)
+  const [stayCity, setStayCity] = useState("")
+  const [stayCountry, setStayCountry] = useState("")
+  const [stayVenueOrArea, setStayVenueOrArea] = useState("")
+  const [stayStartsOn, setStayStartsOn] = useState("")
+  const [stayEndsOn, setStayEndsOn] = useState("")
+  const [stayColor, setStayColor] = useState(STAY_COLORS[0])
+  const [stayNotes, setStayNotes] = useState("")
+  const [staySaving, setStaySaving] = useState(false)
+  const [stayError, setStayError] = useState("")
+  const [stayGenerating, setStayGenerating] = useState(false)
+
   type HomeBooking = {
     id: string; referenceId: string; fullName: string
     city: string; eventDate: string; status: string
@@ -1372,6 +1394,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     })()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection])
+
+  // City stays: reset and re-fetch whenever the selected tour changes
+  useEffect(() => {
+    setTourStays([])
+    setStaysLoaded(false)
+    setStayFormOpen(false)
+    setEditingStayId(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTourId])
+
+  useEffect(() => {
+    if (!selectedTourId || staysLoaded) return
+    void (async () => {
+      try {
+        const res = await fetch(`/api/artists/tours/stays?tourId=${selectedTourId}&artistId=${artist.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setTourStays(data.stays ?? [])
+        }
+      } finally {
+        setStaysLoaded(true)
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTourId, staysLoaded])
 
   // Home: fetch latest booking for the command surface (once per mount)
   useEffect(() => {
@@ -6474,6 +6521,101 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         setTourFormOpen(false)
       } catch { /* ignore */ }
       finally { setTourDeleting(false) }
+    }
+
+    // ── City Stays handlers ───────────────────────────────────────────────────
+
+    function openAddStay() {
+      setEditingStayId(null)
+      setStayCity(""); setStayCountry(""); setStayVenueOrArea("")
+      setStayStartsOn(""); setStayEndsOn("")
+      setStayColor(STAY_COLORS[tourStays.length % STAY_COLORS.length])
+      setStayNotes(""); setStayError("")
+      setStayFormOpen(true)
+    }
+
+    function openEditStay(stay: StayRecord) {
+      setStayFormOpen(false)
+      setEditingStayId(stay.id)
+      setStayCity(stay.city); setStayCountry(stay.country ?? "")
+      setStayVenueOrArea(stay.venueOrArea ?? "")
+      setStayStartsOn(stay.startsOn); setStayEndsOn(stay.endsOn)
+      setStayColor(stay.color); setStayNotes(stay.notes ?? "")
+      setStayError("")
+    }
+
+    function closeStayForm() {
+      setStayFormOpen(false)
+      setEditingStayId(null)
+      setStayError("")
+    }
+
+    async function handleSaveStay() {
+      if (!stayCity.trim() || !stayStartsOn || !stayEndsOn || !stayColor) {
+        setStayError("City, start date, end date and color are required.")
+        return
+      }
+      if (!selectedTourId) return
+      setStaySaving(true); setStayError("")
+      try {
+        if (editingStayId) {
+          const res = await fetch("/api/artists/tours/stays", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              stayId: editingStayId, artistId: artist.id,
+              city: stayCity, country: stayCountry || null, venueOrArea: stayVenueOrArea || null,
+              startsOn: stayStartsOn, endsOn: stayEndsOn, color: stayColor, notes: stayNotes || null,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok) { setStayError(data.error ?? "Failed to save stay."); return }
+          setTourStays((prev) => prev.map((s) => s.id === editingStayId ? {
+            ...s, city: data.stay.city, country: data.stay.country, venueOrArea: data.stay.venueOrArea,
+            startsOn: data.stay.startsOn, endsOn: data.stay.endsOn, color: data.stay.color, notes: data.stay.notes,
+          } : s))
+        } else {
+          const res = await fetch("/api/artists/tours/stays", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tourId: selectedTourId, artistId: artist.id,
+              city: stayCity, country: stayCountry || null, venueOrArea: stayVenueOrArea || null,
+              startsOn: stayStartsOn, endsOn: stayEndsOn, color: stayColor,
+              sortOrder: tourStays.length, notes: stayNotes || null,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok) { setStayError(data.error ?? "Failed to save stay."); return }
+          setTourStays((prev) => [...prev, data.stay])
+        }
+        closeStayForm()
+      } catch { setStayError("Failed to save stay.") }
+      finally { setStaySaving(false) }
+    }
+
+    async function handleDeleteStay(stayId: string) {
+      try {
+        await fetch(`/api/artists/tours/stays?stayId=${stayId}&artistId=${artist.id}`, { method: "DELETE" })
+        setTourStays((prev) => prev.filter((s) => s.id !== stayId))
+        if (editingStayId === stayId) closeStayForm()
+      } catch { /* ignore */ }
+    }
+
+    async function handleGenerateStays() {
+      if (!selectedTourId) return
+      setStayGenerating(true)
+      try {
+        const res = await fetch("/api/artists/tours/stays/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tourId: selectedTourId, artistId: artist.id }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setStayError(data.error ?? "Failed to generate stays."); return }
+        setTourStays(data.stays ?? [])
+      } catch { setStayError("Failed to generate stays.") }
+      finally { setStayGenerating(false) }
     }
 
     function openCreateForm() {
