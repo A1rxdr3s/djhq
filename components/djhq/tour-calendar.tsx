@@ -177,21 +177,32 @@ export function TourCalendar({ startDate, endDate, gigs, stays, variant = "hq" }
                       : []
                     const hasStays = cellStays.length > 0
 
-                    // Compute background style from stays
+                    // Compute background style from stays.
+                    // Single stay: very low-opacity fill + inset left accent bar (avoids touching
+                    // the outer rounded corners that a real border-left would clip).
+                    // Split stay: two subtle tinted halves separated by a thin 1px light hairline
+                    // rather than a heavy dark band.
                     let stayBg: React.CSSProperties = {}
                     if (cellStays.length === 1) {
-                      stayBg = { background: hexToRgba(cellStays[0].color, isPublic ? 0.13 : 0.10) }
+                      const c = cellStays[0].color
+                      stayBg = {
+                        background: hexToRgba(c, isPublic ? 0.07 : 0.05),
+                        boxShadow: `inset 2px 0 0 ${hexToRgba(c, isPublic ? 0.50 : 0.38)}`,
+                      }
                     } else if (cellStays.length >= 2) {
-                      // 2px dark diagonal separator makes the split clearly legible
+                      const c1 = cellStays[0].color
+                      const c2 = cellStays[1].color
                       stayBg = {
                         background: [
                           `linear-gradient(135deg,`,
-                          `  ${hexToRgba(cellStays[0].color, 0.22)} calc(50% - 1px),`,
-                          `  rgba(0,0,0,0.35) calc(50% - 1px),`,
-                          `  rgba(0,0,0,0.35) calc(50% + 1px),`,
-                          `  ${hexToRgba(cellStays[1].color, 0.22)} calc(50% + 1px)`,
+                          `  ${hexToRgba(c1, 0.09)} calc(50% - 0.5px),`,
+                          `  rgba(255,255,255,0.10) calc(50% - 0.5px),`,
+                          `  rgba(255,255,255,0.10) calc(50% + 0.5px),`,
+                          `  ${hexToRgba(c2, 0.09)} calc(50% + 0.5px)`,
                           `)`,
                         ].join(" "),
+                        // Left accent shows the first city's color
+                        boxShadow: `inset 2px 0 0 ${hexToRgba(c1, isPublic ? 0.50 : 0.38)}`,
                       }
                     }
 
@@ -213,7 +224,7 @@ export function TourCalendar({ startDate, endDate, gigs, stays, variant = "hq" }
                                   : "bg-secondary/20"
                                 : ""
                           ),
-                          hasStays && hasGigs && "ring-1 ring-inset ring-accent/18",
+                          hasStays && hasGigs && "ring-1 ring-inset ring-white/[0.08]",
                         )}
                       >
                         {date && (
@@ -227,14 +238,14 @@ export function TourCalendar({ startDate, endDate, gigs, stays, variant = "hq" }
                               {dayNum}
                             </span>
 
-                            {/* City stay labels */}
+                            {/* City stay labels — intentionally subordinate to show pills */}
                             {cellStays.length > 0 && (
                               <div className="mt-0.5 space-y-px">
                                 {cellStays.slice(0, 2).map((s, si) => (
                                   <p
                                     key={si}
-                                    className="truncate text-[7px] font-medium leading-tight"
-                                    style={{ color: s.color, opacity: 0.8 }}
+                                    className="truncate text-[6.5px] leading-tight"
+                                    style={{ color: s.color, opacity: 0.45 }}
                                   >
                                     {s.city}
                                   </p>
@@ -242,16 +253,16 @@ export function TourCalendar({ startDate, endDate, gigs, stays, variant = "hq" }
                               </div>
                             )}
 
-                            {/* Show labels */}
+                            {/* Show labels — primary visual element inside the cell */}
                             <div className="mt-0.5 space-y-px">
                               {dayGigs.slice(0, 2).map((gig, gi) => (
                                 <div
                                   key={gi}
                                   className={cn(
-                                    "truncate rounded px-1 py-px text-[7.5px] font-semibold leading-tight",
+                                    "truncate rounded px-1 py-px text-[7.5px] font-bold leading-tight",
                                     isPublic
-                                      ? "bg-accent/20 text-accent/90"
-                                      : "bg-accent/12 text-accent",
+                                      ? "bg-white/[0.12] text-white/90"
+                                      : "bg-accent/[0.14] text-accent",
                                   )}
                                   title={[gig.eventName, gig.venue, gig.city].filter(Boolean).join(" · ")}
                                 >
