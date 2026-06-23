@@ -117,7 +117,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "min-w-0 truncate text-[15px] xl:text-[17px] font-semibold uppercase leading-tight tracking-[0.04em]",
-              isPast ? "text-foreground/30" : isTba ? "text-foreground/60" : "text-foreground/92",
+              isPast ? "text-foreground/30" : isTba ? "text-foreground/75" : "text-foreground/92",
             )}
           >
             {displayTitle}
@@ -133,18 +133,14 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
             </span>
           )}
           {isTba && (
-            <span className="shrink-0 rounded-full border border-white/[0.10] bg-white/[0.03] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/42">
-              Announcing
+            <span className="shrink-0 rounded-full border border-accent/[0.22] bg-accent/[0.06] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-accent/65">
+              Venue TBA
             </span>
           )}
         </div>
 
-        {/* Venue context line / TBA sub-copy */}
-        {isTba ? (
-          <p className="mt-0.5 text-xs font-medium leading-tight text-white/38">
-            Venue details announcing soon
-          </p>
-        ) : !isHidden ? (
+        {/* Venue context line — height reserved; invisible when event name absent */}
+        {!isTba && !isHidden ? (
           <p
             className={cn(
               "mt-0.5 truncate text-xs font-medium leading-tight",
@@ -257,14 +253,16 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
         <p
           className={cn(
             "truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.04em]",
-            isPast ? "text-foreground/32" : isTba ? "text-foreground/55" : "text-foreground/82",
+            isPast ? "text-foreground/32" : isTba ? "text-foreground/68" : "text-foreground/82",
           )}
         >
           {displayTitle}
         </p>
         {isTba ? (
-          <p className="truncate text-[9px] font-medium leading-tight text-white/32">
-            Announcing soon
+          <p className="mt-[2px]">
+            <span className="inline-flex rounded-full border border-accent/[0.20] bg-accent/[0.04] px-1.5 py-[1px] text-[8px] font-semibold uppercase tracking-[0.10em] text-accent/58">
+              Venue TBA
+            </span>
           </p>
         ) : hasEventName && gig.venue ? (
           <p
@@ -402,7 +400,6 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
   const hasPastToggle = pastForToggle.length > 0
 
   const sectionTitle = scenarioA ? "Recent Shows" : "Shows"
-  const tbaCount = futureGigs.filter((g) => g.visibilityStatus === "tba").length
 
   // First show gets the full featured card; the rest render as compact rows.
   const featuredGig = primaryRows[0]
@@ -411,11 +408,6 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
   return (
     <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-6 xl:p-9">
       <SectionHeader>{sectionTitle}</SectionHeader>
-      {tbaCount >= 2 && (
-        <p className="mt-1.5 text-[10px] font-medium tracking-[0.06em] text-white/30">
-          Upcoming dates are being announced soon.
-        </p>
-      )}
 
       <div className="mt-4 lg:flex-1">
         <motion.div
