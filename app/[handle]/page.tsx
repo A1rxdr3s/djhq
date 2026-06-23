@@ -933,7 +933,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {!isFloatingPlacement && (
               <div className="absolute inset-x-0 bottom-[28%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
                 {(displayHeroTagline || credibilityLine) && (
-                  <div className="mb-7 flex flex-col items-center gap-2">
+                  <div className="mb-7 flex flex-col items-center gap-3">
                     {displayHeroTagline && (
                       <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/68">
                         {displayHeroTagline.split(/\. /).map((part, i, arr) => (
@@ -942,7 +942,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       </p>
                     )}
                     {credibilityLine && (
-                      <p className="max-w-[260px] text-balance text-center text-[13px] font-semibold leading-[1.55] text-white/85">
+                      <p className="max-w-[260px] text-balance text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
                         {credibilityLine}
                       </p>
                     )}
@@ -1034,7 +1034,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
                 {/* Tagline + short bio — artist statement cluster */}
                 {(displayHeroTagline || credibilityLine) && (
-                  <div className="mt-4 flex flex-col items-center gap-2 sm:mt-11">
+                  <div className="mt-4 flex flex-col items-center gap-4 sm:mt-11">
                     {displayHeroTagline && (
                       <p
                         className="max-w-[80vw] text-[14px] font-bold uppercase tracking-[0.12em] text-white/90 line-clamp-2 sm:max-w-none sm:text-[17px] sm:tracking-[0.22em] sm:line-clamp-none"
@@ -1045,7 +1045,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     )}
                     {credibilityLine && (
                       <p
-                        className="max-w-2xl text-pretty text-center text-[14px] font-semibold leading-[1.55] text-white/85"
+                        className="max-w-2xl text-pretty text-center text-[13px] font-semibold uppercase tracking-[0.14em] text-white/70 sm:text-[14px] sm:tracking-[0.20em]"
                         style={{ textShadow: "0 1px 8px rgba(0,0,0,0.45)" }}
                       >
                         {credibilityLine}
@@ -1095,7 +1095,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               /* Floating logo placement: logo is separate, tagline + CTAs centered below */
               <div className="absolute inset-x-0 bottom-[14%] z-10 flex flex-col items-center px-4 text-center sm:bottom-[16%]">
                 {(displayHeroTagline || credibilityLine) && (
-                  <div className="mb-5 flex flex-col items-center gap-2">
+                  <div className="mb-5 flex flex-col items-center gap-3">
                     {displayHeroTagline && (
                       <p
                         className="max-w-[80vw] text-[13px] font-semibold uppercase tracking-[0.12em] text-white/78 line-clamp-2 sm:max-w-none sm:text-[14px] sm:tracking-[0.22em] sm:line-clamp-none"
@@ -1106,7 +1106,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     )}
                     {credibilityLine && (
                       <p
-                        className="max-w-[260px] text-pretty text-center text-[14px] font-semibold leading-[1.55] text-white/85 sm:max-w-2xl"
+                        className="max-w-[260px] text-pretty text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60 sm:max-w-2xl sm:text-[12px] sm:tracking-[0.20em]"
                         style={{ textShadow: "0 1px 8px rgba(0,0,0,0.40)" }}
                       >
                         {credibilityLine}
