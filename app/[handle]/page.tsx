@@ -1583,13 +1583,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                             <img
                               src={featuredSet.imageUrl}
                               alt={`${featuredSet.title} artwork`}
-                              className="absolute inset-0 h-full w-full object-cover brightness-[0.85] transition-transform duration-500 group-hover:scale-[1.03]"
+                              className="absolute inset-0 h-full w-full object-cover brightness-[0.78] transition-transform duration-500 group-hover:scale-[1.03]"
                             />
                           ) : (
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
                           )}
                           {featuredSet.imageUrl && (
-                            <div className="absolute inset-0 bg-black/[0.15]" aria-hidden />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/[0.05] to-black/[0.48]" aria-hidden />
                           )}
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
