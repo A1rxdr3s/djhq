@@ -1454,6 +1454,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     const { displayTitle } = getVideoDisplayInfo(featuredVideo, artist.artistName)
                     const metaParts = [
                       featuredVideo.venue?.trim() || null,
+                      featuredVideo.videoCity?.trim() || null,
                       featuredVideo.videoDate ? (formatReleaseDate(featuredVideo.videoDate)?.replace(",", "") ?? null) : null,
                     ].filter(Boolean)
                     return (
@@ -1563,9 +1564,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Featured Set */}
                   {(() => {
                     const setTitle = featuredSet.event?.trim() || featuredSet.venue?.trim() || cleanDjSetTitle(featuredSet.title, artist.artistName)
+                    const venuePart = featuredSet.venue?.trim() || null
                     const cityPart = featuredSet.city?.trim() || null
                     const datePart = featuredSet.setDate ? (formatReleaseDate(featuredSet.setDate)?.replace(",", "") ?? null) : null
-                    const metaParts = [cityPart, datePart].filter(Boolean)
+                    const metaParts = [venuePart, cityPart, datePart].filter(Boolean)
                     return (
                       <a
                         href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
