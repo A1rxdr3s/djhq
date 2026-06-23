@@ -1483,7 +1483,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         </div>
                         <div className="px-4 py-2.5 sm:px-5 sm:py-3.5">
                           <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/75">
-                            LIVE PERFORMANCE
+                            VIDEO PERFORMANCE
                           </p>
                           <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px] xl:text-[28px]">
                             {displayTitle}
@@ -1502,7 +1502,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {secondaryVideos.length > 0 ? (
                     <div>
                       <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-foreground/30">
-                        Recent Performances
+                        More Video Performances
                       </p>
                       <div className="space-y-px">
                         {secondaryVideos.map((video) => {
@@ -1546,7 +1546,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   </p>
                                 ) : null}
                               </div>
-                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-foreground/20 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent/50" />
+                              <span className="-m-2 shrink-0 p-2">
+                                <ExternalLink className="h-3.5 w-3.5 text-foreground/20 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent/50" />
+                              </span>
                             </a>
                           )
                         })}
@@ -1586,6 +1588,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           ) : (
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
                           )}
+                          {featuredSet.imageUrl && (
+                            <div className="absolute inset-0 bg-black/[0.15]" aria-hidden />
+                          )}
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                               <Play className="h-6 w-6 fill-white text-white" />
@@ -1613,7 +1618,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {recentSets.length > 0 ? (
                     <div>
                       <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-foreground/30">
-                        Recent Sets
+                        More DJ Sets
                       </p>
                       <div className="space-y-px">
                         {recentSets.map((set) => {
@@ -1654,7 +1659,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   </p>
                                 ) : null}
                               </div>
-                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-foreground/18 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-[2px] group-hover:text-accent/45" />
+                              <span className="-m-2 shrink-0 p-2">
+                                <ExternalLink className="h-3.5 w-3.5 text-foreground/18 transition-all duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-[2px] group-hover:text-accent/45" />
+                              </span>
                             </a>
                           )
                         })}
