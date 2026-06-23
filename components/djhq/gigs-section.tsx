@@ -250,21 +250,22 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
 
       {/* Title → optional venue sub → location */}
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.04em]",
-            isPast ? "text-foreground/32" : isTba ? "text-foreground/68" : "text-foreground/82",
-          )}
-        >
-          {displayTitle}
-        </p>
-        {isTba ? (
-          <p className="mt-[2px]">
-            <span className="inline-flex rounded-full border border-accent/[0.14] bg-accent/[0.03] px-1 py-[1px] text-[8px] font-semibold uppercase tracking-[0.10em] text-accent/55">
+        <div className="flex min-w-0 items-center gap-2">
+          <p
+            className={cn(
+              "min-w-0 truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.04em]",
+              isPast ? "text-foreground/32" : isTba ? "text-foreground/68" : "text-foreground/82",
+            )}
+          >
+            {displayTitle}
+          </p>
+          {isTba && (
+            <span className="shrink-0 rounded-full border border-accent/[0.14] bg-accent/[0.03] px-1 py-[1px] text-[8px] font-semibold uppercase tracking-[0.10em] text-accent/55">
               Venue TBA
             </span>
-          </p>
-        ) : hasEventName && gig.venue ? (
+          )}
+        </div>
+        {!isTba && hasEventName && gig.venue ? (
           <p
             className={cn(
               "truncate text-[10px] font-medium leading-tight",
