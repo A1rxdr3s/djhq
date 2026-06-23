@@ -942,7 +942,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                       </p>
                     )}
                     {credibilityLine && (
-                      <p className="max-w-[260px] text-center text-[12px] leading-[1.55] text-white/70">
+                      <p className="max-w-[260px] text-balance text-center text-[12px] leading-[1.55] text-white/70">
                         {credibilityLine}
                       </p>
                     )}
@@ -1045,7 +1045,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     )}
                     {credibilityLine && (
                       <p
-                        className="max-w-sm text-center text-[13px] leading-[1.55] text-white/72"
+                        className="max-w-2xl text-pretty text-center text-[13px] leading-[1.55] text-white/72"
                         style={{ textShadow: "0 1px 8px rgba(0,0,0,0.45)" }}
                       >
                         {credibilityLine}
@@ -1106,7 +1106,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     )}
                     {credibilityLine && (
                       <p
-                        className="max-w-sm text-center text-[13px] leading-[1.55] text-white/70"
+                        className="max-w-[260px] text-pretty text-center text-[13px] leading-[1.55] text-white/70 sm:max-w-2xl"
                         style={{ textShadow: "0 1px 8px rgba(0,0,0,0.40)" }}
                       >
                         {credibilityLine}
