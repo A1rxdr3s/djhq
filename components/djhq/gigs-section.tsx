@@ -133,7 +133,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
             </span>
           )}
           {isTba && (
-            <span className="shrink-0 rounded-full border border-accent/[0.22] bg-accent/[0.06] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-accent/65">
+            <span className="shrink-0 rounded-full border border-accent/[0.16] bg-accent/[0.04] px-1.5 py-[1px] text-[8px] font-semibold uppercase tracking-[0.12em] text-accent/62">
               Venue TBA
             </span>
           )}
@@ -260,7 +260,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
         </p>
         {isTba ? (
           <p className="mt-[2px]">
-            <span className="inline-flex rounded-full border border-accent/[0.20] bg-accent/[0.04] px-1.5 py-[1px] text-[8px] font-semibold uppercase tracking-[0.10em] text-accent/58">
+            <span className="inline-flex rounded-full border border-accent/[0.14] bg-accent/[0.03] px-1 py-[1px] text-[8px] font-semibold uppercase tracking-[0.10em] text-accent/55">
               Venue TBA
             </span>
           </p>
