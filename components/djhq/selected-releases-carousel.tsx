@@ -34,6 +34,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
   const dragStartRef = useRef(0)
   const dragScrollRef = useRef(0)
   const wasDraggingRef = useRef(false)
+  const modalOpenRef = useRef(false)
 
   // Double items for seamless infinite loop
   const items = [...releases, ...releases]
@@ -59,7 +60,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
   useEffect(() => {
     if (releases.length <= 1) return
     const tick = () => {
-      if (pausedRef.current || dragRef.current) return
+      if (pausedRef.current || dragRef.current || modalOpenRef.current) return
       const el = scrollRef.current
       if (!el) return
       const firstItem = el.querySelector("article")
@@ -144,7 +145,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
               aria-hidden={isClone}
               className="flex w-[min(72vw,240px)] shrink-0 snap-start flex-col sm:w-[240px] lg:w-[240px]"
             >
-              <DialogPrimitive.Root>
+              <DialogPrimitive.Root onOpenChange={(open) => { modalOpenRef.current = open }}>
                 {/* Artwork with hover lift + overlay */}
                 <div className="group relative aspect-square overflow-hidden rounded-2xl border border-white/[0.06] bg-secondary shadow-md shadow-black/30 transition-all duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-accent/40 hover:[box-shadow:0_0_16px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
                   {hasArtwork ? (
