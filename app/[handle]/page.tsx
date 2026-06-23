@@ -1337,7 +1337,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <MobileSection tab="music" className="max-lg:hidden">
             <div className="flex flex-col">
               <SectionHeader>Featured Release</SectionHeader>
-              <section className="mt-4 flex flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-5 shadow-lg shadow-black/20 sm:mt-5 sm:p-6 lg:mt-5 lg:p-6 xl:p-9">
+              <section className="mt-4 flex flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-5 shadow-lg shadow-black/20 sm:mt-5 sm:p-6 lg:mt-5 lg:px-6 lg:py-4 xl:px-8 xl:py-6">
               <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-[minmax(0,44%)_minmax(0,1fr)] sm:gap-5 lg:grid-cols-[minmax(0,48%)_minmax(0,1fr)] lg:items-stretch lg:gap-6 xl:gap-8">
                 <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full lg:aspect-auto lg:self-stretch">
                   {!hasFeaturedArtwork ? (
@@ -1355,24 +1355,24 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                 </div>
-                <div className="flex min-w-0 flex-col justify-between sm:py-1 lg:py-1">
+                <div className="flex min-w-0 flex-col justify-between">
                   <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent/90 lg:text-[12px]">
                     {featuredRelease.type}
                   </p>
-                  <h2 className="mt-1.5 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-2 sm:text-2xl lg:text-[2rem] xl:text-[2.25rem]">
+                  <h2 className="mt-1 text-balance text-xl font-black leading-[1.05] tracking-[-0.015em] text-foreground sm:mt-1.5 sm:text-2xl lg:text-[2rem] xl:text-[2.25rem]">
                     {featuredRelease.title}
                   </h2>
                   {featuredRelease.credits ? (
-                    <p className="mt-1.5 text-xs text-muted-foreground/85 sm:mt-2">
+                    <p className="mt-1 text-xs text-muted-foreground/85 sm:mt-1.5">
                       {featuredRelease.credits}
                     </p>
                   ) : null}
-                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground sm:mt-2.5">
+                  <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground sm:mt-2">
                     {featuredRelease.label} · {featuredReleaseYear}
                   </p>
                   <Button
                     asChild
-                    className="mt-4 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-4 sm:w-auto lg:mt-5 lg:h-12 lg:px-7 xl:h-12 xl:px-8"
+                    className="mt-3 h-11 w-full rounded-full bg-accent px-6 text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90 sm:mt-3 sm:w-auto lg:mt-4 lg:h-12 lg:px-7 xl:h-12 xl:px-8"
                   >
                     <a href={resolveSafeHref(featuredRelease.platformUrl) ?? "#"} target="_blank" rel="noopener noreferrer">
                       Listen / Buy

@@ -449,7 +449,7 @@ export function GigsSection({ futureGigs, pastGigs, className }: GigsSectionProp
         <button
           type="button"
           onClick={() => setShowAllFuture(true)}
-          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
+          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-2 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
         >
           View All Shows ({futureGigs.length}) →
         </button>
@@ -460,7 +460,7 @@ export function GigsSection({ futureGigs, pastGigs, className }: GigsSectionProp
         <button
           type="button"
           onClick={() => setPastExpanded((v) => !v)}
-          className="mt-4 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-3 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
+          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-2 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
         >
           {pastExpanded ? "Hide Past Shows ↑" : "View Past Shows →"}
         </button>
