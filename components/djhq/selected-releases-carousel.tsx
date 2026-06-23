@@ -176,7 +176,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
               </div>
 
               {/* Metadata */}
-              <div className="mt-2 min-w-0">
+              <div className="mt-3 min-w-0">
                 {/* Type / version badges */}
                 {badges.length > 0 && (
                   <div className="mb-1.5 flex flex-wrap gap-1">
@@ -191,20 +191,15 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                   </div>
                 )}
 
-                <h3 className="text-balance text-[15px] font-bold leading-tight text-foreground">
+                <h3 className="text-balance text-[15px] font-black leading-tight text-foreground">
                   {release.title}
                 </h3>
 
-                <p className="mt-px text-[12px] text-white/50 line-clamp-1">{release.credits ?? ""}</p>
+                <p className="mt-1 text-[12px] text-white/42 line-clamp-1">{release.credits ?? ""}</p>
 
-                <p className="mt-1 line-clamp-1 text-[10px] uppercase tracking-[0.18em] text-white/32">
-                  {release.label}
+                <p className="mt-1 line-clamp-1 text-[10px] uppercase tracking-[0.14em] text-white/28">
+                  {[releaseYear, release.label].filter(Boolean).join(" · ")}
                 </p>
-                {releaseYear && (
-                  <p className="text-[10px] tracking-[0.10em] text-white/22">
-                    {releaseYear}
-                  </p>
-                )}
 
                 <ReleaseListenPanel release={release} platformLinks={platformLinks} />
               </div>
