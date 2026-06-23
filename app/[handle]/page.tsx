@@ -255,6 +255,25 @@ function formatReleaseDate(releaseDate: string): string | null {
   })
 }
 
+// Formats genre tags for editorial display with natural language conjunctions.
+// Handles both string[] and raw comma-separated strings defensively.
+// ["House", "Tech House"] → "House & Tech House"
+// ["House", "Tech House", "Melodic House"] → "House, Tech House & Melodic House"
+function formatGenres(raw: string | string[] | null | undefined): string {
+  if (!raw) return ""
+  const tags = (Array.isArray(raw) ? raw : raw.split(",").map((s) => s.trim())).filter(Boolean)
+  if (tags.length === 0) return ""
+  if (tags.length === 1) return tags[0]
+  return `${tags.slice(0, -1).join(", ")} & ${tags[tags.length - 1]}`
+}
+
+function buildCredibilityLine(shortBio: string, genres: string[]): string {
+  const bio = shortBio.trim()
+  const genreStr = formatGenres(genres)
+  if (bio && genreStr) return `${bio} · ${genreStr}`
+  return bio || genreStr
+}
+
 // Strips raw scraped noise from SoundCloud/platform titles for editorial display.
 // Removes leading "ARTIST –/—/- " prefix and trailing " by ARTIST" or " –/—/- ARTIST".
 // Deterministic regex only — no AI, no heuristics.
@@ -712,6 +731,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
   // heroTagline takes priority; falls back to the legacy tagline field for existing artists.
   const displayHeroTagline = artist.heroTagline?.trim() || releaseTagline
+  const credibilityLine = buildCredibilityLine(artist.shortBio, artist.genres)
   const hasFeaturedArtwork = !!featuredRelease?.artworkUrl.trim()
 
   // Hero Identity System — Pro artists can use logo, text, or both.
@@ -912,12 +932,21 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Mobile CTA stack — tagline → CTAs → social → scroll (sm:hidden, editorial placement only) */}
             {!isFloatingPlacement && (
               <div className="absolute inset-x-0 bottom-[28%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
-                {displayHeroTagline && (
-                  <p className="mb-7 text-[12px] font-semibold uppercase tracking-[0.16em] text-white/68">
-                    {displayHeroTagline.split(/\. /).map((part, i, arr) => (
-                      <span key={i} className="block">{part}{i < arr.length - 1 ? "." : ""}</span>
-                    ))}
-                  </p>
+                {(displayHeroTagline || credibilityLine) && (
+                  <div className="mb-7 flex flex-col items-center gap-2">
+                    {displayHeroTagline && (
+                      <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/68">
+                        {displayHeroTagline.split(/\. /).map((part, i, arr) => (
+                          <span key={i} className="block">{part}{i < arr.length - 1 ? "." : ""}</span>
+                        ))}
+                      </p>
+                    )}
+                    {credibilityLine && (
+                      <p className="max-w-[260px] text-center text-[12px] leading-[1.55] text-white/70">
+                        {credibilityLine}
+                      </p>
+                    )}
+                  </div>
                 )}
                 {(artist.bookingInfo.email.trim() || hasPressKit) && (
                   <div className="flex flex-wrap items-center justify-center gap-[10px]">
@@ -1003,14 +1032,26 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 </div>
 
-                {/* Tagline — artist statement, sole text element */}
-                {displayHeroTagline && (
-                  <p
-                    className="mt-4 max-w-[80vw] text-[14px] font-bold uppercase tracking-[0.12em] text-white/90 line-clamp-2 sm:mt-11 sm:max-w-none sm:text-[17px] sm:tracking-[0.22em] sm:line-clamp-none"
-                    style={{ textShadow: "0 1px 10px rgba(0,0,0,0.55)" }}
-                  >
-                    {displayHeroTagline}
-                  </p>
+                {/* Tagline + short bio — artist statement cluster */}
+                {(displayHeroTagline || credibilityLine) && (
+                  <div className="mt-4 flex flex-col items-center gap-2 sm:mt-11">
+                    {displayHeroTagline && (
+                      <p
+                        className="max-w-[80vw] text-[14px] font-bold uppercase tracking-[0.12em] text-white/90 line-clamp-2 sm:max-w-none sm:text-[17px] sm:tracking-[0.22em] sm:line-clamp-none"
+                        style={{ textShadow: "0 1px 10px rgba(0,0,0,0.55)" }}
+                      >
+                        {displayHeroTagline}
+                      </p>
+                    )}
+                    {credibilityLine && (
+                      <p
+                        className="max-w-sm text-center text-[13px] leading-[1.55] text-white/72"
+                        style={{ textShadow: "0 1px 8px rgba(0,0,0,0.45)" }}
+                      >
+                        {credibilityLine}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {/* CTAs */}
@@ -1053,13 +1094,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             ) : (
               /* Floating logo placement: logo is separate, tagline + CTAs centered below */
               <div className="absolute inset-x-0 bottom-[14%] z-10 flex flex-col items-center px-4 text-center sm:bottom-[16%]">
-                {displayHeroTagline && (
-                  <p
-                    className="mb-5 max-w-[80vw] text-[13px] font-semibold uppercase tracking-[0.12em] text-white/78 line-clamp-2 sm:max-w-none sm:text-[14px] sm:tracking-[0.22em] sm:line-clamp-none"
-                    style={{ textShadow: "0 1px 10px rgba(0,0,0,0.50)" }}
-                  >
-                    {displayHeroTagline}
-                  </p>
+                {(displayHeroTagline || credibilityLine) && (
+                  <div className="mb-5 flex flex-col items-center gap-2">
+                    {displayHeroTagline && (
+                      <p
+                        className="max-w-[80vw] text-[13px] font-semibold uppercase tracking-[0.12em] text-white/78 line-clamp-2 sm:max-w-none sm:text-[14px] sm:tracking-[0.22em] sm:line-clamp-none"
+                        style={{ textShadow: "0 1px 10px rgba(0,0,0,0.50)" }}
+                      >
+                        {displayHeroTagline}
+                      </p>
+                    )}
+                    {credibilityLine && (
+                      <p
+                        className="max-w-sm text-center text-[13px] leading-[1.55] text-white/70"
+                        style={{ textShadow: "0 1px 8px rgba(0,0,0,0.40)" }}
+                      >
+                        {credibilityLine}
+                      </p>
+                    )}
+                  </div>
                 )}
                 {(artist.bookingInfo.email.trim() || hasPressKit) ? (
                   <div className="flex flex-wrap items-center justify-center gap-[10px] sm:flex-nowrap sm:gap-3">
