@@ -1330,7 +1330,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
           {/* ── RIGHT: flex-col stack; each card is its natural height ─ */}
           {/* Decoupled from Moments height so Shows expansion does not affect Releases. */}
-          <div className="flex flex-col gap-y-6 lg:flex lg:flex-col lg:h-full lg:gap-y-5 xl:gap-y-6">
+          <div className="flex flex-col gap-y-6 lg:flex lg:flex-col lg:h-full lg:gap-y-3 xl:gap-y-4">
 
             {/* Featured Release — top 42% of right column height */}
             {featuredRelease && (
