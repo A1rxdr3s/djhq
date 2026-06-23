@@ -731,7 +731,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
   // heroTagline takes priority; falls back to the legacy tagline field for existing artists.
   const displayHeroTagline = artist.heroTagline?.trim() || releaseTagline
-  const credibilityLine = buildCredibilityLine(artist.shortBio, artist.genres)
+  const credibilityLine = artist.shortBio.trim()
   const hasFeaturedArtwork = !!featuredRelease?.artworkUrl.trim()
 
   // Hero Identity System — Pro artists can use logo, text, or both.
