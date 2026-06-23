@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
-import { Music2, Play } from "lucide-react"
+import { Music2 } from "lucide-react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import type { Release } from "@/types/djhq"
 import { getReleasePlatformLinks } from "@/lib/release-platforms"
@@ -153,7 +153,7 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                       alt={`${release.title} artwork`}
                       fill
                       sizes="200px"
-                      className="object-cover"
+                      className="object-cover transition-[filter] duration-200 group-hover:brightness-[1.08]"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.24),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
@@ -161,20 +161,15 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-                  {/* Cover overlay — opens listen dialog (same as LISTEN button) when platform links exist */}
+                  {/* Transparent full-cover trigger — no overlay, dialog opens on click */}
                   {hasPlatformLinks ? (
                     <DialogPrimitive.Trigger asChild>
                       <button
                         tabIndex={isClone ? -1 : 0}
                         aria-label={`Listen to ${release.title}`}
-                        className="absolute inset-0 flex items-center justify-center bg-transparent opacity-0 transition-all duration-200 group-hover:bg-black/52 group-hover:opacity-100 group-hover:backdrop-blur-[3px]"
+                        className="absolute inset-0 bg-transparent focus:outline-none"
                         onClick={(e) => { if (wasDraggingRef.current) e.preventDefault() }}
-                      >
-                        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
-                          <Play className="h-3.5 w-3.5 fill-current" />
-                          Listen
-                        </span>
-                      </button>
+                      />
                     </DialogPrimitive.Trigger>
                   ) : (
                     <a
@@ -183,14 +178,9 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                       rel="noopener noreferrer"
                       aria-label={`Listen to ${release.title}`}
                       tabIndex={isClone ? -1 : 0}
-                      className="absolute inset-0 flex items-center justify-center bg-transparent opacity-0 transition-all duration-200 group-hover:bg-black/52 group-hover:opacity-100 group-hover:backdrop-blur-[3px]"
+                      className="absolute inset-0 bg-transparent"
                       onClick={(e) => { if (wasDraggingRef.current) e.preventDefault() }}
-                    >
-                      <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
-                        <Play className="h-3.5 w-3.5 fill-current" />
-                        Listen
-                      </span>
-                    </a>
+                    />
                   )}
                 </div>
 
