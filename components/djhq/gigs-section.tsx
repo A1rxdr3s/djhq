@@ -223,7 +223,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 border-t border-white/[0.05] px-2 py-2 xl:px-3",
+        "flex items-center gap-2 border-t border-white/[0.07] px-2 py-3 xl:px-3 xl:py-3.5",
         "transition-colors duration-150",
         isPast ? "hover:bg-white/[0.012]" : "hover:bg-white/[0.025]",
       )}
@@ -434,7 +434,7 @@ export function GigsSection({ futureGigs, pastGigs, className }: GigsSectionProp
           {compactGigs.length > 0 && (
             <motion.div
               variants={item}
-              className="mt-2.5 overflow-hidden rounded-xl border border-white/[0.06]"
+              className="mt-3 overflow-hidden rounded-xl border border-white/[0.06]"
             >
               {compactGigs.map((gig) => (
                 <GigRowCompact key={gig.id} gig={gig} isPast={primaryIsPast} />
