@@ -1318,7 +1318,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             The outer grid has ONE row. Moments (left) defines the section height.
             The right wrapper uses its own fr-based nested grid to divide that
             height proportionally between Featured Release (42%) and Shows (58%). */}
-        <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.55fr)_minmax(420px,0.95fr)] lg:items-start lg:gap-x-10 xl:gap-x-14">
+        <div className="relative flex flex-col gap-y-6 lg:grid lg:grid-cols-[minmax(0,1.55fr)_minmax(420px,0.95fr)] lg:items-stretch lg:gap-x-10 xl:gap-x-14">
 
           {/* ── LEFT: Moments — the height anchor for this entire section ─────── */}
           <MobileSection tab="media" className="max-lg:hidden">
