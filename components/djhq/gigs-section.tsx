@@ -374,9 +374,10 @@ type GigsSectionProps = {
   futureGigs: Gig[]
   /** Past shows sorted descending (most recent first). Pre-filtered by the server. */
   pastGigs: Gig[]
+  className?: string
 }
 
-export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
+export function GigsSection({ futureGigs, pastGigs, className }: GigsSectionProps) {
   const [showAllFuture, setShowAllFuture] = useState(false)
   const [pastExpanded, setPastExpanded] = useState(false)
 
@@ -407,7 +408,7 @@ export function GigsSection({ futureGigs, pastGigs }: GigsSectionProps) {
   const compactGigs = primaryRows.slice(1)
 
   return (
-    <section className="border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-6 xl:p-9">
+    <section className={cn("border-t border-white/[0.06] pt-6 sm:pt-7 lg:flex lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-white/[0.06] lg:bg-card/25 lg:p-6 xl:p-9", className)}>
       <SectionHeader>{sectionTitle}</SectionHeader>
 
       <div className="mt-4 lg:flex-1">

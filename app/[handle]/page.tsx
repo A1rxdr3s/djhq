@@ -1330,14 +1330,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
           {/* ── RIGHT: flex-col stack; each card is its natural height ─ */}
           {/* Decoupled from Moments height so Shows expansion does not affect Releases. */}
-          <div className="flex flex-col gap-y-6 lg:flex lg:flex-col lg:gap-y-8 xl:gap-y-10">
+          <div className="flex flex-col gap-y-6 lg:flex lg:flex-col lg:h-full lg:gap-y-8 xl:gap-y-10">
 
             {/* Featured Release — top 42% of right column height */}
             {featuredRelease && (
             <MobileSection tab="music" className="max-lg:hidden">
-            <section className="flex flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-5 shadow-lg shadow-black/20 sm:p-6 lg:p-6 xl:p-9">
+            <div className="flex flex-col">
               <SectionHeader>Featured Release</SectionHeader>
-              <div className="mt-4 grid flex-1 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-[minmax(0,44%)_minmax(0,1fr)] sm:gap-5 lg:mt-4 lg:grid-cols-[minmax(0,48%)_minmax(0,1fr)] lg:items-stretch lg:gap-6 xl:gap-8">
+              <section className="mt-4 flex flex-col rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-b from-card/50 to-background/40 p-5 shadow-lg shadow-black/20 sm:mt-5 sm:p-6 lg:mt-5 lg:p-6 xl:p-9">
+              <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-[minmax(0,44%)_minmax(0,1fr)] sm:gap-5 lg:grid-cols-[minmax(0,48%)_minmax(0,1fr)] lg:items-stretch lg:gap-6 xl:gap-8">
                 <div className="relative mx-auto aspect-square w-full max-w-[200px] overflow-hidden rounded-2xl bg-secondary shadow-lg shadow-black/35 sm:mx-0 sm:max-w-none sm:w-full lg:aspect-auto lg:self-stretch">
                   {!hasFeaturedArtwork ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.28),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]">
@@ -1380,14 +1381,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </Button>
                 </div>
               </div>
-            </section>
+              </section>
+            </div>
             </MobileSection>
             )}
 
             {/* Shows — bottom 58% of right column height */}
             {(futureGigs.length > 0 || pastGigs.length > 0) && (
-              <MobileSection tab="live" id="shows">
-                <GigsSection futureGigs={futureGigs} pastGigs={pastGigs} />
+              <MobileSection tab="live" id="shows" className="lg:flex-1 lg:flex lg:flex-col">
+                <GigsSection futureGigs={futureGigs} pastGigs={pastGigs} className="lg:h-full" />
               </MobileSection>
             )}
 
