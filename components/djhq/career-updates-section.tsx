@@ -29,24 +29,27 @@ function computeGridLimit(count: number): number {
 // ── Mosaic desktop placement ──────────────────────────────────────────────────
 //
 // Returns Tailwind arbitrary grid-column/grid-row classes for the desktop
-// 12-column mosaic (grid-auto-rows: 120px, so each row unit = 120 px).
+// 12-column mosaic (grid-auto-rows: 86px, so each row unit = 86 px).
 //
-// Layout A — primary has image (hero left anchor, 3 rows tall):
+// Layout A — primary has image (4-5-3 column pattern, hero anchors left):
 //
-//   Rows 1–3, cols 1–4 : item 0  hero   (3 × 120 = 360 px)
-//   Rows 1–2, cols 5–8 : item 1  medium
-//   Rows 1–2, cols 9–12: item 2  medium
-//   Rows 3–4, cols 5–8 : item 3  medium
-//   Rows 3–4, cols 9–12: item 4  medium
-//   Rows 4–6, cols 1–4 : item 5  tall   (3 × 120 = 360 px)
-//   Rows 5–6, cols 5–8 : item 6  compact  (wide strip if only 7 items)
-//   Rows 5–6, cols 9–12: item 7  compact
+//   Row 1: [0  4col hero][1  5col wide   ][2  3col compact]
+//   Row 2: [0  4col hero][1  5col wide   ][2  3col compact]
+//   Row 3: [0  4col hero][4  5col wide   ][3  3col compact]  ← items 3 & 4 swap sides
+//   Row 4: [5  4col tall][4  5col wide   ][3  3col compact]
+//   Row 5: [5  4col tall][6  5col wide   ][7  3col compact]
+//   Row 6: [5  4col tall][6  5col wide   ][7  3col compact]
 //
-// Layout B — primary has no image (uniform 4-col, 2-row grid):
+//   Total: 6 rows × 86 px + 5 × gap = ~576 px (vs. 780 px before)
 //
-//   Rows 1–2: items 0, 1, 2  (cols 1–4, 5–8, 9–12)
-//   Rows 3–4: items 3, 4, 5  (cols 1–4, 5–8, 9–12)
-//   Rows 5–6: item 6 (6-col wide), item 7 (6-col wide)
+// Layout B — primary has no image (5-4-3 then 4-5-3 mix, bottom wide pair):
+//
+//   Row 1: [0  5col wide  ][1  4col med][2  3col compact]
+//   Row 2: [0  5col wide  ][1  4col med][2  3col compact]
+//   Row 3: [3  4col med][4  5col wide  ][5  3col compact]
+//   Row 4: [3  4col med][4  5col wide  ][5  3col compact]
+//   Row 5: [6  6col wide       ][7  6col wide      ]  (or full-width if 7 items)
+//   Row 6: [6  6col wide       ][7  6col wide      ]
 
 function getMosaicDesktopClass(
   index: number,
@@ -55,29 +58,32 @@ function getMosaicDesktopClass(
 ): string {
   if (primaryHasImage) {
     switch (index) {
-      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/4]"
-      case 1: return "lg:[grid-column:5/9] lg:[grid-row:1/3]"
-      case 2: return "lg:[grid-column:9/13] lg:[grid-row:1/3]"
-      case 3: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"
-      case 4: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"
-      case 5: return "lg:[grid-column:1/5] lg:[grid-row:4/7]"
+      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/4]"     // hero,    4col × 3row
+      case 1: return "lg:[grid-column:5/10] lg:[grid-row:1/3]"    // wide,    5col × 2row
+      case 2: return "lg:[grid-column:10/13] lg:[grid-row:1/3]"   // compact, 3col × 2row
+      case 3: return "lg:[grid-column:10/13] lg:[grid-row:3/5]"   // compact, 3col × 2row
+      case 4: return "lg:[grid-column:5/10] lg:[grid-row:3/5]"    // wide,    5col × 2row
+      case 5: return "lg:[grid-column:1/5] lg:[grid-row:4/7]"     // tall,    4col × 3row
       case 6:
         return totalItems <= 7
-          ? "lg:[grid-column:5/13] lg:[grid-row:5/7]"
-          : "lg:[grid-column:5/9] lg:[grid-row:5/7]"
-      case 7: return "lg:[grid-column:9/13] lg:[grid-row:5/7]"
+          ? "lg:[grid-column:5/13] lg:[grid-row:5/7]"             // wide strip (7 items)
+          : "lg:[grid-column:5/10] lg:[grid-row:5/7]"             // wide,    5col × 2row
+      case 7: return "lg:[grid-column:10/13] lg:[grid-row:5/7]"   // compact, 3col × 2row
       default: return ""
     }
   } else {
     switch (index) {
-      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/3]"
-      case 1: return "lg:[grid-column:5/9] lg:[grid-row:1/3]"
-      case 2: return "lg:[grid-column:9/13] lg:[grid-row:1/3]"
-      case 3: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"
-      case 4: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"
-      case 5: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"
-      case 6: return "lg:[grid-column:1/7] lg:[grid-row:5/7]"
-      case 7: return "lg:[grid-column:7/13] lg:[grid-row:5/7]"
+      case 0: return "lg:[grid-column:1/6] lg:[grid-row:1/3]"     // wide,    5col × 2row
+      case 1: return "lg:[grid-column:6/10] lg:[grid-row:1/3]"    // medium,  4col × 2row
+      case 2: return "lg:[grid-column:10/13] lg:[grid-row:1/3]"   // compact, 3col × 2row
+      case 3: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // medium,  4col × 2row
+      case 4: return "lg:[grid-column:5/10] lg:[grid-row:3/5]"    // wide,    5col × 2row
+      case 5: return "lg:[grid-column:10/13] lg:[grid-row:3/5]"   // compact, 3col × 2row
+      case 6:
+        return totalItems <= 7
+          ? "lg:[grid-column:1/13] lg:[grid-row:5/7]"             // full-width (7 items)
+          : "lg:[grid-column:1/7] lg:[grid-row:5/7]"              // wide,    6col × 2row
+      case 7: return "lg:[grid-column:7/13] lg:[grid-row:5/7]"    // wide,    6col × 2row
       default: return ""
     }
   }
@@ -673,7 +679,7 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
         {useMosaicLayout ? (
 
           // ── 12-col mosaic — see getMosaicDesktopClass for placement map ─────
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:[grid-auto-rows:120px]">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:[grid-auto-rows:86px]">
             {gridItems.map((item, index) => (
               <div
                 key={item.id}
