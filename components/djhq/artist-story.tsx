@@ -1,12 +1,17 @@
+"use client"
+
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SectionHeader } from "@/components/djhq/section-header"
-import type {
-  ArtistStoryChapter,
-  ArtistStoryMilestone,
-  MilestoneImportance,
-} from "@/types/djhq"
+import type { CareerTimelineItem } from "@/types/djhq"
 
-// ── Category display labels ───────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+// How many milestones appear in the default "career signals" bento.
+// Items are ordered by sort_order from the DB (HQ-configured priority).
+// The first item becomes the primary card; the rest fill secondary slots.
+const BENTO_LIMIT = 5
 
 const CATEGORY_LABELS: Record<string, string> = {
   residency:     "Residency",
@@ -20,206 +25,185 @@ const CATEGORY_LABELS: Record<string, string> = {
   other:         "Other",
 }
 
-// ── Importance-based typography tokens ───────────────────────────────────────
-// All visual hierarchy is driven exclusively by milestone.importance.
-// No title, venue, or artist-specific checks anywhere in this file.
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const TITLE_CLASS: Record<MilestoneImportance, string> = {
-  featured: "text-[14px] sm:text-[14.5px] font-black  tracking-[-0.018em] text-foreground/95 leading-snug",
-  major:    "text-[13px] sm:text-[13.5px] font-bold   tracking-[-0.012em] text-foreground/84 leading-snug",
-  standard: "text-[12.5px]               font-semibold tracking-[-0.007em] text-foreground/70 leading-snug",
-  minor:    "text-[12px]                 font-semibold tracking-[-0.004em] text-foreground/52 leading-snug",
+function itemYear(item: CareerTimelineItem): string {
+  return item.eventDate.slice(0, 4)
 }
 
-const CAT_CLASS: Record<MilestoneImportance, string> = {
-  featured: "text-accent/70",
-  major:    "text-accent/56",
-  standard: "text-accent/44",
-  minor:    "text-accent/32",
+function itemCatLabel(item: CareerTimelineItem): string {
+  return CATEGORY_LABELS[item.category] ?? item.category
 }
 
-const DESC_CLASS: Record<MilestoneImportance, string> = {
-  featured: "text-[11.5px] leading-[1.55] text-foreground/50",
-  major:    "text-[11px]   leading-[1.52] text-foreground/44",
-  standard: "text-[10.5px] leading-[1.50] text-foreground/38",
-  minor:    "text-[10px]   leading-[1.48] text-foreground/30",
-}
+// ── Primary card ──────────────────────────────────────────────────────────────
+// Largest surface in the default view.
+// Position is determined by sort_order in the DB — the HQ configures which
+// milestone leads. No artist-specific logic here.
 
-const MILESTONE_GAP: Record<MilestoneImportance, string> = {
-  featured: "mt-[14px]",
-  major:    "mt-[11px]",
-  standard: "mt-[10px]",
-  minor:    "mt-[9px]",
-}
-
-// ── Milestone entry ───────────────────────────────────────────────────────────
-
-function MilestoneEntry({
-  milestone,
-  isFirst,
-}: {
-  milestone: ArtistStoryMilestone
-  isFirst:   boolean
-}) {
-  const imp      = milestone.importance
-  const catLabel = CATEGORY_LABELS[milestone.category] ?? milestone.category
-
+function PrimaryCard({ item }: { item: CareerTimelineItem }) {
   return (
-    <div className={cn(!isFirst && MILESTONE_GAP[imp])}>
-      {/* Category — Title · Location */}
-      <div className="flex flex-wrap items-baseline gap-x-[5px] gap-y-[1px]">
-        <span
-          className={cn(
-            "shrink-0 text-[7px] font-bold uppercase tracking-[0.22em]",
-            CAT_CLASS[imp],
-          )}
-        >
-          {catLabel}
+    <div className="relative flex h-full flex-col overflow-hidden rounded-[10px] border border-white/[0.08] bg-[oklch(0.105_0.005_160)] p-5 sm:p-6">
+      <div
+        className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-accent/55 via-accent/18 to-transparent"
+        aria-hidden
+      />
+
+      <div className="flex items-center gap-[7px]">
+        <span className="text-[10px] font-bold tabular-nums leading-none text-foreground/34">
+          {itemYear(item)}
         </span>
-        <span className="shrink-0 text-[9px] text-foreground/16" aria-hidden>
-          —
+        <span className="text-[7.5px] font-bold uppercase tracking-[0.24em] text-accent/66">
+          {itemCatLabel(item)}
         </span>
-        <span className={TITLE_CLASS[imp]}>{milestone.title}</span>
-        {milestone.location && (
-          <>
-            <span className="shrink-0 text-[8px] text-foreground/14" aria-hidden>
-              ·
-            </span>
-            <span className="shrink-0 text-[7.5px] font-medium uppercase tracking-[0.11em] text-foreground/26">
-              {milestone.location}
-            </span>
-          </>
-        )}
       </div>
 
-      {/* Description */}
-      <p className={cn("mt-[4px]", DESC_CLASS[imp])}>{milestone.description}</p>
+      <h4 className="mt-[10px] text-[19px] font-black leading-[1.05] tracking-[-0.018em] text-foreground/94 sm:text-[21px]">
+        {item.title}
+      </h4>
+
+      {item.location && (
+        <p className="mt-[5px] text-[8.5px] font-semibold uppercase tracking-[0.17em] text-foreground/30">
+          {item.location}
+        </p>
+      )}
+
+      {item.description && (
+        <p className="mt-[14px] flex-1 text-[12px] leading-[1.60] text-foreground/50">
+          {item.description}
+        </p>
+      )}
     </div>
   )
 }
 
-// ── Year group ────────────────────────────────────────────────────────────────
+// ── Secondary card ────────────────────────────────────────────────────────────
+// Four supporting signals that fill the 2×2 block beside the primary on desktop.
 
-function YearGroup({
-  year,
-  milestones,
+function SecondaryCard({ item }: { item: CareerTimelineItem }) {
+  return (
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-[8px] border border-white/[0.055] bg-white/[0.024] p-4 transition-colors duration-150 hover:border-white/[0.08] hover:bg-white/[0.036]">
+      <div
+        className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-accent/22 via-accent/7 to-transparent"
+        aria-hidden
+      />
+
+      <div className="flex items-center gap-[6px]">
+        <span className="text-[10px] font-bold tabular-nums leading-none text-foreground/28">
+          {itemYear(item)}
+        </span>
+        <span className="text-[7px] font-bold uppercase tracking-[0.20em] text-accent/52">
+          {itemCatLabel(item)}
+        </span>
+      </div>
+
+      <p className="mt-[6px] text-[13px] font-bold leading-snug tracking-[-0.009em] text-foreground/80">
+        {item.title}
+      </p>
+
+      {item.location && (
+        <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.13em] text-foreground/24">
+          {item.location}
+        </p>
+      )}
+
+      {item.description && (
+        <p className="mt-[8px] flex-1 text-[11px] leading-[1.48] text-foreground/42">
+          {item.description}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ── Timeline entry ────────────────────────────────────────────────────────────
+// Compact row used in the expanded full chronology.
+// Renders as a scan-friendly list — no cards, no decorative elements.
+
+function TimelineEntry({
+  item,
   isFirst,
 }: {
-  year:       number
-  milestones: ArtistStoryMilestone[]
-  isFirst:    boolean
+  item:    CareerTimelineItem
+  isFirst: boolean
 }) {
   return (
     <div
       className={cn(
-        "flex gap-[18px] sm:gap-[22px]",
-        !isFirst && "mt-[20px] border-t border-white/[0.05] pt-[20px]",
+        "flex gap-[14px] py-[10px]",
+        !isFirst && "border-t border-white/[0.04]",
       )}
     >
-      {/* Year anchor — large, muted */}
-      <div className="w-[38px] shrink-0 pt-[3px] sm:w-[42px]">
-        <span className="block text-[13px] font-black tabular-nums leading-none text-foreground/[0.20] sm:text-[14px]">
-          {year}
+      {/* Year gutter */}
+      <div className="w-[32px] shrink-0 pt-[2px]">
+        <span className="text-[10.5px] font-bold tabular-nums leading-none text-foreground/28">
+          {itemYear(item)}
         </span>
       </div>
 
-      {/* Milestone entries */}
+      {/* Content */}
       <div className="min-w-0 flex-1">
-        {milestones.map((m, i) => (
-          <MilestoneEntry key={m.id} milestone={m} isFirst={i === 0} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Chapter column ────────────────────────────────────────────────────────────
-
-type YearBand = { year: number; milestones: ArtistStoryMilestone[] }
-
-function buildYearBands(milestones: ArtistStoryMilestone[]): YearBand[] {
-  const map = new Map<number, ArtistStoryMilestone[]>()
-  for (const m of milestones) {
-    const existing = map.get(m.year)
-    if (existing) existing.push(m)
-    else map.set(m.year, [m])
-  }
-  return [...map.entries()]
-    .sort(([a], [b]) => b - a) // newest year first
-    .map(([year, ms]) => ({
-      year,
-      milestones: [...ms].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    }))
-}
-
-function ChapterColumn({ chapter, milestones }: { chapter: ArtistStoryChapter; milestones: ArtistStoryMilestone[] }) {
-  const yearBands = buildYearBands(milestones)
-  if (yearBands.length === 0) return null
-
-  return (
-    <div>
-      {/* Chapter header */}
-      <div className="mb-[14px] border-b border-white/[0.05] pb-[9px]">
-        <div className="flex items-baseline gap-[8px]">
-          <span className="text-[7.5px] font-bold uppercase tracking-[0.26em] text-foreground/32">
-            {chapter.title}
+        <div className="flex flex-wrap items-center gap-x-[6px] gap-y-[2px]">
+          <span className="text-[7.5px] font-bold uppercase tracking-[0.20em] text-accent/50">
+            {itemCatLabel(item)}
           </span>
-          {chapter.rangeLabel && (
-            <span className="text-[7px] tabular-nums text-foreground/18">
-              {chapter.rangeLabel}
-            </span>
+          {item.location && (
+            <>
+              <span className="text-[8px] text-foreground/16" aria-hidden>·</span>
+              <span className="text-[8px] font-medium uppercase tracking-[0.10em] text-foreground/24">
+                {item.location}
+              </span>
+            </>
           )}
         </div>
-      </div>
 
-      {/* Year bands */}
-      {yearBands.map((band, i) => (
-        <YearGroup
-          key={band.year}
-          year={band.year}
-          milestones={band.milestones}
-          isFirst={i === 0}
-        />
-      ))}
+        <p className="mt-[3px] text-[12px] font-semibold leading-snug tracking-[-0.006em] text-foreground/72">
+          {item.title}
+        </p>
+
+        {item.description && (
+          <p className="mt-[4px] text-[10.5px] leading-[1.46] text-foreground/38">
+            {item.description}
+          </p>
+        )}
+      </div>
     </div>
   )
-}
-
-// ── Grid column class by chapter count ───────────────────────────────────────
-
-function gridClass(count: number): string {
-  if (count === 1) return "lg:grid-cols-1 lg:max-w-xl"
-  if (count === 2) return "lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]"
-  return "lg:grid-cols-3"
 }
 
 // ── ArtistStory ───────────────────────────────────────────────────────────────
+// Renders a career signals bento (compact default) + expandable full chronology.
+//
+// Data contract:
+//   items — published CareerTimelineItem[] already sorted by sort_order asc
+//           from the DB query (is_published = true filter applied at query time).
+//           First item = highest HQ-configured priority → primary card.
+//
+// Visibility rules:
+//   • Only items with isPublished = true are rendered (guard against any leak).
+//   • The DB query already enforces this; the filter here is a safety net.
+//   • Milestones absent from, or marked unpublished in, the DB never appear.
 
 export interface ArtistStoryProps {
-  chapters:   ArtistStoryChapter[]
-  milestones: ArtistStoryMilestone[]
-  headline?:  string
-  intro?:     string
+  items:     CareerTimelineItem[]
+  headline?: string
+  intro?:    string
 }
 
-export function ArtistStory({ chapters, milestones, headline, intro }: ArtistStoryProps) {
-  const visible = milestones.filter((m) => m.isVisible)
-  if (visible.length === 0) return null
+export function ArtistStory({ items, headline, intro }: ArtistStoryProps) {
+  const [expanded, setExpanded] = useState(false)
 
-  // Sort chapters by order
-  const sortedChapters = [...chapters].sort((a, b) => a.order - b.order)
+  // Safety filter: only render published items (DB query already enforces this)
+  const published = items.filter((item) => item.isPublished)
+  if (published.length === 0) return null
 
-  // Build a milestone lookup by chapterId
-  const byChapter = new Map<string, ArtistStoryMilestone[]>()
-  for (const m of visible) {
-    const arr = byChapter.get(m.chapterId)
-    if (arr) arr.push(m)
-    else byChapter.set(m.chapterId, [m])
-  }
+  // Default view: first BENTO_LIMIT items by sort_order (HQ-configured priority)
+  const bentoItems = published.slice(0, BENTO_LIMIT)
+  const [primary, ...secondary] = bentoItems
 
-  // Only render chapters that have at least one visible milestone
-  const activeChapters = sortedChapters.filter((c) => (byChapter.get(c.id)?.length ?? 0) > 0)
-  if (activeChapters.length === 0) return null
+  // Full chronology: all published items sorted oldest → newest
+  const chronology = [...published].sort((a, b) =>
+    a.eventDate.localeCompare(b.eventDate),
+  )
 
   return (
     <section id="story" className="mt-10 lg:mt-12">
@@ -239,20 +223,62 @@ export function ArtistStory({ chapters, milestones, headline, intro }: ArtistSto
           </p>
         )}
 
-        {/* Two-column editorial layout — all milestones always visible */}
-        <div
-          className={cn(
-            "mt-6 grid grid-cols-1 gap-x-10 gap-y-8 xl:gap-x-14",
-            gridClass(activeChapters.length),
-          )}
-        >
-          {activeChapters.map((chapter) => (
-            <ChapterColumn
-              key={chapter.id}
-              chapter={chapter}
-              milestones={byChapter.get(chapter.id) ?? []}
-            />
+        {/* ── Career signals bento ───────────────────────────────────────────
+            Desktop (lg, 3 col):
+              col 1, rows 1-2  = Primary (HQ sort_order=1 milestone)
+              col 2, row 1     = Secondary 1
+              col 3, row 1     = Secondary 2
+              col 2, row 2     = Secondary 3
+              col 3, row 2     = Secondary 4
+            Tablet (sm, 2 col):
+              cols 1-2, row 1  = Primary (full width)
+              col 1+2, rows 2-3 = Secondary 1-4 in 2×2
+            Mobile (1 col): stacked in DOM order                            */}
+        <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
+
+          <div className="sm:col-span-2 lg:col-span-1 lg:row-span-2">
+            <PrimaryCard item={primary} />
+          </div>
+
+          {secondary.map((item) => (
+            <SecondaryCard key={item.id} item={item} />
           ))}
+
+        </div>
+
+        {/* ── Expand control ─────────────────────────────────────────────────
+            Pill button — deliberate secondary action, not tiny metadata.     */}
+        <div className="mt-[18px]">
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-expanded={expanded}
+            className="flex items-center gap-[7px] rounded-[5px] border border-white/[0.07] bg-white/[0.022] px-[14px] py-[7px] text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/44 transition-colors duration-150 hover:border-white/[0.12] hover:bg-white/[0.038] hover:text-foreground/64 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <ChevronDown
+              className={cn(
+                "h-[10px] w-[10px] transition-transform duration-200",
+                expanded && "rotate-180",
+              )}
+              aria-hidden
+            />
+            {expanded ? "Hide full career chronology" : "View full career chronology"}
+          </button>
+
+          {/* ── Full chronological timeline ─────────────────────────────────
+              All published milestones, oldest → newest.
+              Compact scan-friendly list — no cards, no oversized elements.  */}
+          {expanded && (
+            <div
+              className="mt-4 border-t border-white/[0.05] pt-[2px]"
+              role="region"
+              aria-label="Full career chronology"
+            >
+              {chronology.map((item, i) => (
+                <TimelineEntry key={item.id} item={item} isFirst={i === 0} />
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
