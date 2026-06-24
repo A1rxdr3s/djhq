@@ -300,7 +300,7 @@ function SecondaryCard({
           <div className="absolute inset-0 bg-white/[0.023] transition-colors duration-200 group-hover:bg-white/[0.038]" />
           {/* Subtle year watermark */}
           <div
-            className="pointer-events-none absolute -right-2 -bottom-2 select-none text-[58px] font-black leading-none tabular-nums text-white/[0.034]"
+            className="pointer-events-none absolute -right-1 -bottom-1 select-none text-[36px] font-black leading-none tabular-nums text-white/[0.020]"
             aria-hidden
           >
             {itemYear(item)}
@@ -314,7 +314,7 @@ function SecondaryCard({
       />
 
       <div className={cn(
-        "relative flex flex-col h-full p-[13px]",
+        "relative flex flex-col h-full p-[10px]",
         hasImage ? "justify-end" : "justify-start",
       )}>
         <MetaChip item={item} />
@@ -685,8 +685,8 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
                 key={item.id}
                 className={cn(
                   // Mobile / tablet floor heights
-                  "min-h-[200px]",
-                  index === 0 && "sm:col-span-2 sm:min-h-[240px]",
+                  "min-h-[160px]",
+                  index === 0 && "sm:col-span-2 sm:min-h-[200px]",
                   // Desktop explicit placement (overrides auto-flow)
                   getMosaicDesktopClass(index, primaryHasImage, gridItems.length),
                   "lg:min-h-0",
