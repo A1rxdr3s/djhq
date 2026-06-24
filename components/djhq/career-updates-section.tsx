@@ -11,12 +11,17 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import type { CareerTimelineItem } from "@/types/djhq"
+import {
+  getPublicCareerUpdates,
+  buildChronologyGroups,
+} from "@/lib/djhq/career-updates"
 
 // ── Constants ─────────────────────────────────────────────────────────────────
+//
+// Default bento grid limit — 6 items balances visual density and layout rhythm
+// on a 3-column desktop grid. Items beyond this are shown in the "View all"
+// compact chronological archive.
 
-// First 6 items shown in the bento grid; rest are behind "View all".
-// Layout: col1 row1 = primary (tall); cols 2-3 row1 = 2 shorter cards (self-start);
-//         cols 1-3 row2 = 3 standard-height cards.
 const GRID_LIMIT = 6
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -48,6 +53,7 @@ function formatDateLabel(eventDate: string): string {
 }
 
 // ── Inline brand SVGs ─────────────────────────────────────────────────────────
+// Lucide 0.564+ removed brand-specific icons. These are minimal inline SVGs.
 
 function IconFacebook({ className }: { className?: string }) {
   return (
@@ -92,7 +98,10 @@ function MetaChip({ item, className }: { item: CareerTimelineItem; className?: s
 }
 
 // ── PrimaryCard ───────────────────────────────────────────────────────────────
-// Top-left bento card — tall, image-assisted if imageUrl present.
+// Top-left tile — tall. Image-assisted if imageUrl is present; premium
+// text-first surface with oversized year watermark if not.
+//
+// IMPORTANT: never reads previewImageUrl — that field is HQ-only.
 
 function PrimaryCard({
   item,
@@ -109,6 +118,7 @@ function PrimaryCard({
       onClick={onClick}
       className="group relative w-full h-full text-left overflow-hidden rounded-[10px] border border-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
+      {/* Background */}
       {hasImage ? (
         <>
           <Image
@@ -118,17 +128,28 @@ function PrimaryCard({
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 33vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/40 to-black/8" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/38 to-black/6" />
         </>
       ) : (
-        <div className="absolute inset-0 bg-[oklch(0.105_0.005_160)] transition-colors duration-200 group-hover:bg-[oklch(0.11_0.005_160)]" />
+        <>
+          <div className="absolute inset-0 bg-[oklch(0.108_0.006_160)] transition-colors duration-200 group-hover:bg-[oklch(0.113_0.006_160)]" />
+          {/* Oversized year watermark — editorial depth without fake imagery */}
+          <div
+            className="pointer-events-none absolute -right-3 bottom-0 select-none text-[88px] font-black leading-none tabular-nums text-white/[0.038]"
+            aria-hidden
+          >
+            {itemYear(item)}
+          </div>
+        </>
       )}
 
+      {/* Accent top line */}
       <div
-        className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-accent/55 via-accent/18 to-transparent"
+        className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-accent/58 via-accent/18 to-transparent"
         aria-hidden
       />
 
+      {/* Content */}
       <div className={cn(
         "relative flex flex-col h-full p-5 sm:p-[22px]",
         hasImage ? "justify-end" : "justify-start",
@@ -140,13 +161,13 @@ function PrimaryCard({
         </h3>
 
         {item.location && (
-          <p className="mt-[4px] text-[8px] font-semibold uppercase tracking-[0.15em] text-foreground/30">
+          <p className="mt-[4px] text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/30">
             {item.location}
           </p>
         )}
 
         {!hasImage && item.description && (
-          <p className="mt-3 flex-1 text-[12px] leading-[1.58] text-foreground/46">
+          <p className="mt-3 flex-1 text-[12px] leading-[1.60] text-foreground/46">
             {item.description}
           </p>
         )}
@@ -162,7 +183,9 @@ function PrimaryCard({
 }
 
 // ── SecondaryCard ─────────────────────────────────────────────────────────────
-// Supporting card. Image overlay if imageUrl present; text-first dark surface otherwise.
+// Supporting tile. Image overlay or text-first premium dark surface.
+//
+// IMPORTANT: never reads previewImageUrl — that field is HQ-only.
 
 function SecondaryCard({
   item,
@@ -185,13 +208,22 @@ function SecondaryCard({
             src={item.imageUrl!}
             alt={item.title}
             fill
-            className="object-cover opacity-72 transition-transform duration-700 group-hover:scale-[1.04]"
+            className="object-cover opacity-[0.72] transition-transform duration-700 group-hover:scale-[1.04]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/48 to-black/18" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/48 to-black/16" />
         </>
       ) : (
-        <div className="absolute inset-0 bg-white/[0.022] transition-colors duration-200 group-hover:bg-white/[0.036]" />
+        <>
+          <div className="absolute inset-0 bg-white/[0.023] transition-colors duration-200 group-hover:bg-white/[0.038]" />
+          {/* Subtle year watermark */}
+          <div
+            className="pointer-events-none absolute -right-2 -bottom-2 select-none text-[58px] font-black leading-none tabular-nums text-white/[0.034]"
+            aria-hidden
+          >
+            {itemYear(item)}
+          </div>
+        </>
       )}
 
       <div
@@ -205,7 +237,7 @@ function SecondaryCard({
       )}>
         <MetaChip item={item} />
 
-        <p className="mt-[5px] text-[13px] font-bold leading-snug tracking-[-0.009em] text-foreground/84 transition-colors duration-200 group-hover:text-foreground/95">
+        <p className="mt-[5px] text-[13px] font-bold leading-snug tracking-[-0.009em] text-foreground/84 transition-colors duration-200 group-hover:text-foreground/96">
           {item.title}
         </p>
 
@@ -216,14 +248,13 @@ function SecondaryCard({
         )}
 
         {!hasImage && item.description && (
-          <p className="mt-[8px] flex-1 text-[11px] leading-[1.46] text-foreground/38 line-clamp-3">
+          <p className="mt-[8px] flex-1 text-[11px] leading-[1.48] text-foreground/38 line-clamp-3">
             {item.description}
           </p>
         )}
 
-        {/* Arrow affordance */}
         <div className="mt-3">
-          <div className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-accent/24 bg-accent/8 text-accent/60 transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/14 group-hover:text-accent/90">
+          <div className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-accent/24 bg-accent/8 text-accent/60 transition-all duration-200 group-hover:border-accent/42 group-hover:bg-accent/14 group-hover:text-accent/88">
             <ArrowUpRight className="h-[9px] w-[9px]" />
           </div>
         </div>
@@ -232,7 +263,42 @@ function SecondaryCard({
   )
 }
 
+// ── ArchiveListItem ───────────────────────────────────────────────────────────
+// Compact row used in the "View all" expanded archive section.
+
+function ArchiveListItem({
+  item,
+  onClick,
+}: {
+  item:    CareerTimelineItem
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-full items-center gap-3 rounded-[4px] border-b border-white/[0.034] px-1 py-[8px] text-left last:border-0 transition-colors hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+    >
+      <span className="w-[72px] shrink-0 text-[7px] font-bold uppercase tracking-[0.18em] text-accent/44 group-hover:text-accent/64">
+        {itemCatLabel(item)}
+      </span>
+      <span className="flex-1 truncate text-[12px] font-semibold text-foreground/70 group-hover:text-foreground/90">
+        {item.title}
+      </span>
+      {item.location && (
+        <span className="hidden shrink-0 text-[9px] text-foreground/26 sm:block">
+          {item.location}
+        </span>
+      )}
+      <ArrowUpRight className="h-[9px] w-[9px] shrink-0 text-foreground/22 transition-colors group-hover:text-accent/60" />
+    </button>
+  )
+}
+
 // ── UpdateDetail — Dialog modal ───────────────────────────────────────────────
+// Full article-style detail view for a career update.
+//
+// IMPORTANT: never reads previewImageUrl — only imageUrl is shown here.
 
 function UpdateDetail({
   item,
@@ -247,8 +313,7 @@ function UpdateDetail({
 
   if (!item) return null
 
-  // Capture non-null reference for closures — TypeScript can't narrow
-  // across closure boundaries even after an early-return guard.
+  // Capture non-null reference for closures (TS can't narrow across closure boundaries).
   const activeItem = item
 
   async function handleCopyLink() {
@@ -262,15 +327,19 @@ function UpdateDetail({
   function handleShareX() {
     const text = encodeURIComponent(activeItem.title)
     const url  = encodeURIComponent(window.location.href)
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank", "width=600,height=420")
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank", "width=600,height=420,noopener,noreferrer")
   }
 
   function handleShareFacebook() {
     const url = encodeURIComponent(window.location.href)
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "width=600,height=420")
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "width=600,height=420,noopener,noreferrer")
   }
 
-  const shareButtonClass = "flex h-[28px] w-[28px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-foreground/40 transition-colors hover:border-white/[0.16] hover:bg-white/[0.08] hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+  const shareButtonClass =
+    "flex h-[28px] w-[28px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-foreground/40 transition-colors hover:border-white/[0.16] hover:bg-white/[0.08] hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+
+  // Only imageUrl is used — previewImageUrl is never shown publicly.
+  const coverImage = activeItem.imageUrl
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -278,9 +347,10 @@ function UpdateDetail({
         showCloseButton={false}
         className="max-h-[88vh] max-w-[600px] overflow-y-auto border-white/[0.08] bg-[oklch(0.085_0.003_160)] p-0 text-foreground"
       >
-        {/* ── Header bar ─────────────────────────────────────────────── */}
+
+        {/* ── Header bar ──────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 pt-5">
-          <MetaChip item={item} />
+          <MetaChip item={activeItem} />
           <DialogClose asChild>
             <button
               type="button"
@@ -292,32 +362,38 @@ function UpdateDetail({
           </DialogClose>
         </div>
 
-        {/* ── Title ──────────────────────────────────────────────────── */}
+        {/* ── Title + location/date ────────────────────────────────── */}
         <div className="px-6 pt-[14px]">
           <h2 className="text-[24px] font-black leading-[1.04] tracking-[-0.022em] text-foreground/96 sm:text-[30px]">
-            {item.title}
+            {activeItem.title}
           </h2>
-
           <div className="mt-[10px] flex flex-wrap items-center gap-x-4 gap-y-1">
-            {item.location && (
+            {activeItem.location && (
               <span className="flex items-center gap-[5px] text-[9px] font-semibold uppercase tracking-[0.12em] text-foreground/34">
                 <MapPin className="h-[9px] w-[9px] text-accent/52" />
-                {item.location}
+                {activeItem.location}
               </span>
             )}
             <span className="flex items-center gap-[5px] text-[9px] font-semibold uppercase tracking-[0.12em] text-foreground/34">
               <Calendar className="h-[9px] w-[9px] text-accent/52" />
-              {formatDateLabel(item.eventDate)}
+              {formatDateLabel(activeItem.eventDate)}
             </span>
           </div>
         </div>
 
-        {/* ── Cover image ────────────────────────────────────────────── */}
-        {item.imageUrl && (
+        {/* ── No-image header decoration ───────────────────────────── */}
+        {/* When there's no cover image, add a subtle accent bar so the modal
+            doesn't look empty between the title and the description. */}
+        {!coverImage && (
+          <div className="mx-6 mt-5 h-[1px] bg-gradient-to-r from-accent/24 via-accent/8 to-transparent" />
+        )}
+
+        {/* ── Cover image (real only — never previewImageUrl) ──────── */}
+        {coverImage && (
           <div className="relative mx-6 mt-5 aspect-[16/9] overflow-hidden rounded-[8px]">
             <Image
-              src={item.imageUrl}
-              alt={item.title}
+              src={coverImage}
+              alt={activeItem.title}
               fill
               className="object-cover"
               sizes="600px"
@@ -325,44 +401,40 @@ function UpdateDetail({
           </div>
         )}
 
-        {/* ── Description ────────────────────────────────────────────── */}
-        {item.description && (
-          <div className={cn("px-6", item.imageUrl ? "pt-5" : "pt-4")}>
+        {/* ── Description body ─────────────────────────────────────── */}
+        {activeItem.description && (
+          <div className={cn("px-6", coverImage ? "pt-5" : "pt-4")}>
             <p className="whitespace-pre-line text-[13px] leading-[1.70] text-foreground/58">
-              {item.description}
+              {activeItem.description}
             </p>
           </div>
         )}
 
-        {/* ── Event Recap section ─────────────────────────────────────
-            Shown when a recap/video link is present.
-            Uses the main imageUrl as a small thumbnail.                  */}
-        {item.link && (
+        {/* ── Event Recap — shown when a recap/video link is present ── */}
+        {activeItem.link && (
           <div className="mx-6 mt-5">
             <div className="overflow-hidden rounded-[8px] border border-white/[0.06] bg-white/[0.028]">
               <div className="flex items-center gap-3 p-4">
-                {/* Thumbnail */}
-                {item.imageUrl && (
-                  <div className="relative h-[52px] w-[84px] flex-shrink-0 overflow-hidden rounded-[4px]">
+                {coverImage && (
+                  <div className="relative h-[52px] w-[84px] shrink-0 overflow-hidden rounded-[4px]">
                     <Image
-                      src={item.imageUrl}
+                      src={coverImage}
                       alt=""
                       fill
-                      className="object-cover brightness-75"
+                      className="object-cover brightness-[0.72]"
                       sizes="84px"
                     />
                   </div>
                 )}
-
                 <div className="min-w-0 flex-1">
-                  <p className="mb-[6px] text-[7px] font-bold uppercase tracking-[0.22em] text-accent/64">
+                  <p className="mb-[5px] text-[7px] font-bold uppercase tracking-[0.22em] text-accent/64">
                     Event Recap
                   </p>
                   <p className="mb-3 text-[11px] leading-[1.44] text-foreground/44">
-                    Live set highlights from {item.title}.
+                    Live set highlights from {activeItem.title}.
                   </p>
                   <a
-                    href={item.link}
+                    href={activeItem.link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-[6px] rounded-[5px] border border-accent/30 bg-accent/10 px-[10px] py-[5px] text-[9px] font-bold uppercase tracking-[0.16em] text-accent/80 transition-colors hover:border-accent/50 hover:bg-accent/18 hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
@@ -376,7 +448,7 @@ function UpdateDetail({
           </div>
         )}
 
-        {/* ── Share section ───────────────────────────────────────────── */}
+        {/* ── Share section ─────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 pb-6 pt-5">
           <p className="text-[7px] font-bold uppercase tracking-[0.22em] text-foreground/26">
             Share this update
@@ -424,16 +496,21 @@ function UpdateDetail({
 
 // ── CareerUpdatesSection ──────────────────────────────────────────────────────
 //
-// Data-driven bento grid of career update tiles.
-// Each tile opens a Dialog with the full update detail.
+// Data-driven public Career Updates bento grid.
 //
-// Grid (desktop, 3 cols):
-//   Row 1: primary (col1, tall) + 2 shorter cards (col2-3, self-start)
-//   Row 2: 3 standard-height cards (cols 1-3)
-// Items beyond GRID_LIMIT are behind the "View all" expand action.
+// Grid layout (desktop, 3 cols, 2 rows):
+//   Row 1 — col1: primary card (tall, min-h-[380px])
+//          — col2+col3: 2 shorter cards (self-start, ~170px)
+//   Row 2 — cols 1-3: up to 3 standard-height cards
 //
-// Visibility: items pre-filtered by DB query (is_published = true).
-// The component's own isPublished guard catches any leaks.
+// Items beyond GRID_LIMIT are shown in a compact year-grouped archive
+// revealed by the "View all career updates" action.
+//
+// Visibility contract:
+//   • items pre-filtered by DB query (is_published = true)
+//   • getPublicCareerUpdates() applies featured-first sort + safety guards
+//   • previewImageUrl is NEVER read here — it is an HQ-only field
+//   • No hardcoded milestone content
 
 export interface CareerUpdatesSectionProps {
   items:     CareerTimelineItem[]
@@ -445,19 +522,25 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
   const [selectedItem, setSelectedItem] = useState<CareerTimelineItem | null>(null)
   const [showAll, setShowAll] = useState(false)
 
-  const published = items.filter((item) => item.isPublished)
+  // Apply public filter + featured-first sort
+  const published  = getPublicCareerUpdates(items)
   if (published.length === 0) return null
 
-  const gridItems = published.slice(0, GRID_LIMIT)
-  const remaining = published.slice(GRID_LIMIT)
-  const hasMore   = remaining.length > 0
+  const gridItems  = published.slice(0, GRID_LIMIT)
+  const remaining  = published.slice(GRID_LIMIT)
+  const hasMore    = remaining.length > 0
 
   const [primary, ...secondary] = gridItems
 
-  // Top-right secondary cards (row 1, cols 2-3): self-start so they're shorter than primary.
-  // Bottom secondary cards (row 2, all cols): fill their cell height.
+  // Top-right secondary cards (row 1, cols 2-3): self-start so they are
+  // shorter than the primary, preserving the editorial height contrast.
   const topRight  = secondary.slice(0, 2)
   const bottomRow = secondary.slice(2)
+
+  // Build chronology groups for the "View all" archive
+  const archiveGroups = buildChronologyGroups(
+    [...remaining].sort((a, b) => b.eventDate.localeCompare(a.eventDate)),
+  )
 
   return (
     <section id="story" className="mt-10 lg:mt-12">
@@ -477,13 +560,13 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
           </p>
         )}
 
-        {/* ── Bento grid ──────────────────────────────────────────────────
+        {/* ── Bento grid ───────────────────────────────────────────────────
             Desktop (3 col):
               Row 1 — col1: primary (tall, min-h-[380px])
-                    — col2+col3: 2 shorter cards (self-start, ~170px)
-              Row 2 — cols 1-3: 3 standard-height cards
-            Tablet (2 col): primary full-width; secondary 2-col grid below.
-            Mobile: stacked in DOM order.                                   */}
+                    — col2+col3: shorter cards with lg:self-start
+              Row 2 — cols 1-3: standard-height cards
+            Tablet (2 col): primary spans full width; secondary fills 2-col grid.
+            Mobile: stacked in DOM order.                                        */}
         <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
 
           {/* Primary — tall */}
@@ -491,14 +574,14 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
             <PrimaryCard item={primary} onClick={() => setSelectedItem(primary)} />
           </div>
 
-          {/* Top-right — shorter, self-start on desktop so they don't stretch to primary height */}
+          {/* Top-right — shorter, don't stretch to primary height on desktop */}
           {topRight.map((item) => (
             <div key={item.id} className="min-h-[170px] lg:self-start">
               <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
             </div>
           ))}
 
-          {/* Bottom row — standard height */}
+          {/* Bottom row — fill cell height */}
           {bottomRow.map((item) => (
             <div key={item.id} className="min-h-[170px]">
               <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
@@ -507,39 +590,53 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         </div>
 
-        {/* ── Expanded overflow items ────────────────────────────────────── */}
-        {showAll && remaining.length > 0 && (
-          <div className="mt-[10px] grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
-            {remaining.map((item) => (
-              <div key={item.id} className="min-h-[170px]">
-                <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Show more / fewer ──────────────────────────────────────────── */}
+        {/* ── View all control + compact archive ──────────────────────────── */}
         {hasMore && (
-          <div className="mt-[18px]">
-            <button
-              type="button"
-              onClick={() => setShowAll((prev) => !prev)}
-              aria-expanded={showAll}
-              className="flex items-center gap-[7px] rounded-[5px] border border-white/[0.07] bg-white/[0.022] px-[14px] py-[7px] text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/44 transition-colors hover:border-white/[0.12] hover:bg-white/[0.038] hover:text-foreground/64 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <ChevronDown
-                className={cn(
-                  "h-[10px] w-[10px] transition-transform duration-200",
-                  showAll && "rotate-180",
-                )}
-                aria-hidden
-              />
-              {showAll ? "Show fewer updates" : "View all career updates"}
-            </button>
-          </div>
+          <>
+            <div className="mt-[18px]">
+              <button
+                type="button"
+                onClick={() => setShowAll((prev) => !prev)}
+                aria-expanded={showAll}
+                className="flex items-center gap-[7px] rounded-[5px] border border-white/[0.07] bg-white/[0.022] px-[14px] py-[7px] text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/44 transition-colors hover:border-white/[0.12] hover:bg-white/[0.038] hover:text-foreground/64 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <ChevronDown
+                  className={cn(
+                    "h-[10px] w-[10px] transition-transform duration-200",
+                    showAll && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+                {showAll ? "Show fewer updates" : "View all career updates"}
+              </button>
+            </div>
+
+            {/* Compact year-grouped archive — editorial, not another bento grid */}
+            {showAll && archiveGroups.length > 0 && (
+              <div className="mt-4 border-t border-white/[0.05] pt-4">
+                {archiveGroups.map((group, gi) => (
+                  <div key={group.year} className={gi > 0 ? "mt-4" : ""}>
+                    <div className="mb-[6px] flex items-center gap-[8px]">
+                      <span className="text-[8px] font-bold tabular-nums tracking-[0.04em] text-foreground/22">
+                        {group.year}
+                      </span>
+                      <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
+                    </div>
+                    {group.items.map((item) => (
+                      <ArchiveListItem
+                        key={item.id}
+                        item={item}
+                        onClick={() => setSelectedItem(item)}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
-        {/* ── Detail modal ───────────────────────────────────────────────── */}
+        {/* ── Detail modal ──────────────────────────────────────────────────── */}
         <UpdateDetail
           item={selectedItem}
           open={!!selectedItem}

@@ -1295,7 +1295,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineDescription, setTimelineDescription] = useState("")
   const [timelineLink, setTimelineLink] = useState("")
   const [timelineIsPublished, setTimelineIsPublished] = useState(true)
+  const [timelineIsFeatured, setTimelineIsFeatured] = useState(false)
   const [timelineImageUrl, setTimelineImageUrl] = useState("")
+  const [timelinePreviewImageUrl, setTimelinePreviewImageUrl] = useState("")
   const [timelineSaving, setTimelineSaving] = useState(false)
   const [timelineError, setTimelineError] = useState("")
   const [timelineDeleteId, setTimelineDeleteId] = useState<string | null>(null)
@@ -9805,6 +9807,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineDescription("")
       setTimelineLink("")
       setTimelineImageUrl("")
+      setTimelinePreviewImageUrl("")
+      setTimelineIsFeatured(false)
       setTimelineIsPublished(true)
       setTimelineError("")
       setTimelineFormOpen(true)
@@ -9819,6 +9823,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineDescription(item.description ?? "")
       setTimelineLink(item.link ?? "")
       setTimelineImageUrl(item.imageUrl ?? "")
+      setTimelinePreviewImageUrl(item.previewImageUrl ?? "")
+      setTimelineIsFeatured(item.isFeatured)
       setTimelineIsPublished(item.isPublished)
       setTimelineError("")
       setTimelineFormOpen(true)
@@ -9828,6 +9834,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineFormOpen(false)
       setTimelineEditId(null)
       setTimelineImageUrl("")
+      setTimelinePreviewImageUrl("")
+      setTimelineIsFeatured(false)
       setTimelineError("")
     }
 
@@ -9851,6 +9859,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             description: timelineDescription.trim() || undefined,
             link: timelineLink.trim() || undefined,
             imageUrl: timelineImageUrl.trim() || undefined,
+            isFeatured: timelineIsFeatured,
+            previewImageUrl: timelinePreviewImageUrl.trim() || undefined,
             isPublished: timelineIsPublished,
           }),
         })
