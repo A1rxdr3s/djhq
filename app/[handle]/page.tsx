@@ -1738,7 +1738,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         <ArtistStory
           items={artist.careerTimeline ?? []}
           headline="Career signals from Chile to international stages."
-          intro="Selected milestones from the artist’s residencies, releases, and international appearances."
+          intro="Selected public milestones from the artist’s residencies, releases, and international appearances."
         />
 
         <div id="contact" className="scroll-mt-16">
