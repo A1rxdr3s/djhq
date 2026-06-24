@@ -22,7 +22,7 @@ import {
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
-import type { Artist, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, CareerTimelineCategory, CareerTimelineItem, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { isSafeInternalPath, resolveSafeHref } from "@/lib/safe-url"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
@@ -195,6 +195,27 @@ type GalleryImageRow = {
   sort_order: number
   focal_x: number
   focal_y: number
+}
+
+type CareerTimelineRow = {
+  id: string
+  title: string
+  category: string
+  event_date: string
+  location: string | null
+  description: string | null
+  link: string | null
+  is_published: boolean
+  sort_order: number | null
+}
+
+const VALID_TIMELINE_CATEGORIES = new Set<string>([
+  "residency", "festival", "club_show", "international",
+  "release", "press", "chart", "tour", "other",
+])
+
+function normalizeTimelineCategory(c: string): CareerTimelineCategory {
+  return VALID_TIMELINE_CATEGORIES.has(c) ? (c as CareerTimelineCategory) : "other"
 }
 
 const socialPlatforms: SocialPlatform[] = [
@@ -412,7 +433,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       return null
     }
 
-    const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult, videosResult] = await Promise.all([
+    const [socialLinksResult, releasesResult, gigsResult, galleryImagesResult, djSetsResult, videosResult, careerTimelineResult] = await Promise.all([
       supabase
         .from("social_links")
         .select("platform, label, url")
@@ -457,6 +478,14 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .order("video_date", { ascending: false })
         .limit(6)
         .returns<VideoRow[]>(),
+      supabase
+        .from("artist_career_timeline")
+        .select("id, title, category, event_date, location, description, link, is_published, sort_order")
+        .eq("artist_id", artistRow.id)
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true, nullsFirst: false })
+        .order("event_date", { ascending: false })
+        .returns<CareerTimelineRow[]>(),
     ])
 
     if (
@@ -594,6 +623,17 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       footerNewsletterEnabled: artistRow.footer_newsletter_enabled ?? true,
       footerSocialsEnabled: artistRow.footer_socials_enabled ?? true,
       footerCopyright: artistRow.footer_copyright ?? null,
+      careerTimeline: (careerTimelineResult.data ?? []).map((r): CareerTimelineItem => ({
+        id: r.id,
+        title: r.title,
+        category: normalizeTimelineCategory(r.category),
+        eventDate: r.event_date,
+        location: r.location ?? undefined,
+        description: r.description ?? undefined,
+        link: r.link ?? undefined,
+        isPublished: r.is_published,
+        sortOrder: r.sort_order,
+      })),
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
     }
@@ -1690,6 +1730,87 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </section>
           </MobileSection>
         )}
+
+        {/* ── Career Story ─────────────────────────────────────────────── */}
+        {(artist.careerTimeline?.length ?? 0) > 0 && (() => {
+          const items = artist.careerTimeline!
+
+          const CATEGORY_LABELS: Record<string, string> = {
+            residency:    "Residency",
+            festival:     "Festival",
+            club_show:    "Club Show",
+            international:"International",
+            release:      "Release",
+            press:        "Press",
+            chart:        "Chart",
+            tour:         "Tour",
+            other:        "Other",
+          }
+
+          return (
+            <section className="mt-10 lg:mt-14">
+              <div className="mx-auto max-w-5xl">
+                <SectionHeader>Artist Story</SectionHeader>
+
+                <div className="mt-6 space-y-0 divide-y divide-white/[0.05]">
+                  {items.map((item) => {
+                    const year = item.eventDate.slice(0, 4)
+                    const categoryLabel = CATEGORY_LABELS[item.category] ?? item.category
+
+                    return (
+                      <div key={item.id} className="group flex gap-5 py-4 sm:gap-7 sm:py-5">
+
+                        {/* Year column */}
+                        <div className="w-10 shrink-0 sm:w-14">
+                          <p className="text-[13px] font-black tabular-nums text-foreground/28 sm:text-[15px]">
+                            {year}
+                          </p>
+                        </div>
+
+                        {/* Category + content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="text-[9px] font-bold uppercase tracking-[0.20em] text-accent/65">
+                              {categoryLabel}
+                            </span>
+                            {item.link ? (
+                              <a
+                                href={item.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[15px] font-black leading-snug tracking-[-0.01em] text-foreground/90 transition-colors duration-150 hover:text-foreground sm:text-[17px]"
+                              >
+                                {item.title}
+                                <ExternalLink className="ml-1.5 inline-block h-3 w-3 translate-y-[-1px] text-foreground/25 transition-colors duration-150 group-hover:text-accent/50" aria-hidden />
+                              </a>
+                            ) : (
+                              <p className="text-[15px] font-black leading-snug tracking-[-0.01em] text-foreground/90 sm:text-[17px]">
+                                {item.title}
+                              </p>
+                            )}
+                          </div>
+
+                          {item.location && (
+                            <p className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-foreground/30">
+                              {item.location}
+                            </p>
+                          )}
+
+                          {item.description && (
+                            <p className="mt-1.5 max-w-prose text-[12px] leading-[1.7] text-foreground/40 sm:text-[13px]">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </section>
+          )
+        })()}
 
         <div id="contact" className="scroll-mt-16">
           <ProfileClosing

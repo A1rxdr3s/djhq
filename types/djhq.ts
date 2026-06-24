@@ -385,6 +385,46 @@ export interface PressKit {
 }
 
 /**
+ * Supported categories for career timeline items.
+ */
+export type CareerTimelineCategory =
+  | "residency"
+  | "festival"
+  | "club_show"
+  | "international"
+  | "release"
+  | "press"
+  | "chart"
+  | "tour"
+  | "other"
+
+/**
+ * A career milestone or achievement displayed on the artist's public profile.
+ */
+export interface CareerTimelineItem {
+  /** Stable unique identifier. */
+  id: string
+  /** Milestone title (e.g. "Hï Ibiza Residency", "Boiler Room Berlin"). */
+  title: string
+  /** Category label used for display and filtering. */
+  category: CareerTimelineCategory
+  /** Event date in ISO-8601 format — year or full date shown publicly. */
+  eventDate: string
+  /** Optional location string (city, country, or venue). */
+  location?: string
+  /** Optional short editorial description. */
+  description?: string
+  /** Optional external link (event page, press coverage, etc.). */
+  link?: string
+  /** Optional image URL. */
+  imageUrl?: string
+  /** Whether this item is visible on the public profile. */
+  isPublished: boolean
+  /** Display sort position. Null means unset; sorted by event_date desc as fallback. */
+  sortOrder: number | null
+}
+
+/**
  * Core DJHQ artist profile aggregate for the MVP.
  */
 export interface Artist {
@@ -482,6 +522,8 @@ export interface Artist {
   footerContactEmail?: string | null
   footerDemosEmail?: string | null
   footerCopyright?: string | null
+  /** Career milestones shown in the editorial career story section. */
+  careerTimeline?: CareerTimelineItem[]
   /** Record creation timestamp. */
   createdAt: ISODateString
   /** Record last update timestamp. */

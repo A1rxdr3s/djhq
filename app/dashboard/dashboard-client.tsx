@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
-import type { Artist, ArtistAccentTheme, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { computeVideoTitle } from "@/lib/performance-title"
@@ -368,11 +368,12 @@ const navGroups: NavGroup[] = [
   {
     label: "Content",
     items: [
-      { id: "releases", label: "Releases", icon: Disc3 },
-      { id: "shows",    label: "Shows",    icon: Calendar },
-      { id: "sets",     label: "Sets",     icon: Headphones },
-      { id: "media",    label: "Videos",   icon: Play },
-      { id: "gallery",  label: "Gallery",  icon: ImageIcon },
+      { id: "releases", label: "Releases",     icon: Disc3 },
+      { id: "shows",    label: "Shows",        icon: Calendar },
+      { id: "sets",     label: "Sets",         icon: Headphones },
+      { id: "media",    label: "Videos",       icon: Play },
+      { id: "gallery",  label: "Gallery",      icon: ImageIcon },
+      { id: "timeline", label: "Career Story", icon: TrendingUp },
     ],
   },
   {
@@ -1271,6 +1272,34 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [stayError, setStayError] = useState("")
   const [stayGenerating, setStayGenerating] = useState(false)
 
+  // ── Career Timeline ───────────────────────────────────────────────────────
+  const TIMELINE_CATEGORIES: { value: CareerTimelineCategory; label: string }[] = [
+    { value: "residency",    label: "Residency" },
+    { value: "festival",     label: "Festival" },
+    { value: "club_show",    label: "Club Show" },
+    { value: "international",label: "International" },
+    { value: "release",      label: "Release" },
+    { value: "press",        label: "Press" },
+    { value: "chart",        label: "Chart" },
+    { value: "tour",         label: "Tour" },
+    { value: "other",        label: "Other" },
+  ]
+  const [timelineItems, setTimelineItems] = useState<CareerTimelineItem[]>([])
+  const [timelineLoaded, setTimelineLoaded] = useState(false)
+  const [timelineFormOpen, setTimelineFormOpen] = useState(false)
+  const [timelineEditId, setTimelineEditId] = useState<string | null>(null)
+  const [timelineTitle, setTimelineTitle] = useState("")
+  const [timelineCategory, setTimelineCategory] = useState<CareerTimelineCategory>("festival")
+  const [timelineEventDate, setTimelineEventDate] = useState("")
+  const [timelineLocation, setTimelineLocation] = useState("")
+  const [timelineDescription, setTimelineDescription] = useState("")
+  const [timelineLink, setTimelineLink] = useState("")
+  const [timelineIsPublished, setTimelineIsPublished] = useState(true)
+  const [timelineSaving, setTimelineSaving] = useState(false)
+  const [timelineError, setTimelineError] = useState("")
+  const [timelineDeleteId, setTimelineDeleteId] = useState<string | null>(null)
+  const [timelineDeleteConfirm, setTimelineDeleteConfirm] = useState(false)
+
   type HomeBooking = {
     id: string; referenceId: string; fullName: string
     city: string; eventDate: string; status: string
@@ -1420,6 +1449,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     })()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTourId, staysLoaded])
+
+  // Career Timeline: load items once when section is first opened
+  useEffect(() => {
+    if (activeSection !== "timeline" || timelineLoaded) return
+    void (async () => {
+      try {
+        const res = await fetch(`/api/artists/career-timeline?artistId=${artist.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setTimelineItems(data.items ?? [])
+        }
+      } finally {
+        setTimelineLoaded(true)
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection])
 
   // Home: fetch latest booking for the command surface (once per mount)
   useEffect(() => {
@@ -9744,6 +9790,403 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  function renderTimeline() {
+    const busy = timelineSaving || !!timelineDeleteId
+
+    function openAddForm() {
+      setTimelineEditId(null)
+      setTimelineTitle("")
+      setTimelineCategory("festival")
+      setTimelineEventDate("")
+      setTimelineLocation("")
+      setTimelineDescription("")
+      setTimelineLink("")
+      setTimelineIsPublished(true)
+      setTimelineError("")
+      setTimelineFormOpen(true)
+    }
+
+    function openEditForm(item: CareerTimelineItem) {
+      setTimelineEditId(item.id)
+      setTimelineTitle(item.title)
+      setTimelineCategory(item.category)
+      setTimelineEventDate(item.eventDate)
+      setTimelineLocation(item.location ?? "")
+      setTimelineDescription(item.description ?? "")
+      setTimelineLink(item.link ?? "")
+      setTimelineIsPublished(item.isPublished)
+      setTimelineError("")
+      setTimelineFormOpen(true)
+    }
+
+    function closeForm() {
+      setTimelineFormOpen(false)
+      setTimelineEditId(null)
+      setTimelineError("")
+    }
+
+    async function handleSave() {
+      if (!timelineTitle.trim()) { setTimelineError("Title is required."); return }
+      if (!timelineEventDate) { setTimelineError("Date is required."); return }
+      setTimelineSaving(true)
+      setTimelineError("")
+      try {
+        const isEdit = !!timelineEditId
+        const res = await fetch("/api/artists/career-timeline", {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...(isEdit ? { id: timelineEditId } : {}),
+            artistId: artist.id,
+            title: timelineTitle.trim(),
+            category: timelineCategory,
+            eventDate: timelineEventDate,
+            location: timelineLocation.trim() || undefined,
+            description: timelineDescription.trim() || undefined,
+            link: timelineLink.trim() || undefined,
+            isPublished: timelineIsPublished,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setTimelineError(data.error ?? "Save failed."); return }
+        if (isEdit) {
+          setTimelineItems((prev) => prev.map((t) => t.id === timelineEditId ? data.item : t))
+        } else {
+          setTimelineItems((prev) => [data.item, ...prev])
+        }
+        closeForm()
+      } catch {
+        setTimelineError("Network error. Please try again.")
+      } finally {
+        setTimelineSaving(false)
+      }
+    }
+
+    async function handleTogglePublish(item: CareerTimelineItem) {
+      if (busy) return
+      setTimelineDeleteId(item.id) // reuse busy signal
+      try {
+        const res = await fetch("/api/artists/career-timeline", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: item.id, artistId: artist.id, isPublished: !item.isPublished }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setTimelineItems((prev) => prev.map((t) => t.id === item.id ? data.item : t))
+        }
+      } finally {
+        setTimelineDeleteId(null)
+      }
+    }
+
+    async function handleDelete(id: string) {
+      setTimelineDeleteId(id)
+      setTimelineDeleteConfirm(false)
+      try {
+        await fetch(`/api/artists/career-timeline?id=${id}&artistId=${artist.id}`, { method: "DELETE" })
+        setTimelineItems((prev) => prev.filter((t) => t.id !== id))
+      } finally {
+        setTimelineDeleteId(null)
+      }
+    }
+
+    function categoryLabel(cat: CareerTimelineCategory): string {
+      return TIMELINE_CATEGORIES.find((c) => c.value === cat)?.label ?? cat
+    }
+
+    function formatYear(dateStr: string): string {
+      return dateStr.slice(0, 4)
+    }
+
+    const itemCount = timelineItems.length
+
+    return (
+      <div className="space-y-5">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
+              Career Story
+              {itemCount > 0 && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground/40">
+                  · {itemCount} {itemCount === 1 ? "milestone" : "milestones"}
+                </span>
+              )}
+            </h2>
+            <p className="mt-0.5 text-sm text-muted-foreground/52">
+              Editorial career milestones shown on your public profile. Only published items are visible publicly.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={openAddForm}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Milestone
+          </button>
+        </div>
+
+        {/* Add / Edit form */}
+        {timelineFormOpen && (
+          <div className="rounded-xl border border-border bg-card/30 p-5 space-y-4">
+            <p className="text-sm font-semibold text-foreground">
+              {timelineEditId ? "Edit Milestone" : "New Milestone"}
+            </p>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {/* Title */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Title <span className="text-destructive/60">*</span>
+                </label>
+                <Input
+                  value={timelineTitle}
+                  onChange={(e) => setTimelineTitle(e.target.value)}
+                  placeholder="e.g. Hï Ibiza Residency, Boiler Room Berlin, #1 Beatport…"
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Category <span className="text-destructive/60">*</span>
+                </label>
+                <select
+                  value={timelineCategory}
+                  onChange={(e) => setTimelineCategory(e.target.value as CareerTimelineCategory)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  {TIMELINE_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Date <span className="text-destructive/60">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={timelineEventDate}
+                  onChange={(e) => setTimelineEventDate(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {/* Location */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Location <span className="normal-case text-muted-foreground/30">(optional)</span>
+                </label>
+                <Input
+                  value={timelineLocation}
+                  onChange={(e) => setTimelineLocation(e.target.value)}
+                  placeholder="e.g. Ibiza, Spain"
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {/* Link */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Link <span className="normal-case text-muted-foreground/30">(optional)</span>
+                </label>
+                <Input
+                  value={timelineLink}
+                  onChange={(e) => setTimelineLink(e.target.value)}
+                  placeholder="https://ra.co/…"
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Description <span className="normal-case text-muted-foreground/30">(optional)</span>
+                </label>
+                <Textarea
+                  value={timelineDescription}
+                  onChange={(e) => setTimelineDescription(e.target.value)}
+                  placeholder="Short editorial note shown on the public profile…"
+                  rows={2}
+                  className="resize-none text-sm"
+                />
+              </div>
+
+              {/* Published toggle */}
+              <div className="sm:col-span-2 flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setTimelineIsPublished((v) => !v)}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-150 focus:outline-none ${timelineIsPublished ? "bg-accent" : "bg-muted"}`}
+                >
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 ${timelineIsPublished ? "translate-x-4" : "translate-x-0.5"}`} />
+                </button>
+                <span className="text-xs text-muted-foreground/60">
+                  {timelineIsPublished ? "Published — visible on public profile" : "Draft — hidden from public profile"}
+                </span>
+              </div>
+            </div>
+
+            {timelineError && (
+              <p className="text-xs text-destructive/80">{timelineError}</p>
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={timelineSaving}
+                className="h-8 bg-accent/90 px-4 text-[11px] text-accent-foreground hover:bg-accent"
+              >
+                {timelineSaving ? "Saving…" : timelineEditId ? "Save Changes" : "Add Milestone"}
+              </Button>
+              <button
+                type="button"
+                onClick={closeForm}
+                disabled={timelineSaving}
+                className="text-xs text-muted-foreground/50 hover:text-foreground/70 disabled:opacity-40"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {!timelineLoaded && (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-14 animate-pulse rounded-lg bg-secondary/50" />
+            ))}
+          </div>
+        )}
+
+        {/* Item list */}
+        {timelineLoaded && itemCount > 0 && (
+          <div className="space-y-2">
+            {timelineItems.map((item) => (
+              <div
+                key={item.id}
+                className={`flex items-start gap-4 rounded-xl border px-4 py-3 transition-colors duration-150 ${
+                  item.isPublished ? "border-border bg-card/20" : "border-dashed border-border/50 bg-transparent"
+                }`}
+              >
+                {/* Year + category */}
+                <div className="shrink-0 min-w-[72px]">
+                  <p className="text-[11px] font-black tabular-nums text-foreground/60">{formatYear(item.eventDate)}</p>
+                  <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-accent/60">
+                    {categoryLabel(item.category)}
+                  </p>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground/90 leading-snug">{item.title}</p>
+                  {item.location && (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">{item.location}</p>
+                  )}
+                  {item.description && (
+                    <p className="mt-1 text-[11px] text-muted-foreground/40 line-clamp-2">{item.description}</p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="shrink-0 flex items-center gap-1">
+                  {/* Publish toggle */}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleTogglePublish(item)}
+                    title={item.isPublished ? "Unpublish" : "Publish"}
+                    className={`h-6 rounded px-2 text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors duration-100 disabled:opacity-40 ${
+                      item.isPublished
+                        ? "bg-accent/10 text-accent/70 hover:bg-accent/20"
+                        : "bg-secondary/50 text-muted-foreground/40 hover:text-foreground/60"
+                    }`}
+                  >
+                    {item.isPublished ? "Live" : "Draft"}
+                  </button>
+
+                  {/* Edit */}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => openEditForm(item)}
+                    className="h-6 rounded px-2 text-[9px] font-medium text-muted-foreground/40 transition-colors duration-100 hover:text-foreground/70 disabled:opacity-40"
+                  >
+                    Edit
+                  </button>
+
+                  {/* Delete */}
+                  {timelineDeleteId === item.id && !timelineSaving ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.id)}
+                        className="h-6 rounded px-2 text-[9px] font-semibold text-destructive/70 hover:text-destructive"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTimelineDeleteId(null)}
+                        className="h-6 rounded px-2 text-[9px] text-muted-foreground/40 hover:text-foreground/60"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => { setTimelineDeleteId(item.id); setTimelineDeleteConfirm(true) }}
+                      className="h-6 rounded px-2 text-[9px] font-medium text-muted-foreground/25 transition-colors duration-100 hover:text-destructive/60 disabled:opacity-40"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {timelineLoaded && itemCount === 0 && !timelineFormOpen && (
+          <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
+            <p className="text-sm font-medium text-foreground/55">No milestones yet.</p>
+            <p className="mt-1.5 mx-auto max-w-xs text-[12px] leading-[1.6] text-muted-foreground/35">
+              Add residencies, festival debuts, press achievements, chart positions and other career highlights.
+            </p>
+            <button
+              type="button"
+              onClick={openAddForm}
+              className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add First Milestone
+            </button>
+          </div>
+        )}
+
+        {timelineLoaded && itemCount > 0 && (
+          <p className="text-[10px] text-muted-foreground/22">
+            Items are sorted by sort order then date (newest first). Only published items appear on your public profile.
+          </p>
+        )}
+
+      </div>
+    )
+  }
+
   function renderActiveSection() {
     switch (activeSection) {
       case "home":
@@ -9762,6 +10205,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderVideos()
       case "gallery":
         return renderGallery()
+      case "timeline":
+        return renderTimeline()
       case "bookings":
         return renderBookings()
       case "tours":
