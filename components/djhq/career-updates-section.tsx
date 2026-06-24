@@ -208,7 +208,11 @@ function SecondaryCard({
   item:    CareerTimelineItem
   onClick: () => void
 }) {
-  const hasImage = !!item.imageUrl
+  const [imgFailed, setImgFailed] = useState(false)
+
+  const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
+  const hasImage   = !!normalized?.isRenderable && !imgFailed
+  const isDrive    = normalized?.source === "google-drive"
 
   return (
     <button
@@ -219,11 +223,13 @@ function SecondaryCard({
       {hasImage ? (
         <>
           <Image
-            src={item.imageUrl!}
+            src={normalized!.renderUrl}
             alt={item.title}
             fill
+            unoptimized={isDrive}
             className="object-cover opacity-[0.72] transition-transform duration-700 group-hover:scale-[1.04]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            onError={() => setImgFailed(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/48 to-black/16" />
         </>
