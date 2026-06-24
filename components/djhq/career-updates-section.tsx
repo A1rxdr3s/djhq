@@ -40,23 +40,25 @@ function computeGridLimit(count: number): number {
 //   Row 5: [5  4col tall][6  5col wide   ][7  3col compact]
 //   Row 6: [5  4col tall][6  5col wide   ][7  3col compact]
 //
-//   Total: 6 rows × 86 px + 5 × gap = ~576 px (vs. 780 px before)
+//   For 7 items: same positions — col 10-12 in rows 5-6 stays empty (accepted).
 //
-// Layout B — primary has no image (5-4-3 then 4-5-3 mix, bottom wide pair):
+// Layout B — primary has no image (2+3+3 structure, 3-tile balanced bottom):
 //
-//   Row 1: [0  5col wide  ][1  4col med][2  3col compact]
-//   Row 2: [0  5col wide  ][1  4col med][2  3col compact]
-//   Row 3: [3  4col med][4  5col wide  ][5  3col compact]
-//   Row 4: [3  4col med][4  5col wide  ][5  3col compact]
-//   Row 5: [6  6col wide       ][7  6col wide      ]  (or full-width if 7 items)
-//   Row 6: [6  6col wide       ][7  6col wide      ]
+//   Row 1: [0  6col wide          ][1  6col wide         ]  ← wide pair
+//   Row 2: [0  6col wide          ][1  6col wide         ]
+//   Row 3: [2  4col med][3  5col wide ][4  3col compact]     ← varied middle
+//   Row 4: [2  4col med][3  5col wide ][4  3col compact]
+//   Row 5: [5  4col    ][6  4col     ][7  4col    ]          ← 3 balanced compact tiles
+//   Row 6: [5  4col    ][6  4col     ][7  4col    ]
+//
+//   For 7 items: same positions — col 9-12 in rows 5-6 stays empty (accepted).
 
 function getMosaicDesktopClass(
   index: number,
   primaryHasImage: boolean,
-  totalItems: number,
 ): string {
   if (primaryHasImage) {
+    // Layout A: hero left-anchor (4-5-3 column mix, 3 tiles per row band)
     switch (index) {
       case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/4]"     // hero,    4col × 3row
       case 1: return "lg:[grid-column:5/10] lg:[grid-row:1/3]"    // wide,    5col × 2row
@@ -64,26 +66,21 @@ function getMosaicDesktopClass(
       case 3: return "lg:[grid-column:10/13] lg:[grid-row:3/5]"   // compact, 3col × 2row
       case 4: return "lg:[grid-column:5/10] lg:[grid-row:3/5]"    // wide,    5col × 2row
       case 5: return "lg:[grid-column:1/5] lg:[grid-row:4/7]"     // tall,    4col × 3row
-      case 6:
-        return totalItems <= 7
-          ? "lg:[grid-column:5/13] lg:[grid-row:5/7]"             // wide strip (7 items)
-          : "lg:[grid-column:5/10] lg:[grid-row:5/7]"             // wide,    5col × 2row
+      case 6: return "lg:[grid-column:5/10] lg:[grid-row:5/7]"    // wide,    5col × 2row
       case 7: return "lg:[grid-column:10/13] lg:[grid-row:5/7]"   // compact, 3col × 2row
       default: return ""
     }
   } else {
+    // Layout B: 2+3+3 structure — wide pair at top, varied middle, 3 compact tiles at bottom
     switch (index) {
-      case 0: return "lg:[grid-column:1/6] lg:[grid-row:1/3]"     // wide,    5col × 2row
-      case 1: return "lg:[grid-column:6/10] lg:[grid-row:1/3]"    // medium,  4col × 2row
-      case 2: return "lg:[grid-column:10/13] lg:[grid-row:1/3]"   // compact, 3col × 2row
-      case 3: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // medium,  4col × 2row
-      case 4: return "lg:[grid-column:5/10] lg:[grid-row:3/5]"    // wide,    5col × 2row
-      case 5: return "lg:[grid-column:10/13] lg:[grid-row:3/5]"   // compact, 3col × 2row
-      case 6:
-        return totalItems <= 7
-          ? "lg:[grid-column:1/13] lg:[grid-row:5/7]"             // full-width (7 items)
-          : "lg:[grid-column:1/7] lg:[grid-row:5/7]"              // wide,    6col × 2row
-      case 7: return "lg:[grid-column:7/13] lg:[grid-row:5/7]"    // wide,    6col × 2row
+      case 0: return "lg:[grid-column:1/7] lg:[grid-row:1/3]"     // wide,    6col × 2row
+      case 1: return "lg:[grid-column:7/13] lg:[grid-row:1/3]"    // wide,    6col × 2row
+      case 2: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // medium,  4col × 2row
+      case 3: return "lg:[grid-column:5/10] lg:[grid-row:3/5]"    // wide,    5col × 2row
+      case 4: return "lg:[grid-column:10/13] lg:[grid-row:3/5]"   // compact, 3col × 2row
+      case 5: return "lg:[grid-column:1/5] lg:[grid-row:5/7]"     // compact, 4col × 2row
+      case 6: return "lg:[grid-column:5/9] lg:[grid-row:5/7]"     // compact, 4col × 2row
+      case 7: return "lg:[grid-column:9/13] lg:[grid-row:5/7]"    // compact, 4col × 2row
       default: return ""
     }
   }
@@ -688,7 +685,7 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
                   "min-h-[160px]",
                   index === 0 && "sm:col-span-2 sm:min-h-[200px]",
                   // Desktop explicit placement (overrides auto-flow)
-                  getMosaicDesktopClass(index, primaryHasImage, gridItems.length),
+                  getMosaicDesktopClass(index, primaryHasImage),
                   "lg:min-h-0",
                 )}
               >
