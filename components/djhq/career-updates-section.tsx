@@ -156,12 +156,15 @@ function PrimaryCard({
 
       {/* Content */}
       <div className={cn(
-        "relative flex flex-col h-full p-5 sm:p-[22px]",
-        hasImage ? "justify-end" : "justify-start",
+        "relative flex flex-col h-full",
+        hasImage ? "justify-end p-5 sm:p-[22px]" : "justify-start p-4 sm:p-5",
       )}>
         <MetaChip item={item} />
 
-        <h3 className="mt-2 text-[18px] font-black leading-[1.05] tracking-[-0.020em] text-foreground/95 sm:text-[20px]">
+        <h3 className={cn(
+          "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/95",
+          hasImage ? "text-[18px] sm:text-[20px]" : "text-[17px] sm:text-[19px]",
+        )}>
           {item.title}
         </h3>
 
@@ -172,14 +175,14 @@ function PrimaryCard({
         )}
 
         {!hasImage && item.description && (
-          <p className="mt-3 flex-1 text-[12px] leading-[1.60] text-foreground/46">
+          <p className="mt-[10px] text-[12px] leading-[1.58] text-foreground/46 line-clamp-3">
             {item.description}
           </p>
         )}
 
-        <div className="mt-4">
-          <div className="inline-flex h-[27px] w-[27px] items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent/80 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/20 group-hover:text-accent">
-            <ArrowUpRight className="h-[11px] w-[11px]" />
+        <div className={cn(hasImage ? "mt-4" : "mt-3")}>
+          <div className="inline-flex h-[26px] w-[26px] items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent/80 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/20 group-hover:text-accent">
+            <ArrowUpRight className="h-[10px] w-[10px]" />
           </div>
         </div>
       </div>
