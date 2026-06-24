@@ -452,16 +452,15 @@ export interface CareerTimelineItem {
    * Conflicts (two items claiming the same slot) resolve by sort order; first wins.
    * Null falls back to positional assignment by source order.
    *
-   * hero        — 6-col × 2-row wide centre hero
-   * right-tall  — 3-col × 4-row tall right anchor
-   * left-anchor — 3-col × 2-row left anchor below intro
-   * compact-a   — 3-col × 2-row first middle compact
-   * compact-b   — 3-col × 2-row second middle compact
-   * text-left   — 3-col × 2-row bottom-left text tile
-   * wide-bottom — 6-col × 2-row bottom wide tile
-   * text-right  — 3-col × 2-row bottom-right text tile
+   * left-tall-story — 3-col × 6-row full-height left column anchor
+   * hero            — 6-col × 2-row wide centre hero
+   * right-top       — 3-col × 2-row top-right compact tile
+   * compact-a       — 3-col × 2-row first centre compact
+   * compact-b       — 3-col × 2-row second centre compact
+   * right-bottom    — 3-col × 4-row tall bottom-right anchor
+   * wide-bottom     — 6-col × 2-row bottom wide tile
    */
-  storySlot?: 'hero' | 'right-tall' | 'left-anchor' | 'compact-a' | 'compact-b' | 'text-left' | 'wide-bottom' | 'text-right' | null
+  storySlot?: 'left-tall-story' | 'hero' | 'right-top' | 'compact-a' | 'compact-b' | 'right-bottom' | 'wide-bottom' | null
   /**
    * Whether this item appears in the collapsed mosaic grid.
    * true (default) — candidate for the 8-slot grid.

@@ -1287,27 +1287,25 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   // Named slots in the public Artist Story mosaic, in fill order.
   const STORY_SLOTS: { id: string; label: string; desc: string; needsImage?: boolean }[] = [
-    { id: "left-anchor",  label: "Left Feature",  desc: "3-col anchor, left of center row", needsImage: false },
-    { id: "hero",         label: "Hero Wide",      desc: "6-col wide centre — most prominent", needsImage: true },
-    { id: "right-tall",   label: "Right Tall",     desc: "3-col tall right anchor", needsImage: true },
-    { id: "compact-a",    label: "Compact A",      desc: "3-col centre compact tile" },
-    { id: "compact-b",    label: "Compact B",      desc: "3-col centre compact tile" },
-    { id: "text-left",    label: "Lower Left",     desc: "3-col bottom-left tile" },
-    { id: "wide-bottom",  label: "Wide Bottom",    desc: "6-col bottom wide tile" },
-    { id: "text-right",   label: "Lower Right",    desc: "3-col bottom-right tile" },
+    { id: "left-tall-story", label: "Left Tall",    desc: "3-col × 6-row full left column — dominant vertical anchor", needsImage: true },
+    { id: "hero",            label: "Hero Wide",    desc: "6-col × 2-row wide centre — most prominent horizontal", needsImage: true },
+    { id: "right-top",       label: "Right Top",    desc: "3-col × 2-row top-right compact tile" },
+    { id: "compact-a",       label: "Compact A",    desc: "3-col × 2-row centre compact tile" },
+    { id: "compact-b",       label: "Compact B",    desc: "3-col × 2-row centre compact tile" },
+    { id: "right-bottom",    label: "Right Bottom", desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
+    { id: "wide-bottom",     label: "Wide Bottom",  desc: "6-col × 2-row bottom wide tile" },
   ]
 
   // Grid positions for the Artist Story preview panel (12-col, 6-row grid).
   // Matches SLOT_DESKTOP_CLASSES in career-updates-section.tsx exactly.
   const SLOT_PREVIEW_GRID: Record<string, string> = {
-    "hero":         "[grid-column:4/10] [grid-row:1/3]",
-    "right-tall":   "[grid-column:10/13] [grid-row:1/5]",
-    "left-anchor":  "[grid-column:1/4] [grid-row:3/5]",
-    "compact-a":    "[grid-column:4/7] [grid-row:3/5]",
-    "compact-b":    "[grid-column:7/10] [grid-row:3/5]",
-    "text-left":    "[grid-column:1/4] [grid-row:5/7]",
-    "wide-bottom":  "[grid-column:4/10] [grid-row:5/7]",
-    "text-right":   "[grid-column:10/13] [grid-row:5/7]",
+    "left-tall-story": "[grid-column:1/4] [grid-row:1/7]",
+    "hero":            "[grid-column:4/10] [grid-row:1/3]",
+    "right-top":       "[grid-column:10/13] [grid-row:1/3]",
+    "compact-a":       "[grid-column:4/7] [grid-row:3/5]",
+    "compact-b":       "[grid-column:7/10] [grid-row:3/5]",
+    "right-bottom":    "[grid-column:10/13] [grid-row:3/7]",
+    "wide-bottom":     "[grid-column:4/10] [grid-row:5/7]",
   }
   const [timelineItems, setTimelineItems] = useState<CareerTimelineItem[]>([])
   const [timelineLoaded, setTimelineLoaded] = useState(false)
@@ -10093,13 +10091,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
 
             {/* Slot grid — 12-col × 6-row, proportional to public mosaic */}
-            {/* grid-auto-rows:44px → Hero(2r)=96px, RightTall(4r)=200px, Compact(2r)=96px */}
+            {/* grid-auto-rows:44px → LeftTall(6r)=276px, Hero(2r)=91px, RightBottom(4r)=183px */}
             <div className="grid grid-cols-12 gap-[3px] [grid-auto-rows:44px]">
-
-              {/* Intro cell — non-interactive */}
-              <div className="[grid-column:1/4] [grid-row:1/3] rounded-[4px] border border-dashed border-border/15 bg-secondary/10 flex flex-col items-start justify-center px-2">
-                <span className="text-[7px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/18">Intro text</span>
-              </div>
 
               {/* Slot tiles — clickable */}
               {STORY_SLOTS.map((slot) => {
@@ -10614,8 +10607,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </span>
                     )}
                     {/* Image warning for image-preferred slots */}
-                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "right-tall") && (
-                      <span title="Hero and Right Tall slots look best with a cover image" className="text-[9px] text-amber-400/50">
+                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom") && (
+                      <span title="Image-anchor slots look best with a cover image" className="text-[9px] text-amber-400/50">
                         ! no image
                       </span>
                     )}

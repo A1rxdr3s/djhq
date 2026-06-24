@@ -1018,7 +1018,7 @@ create table if not exists public.artist_career_timeline (
   is_published        boolean     not null default true,
   sort_order          integer,
   layout_size         text        check (layout_size is null or layout_size in ('hero', 'tall', 'wide', 'compact')),
-  story_slot          text        check (story_slot is null or story_slot in ('hero', 'right-tall', 'left-anchor', 'compact-a', 'compact-b', 'text-left', 'wide-bottom', 'text-right')),
+  story_slot          text        check (story_slot is null or story_slot in ('left-tall-story', 'hero', 'right-top', 'right-bottom', 'compact-a', 'compact-b', 'wide-bottom')),
   show_in_collapsed   boolean     not null default true,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()

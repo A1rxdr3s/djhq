@@ -29,71 +29,83 @@ function computeGridLimit(count: number): number {
 // ── Editorial mosaic — slot system ───────────────────────────────────────────
 //
 // 12-column CSS grid, grid-auto-rows: 86px. 6 rows total.
-// The section intro (eyebrow + heading + description) occupies the intro cell
-// (col 1-3, rows 1-2). Tile slots fill the remaining area.
+// Section title sits above the grid (not inside it). All 7 slots are content tiles.
 //
-//   Row 1: [INTRO   3col r2] [HERO      6col r2        ] [RIGHT-TALL 3col r4]
-//   Row 2: [INTRO   r2     ] [HERO      r2             ] [RIGHT-TALL r4     ]
-//   Row 3: [L-ANCHOR 3col r2] [COMPACT-A 3col r2][COMPACT-B 3col r2][R-TALL r4]
-//   Row 4: [L-ANCHOR r2    ] [COMPACT-A r2     ][COMPACT-B r2     ][R-TALL r4]
-//   Row 5: [TEXT-L   3col r2] [WIDE-BOTTOM 6col r2      ] [TEXT-R  3col r2]
-//   Row 6: [TEXT-L   r2    ] [WIDE-BOTTOM r2            ] [TEXT-R  r2     ]
+//   Row 1: [L-TALL  3col r6] [HERO      6col r2] [RIGHT-TOP  3col r2]
+//   Row 2: [L-TALL  r6     ] [HERO      r2     ] [RIGHT-TOP  r2     ]
+//   Row 3: [L-TALL  r6     ] [COMPACT-A 3col r2] [COMPACT-B 3col r2] [R-BOT 3col r4]
+//   Row 4: [L-TALL  r6     ] [COMPACT-A r2     ] [COMPACT-B r2     ] [R-BOT r4     ]
+//   Row 5: [L-TALL  r6     ] [WIDE-BOTTOM 6col r2              ] [R-BOT r4     ]
+//   Row 6: [L-TALL  r6     ] [WIDE-BOTTOM r2                   ] [R-BOT r4     ]
 //
 // Primary assignment: storySlot field from HQ maps directly to a named slot.
 // Conflicts (two items with the same storySlot): first in priority-sorted list wins.
 // Fallback for items without storySlot: fill remaining slots in ORDERED_SLOTS order.
 //
-// Total grid height: 6 × 86 + 5 × 12 = 576 px.
+// Total grid height: 6 × 86 + 5 × 12 = 576 px (unchanged).
 
 type StorySlotId =
+  | 'left-tall-story'
   | 'hero'
-  | 'right-tall'
-  | 'left-anchor'
+  | 'right-top'
   | 'compact-a'
   | 'compact-b'
-  | 'text-left'
+  | 'right-bottom'
   | 'wide-bottom'
-  | 'text-right'
 
 const SLOT_DESKTOP_CLASSES: Record<StorySlotId, string> = {
-  'hero':         "lg:[grid-column:4/10] lg:[grid-row:1/3]",   // 6col × 2row — wide centre hero
-  'right-tall':   "lg:[grid-column:10/13] lg:[grid-row:1/5]",  // 3col × 4row — tall right anchor
-  'left-anchor':  "lg:[grid-column:1/4] lg:[grid-row:3/5]",    // 3col × 2row — left anchor
-  'compact-a':    "lg:[grid-column:4/7] lg:[grid-row:3/5]",    // 3col × 2row
-  'compact-b':    "lg:[grid-column:7/10] lg:[grid-row:3/5]",   // 3col × 2row
-  'text-left':    "lg:[grid-column:1/4] lg:[grid-row:5/7]",    // 3col × 2row — bottom-left
-  'wide-bottom':  "lg:[grid-column:4/10] lg:[grid-row:5/7]",   // 6col × 2row — bottom wide
-  'text-right':   "lg:[grid-column:10/13] lg:[grid-row:5/7]",  // 3col × 2row — bottom-right
+  'left-tall-story': "lg:[grid-column:1/4] lg:[grid-row:1/7]",   // 3col × 6row — full left column
+  'hero':            "lg:[grid-column:4/10] lg:[grid-row:1/3]",   // 6col × 2row — wide centre hero
+  'right-top':       "lg:[grid-column:10/13] lg:[grid-row:1/3]",  // 3col × 2row — top right
+  'compact-a':       "lg:[grid-column:4/7] lg:[grid-row:3/5]",    // 3col × 2row
+  'compact-b':       "lg:[grid-column:7/10] lg:[grid-row:3/5]",   // 3col × 2row
+  'right-bottom':    "lg:[grid-column:10/13] lg:[grid-row:3/7]",  // 3col × 4row — tall right bottom
+  'wide-bottom':     "lg:[grid-column:4/10] lg:[grid-row:5/7]",   // 6col × 2row — bottom wide
 }
 
 // Primary featured positions — use PrimaryCard for richer typographic treatment.
-const PRIMARY_SLOTS = new Set<StorySlotId>(['left-anchor', 'hero'])
+const PRIMARY_SLOTS = new Set<StorySlotId>(['left-tall-story', 'hero'])
 
 // Fill order when items have no explicit storySlot assignment.
 const ORDERED_SLOTS: StorySlotId[] = [
-  'left-anchor',
+  'left-tall-story',
   'hero',
-  'right-tall',
+  'right-bottom',
   'compact-a',
   'compact-b',
-  'text-left',
+  'right-top',
   'wide-bottom',
-  'text-right',
 ]
+
+// Maps legacy slot IDs (pre-058 migration) to current canonical names.
+// Handles any rows that weren't updated by the DB migration (e.g. local dev).
+const SLOT_MIGRATION: Record<string, StorySlotId> = {
+  'left-anchor': 'left-tall-story',
+  'text-left':   'left-tall-story',
+  'right-tall':  'right-bottom',
+  'text-right':  'right-top',
+}
 
 // Resolves which item occupies each slot:
 //   1. Items with storySlot claim that named slot (first-wins per slot; items are
 //      already priority-sorted by getPublicCareerUpdates → featured → sort_order → date).
 //   2. Remaining items fill unclaimed slots in ORDERED_SLOTS order.
+//   Legacy slot IDs are silently remapped via SLOT_MIGRATION before assignment.
 function resolveSlots(
   items: CareerTimelineItem[],
 ): Array<{ item: CareerTimelineItem; slot: StorySlotId }> {
+  function normalizeSlot(raw: string | null | undefined): StorySlotId | null {
+    if (!raw) return null
+    if (SLOT_DESKTOP_CLASSES[raw as StorySlotId]) return raw as StorySlotId
+    return SLOT_MIGRATION[raw] ?? null
+  }
+
   const claimed = new Map<StorySlotId, CareerTimelineItem>()
   const unassigned: CareerTimelineItem[] = []
 
   for (const item of items) {
-    const sid = item.storySlot as StorySlotId | undefined
-    if (sid && SLOT_DESKTOP_CLASSES[sid] && !claimed.has(sid)) {
+    const sid = normalizeSlot(item.storySlot)
+    if (sid && !claimed.has(sid)) {
       claimed.set(sid, item)
     } else {
       unassigned.push(item)
@@ -686,50 +698,34 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         {useMosaicLayout ? (
 
-          // ── Editorial mosaic (≥7 items): intro inside grid, slots by storySlot ──
-          // Section header + heading + intro move into the top-left intro cell (2 rows).
+          // ── Editorial mosaic (≥7 items): section title above grid, 7 content slots ──
           // Total grid height: 6 rows × 86px + 5 gaps × 12px = 576px.
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:[grid-auto-rows:86px]">
+          <>
+            <SectionHeader>Artist Story</SectionHeader>
 
-            {/* Intro cell — col 1-3, rows 1-2 on desktop. First on mobile. */}
-            <div className={cn(
-              "flex flex-col justify-start",
-              "sm:col-span-2",
-              "lg:[grid-column:1/4] lg:[grid-row:1/3]",
-            )}>
-              <SectionHeader>Career Updates</SectionHeader>
-              {headline && (
-                <h3 className="mt-2 text-[16px] font-black leading-[1.10] tracking-[-0.018em] text-foreground/84 sm:text-[17px]">
-                  {headline}
-                </h3>
-              )}
-              {intro && (
-                <p className="mt-[6px] text-[11px] leading-[1.56] text-foreground/40 sm:text-[11.5px]">
-                  {intro}
-                </p>
-              )}
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:[grid-auto-rows:86px]">
+
+              {/* Tile slots — positioned by SLOT_DESKTOP_CLASSES */}
+              {tileSlots.map(({ item, slot }) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "min-h-[160px]",
+                    (slot === 'left-tall-story' || slot === 'hero') && "sm:col-span-2 sm:min-h-[200px]",
+                    SLOT_DESKTOP_CLASSES[slot],
+                    "lg:min-h-0",
+                  )}
+                >
+                  {PRIMARY_SLOTS.has(slot) ? (
+                    <PrimaryCard item={item} onClick={() => setSelectedItem(item)} />
+                  ) : (
+                    <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
+                  )}
+                </div>
+              ))}
+
             </div>
-
-            {/* Tile slots — positioned by SLOT_DESKTOP_CLASSES */}
-            {tileSlots.map(({ item, slot }) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "min-h-[160px]",
-                  (slot === 'left-anchor' || slot === 'hero') && "sm:col-span-2 sm:min-h-[200px]",
-                  SLOT_DESKTOP_CLASSES[slot],
-                  "lg:min-h-0",
-                )}
-              >
-                {PRIMARY_SLOTS.has(slot) ? (
-                  <PrimaryCard item={item} onClick={() => setSelectedItem(item)} />
-                ) : (
-                  <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
-                )}
-              </div>
-            ))}
-
-          </div>
+          </>
 
         ) : (
 
