@@ -11,7 +11,7 @@
  * career images are referenced directly via imageUrl on the timeline item.
  *
  * Accepted formats: jpg, jpeg, png, webp (enforced here; bucket accepts all).
- * Max size: 10 MB (enforced by caller; bucket limit is 50 MB).
+ * Max size: 20 MB (enforced by caller; bucket limit is 50 MB).
  */
 import { NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"

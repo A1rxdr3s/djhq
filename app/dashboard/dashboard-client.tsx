@@ -9943,14 +9943,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       }
     }
 
+    const MAX_CAREER_IMAGE_MB = 20
+    const MAX_CAREER_IMAGE_BYTES = MAX_CAREER_IMAGE_MB * 1024 * 1024
+
     async function handleTimelineImageUpload(file: File) {
       const ALLOWED = ['image/jpeg', 'image/png', 'image/webp']
       if (!ALLOWED.includes(file.type)) {
         setTimelineImageUploadError('Only JPG, PNG, and WebP images are supported.')
         return
       }
-      if (file.size > 10_000_000) {
-        setTimelineImageUploadError('Image must be under 10 MB.')
+      if (file.size > MAX_CAREER_IMAGE_BYTES) {
+        setTimelineImageUploadError(`Image must be under ${MAX_CAREER_IMAGE_MB} MB.`)
         return
       }
       setTimelineImageUploading(true)
@@ -10508,7 +10511,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {timelineImageUploadError && (
                       <p className="text-[11px] text-destructive">{timelineImageUploadError}</p>
                     )}
-                    <p className="text-[10px] text-muted-foreground/38">JPG, PNG, or WebP — max 10 MB</p>
+                    <p className="text-[10px] text-muted-foreground/38">JPG, PNG, or WebP — max {MAX_CAREER_IMAGE_MB} MB</p>
                   </div>
                 )}
 
