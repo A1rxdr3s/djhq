@@ -15,6 +15,8 @@ type TimelineRow = {
   description: string | null
   link: string | null
   image_url: string | null
+  is_featured: boolean
+  preview_image_url: string | null
   is_published: boolean
   sort_order: number | null
   created_at: string
@@ -40,6 +42,8 @@ function mapRow(r: TimelineRow) {
     description: r.description ?? undefined,
     link: r.link ?? undefined,
     imageUrl: r.image_url ?? undefined,
+    isFeatured: r.is_featured,
+    previewImageUrl: r.preview_image_url ?? undefined,
     isPublished: r.is_published,
     sortOrder: r.sort_order,
     createdAt: r.created_at,
@@ -82,7 +86,7 @@ export async function GET(request: Request) {
   const supabase = createSupabaseAdminClient()
   const { data: items, error } = await supabase
     .from("artist_career_timeline")
-    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_published, sort_order, created_at, updated_at")
+    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, created_at, updated_at")
     .eq("artist_id", artistId)
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("event_date", { ascending: false })
@@ -99,7 +103,7 @@ export async function POST(request: Request) {
   if (!user) return unauthorized("Authentication required.")
 
   const body = await request.json()
-  const { artistId, title, category, eventDate, location, description, link, imageUrl, isPublished = true, sortOrder } = body
+  const { artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured = false, previewImageUrl, isPublished = true, sortOrder } = body
 
   if (!artistId || !title?.trim() || !category || !eventDate) {
     return NextResponse.json({ error: "artistId, title, category and eventDate are required." }, { status: 400 })
@@ -124,10 +128,12 @@ export async function POST(request: Request) {
       description: description?.trim() || null,
       link: link?.trim() || null,
       image_url: imageUrl?.trim() || null,
+      is_featured: isFeatured,
+      preview_image_url: previewImageUrl?.trim() || null,
       is_published: isPublished,
       sort_order: sortOrder ?? null,
     })
-    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_published, sort_order, created_at, updated_at")
+    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, created_at, updated_at")
     .single<TimelineRow>()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -141,7 +147,7 @@ export async function PATCH(request: Request) {
   if (!user) return unauthorized("Authentication required.")
 
   const body = await request.json()
-  const { id, artistId, title, category, eventDate, location, description, link, imageUrl, isPublished, sortOrder } = body
+  const { id, artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured, previewImageUrl, isPublished, sortOrder } = body
 
   if (!id || !artistId) {
     return NextResponse.json({ error: "id and artistId are required." }, { status: 400 })
@@ -162,6 +168,8 @@ export async function PATCH(request: Request) {
   if (description !== undefined) patch.description = description?.trim() || null
   if (link !== undefined) patch.link = link?.trim() || null
   if (imageUrl !== undefined) patch.image_url = imageUrl?.trim() || null
+  if (isFeatured !== undefined) patch.is_featured = isFeatured
+  if (previewImageUrl !== undefined) patch.preview_image_url = previewImageUrl?.trim() || null
   if (isPublished !== undefined) patch.is_published = isPublished
   if (sortOrder !== undefined) patch.sort_order = sortOrder
 
@@ -171,7 +179,7 @@ export async function PATCH(request: Request) {
     .update(patch)
     .eq("id", id)
     .eq("artist_id", artistId)
-    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_published, sort_order, created_at, updated_at")
+    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, created_at, updated_at")
     .single<TimelineRow>()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -416,8 +416,21 @@ export interface CareerTimelineItem {
   description?: string
   /** Optional external link (event page, press coverage, etc.). */
   link?: string
-  /** Optional image URL. */
+  /** Optional image URL. Shown publicly when the item is published. */
   imageUrl?: string
+  /**
+   * HQ-only design preview image URL.
+   * NEVER rendered on the public artist profile — used only within /hq
+   * to evaluate how the card will look with imagery before a real image
+   * is available. The public component intentionally omits this field.
+   */
+  previewImageUrl?: string
+  /**
+   * Whether this update is featured.
+   * Featured items appear first in the public Career Updates grid,
+   * before sort_order and event_date, regardless of other ordering.
+   */
+  isFeatured: boolean
   /** Whether this item is visible on the public profile. */
   isPublished: boolean
   /** Display sort position. Null means unset; sorted by event_date desc as fallback. */

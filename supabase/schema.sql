@@ -1004,22 +1004,25 @@ create policy "artist_tour_stays_owner_delete"
 
 -- ── artist_career_timeline ───────────────────────────────────────────────────
 create table if not exists public.artist_career_timeline (
-  id            uuid        primary key default gen_random_uuid(),
-  artist_id     uuid        not null references public.artists(id) on delete cascade,
-  title         text        not null,
-  category      text        not null default 'other',
-  event_date    date        not null,
-  location      text,
-  description   text,
-  link          text,
-  image_url     text,
-  is_published  boolean     not null default true,
-  sort_order    integer,
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
+  id                  uuid        primary key default gen_random_uuid(),
+  artist_id           uuid        not null references public.artists(id) on delete cascade,
+  title               text        not null,
+  category            text        not null default 'other',
+  event_date          date        not null,
+  location            text,
+  description         text,
+  link                text,
+  image_url           text,
+  is_featured         boolean     not null default false,
+  preview_image_url   text,
+  is_published        boolean     not null default true,
+  sort_order          integer,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
 );
 create index if not exists artist_career_timeline_artist_id_idx on public.artist_career_timeline (artist_id);
 create index if not exists artist_career_timeline_artist_date_idx on public.artist_career_timeline (artist_id, event_date desc);
+create index if not exists artist_career_timeline_featured_idx on public.artist_career_timeline (artist_id, sort_order) where is_featured = true;
 alter table public.artist_career_timeline enable row level security;
 
 create policy "artist_career_timeline_select"
