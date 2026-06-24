@@ -18,71 +18,47 @@ const CATEGORY_LABELS: Record<string, string> = {
   other:         "Other",
 }
 
-// ── Milestone box ─────────────────────────────────────────────────────────────
-// "isLeading" applies to the #1 sort_order item (e.g. Euro Tour 2026):
-//   same box size, same grid cell, but slightly stronger title weight/color.
-// All boxes use the same padding and border so the grid stays rhythmic.
+// ── Primary card (sort_order 1) ───────────────────────────────────────────────
+// The section's strongest signal. Taller on desktop — anchors the left column.
+// Slightly green-tinted surface to distinguish it from the secondary grid.
 
-function MilestoneBox({
-  item,
-  isLeading = false,
-}: {
-  item: CareerTimelineItem
-  isLeading?: boolean
-}) {
+function PrimaryCard({ item }: { item: CareerTimelineItem }) {
   const year     = item.eventDate.slice(0, 4)
   const catLabel = CATEGORY_LABELS[item.category] ?? item.category
 
   return (
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-[8px] border p-4 transition-colors duration-150",
-        isLeading
-          ? "border-white/[0.08] bg-white/[0.036] hover:border-accent/[0.12] hover:bg-white/[0.052]"
-          : "border-white/[0.06] bg-white/[0.026] hover:border-white/[0.09] hover:bg-white/[0.04]",
-      )}
-    >
-      {/* Thin green top accent — restrained, not colorful */}
+    <div className="relative flex h-full flex-col overflow-hidden rounded-[10px] border border-white/[0.08] bg-[oklch(0.105_0.005_160)] p-5 sm:p-6">
+      {/* Stronger green top accent — marks primary hierarchy */}
       <div
-        className={cn(
-          "absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r to-transparent",
-          isLeading ? "from-accent/36 via-accent/12" : "from-accent/22 via-accent/7",
-        )}
+        className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-accent/55 via-accent/18 to-transparent"
         aria-hidden
       />
 
-      {/* Year + Category micro-label */}
-      <div className="flex items-center gap-[6px]">
-        <span className="text-[10px] font-bold tabular-nums leading-none text-foreground/30">
+      {/* Year + Category */}
+      <div className="flex items-center gap-[7px]">
+        <span className="text-[10px] font-bold tabular-nums leading-none text-foreground/34">
           {year}
         </span>
-        <span className="text-[7.5px] font-bold uppercase tracking-[0.22em] text-accent/56">
+        <span className="text-[7.5px] font-bold uppercase tracking-[0.24em] text-accent/66">
           {catLabel}
         </span>
       </div>
 
-      {/* Title — primary signal, clearly readable */}
-      <p
-        className={cn(
-          "mt-[7px] leading-snug",
-          isLeading
-            ? "text-[14px] font-black tracking-[-0.015em] text-foreground/92"
-            : "text-[13px] font-bold  tracking-[-0.010em] text-foreground/82",
-        )}
-      >
+      {/* Title — largest in the section */}
+      <h4 className="mt-[10px] text-[19px] font-black leading-[1.06] tracking-[-0.018em] text-foreground/94 sm:text-[21px]">
         {item.title}
-      </p>
+      </h4>
 
-      {/* Location — muted metadata */}
+      {/* Location */}
       {item.location && (
-        <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.15em] text-foreground/26">
+        <p className="mt-[5px] text-[8.5px] font-semibold uppercase tracking-[0.17em] text-foreground/30">
           {item.location}
         </p>
       )}
 
-      {/* Description — short, legible, supporting context */}
+      {/* Description — editorial copy, 2–3 lines */}
       {item.description && (
-        <p className="mt-[8px] text-[11px] leading-[1.5] text-foreground/42">
+        <p className="mt-[14px] text-[12px] leading-[1.60] text-foreground/50">
           {item.description}
         </p>
       )}
@@ -90,9 +66,112 @@ function MilestoneBox({
   )
 }
 
+// ── Secondary card (sort_order 2–5) ──────────────────────────────────────────
+// Four compact signals that form a 2×2 grid to the right of the primary card
+// on desktop. Equal internal treatment — their differentiation comes from
+// the content (category, location) not from varying box sizes.
+
+function SecondaryCard({ item }: { item: CareerTimelineItem }) {
+  const year     = item.eventDate.slice(0, 4)
+  const catLabel = CATEGORY_LABELS[item.category] ?? item.category
+
+  return (
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-[8px] border border-white/[0.055] bg-white/[0.024] p-4 transition-colors duration-150 hover:border-white/[0.08] hover:bg-white/[0.036]">
+      {/* Thin top accent — restrained */}
+      <div
+        className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-accent/24 via-accent/8 to-transparent"
+        aria-hidden
+      />
+
+      {/* Year + Category */}
+      <div className="flex items-center gap-[6px]">
+        <span className="text-[10px] font-bold tabular-nums leading-none text-foreground/28">
+          {year}
+        </span>
+        <span className="text-[7px] font-bold uppercase tracking-[0.20em] text-accent/52">
+          {catLabel}
+        </span>
+      </div>
+
+      {/* Title */}
+      <p className="mt-[6px] text-[13px] font-bold leading-snug tracking-[-0.009em] text-foreground/80">
+        {item.title}
+      </p>
+
+      {/* Location */}
+      {item.location && (
+        <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.13em] text-foreground/24">
+          {item.location}
+        </p>
+      )}
+
+      {/* Description */}
+      {item.description && (
+        <p className="mt-[8px] text-[11px] leading-[1.48] text-foreground/40">
+          {item.description}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ── Foundation card (sort_order 6) ───────────────────────────────────────────
+// Full-width horizontal strip at the bottom of the bento.
+// Reads like a career base layer — calmer, more grounded than the signals above.
+// Horizontal layout on sm+ creates a distinct reading pattern from the cards.
+
+function FoundationCard({ item }: { item: CareerTimelineItem }) {
+  const year     = item.eventDate.slice(0, 4)
+  const catLabel = CATEGORY_LABELS[item.category] ?? item.category
+
+  return (
+    <div className="relative overflow-hidden rounded-[8px] border border-white/[0.04] bg-white/[0.016]">
+      {/* Very subtle left accent rail instead of top line — grounding, different rhythm */}
+      <div
+        className="absolute inset-y-0 left-0 w-[1.5px] bg-gradient-to-b from-accent/22 via-accent/8 to-transparent"
+        aria-hidden
+      />
+
+      <div className="flex flex-col gap-3 px-5 py-[14px] sm:flex-row sm:items-center sm:gap-6">
+        {/* Meta column — category + year */}
+        <div className="shrink-0 sm:w-[90px]">
+          <span className="text-[7.5px] font-bold uppercase tracking-[0.22em] text-accent/46">
+            {catLabel}
+          </span>
+          <p className="mt-[2px] text-[10px] font-bold tabular-nums text-foreground/24">
+            {year}
+          </p>
+        </div>
+
+        {/* Vertical separator on desktop */}
+        <div className="hidden w-px self-stretch bg-white/[0.05] sm:block" aria-hidden />
+
+        {/* Title + location */}
+        <div className="min-w-0 sm:w-[200px] sm:shrink-0">
+          <p className="text-[13px] font-semibold leading-snug tracking-[-0.007em] text-foreground/70">
+            {item.title}
+          </p>
+          {item.location && (
+            <p className="mt-[2px] text-[8px] font-semibold uppercase tracking-[0.13em] text-foreground/22">
+              {item.location}
+            </p>
+          )}
+        </div>
+
+        {/* Description — takes remaining width on desktop */}
+        {item.description && (
+          <p className="flex-1 text-[11px] leading-[1.48] text-foreground/36">
+            {item.description}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Chronological timeline entry ──────────────────────────────────────────────
-// Compact row: year gutter + category · location + title + description.
-// Intentionally smaller and quieter than the featured boxes — supporting detail only.
+// Compact supporting layer. Year gutter on the left, content on the right.
+// Intentionally quieter than the bento above — this is the deeper data view.
 
 function TimelineEntry({
   item,
@@ -120,7 +199,6 @@ function TimelineEntry({
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        {/* Category + location in one compact row */}
         <div className="flex flex-wrap items-center gap-x-[6px] gap-y-0">
           <span className="text-[7.5px] font-bold uppercase tracking-[0.20em] text-accent/50">
             {catLabel}
@@ -135,12 +213,10 @@ function TimelineEntry({
           )}
         </div>
 
-        {/* Title */}
         <p className="mt-[3px] text-[12px] font-semibold leading-snug tracking-[-0.006em] text-foreground/72">
           {item.title}
         </p>
 
-        {/* Description */}
         {item.description && (
           <p className="mt-[4px] text-[10.5px] leading-[1.46] text-foreground/38">
             {item.description}
@@ -164,16 +240,19 @@ export function ArtistStory({ items, headline, intro }: ArtistStoryProps) {
 
   if (items.length === 0) return null
 
-  // Featured grid: top 6 by sort_order (artist-controlled priority in HQ).
-  // The first item (lowest sort_order) receives leading visual treatment.
-  const featuredItems = items.slice(0, 6)
+  // Bento hierarchy derived from sort_order (artist-controlled in HQ):
+  //   primary    = sort_order 1  → large left column card
+  //   secondary  = sort_order 2–5 → 2×2 compact grid (right column on desktop)
+  //   foundation = sort_order 6  → full-width horizontal base strip
+  const top6 = items.slice(0, 6)
+  const [primary, ...rest] = top6
+  const secondary  = rest.slice(0, 4)
+  const foundation = rest.length >= 5 ? rest[4] : null
 
-  // Full chronology: all published items sorted oldest → newest for the reveal panel.
+  // Full chronology: all published items, oldest → newest (for the reveal panel)
   const chronologicalItems = [...items].sort((a, b) =>
     a.eventDate.localeCompare(b.eventDate),
   )
-
-  const [leadingItem, ...secondaryItems] = featuredItems
 
   return (
     <section id="story" className="mt-10 lg:mt-12">
@@ -194,27 +273,42 @@ export function ArtistStory({ items, headline, intro }: ArtistStoryProps) {
           </p>
         )}
 
-        {/* ── Featured milestone grid ─────────────────────────────────────── */}
-        {/* Desktop: 3-col × 2-row  |  Tablet: 2-col × 3-row  |  Mobile: 1-col */}
-        {featuredItems.length > 0 && (
-          <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
-            {leadingItem && (
-              <MilestoneBox item={leadingItem} isLeading />
-            )}
-            {secondaryItems.map((item) => (
-              <MilestoneBox key={item.id} item={item} />
-            ))}
-          </div>
-        )}
+        {/* ── Career signals bento ────────────────────────────────────────── */}
+        <div className="mt-5 flex flex-col gap-[10px]">
+
+          {/* Upper cluster — primary left + secondary 2×2 right on desktop */}
+          {primary && (
+            <div className="flex flex-col gap-[10px] lg:flex-row lg:items-stretch">
+
+              {/* Primary: full width on mobile/tablet, 37% on desktop */}
+              <div className="lg:w-[37%] lg:shrink-0">
+                <PrimaryCard item={primary} />
+              </div>
+
+              {/* Secondary 2×2: 1-col on mobile, 2-col on sm+ */}
+              {secondary.length > 0 && (
+                <div className="grid flex-1 grid-cols-1 gap-[10px] sm:grid-cols-2">
+                  {secondary.map((item) => (
+                    <SecondaryCard key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Foundation strip — full width, horizontal layout on sm+ */}
+          {foundation && <FoundationCard item={foundation} />}
+
+        </div>
 
         {/* ── Expand control ──────────────────────────────────────────────── */}
         {chronologicalItems.length > 0 && (
-          <div className="mt-[18px]">
+          <div className="mt-5">
             <button
               type="button"
               onClick={() => setExpanded((prev) => !prev)}
               aria-expanded={expanded}
-              className="group flex items-center gap-[6px] rounded-[4px] py-[3px] text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/35 transition-colors duration-150 hover:text-foreground/58 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="flex items-center gap-[6px] rounded-[4px] py-[3px] text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/35 transition-colors duration-150 hover:text-foreground/58 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <ChevronDown
                 className={cn(
@@ -226,7 +320,7 @@ export function ArtistStory({ items, headline, intro }: ArtistStoryProps) {
               {expanded ? "Hide full chronology" : "View full chronology"}
             </button>
 
-            {/* ── Full chronological timeline — revealed on expand ──────── */}
+            {/* Full chronological timeline — revealed on expand */}
             {expanded && (
               <div
                 className="mt-4 border-t border-white/[0.05] pt-[2px]"

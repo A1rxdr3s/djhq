@@ -1736,8 +1736,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {/* TODO: headline + intro should come from editable artist profile fields */}
         <ArtistStory
           items={artist.careerTimeline ?? []}
-          headline="Career highlights and international milestones."
-          intro={`A compact view of the moments shaping ${artist.artistName}’s path — from Santiago residencies and vinyl releases to Barcelona, Miami, Bali, and the Euro Tour 2026.`}
+          headline="From Santiago clubs to international stages."
+          intro={`A compact view of the residencies, releases, and international milestones shaping ${artist.artistName}’s path across Chile, Barcelona, Miami, Bali, and beyond.`}
         />
 
         <div id="contact" className="scroll-mt-16">
