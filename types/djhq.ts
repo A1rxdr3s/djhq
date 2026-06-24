@@ -482,6 +482,11 @@ export interface CareerTimelineItem {
    * 'cover' fills the tile and may crop; 'contain' fits the full image without cropping.
    */
   imageObjectFit: 'cover' | 'contain'
+  /**
+   * Zoom multiplier — 1.0 (no zoom) to 3.0.
+   * Applied as CSS transform: scale() centered on the focal point.
+   */
+  imageZoom: number
 }
 
 /**

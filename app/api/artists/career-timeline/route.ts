@@ -24,6 +24,7 @@ type TimelineRow = {
   image_focal_x: number
   image_focal_y: number
   image_object_fit: string
+  image_zoom: number
   created_at: string
   updated_at: string
 }
@@ -56,6 +57,7 @@ function mapRow(r: TimelineRow) {
     imageFocalX: r.image_focal_x,
     imageFocalY: r.image_focal_y,
     imageObjectFit: r.image_object_fit as 'cover' | 'contain',
+    imageZoom: r.image_zoom,
     createdAt: r.created_at,
   }
 }
@@ -96,7 +98,7 @@ export async function GET(request: Request) {
   const supabase = createSupabaseAdminClient()
   const { data: items, error } = await supabase
     .from("artist_career_timeline")
-    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, created_at, updated_at")
+    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, image_zoom, created_at, updated_at")
     .eq("artist_id", artistId)
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("event_date", { ascending: false })
@@ -113,7 +115,7 @@ export async function POST(request: Request) {
   if (!user) return unauthorized("Authentication required.")
 
   const body = await request.json()
-  const { artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured = false, previewImageUrl, isPublished = true, sortOrder, storySlot, showInCollapsed = true, imageFocalX = 50, imageFocalY = 50, imageObjectFit = 'cover' } = body
+  const { artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured = false, previewImageUrl, isPublished = true, sortOrder, storySlot, showInCollapsed = true, imageFocalX = 50, imageFocalY = 50, imageObjectFit = 'cover', imageZoom = 1 } = body
 
   if (!artistId || !title?.trim() || !category || !eventDate) {
     return NextResponse.json({ error: "artistId, title, category and eventDate are required." }, { status: 400 })
@@ -147,8 +149,9 @@ export async function POST(request: Request) {
       image_focal_x: Math.max(0, Math.min(100, Number(imageFocalX) || 50)),
       image_focal_y: Math.max(0, Math.min(100, Number(imageFocalY) || 50)),
       image_object_fit: imageObjectFit === 'contain' ? 'contain' : 'cover',
+      image_zoom: Math.max(1, Math.min(3, Number(imageZoom) || 1)),
     })
-    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, created_at, updated_at")
+    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, image_zoom, created_at, updated_at")
     .single<TimelineRow>()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -162,7 +165,7 @@ export async function PATCH(request: Request) {
   if (!user) return unauthorized("Authentication required.")
 
   const body = await request.json()
-  const { id, artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured, previewImageUrl, isPublished, sortOrder, storySlot, showInCollapsed, imageFocalX, imageFocalY, imageObjectFit } = body
+  const { id, artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured, previewImageUrl, isPublished, sortOrder, storySlot, showInCollapsed, imageFocalX, imageFocalY, imageObjectFit, imageZoom } = body
 
   if (!id || !artistId) {
     return NextResponse.json({ error: "id and artistId are required." }, { status: 400 })
@@ -192,6 +195,7 @@ export async function PATCH(request: Request) {
   if (imageFocalX !== undefined) patch.image_focal_x = Math.max(0, Math.min(100, Number(imageFocalX) || 50))
   if (imageFocalY !== undefined) patch.image_focal_y = Math.max(0, Math.min(100, Number(imageFocalY) || 50))
   if (imageObjectFit !== undefined) patch.image_object_fit = imageObjectFit === 'contain' ? 'contain' : 'cover'
+  if (imageZoom !== undefined) patch.image_zoom = Math.max(1, Math.min(3, Number(imageZoom) || 1))
 
   const supabase = createSupabaseAdminClient()
   const { data: item, error } = await supabase
@@ -199,7 +203,7 @@ export async function PATCH(request: Request) {
     .update(patch)
     .eq("id", id)
     .eq("artist_id", artistId)
-    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, created_at, updated_at")
+    .select("id, artist_id, title, category, event_date, location, description, link, image_url, is_featured, preview_image_url, is_published, sort_order, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, image_zoom, created_at, updated_at")
     .single<TimelineRow>()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

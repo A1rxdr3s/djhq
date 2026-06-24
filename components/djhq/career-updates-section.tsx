@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
+import { StoryImage } from "@/components/djhq/story-image"
 import { ArrowUpRight, ChevronDown, MapPin, Calendar, X, Link2, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SectionHeader } from "@/components/djhq/section-header"
@@ -225,19 +226,20 @@ function PrimaryCard({
       {/* Background */}
       {hasImage ? (
         <>
-          <Image
-            src={normalized!.renderUrl}
-            alt={item.title}
-            fill
-            unoptimized={isDrive}
-            className="transition-transform duration-700 group-hover:scale-[1.03]"
-            style={{
-              objectFit:     item.imageObjectFit ?? 'cover',
-              objectPosition: `${item.imageFocalX ?? 50}% ${item.imageFocalY ?? 50}%`,
-            }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 33vw"
-            onError={() => setImgFailed(true)}
-          />
+          <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.03]">
+            <StoryImage
+              src={normalized!.renderUrl}
+              alt={item.title}
+              fill
+              unoptimized={isDrive}
+              objectFit={item.imageObjectFit}
+              positionX={item.imageFocalX}
+              positionY={item.imageFocalY}
+              zoom={item.imageZoom}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 33vw"
+              onError={() => setImgFailed(true)}
+            />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/38 to-black/6" />
         </>
       ) : (
@@ -321,19 +323,21 @@ function SecondaryCard({
     >
       {hasImage ? (
         <>
-          <Image
-            src={normalized!.renderUrl}
-            alt={item.title}
-            fill
-            unoptimized={isDrive}
-            className="opacity-[0.72] transition-transform duration-700 group-hover:scale-[1.04]"
-            style={{
-              objectFit:     item.imageObjectFit ?? 'cover',
-              objectPosition: `${item.imageFocalX ?? 50}% ${item.imageFocalY ?? 50}%`,
-            }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            onError={() => setImgFailed(true)}
-          />
+          <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.04]">
+            <StoryImage
+              src={normalized!.renderUrl}
+              alt={item.title}
+              fill
+              unoptimized={isDrive}
+              objectFit={item.imageObjectFit}
+              positionX={item.imageFocalX}
+              positionY={item.imageFocalY}
+              zoom={item.imageZoom}
+              className="opacity-[0.72]"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              onError={() => setImgFailed(true)}
+            />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/48 to-black/16" />
         </>
       ) : (

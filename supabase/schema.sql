@@ -1023,6 +1023,7 @@ create table if not exists public.artist_career_timeline (
   image_focal_x       smallint    not null default 50 check (image_focal_x between 0 and 100),
   image_focal_y       smallint    not null default 50 check (image_focal_y between 0 and 100),
   image_object_fit    text        not null default 'cover' check (image_object_fit in ('cover', 'contain')),
+  image_zoom          real        not null default 1.0 check (image_zoom between 1.0 and 3.0),
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
