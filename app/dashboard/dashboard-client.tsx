@@ -1331,6 +1331,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineDragOverIndex, setTimelineDragOverIndex] = useState<number | null>(null)
   const [timelineStorySlot, setTimelineStorySlot] = useState<string>("")
   const [timelineShowInCollapsed, setTimelineShowInCollapsed] = useState(true)
+  const [timelineSlotPickerOpen, setTimelineSlotPickerOpen] = useState<string | null>(null)
 
   type HomeBooking = {
     id: string; referenceId: string; fullName: string
@@ -10055,99 +10056,215 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </button>
         </div>
 
-        {/* Artist Story Layout Preview — visual slot map */}
+        {/* ── Placement Board ──────────────────────────────────────────────────── */}
         {timelineLoaded && (
           <div className="rounded-xl border border-border/50 bg-card/20 p-4">
+
+            {/* Board header */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/40">
-                  Public Layout Preview
-                </span>
-                {mosaicActive ? (
-                  <span className="rounded-[3px] bg-accent/10 px-[5px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-accent/60">
-                    Mosaic active
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/50">
+                    Placement Board
                   </span>
-                ) : (
-                  <span className="rounded-[3px] bg-secondary/60 px-[5px] py-[1px] text-[7px] font-medium uppercase tracking-[0.10em] text-muted-foreground/35">
-                    {publishedCollapsedCount < 7 ? `${publishedCollapsedCount}/7 to activate mosaic` : "Standard grid"}
-                  </span>
-                )}
+                  {mosaicActive ? (
+                    <span className="rounded-[3px] bg-accent/10 px-[5px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-accent/60">
+                      Mosaic active
+                    </span>
+                  ) : (
+                    <span className="rounded-[3px] bg-secondary/60 px-[5px] py-[1px] text-[7px] font-medium uppercase tracking-[0.10em] text-muted-foreground/35">
+                      {publishedCollapsedCount}/7 to activate
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/35">
+                  Click a slot to assign or change which update appears there.
+                </p>
               </div>
-              <span className="text-[9px] text-muted-foreground/25">12-column editorial mosaic</span>
+              {timelineSlotPickerOpen && (
+                <button
+                  type="button"
+                  onClick={() => setTimelineSlotPickerOpen(null)}
+                  className="text-[9px] text-muted-foreground/40 hover:text-foreground/60 transition-colors"
+                >
+                  Close picker
+                </button>
+              )}
             </div>
 
-            {/* Slot grid — mirrors the public 6-row 12-col mosaic proportionally */}
-            <div className="grid grid-cols-12 gap-[3px] [grid-auto-rows:26px]">
+            {/* Slot grid — 12-col × 6-row, proportional to public mosaic */}
+            {/* grid-auto-rows:44px → Hero(2r)=96px, RightTall(4r)=200px, Compact(2r)=96px */}
+            <div className="grid grid-cols-12 gap-[3px] [grid-auto-rows:44px]">
 
-              {/* Intro cell — represents the section header/description text area */}
-              <div className="[grid-column:1/4] [grid-row:1/3] rounded-[3px] border border-dashed border-border/20 bg-secondary/20 flex flex-col items-start justify-center px-1.5">
-                <span className="text-[6px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/20">Intro</span>
+              {/* Intro cell — non-interactive */}
+              <div className="[grid-column:1/4] [grid-row:1/3] rounded-[4px] border border-dashed border-border/15 bg-secondary/10 flex flex-col items-start justify-center px-2">
+                <span className="text-[7px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/18">Intro text</span>
               </div>
 
-              {/* Slot tiles */}
+              {/* Slot tiles — clickable */}
               {STORY_SLOTS.map((slot) => {
                 const assigned = slotMap.get(slot.id)
                 const isExplicit = assigned?.storySlot === slot.id
-                const noImage = assigned && !assigned.imageUrl && slot.needsImage
+                const noImage = !!assigned && !assigned.imageUrl && !!slot.needsImage
                 const isConflict = timelineItems.filter(
                   (i) => i.isPublished && i.storySlot === slot.id
                 ).length > 1
+                const isOpen = timelineSlotPickerOpen === slot.id
+
                 return (
-                  <div
+                  <button
                     key={slot.id}
-                    className={`${SLOT_PREVIEW_GRID[slot.id]} rounded-[3px] border flex flex-col justify-between p-1.5 transition-colors duration-100 ${
-                      assigned
+                    type="button"
+                    onClick={() => setTimelineSlotPickerOpen(isOpen ? null : slot.id)}
+                    className={`${SLOT_PREVIEW_GRID[slot.id]} rounded-[4px] border flex flex-col justify-between p-2 text-left transition-all duration-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 ${
+                      isOpen
+                        ? "border-accent/50 bg-accent/10 ring-1 ring-accent/30"
+                        : assigned
                         ? isExplicit
-                          ? "border-accent/20 bg-accent/[0.06]"
-                          : "border-border/40 bg-secondary/30"
-                        : "border-dashed border-border/20 bg-secondary/10"
+                          ? "border-accent/22 bg-accent/[0.05] hover:border-accent/36 hover:bg-accent/[0.08]"
+                          : "border-border/40 bg-secondary/20 hover:border-border/60 hover:bg-secondary/30"
+                        : "border-dashed border-border/22 bg-secondary/8 hover:border-border/40 hover:bg-secondary/18"
                     }`}
                   >
-                    <div className="flex items-center gap-1 justify-between">
-                      <span className="text-[6px] font-bold uppercase tracking-[0.12em] text-muted-foreground/35 truncate">
+                    {/* Slot label row */}
+                    <div className="flex items-start justify-between gap-1">
+                      <span className={`text-[7px] font-bold uppercase tracking-[0.11em] leading-tight ${assigned ? "text-muted-foreground/50" : "text-muted-foreground/28"}`}>
                         {slot.label}
                       </span>
-                      <div className="flex items-center gap-0.5 shrink-0">
+                      <div className="flex items-center gap-[3px] shrink-0 mt-[1px]">
                         {isExplicit && (
-                          <span title="Slot explicitly assigned" className="h-[5px] w-[5px] rounded-full bg-accent/50" />
+                          <span title="Explicitly assigned" className="h-[5px] w-[5px] rounded-full bg-accent/55 shrink-0" />
                         )}
                         {noImage && (
-                          <span title="No image — text-only display" className="text-[7px] text-amber-500/50">!</span>
+                          <span title="No cover image — will use text-only display" className="text-[8px] leading-none text-amber-400/60">!</span>
                         )}
                         {isConflict && (
-                          <span title="Multiple items claim this slot — first wins" className="text-[7px] text-orange-400/60">⚡</span>
+                          <span title="Conflict — two published items claim this slot; first by fallback order wins" className="text-[8px] leading-none text-orange-400/60">⚡</span>
                         )}
                       </div>
                     </div>
-                    {assigned ? (
-                      <p className="mt-0.5 text-[7px] font-semibold text-foreground/55 truncate leading-tight">
-                        {assigned.title}
-                      </p>
-                    ) : (
-                      <p className="mt-0.5 text-[7px] text-muted-foreground/22">Empty</p>
-                    )}
-                  </div>
+                    {/* Assigned title */}
+                    <div className="mt-1">
+                      {assigned ? (
+                        <p className="text-[8px] font-semibold leading-tight text-foreground/62 truncate">
+                          {assigned.title}
+                        </p>
+                      ) : (
+                        <p className="text-[8px] text-muted-foreground/22 italic">Empty — click to assign</p>
+                      )}
+                      {assigned && !isExplicit && (
+                        <p className="text-[7px] text-muted-foreground/22 mt-[2px]">Auto</p>
+                      )}
+                    </div>
+                  </button>
                 )
               })}
             </div>
 
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+            {/* Slot picker panel — appears when a slot is selected */}
+            {timelineSlotPickerOpen && (() => {
+              const activeSlot = STORY_SLOTS.find((s) => s.id === timelineSlotPickerOpen)
+              if (!activeSlot) return null
+              const currentlyAssigned = slotMap.get(timelineSlotPickerOpen)
+              const eligibleItems = timelineItems.filter((i) => i.isPublished)
+              const noImage = !!activeSlot.needsImage
+
+              return (
+                <div className="mt-3 rounded-[8px] border border-border/60 bg-card/40 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-[10px] font-bold text-foreground/70">
+                        {activeSlot.label}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground/40">{activeSlot.desc}</p>
+                    </div>
+                    {noImage && (
+                      <span className="text-[9px] text-amber-400/60 flex items-center gap-1">
+                        <span className="text-[11px]">!</span> Works best with a cover image
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-[3px]">
+                    {/* Clear option */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const itemToUnset = timelineItems.find((i) => i.storySlot === timelineSlotPickerOpen)
+                        if (itemToUnset) handleSlotChange(itemToUnset, null)
+                        setTimelineSlotPickerOpen(null)
+                      }}
+                      className={`w-full flex items-center gap-2 rounded-[5px] px-2.5 py-1.5 text-left transition-colors duration-100 ${
+                        !timelineItems.find((i) => i.isPublished && i.storySlot === timelineSlotPickerOpen)
+                          ? "bg-secondary/30 text-muted-foreground/30 cursor-default"
+                          : "hover:bg-secondary/40 text-muted-foreground/50 hover:text-foreground/60"
+                      }`}
+                    >
+                      <span className="text-[9px] font-medium">Auto (no explicit assignment)</span>
+                      {!timelineItems.find((i) => i.storySlot === timelineSlotPickerOpen) && (
+                        <span className="text-[8px] text-accent/50 ml-auto">current</span>
+                      )}
+                    </button>
+
+                    {/* Published items */}
+                    {eligibleItems.length === 0 && (
+                      <p className="px-2.5 py-2 text-[9px] text-muted-foreground/30">No published updates to assign.</p>
+                    )}
+                    {eligibleItems.map((item) => {
+                      const isCurrentSlot = item.storySlot === timelineSlotPickerOpen
+                      const isOtherSlot = !!item.storySlot && item.storySlot !== timelineSlotPickerOpen
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            handleSlotChange(item, timelineSlotPickerOpen)
+                            setTimelineSlotPickerOpen(null)
+                          }}
+                          className={`w-full flex items-center gap-2 rounded-[5px] px-2.5 py-1.5 text-left transition-colors duration-100 ${
+                            isCurrentSlot
+                              ? "bg-accent/10 text-foreground/80"
+                              : "hover:bg-secondary/40 text-foreground/55 hover:text-foreground/80"
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-semibold leading-snug truncate">{item.title}</p>
+                            <p className="text-[8px] text-muted-foreground/40">
+                              {item.eventDate.slice(0, 4)} · {categoryLabel(item.category)}
+                              {item.location ? ` · ${item.location}` : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.imageUrl && <span className="text-[9px] text-foreground/30">📷</span>}
+                            {isCurrentSlot && (
+                              <span className="text-[8px] font-bold text-accent/70">assigned</span>
+                            )}
+                            {isOtherSlot && (
+                              <span className="text-[8px] text-muted-foreground/30">
+                                → {STORY_SLOTS.find((s) => s.id === item.storySlot)?.label ?? item.storySlot}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Legend */}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
               <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
-                <span className="inline-block h-[5px] w-[5px] rounded-full bg-accent/50" />
-                Slot explicitly assigned in HQ
+                <span className="inline-block h-[5px] w-[5px] rounded-full bg-accent/55" />
+                Explicitly assigned
               </span>
               <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
                 <span className="inline-block h-[5px] w-[5px] rounded-full bg-border/50" />
                 Auto-filled by fallback order
               </span>
-              <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
-                <span className="text-amber-500/60 text-[8px]">!</span>
-                Important slot has no image
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
-                <span className="text-orange-400/60 text-[8px]">⚡</span>
-                Slot conflict — first item wins
-              </span>
+              <span className="text-[9px] text-amber-400/55">! = no image</span>
+              <span className="text-[9px] text-orange-400/55">⚡ = slot conflict, first wins</span>
             </div>
           </div>
         )}
@@ -10378,6 +10495,25 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           </div>
         )}
 
+        {/* Inventory section divider */}
+        {timelineLoaded && itemCount > 0 && (
+          <div className="flex items-center gap-3 pt-1">
+            <div className="h-px flex-1 bg-border/30" />
+            <div>
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/30">
+                Update Inventory
+              </span>
+              <span className="ml-2 text-[9px] text-muted-foreground/22">· Fallback &amp; Overflow Order</span>
+            </div>
+            <div className="h-px flex-1 bg-border/30" />
+          </div>
+        )}
+        {timelineLoaded && itemCount > 0 && (
+          <p className="text-[10px] text-muted-foreground/28">
+            Drag to set Fallback Order — used for Auto-slotted items and the expanded &quot;View all&quot; list. Explicit Story Slot assignments are not affected by drag order.
+          </p>
+        )}
+
         {/* Item list */}
         {timelineLoaded && itemCount > 0 && (
           <div className="space-y-2">
@@ -10397,8 +10533,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     : "border-dashed border-border/50 bg-transparent"
                 } ${timelineDragIndex === i ? "opacity-40" : ""}`}
               >
-                {/* Drag handle */}
-                <div className="mt-0.5 shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-muted-foreground/50 transition-colors duration-100">
+                {/* Drag handle — sets Fallback Order only */}
+                <div
+                  className="mt-0.5 shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-muted-foreground/50 transition-colors duration-100"
+                  title="Drag to set Fallback Order — only affects Auto-slotted and overflow items"
+                >
                   <GripVertical className="h-4 w-4" />
                 </div>
 
@@ -10434,44 +10573,49 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* Story Slot + Collapsed — inline editorial controls */}
                   <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                    {/* Slot inline select */}
-                    <select
-                      value={item.storySlot ?? ""}
-                      disabled={busy}
-                      onChange={(e) => handleSlotChange(item, e.target.value || null)}
-                      className="h-[22px] rounded border border-border/50 bg-background/60 px-1.5 text-[9px] font-medium text-muted-foreground/70 transition-colors hover:border-border hover:text-foreground/80 focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 cursor-pointer"
-                      title="Story Slot — controls visual position in the public mosaic"
-                    >
-                      <option value="">Auto slot</option>
-                      {STORY_SLOTS.map((s) => (
-                        <option key={s.id} value={s.id}>{s.label}</option>
-                      ))}
-                    </select>
+                    {/* Story Slot label + inline select */}
+                    <div className="flex items-center gap-1">
+                      <span className="text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/30">Slot</span>
+                      <select
+                        value={item.storySlot ?? ""}
+                        disabled={busy}
+                        onChange={(e) => { handleSlotChange(item, e.target.value || null); setTimelineSlotPickerOpen(null) }}
+                        className="h-[22px] rounded border border-border/50 bg-background/60 px-1.5 text-[9px] font-medium text-muted-foreground/70 transition-colors hover:border-border hover:text-foreground/80 focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 cursor-pointer"
+                        title="Story Slot — controls visual position in the public Artist Story mosaic"
+                      >
+                        <option value="">Auto</option>
+                        {STORY_SLOTS.map((s) => (
+                          <option key={s.id} value={s.id}>{s.label}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                    {/* Show in Collapsed toggle */}
+                    {/* Show in Collapsed toggle — "Default" vs "Overflow" */}
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => handleShowInCollapsedToggle(item)}
-                      title={item.showInCollapsed !== false ? "In default mosaic — click to move to archive only" : "Archive only — click to show in default mosaic"}
+                      title={item.showInCollapsed !== false
+                        ? "Shown in default public Artist Story — click to move to overflow/all view only"
+                        : "Overflow only — shown under 'View all' — click to include in default Artist Story"}
                       className={`h-[22px] rounded border px-2 text-[9px] font-medium transition-colors duration-100 disabled:opacity-40 ${
                         item.showInCollapsed !== false
                           ? "border-accent/20 bg-accent/5 text-accent/60 hover:bg-accent/10"
-                          : "border-border/40 bg-secondary/30 text-muted-foreground/35 hover:text-foreground/55"
+                          : "border-border/35 bg-secondary/20 text-muted-foreground/32 hover:text-foreground/55"
                       }`}
                     >
-                      {item.showInCollapsed !== false ? "In view" : "Archive"}
+                      {item.showInCollapsed !== false ? "Default view" : "Overflow"}
                     </button>
 
                     {/* Slot conflict warning */}
                     {item.storySlot && timelineItems.filter((t) => t.isPublished && t.storySlot === item.storySlot).length > 1 && (
-                      <span title="Multiple published items claim this slot — first in sort order wins" className="text-[9px] text-orange-400/60">
-                        ⚡ slot conflict
+                      <span title="Multiple published items claim this slot — first by fallback order wins publicly" className="text-[9px] text-orange-400/55">
+                        ⚡ conflict
                       </span>
                     )}
                     {/* Image warning for image-preferred slots */}
                     {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "right-tall") && (
-                      <span title="Hero and Right Tall slots look best with a cover image" className="text-[9px] text-amber-500/50">
+                      <span title="Hero and Right Tall slots look best with a cover image" className="text-[9px] text-amber-400/50">
                         ! no image
                       </span>
                     )}
@@ -10559,7 +10703,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {timelineLoaded && itemCount > 0 && (
           <p className="text-[10px] text-muted-foreground/22">
-            Story Slot controls visual placement in the public mosaic. &quot;In view&quot; items appear in the default 8-slot layout; &quot;Archive&quot; items appear only after expanding. Featured items sort first in fallback order. Drag to set fallback position.
+            Story Slots override fallback order for public placement. &quot;Default view&quot; items appear in the Artist Story mosaic; &quot;Overflow&quot; items appear only after expanding. Featured items sort first in fallback order.
           </p>
         )}
 
