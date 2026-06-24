@@ -446,6 +446,28 @@ export interface CareerTimelineItem {
    * compact — smaller tile; concise metadata, high-density row
    */
   layoutSize?: 'hero' | 'tall' | 'wide' | 'compact' | null
+  /**
+   * Explicit slot assignment in the 12-column editorial mosaic.
+   * Set via HQ — overrides positional fallback when present.
+   * Conflicts (two items claiming the same slot) resolve by sort order; first wins.
+   * Null falls back to positional assignment by source order.
+   *
+   * hero        — 6-col × 2-row wide centre hero
+   * right-tall  — 3-col × 4-row tall right anchor
+   * left-anchor — 3-col × 2-row left anchor below intro
+   * compact-a   — 3-col × 2-row first middle compact
+   * compact-b   — 3-col × 2-row second middle compact
+   * text-left   — 3-col × 2-row bottom-left text tile
+   * wide-bottom — 6-col × 2-row bottom wide tile
+   * text-right  — 3-col × 2-row bottom-right text tile
+   */
+  storySlot?: 'hero' | 'right-tall' | 'left-anchor' | 'compact-a' | 'compact-b' | 'text-left' | 'wide-bottom' | 'text-right' | null
+  /**
+   * Whether this item appears in the collapsed mosaic grid.
+   * true (default) — candidate for the 8-slot grid.
+   * false — bypasses the grid and goes directly to the "View all" archive.
+   */
+  showInCollapsed: boolean
 }
 
 /**
