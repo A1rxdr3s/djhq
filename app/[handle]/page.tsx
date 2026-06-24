@@ -35,6 +35,7 @@ import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { ProfileClosing } from "@/components/djhq/profile-closing"
+import { ArtistStory } from "@/components/djhq/artist-story"
 import { MobileTabManager, MobileSection } from "@/components/profile/mobile-tab-manager"
 import { MobileScrollNav } from "@/components/profile/mobile-scroll-nav"
 import { SectionHeader } from "@/components/djhq/section-header"
@@ -1731,99 +1732,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        {/* ── Career Story ─────────────────────────────────────────────── */}
-        {(artist.careerTimeline?.length ?? 0) > 0 && (() => {
-          const items = artist.careerTimeline!
-          const mid = Math.ceil(items.length / 2)
-          const currentChapter = items.slice(0, mid)
-          const foundations = items.slice(mid)
-
-          const CATEGORY_LABELS: Record<string, string> = {
-            residency:     "Residency",
-            festival:      "Festival",
-            club_show:     "Club Show",
-            international: "International",
-            release:       "Release",
-            press:         "Press",
-            chart:         "Chart",
-            tour:          "Tour",
-            other:         "Other",
-          }
-
-          function renderEntry(item: CareerTimelineItem) {
-            const year = item.eventDate.slice(0, 4)
-            const catLabel = CATEGORY_LABELS[item.category] ?? item.category
-            return (
-              <div key={item.id} className="group border-t border-white/[0.05] pb-6 pt-5">
-                <p className="text-[40px] font-black tabular-nums leading-none tracking-[-0.03em] text-foreground/[0.08] lg:text-[46px]">
-                  {year}
-                </p>
-                <div className="mt-2.5">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-accent/55">
-                    {catLabel}
-                  </p>
-                  <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0">
-                    {item.link ? (
-                      <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[17px] font-black leading-tight tracking-[-0.015em] text-foreground/88 transition-colors duration-150 hover:text-foreground sm:text-[19px]"
-                      >
-                        {item.title}
-                        <ExternalLink className="ml-1 inline-block h-3 w-3 translate-y-[-1px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/50" aria-hidden />
-                      </a>
-                    ) : (
-                      <span className="text-[17px] font-black leading-tight tracking-[-0.015em] text-foreground/88 sm:text-[19px]">
-                        {item.title}
-                      </span>
-                    )}
-                    {item.location && (
-                      <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-foreground/25">
-                        {item.location}
-                      </span>
-                    )}
-                  </div>
-                  {item.description && (
-                    <p className="mt-1.5 max-w-sm text-[12px] leading-[1.62] text-foreground/38">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )
-          }
-
-          return (
-            <section className="mt-10 lg:mt-14">
-              <div className="mx-auto max-w-5xl">
-                <SectionHeader>Artist Story</SectionHeader>
-
-                <div className="mt-8 grid grid-cols-1 gap-x-14 lg:grid-cols-2">
-
-                  {/* Left — Current Chapter */}
-                  <div>
-                    <h3 className="mb-5 text-[28px] font-black tracking-[-0.025em] text-foreground/75 sm:text-[32px]">
-                      Current Chapter
-                    </h3>
-                    {currentChapter.map(renderEntry)}
-                  </div>
-
-                  {/* Right — Foundations */}
-                  {foundations.length > 0 && (
-                    <div className="mt-12 lg:mt-0">
-                      <h3 className="mb-5 text-[28px] font-black tracking-[-0.025em] text-foreground/75 sm:text-[32px]">
-                        Foundations
-                      </h3>
-                      {foundations.map(renderEntry)}
-                    </div>
-                  )}
-
-                </div>
-              </div>
-            </section>
-          )
-        })()}
+        {/* ── Artist Story ─────────────────────────────────────────────── */}
+        <ArtistStory
+          items={artist.careerTimeline ?? []}
+          headline={artist.tagline}
+        />
 
         <div id="contact" className="scroll-mt-16">
           <ProfileClosing
