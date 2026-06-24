@@ -425,6 +425,42 @@ export interface CareerTimelineItem {
 }
 
 /**
+ * Editorial importance level for an artist story milestone.
+ * Drives visual hierarchy in the public Artist Story section.
+ * Set by the artist or HQ — never inferred from title or venue.
+ */
+export type MilestoneImportance = "featured" | "major" | "standard" | "minor"
+
+/**
+ * A milestone as it appears in the editorial Artist Story section.
+ * Extends the basic career timeline with chapter assignment and importance rating,
+ * enabling the Artist Story to be configured from the HQ dashboard.
+ */
+export interface ArtistStoryMilestone {
+  id:          string
+  year:        number
+  category:    CareerTimelineCategory
+  title:       string
+  location?:   string
+  description: string
+  chapterId:   string
+  importance:  MilestoneImportance
+  isVisible:   boolean
+  order?:      number
+}
+
+/**
+ * A named chapter (column) in the Artist Story two-column layout.
+ * Examples: "Current Arc" (recent international work), "Origin Arc" (historical roots).
+ */
+export interface ArtistStoryChapter {
+  id:           string
+  title:        string
+  rangeLabel?:  string
+  order:        number
+}
+
+/**
  * Core DJHQ artist profile aggregate for the MVP.
  */
 export interface Artist {

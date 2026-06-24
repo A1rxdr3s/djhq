@@ -36,6 +36,7 @@ import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { ProfileClosing } from "@/components/djhq/profile-closing"
 import { ArtistStory } from "@/components/djhq/artist-story"
+import { ANDRES_HERRERA_CHAPTERS, ANDRES_HERRERA_MILESTONES } from "@/lib/djhq/artist-story-sample"
 import { MobileTabManager, MobileSection } from "@/components/profile/mobile-tab-manager"
 import { MobileScrollNav } from "@/components/profile/mobile-scroll-nav"
 import { SectionHeader } from "@/components/djhq/section-header"
@@ -1733,9 +1734,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         )}
 
         {/* ── Artist Story ─────────────────────────────────────────────── */}
-        {/* TODO: headline + intro should come from editable artist profile fields */}
+        {/* TODO: chapters + milestones should come from DB once the schema supports importance + chapterId */}
         <ArtistStory
-          items={artist.careerTimeline ?? []}
+          chapters={ANDRES_HERRERA_CHAPTERS}
+          milestones={ANDRES_HERRERA_MILESTONES}
           headline="From Santiago clubs to international stages."
           intro={`A compact view of the residencies, releases, and international milestones shaping ${artist.artistName}’s path across Chile, Barcelona, Miami, Bali, and beyond.`}
         />
