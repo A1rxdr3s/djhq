@@ -528,12 +528,13 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
   const [showAll, setShowAll] = useState(false)
 
   // Apply public filter + featured-first sort
-  const published  = getPublicCareerUpdates(items)
+  const published   = getPublicCareerUpdates(items)
   if (published.length === 0) return null
 
-  const gridItems  = published.slice(0, GRID_LIMIT)
-  const remaining  = published.slice(GRID_LIMIT)
-  const hasMore    = remaining.length > 0
+  const gridLimit   = computeGridLimit(published.length)
+  const gridItems   = published.slice(0, gridLimit)
+  const remaining   = published.slice(gridLimit)
+  const hasMore     = remaining.length > 0
 
   const [primary, ...secondary] = gridItems
 
@@ -541,6 +542,10 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
   // shorter than the primary, preserving the editorial height contrast.
   const topRight  = secondary.slice(0, 2)
   const bottomRow = secondary.slice(2)
+
+  // Adapt primary card height: reduce when no image so the card doesn't feel
+  // like a cavernous empty box (380px tall with just two lines of text).
+  const primaryHasImage = !!primary.imageUrl
 
   // Build chronology groups for the "View all" archive
   const archiveGroups = buildChronologyGroups(
@@ -574,8 +579,13 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
             Mobile: stacked in DOM order.                                        */}
         <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
 
-          {/* Primary — tall */}
-          <div className="min-h-[280px] sm:col-span-2 sm:min-h-[300px] lg:col-span-1 lg:min-h-[380px]">
+          {/* Primary — height adapts: tall when image, compact when text-only */}
+          <div className={cn(
+            "sm:col-span-2 lg:col-span-1",
+            primaryHasImage
+              ? "min-h-[280px] sm:min-h-[320px] lg:min-h-[380px]"
+              : "min-h-[210px] sm:min-h-[240px] lg:min-h-[230px]",
+          )}>
             <PrimaryCard item={primary} onClick={() => setSelectedItem(primary)} />
           </div>
 
