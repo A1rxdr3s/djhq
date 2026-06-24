@@ -243,7 +243,7 @@ function PrimaryCard({
         )}
 
         {!hasImage && item.description && (
-          <p className="mt-[10px] text-[12px] leading-[1.58] text-foreground/46 line-clamp-3">
+          <p className="mt-[8px] text-[11.5px] leading-[1.52] text-foreground/46 line-clamp-2">
             {item.description}
           </p>
         )}
