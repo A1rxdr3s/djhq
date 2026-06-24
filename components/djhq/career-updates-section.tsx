@@ -20,11 +20,67 @@ import { normalizeExternalImageUrl } from "@/lib/media"
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 // How many items to show in the mosaic grid before "View all" kicks in.
-// With the row-span-2 layout (≥7 items), 7 produces a clean 2+2-right + 2-partial-row3,
-// and 8 produces a perfect 2+2-right + 3-full-row3. Show all up to 8.
+// Show up to 8; fewer when count < 8.
 function computeGridLimit(count: number): number {
   if (count >= 8) return 8
   return count
+}
+
+// ── Mosaic desktop placement ──────────────────────────────────────────────────
+//
+// Returns Tailwind arbitrary grid-column/grid-row classes for the desktop
+// 12-column mosaic (grid-auto-rows: 120px, so each row unit = 120 px).
+//
+// Layout A — primary has image (hero left anchor, 3 rows tall):
+//
+//   Rows 1–3, cols 1–4 : item 0  hero   (3 × 120 = 360 px)
+//   Rows 1–2, cols 5–8 : item 1  medium
+//   Rows 1–2, cols 9–12: item 2  medium
+//   Rows 3–4, cols 5–8 : item 3  medium
+//   Rows 3–4, cols 9–12: item 4  medium
+//   Rows 4–6, cols 1–4 : item 5  tall   (3 × 120 = 360 px)
+//   Rows 5–6, cols 5–8 : item 6  compact  (wide strip if only 7 items)
+//   Rows 5–6, cols 9–12: item 7  compact
+//
+// Layout B — primary has no image (uniform 4-col, 2-row grid):
+//
+//   Rows 1–2: items 0, 1, 2  (cols 1–4, 5–8, 9–12)
+//   Rows 3–4: items 3, 4, 5  (cols 1–4, 5–8, 9–12)
+//   Rows 5–6: item 6 (6-col wide), item 7 (6-col wide)
+
+function getMosaicDesktopClass(
+  index: number,
+  primaryHasImage: boolean,
+  totalItems: number,
+): string {
+  if (primaryHasImage) {
+    switch (index) {
+      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/4]"
+      case 1: return "lg:[grid-column:5/9] lg:[grid-row:1/3]"
+      case 2: return "lg:[grid-column:9/13] lg:[grid-row:1/3]"
+      case 3: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"
+      case 4: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"
+      case 5: return "lg:[grid-column:1/5] lg:[grid-row:4/7]"
+      case 6:
+        return totalItems <= 7
+          ? "lg:[grid-column:5/13] lg:[grid-row:5/7]"
+          : "lg:[grid-column:5/9] lg:[grid-row:5/7]"
+      case 7: return "lg:[grid-column:9/13] lg:[grid-row:5/7]"
+      default: return ""
+    }
+  } else {
+    switch (index) {
+      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/3]"
+      case 1: return "lg:[grid-column:5/9] lg:[grid-row:1/3]"
+      case 2: return "lg:[grid-column:9/13] lg:[grid-row:1/3]"
+      case 3: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"
+      case 4: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"
+      case 5: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"
+      case 6: return "lg:[grid-column:1/7] lg:[grid-row:5/7]"
+      case 7: return "lg:[grid-column:7/13] lg:[grid-row:5/7]"
+      default: return ""
+    }
+  }
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
