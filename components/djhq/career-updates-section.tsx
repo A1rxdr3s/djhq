@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { ArrowUpRight, ChevronDown, MapPin, Calendar, X, Link2, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -329,7 +329,12 @@ function UpdateDetail({
   open:    boolean
   onClose: () => void
 }) {
-  const [copied, setCopied] = useState(false)
+  const [copied,    setCopied]    = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+
+  // Reset image-failed state whenever the selected item changes so a new item's
+  // image gets a fresh attempt rather than being suppressed by the prior failure.
+  useEffect(() => { setImgFailed(false) }, [item?.id])
 
   if (!item) return null
 
@@ -359,7 +364,14 @@ function UpdateDetail({
     "flex h-[28px] w-[28px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-foreground/40 transition-colors hover:border-white/[0.16] hover:bg-white/[0.08] hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
 
   // Only imageUrl is used — previewImageUrl is never shown publicly.
-  const coverImage = activeItem.imageUrl
+  // Normalize the URL (converts Drive share links to thumbnail URLs).
+  const coverNormalized = activeItem.imageUrl
+    ? normalizeExternalImageUrl(activeItem.imageUrl)
+    : null
+  const coverImage  = coverNormalized?.isRenderable && !imgFailed
+    ? coverNormalized.renderUrl
+    : null
+  const coverIsDrive = coverNormalized?.source === "google-drive"
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -415,8 +427,10 @@ function UpdateDetail({
               src={coverImage}
               alt={activeItem.title}
               fill
+              unoptimized={coverIsDrive}
               className="object-cover"
               sizes="600px"
+              onError={() => setImgFailed(true)}
             />
           </div>
         )}
@@ -441,6 +455,7 @@ function UpdateDetail({
                       src={coverImage}
                       alt=""
                       fill
+                      unoptimized={coverIsDrive}
                       className="object-cover brightness-[0.72]"
                       sizes="84px"
                     />

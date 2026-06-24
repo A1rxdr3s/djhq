@@ -10056,11 +10056,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <Input
                   value={timelineImageUrl}
                   onChange={(e) => setTimelineImageUrl(e.target.value)}
-                  placeholder="https://..."
+                  placeholder="https://... or a Google Drive share link"
                   className="h-9 text-sm"
                 />
                 <p className="text-[10px] text-muted-foreground/38">
-                  Shown publicly on the Career Updates card when the update is published.
+                  Shown publicly on the Career Updates card when published. Google Drive share links are supported — paste the link and DJHQ will convert it for display if the file is publicly accessible.
                 </p>
               </div>
 
