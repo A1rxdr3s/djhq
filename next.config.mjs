@@ -32,6 +32,19 @@ const nextConfig = {
         protocol: "https",
         hostname: "mosaic.scdn.co",
       },
+      // Google Drive thumbnail URLs (used with unoptimized={true} on next/image
+      // so Drive redirects are followed by the browser directly).
+      {
+        protocol: "https",
+        hostname: "drive.google.com",
+        pathname: "/thumbnail/**",
+      },
+      // Drive thumbnail URLs redirect to this CDN — allow it for safety.
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
     ],
   },
 

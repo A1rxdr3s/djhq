@@ -15,6 +15,7 @@ import {
   getPublicCareerUpdates,
   buildChronologyGroups,
 } from "@/lib/djhq/career-updates"
+import { normalizeExternalImageUrl } from "@/lib/media"
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -112,7 +113,13 @@ function PrimaryCard({
   item:    CareerTimelineItem
   onClick: () => void
 }) {
-  const hasImage = !!item.imageUrl
+  const [imgFailed, setImgFailed] = useState(false)
+
+  // Normalize the image URL (converts Google Drive share links to thumbnail URLs).
+  // previewImageUrl is never read here — only imageUrl is used publicly.
+  const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
+  const hasImage   = !!normalized?.isRenderable && !imgFailed
+  const isDrive    = normalized?.source === "google-drive"
 
   return (
     <button
@@ -124,11 +131,13 @@ function PrimaryCard({
       {hasImage ? (
         <>
           <Image
-            src={item.imageUrl!}
+            src={normalized!.renderUrl}
             alt={item.title}
             fill
+            unoptimized={isDrive}
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 33vw"
+            onError={() => setImgFailed(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/38 to-black/6" />
         </>
