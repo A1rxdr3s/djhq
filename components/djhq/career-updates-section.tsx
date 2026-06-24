@@ -31,16 +31,19 @@ function computeGridLimit(count: number): number {
 // Returns Tailwind arbitrary grid-column/grid-row classes for the desktop
 // 12-column mosaic (grid-auto-rows: 86px, so each row unit = 86 px).
 //
-// Layout A — primary has image (4-5-3 column pattern, hero anchors left):
+// Layout A — primary has image (tall anchor + strip pairs + 3-image row):
 //
-//   Row 1: [0  4col hero][1  5col wide   ][2  3col compact]
-//   Row 2: [0  4col hero][1  5col wide   ][2  3col compact]
-//   Row 3: [0  4col hero][4  5col wide   ][3  3col compact]  ← items 3 & 4 swap sides
-//   Row 4: [5  4col tall][4  5col wide   ][3  3col compact]
-//   Row 5: [5  4col tall][6  5col wide   ][7  3col compact]
-//   Row 6: [5  4col tall][6  5col wide   ][7  3col compact]
+//   Row 1: [0  4col anchor r2][1  4col strip r1][2  4col strip r1]
+//   Row 2: [0  4col anchor   ][3  4col strip r1][4  4col strip r1]
+//   Row 3: [5  4col image r2 ][6  4col image r2][7  4col image r2]
+//   Row 4: [5  4col image    ][6  4col image   ][7  4col image   ]
 //
-//   For 7 items: same positions — col 10-12 in rows 5-6 stays empty (accepted).
+//   TABU Bali (index 0) = 4-col × 2-row anchor (184 px tall).
+//   Items 1–4 = 4-col × 1-row compact strips (86 px) flanking the anchor.
+//   Items 5–7 = 4-col × 2-row image tiles — the "3 image tiles" row.
+//   For 7 items: same positions — col 9-12 in rows 3-4 stays empty (accepted).
+//
+//   Total height: 4 × 86 + 3 × gap ≈ 380 px (vs. 576 px before)
 //
 // Layout B — primary has no image (2+3+3 structure, 3-tile balanced bottom):
 //
@@ -58,16 +61,16 @@ function getMosaicDesktopClass(
   primaryHasImage: boolean,
 ): string {
   if (primaryHasImage) {
-    // Layout A: hero left-anchor (4-5-3 column mix, 3 tiles per row band)
+    // Layout A: tall anchor (2-row) + compact strips + 3-image bottom row
     switch (index) {
-      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/4]"     // hero,    4col × 3row
-      case 1: return "lg:[grid-column:5/10] lg:[grid-row:1/3]"    // wide,    5col × 2row
-      case 2: return "lg:[grid-column:10/13] lg:[grid-row:1/3]"   // compact, 3col × 2row
-      case 3: return "lg:[grid-column:10/13] lg:[grid-row:3/5]"   // compact, 3col × 2row
-      case 4: return "lg:[grid-column:5/10] lg:[grid-row:3/5]"    // wide,    5col × 2row
-      case 5: return "lg:[grid-column:1/5] lg:[grid-row:4/7]"     // tall,    4col × 3row
-      case 6: return "lg:[grid-column:5/10] lg:[grid-row:5/7]"    // wide,    5col × 2row
-      case 7: return "lg:[grid-column:10/13] lg:[grid-row:5/7]"   // compact, 3col × 2row
+      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/3]"     // anchor, 4col × 2row
+      case 1: return "lg:[grid-column:5/9] lg:[grid-row:1/2]"     // strip,  4col × 1row
+      case 2: return "lg:[grid-column:9/13] lg:[grid-row:1/2]"    // strip,  4col × 1row
+      case 3: return "lg:[grid-column:5/9] lg:[grid-row:2/3]"     // strip,  4col × 1row
+      case 4: return "lg:[grid-column:9/13] lg:[grid-row:2/3]"    // strip,  4col × 1row
+      case 5: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // image,  4col × 2row
+      case 6: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"     // image,  4col × 2row
+      case 7: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"    // image,  4col × 2row
       default: return ""
     }
   } else {
