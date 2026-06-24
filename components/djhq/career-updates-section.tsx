@@ -240,30 +240,30 @@ function SecondaryCard({
       />
 
       <div className={cn(
-        "relative flex flex-col h-full p-[14px]",
+        "relative flex flex-col h-full p-[13px]",
         hasImage ? "justify-end" : "justify-start",
       )}>
         <MetaChip item={item} />
 
-        <p className="mt-[5px] text-[13px] font-bold leading-snug tracking-[-0.009em] text-foreground/84 transition-colors duration-200 group-hover:text-foreground/96">
+        <p className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/84 transition-colors duration-200 group-hover:text-foreground/96 line-clamp-2">
           {item.title}
         </p>
 
         {item.location && (
-          <p className="mt-[2px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/24">
+          <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/24 truncate">
             {item.location}
           </p>
         )}
 
         {!hasImage && item.description && (
-          <p className="mt-[8px] flex-1 text-[11px] leading-[1.48] text-foreground/38 line-clamp-3">
+          <p className="mt-[7px] text-[11px] leading-[1.46] text-foreground/36 line-clamp-2">
             {item.description}
           </p>
         )}
 
-        <div className="mt-3">
-          <div className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-accent/24 bg-accent/8 text-accent/60 transition-all duration-200 group-hover:border-accent/42 group-hover:bg-accent/14 group-hover:text-accent/88">
-            <ArrowUpRight className="h-[9px] w-[9px]" />
+        <div className="mt-[10px]">
+          <div className="inline-flex h-[20px] w-[20px] items-center justify-center rounded-full border border-accent/22 bg-accent/7 text-accent/56 transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/13 group-hover:text-accent/84">
+            <ArrowUpRight className="h-[8px] w-[8px]" />
           </div>
         </div>
       </div>
@@ -594,14 +594,14 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
           {/* Top-right — shorter, don't stretch to primary height on desktop */}
           {topRight.map((item) => (
-            <div key={item.id} className="min-h-[170px] lg:self-start">
+            <div key={item.id} className="min-h-[160px] lg:self-start">
               <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
             </div>
           ))}
 
-          {/* Bottom row — fill cell height */}
+          {/* Bottom rows — fill cell height (may be 3+2 for 8-item layout) */}
           {bottomRow.map((item) => (
-            <div key={item.id} className="min-h-[170px]">
+            <div key={item.id} className="min-h-[160px]">
               <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
             </div>
           ))}
