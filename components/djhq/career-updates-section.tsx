@@ -230,7 +230,11 @@ function PrimaryCard({
             alt={item.title}
             fill
             unoptimized={isDrive}
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+            className="transition-transform duration-700 group-hover:scale-[1.03]"
+            style={{
+              objectFit:     item.imageObjectFit ?? 'cover',
+              objectPosition: `${item.imageFocalX ?? 50}% ${item.imageFocalY ?? 50}%`,
+            }}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 33vw"
             onError={() => setImgFailed(true)}
           />
@@ -322,7 +326,11 @@ function SecondaryCard({
             alt={item.title}
             fill
             unoptimized={isDrive}
-            className="object-cover opacity-[0.72] transition-transform duration-700 group-hover:scale-[1.04]"
+            className="opacity-[0.72] transition-transform duration-700 group-hover:scale-[1.04]"
+            style={{
+              objectFit:     item.imageObjectFit ?? 'cover',
+              objectPosition: `${item.imageFocalX ?? 50}% ${item.imageFocalY ?? 50}%`,
+            }}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             onError={() => setImgFailed(true)}
           />

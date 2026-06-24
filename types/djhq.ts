@@ -467,6 +467,21 @@ export interface CareerTimelineItem {
    * false — bypasses the grid and goes directly to the "View all" archive.
    */
   showInCollapsed: boolean
+  /**
+   * Horizontal focal point for image display — 0 (left) to 100 (right).
+   * Applied as CSS object-position X. Default 50 = center.
+   */
+  imageFocalX: number
+  /**
+   * Vertical focal point for image display — 0 (top) to 100 (bottom).
+   * Applied as CSS object-position Y. Default 50 = center.
+   */
+  imageFocalY: number
+  /**
+   * CSS object-fit behavior for the image inside the card tile.
+   * 'cover' fills the tile and may crop; 'contain' fits the full image without cropping.
+   */
+  imageObjectFit: 'cover' | 'contain'
 }
 
 /**

@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
+import { normalizeExternalImageUrl } from "@/lib/media"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
 import { computeVideoTitle } from "@/lib/performance-title"
 import { ACCENT_THEMES, getAccentTheme } from "@/lib/accent-themes"
@@ -1330,6 +1331,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineStorySlot, setTimelineStorySlot] = useState<string>("")
   const [timelineShowInCollapsed, setTimelineShowInCollapsed] = useState(true)
   const [timelineSlotPickerOpen, setTimelineSlotPickerOpen] = useState<string | null>(null)
+  const [timelineImageFocalX, setTimelineImageFocalX] = useState(50)
+  const [timelineImageFocalY, setTimelineImageFocalY] = useState(50)
+  const [timelineImageObjectFit, setTimelineImageObjectFit] = useState<'cover' | 'contain'>('cover')
+  const [timelineImageSourceMode, setTimelineImageSourceMode] = useState<'url' | 'upload'>('url')
+  const [timelineImageUploading, setTimelineImageUploading] = useState(false)
+  const [timelineImageUploadError, setTimelineImageUploadError] = useState('')
 
   type HomeBooking = {
     id: string; referenceId: string; fullName: string
@@ -9838,6 +9845,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineIsPublished(true)
       setTimelineStorySlot("")
       setTimelineShowInCollapsed(true)
+      setTimelineImageFocalX(50)
+      setTimelineImageFocalY(50)
+      setTimelineImageObjectFit('cover')
+      setTimelineImageSourceMode('url')
+      setTimelineImageUploadError('')
       setTimelineError("")
       setTimelineFormOpen(true)
     }
@@ -9856,6 +9868,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineIsPublished(item.isPublished)
       setTimelineStorySlot(item.storySlot ?? "")
       setTimelineShowInCollapsed(item.showInCollapsed !== false)
+      setTimelineImageFocalX(item.imageFocalX ?? 50)
+      setTimelineImageFocalY(item.imageFocalY ?? 50)
+      setTimelineImageObjectFit(item.imageObjectFit ?? 'cover')
+      setTimelineImageSourceMode('url')
+      setTimelineImageUploadError('')
       setTimelineError("")
       setTimelineFormOpen(true)
     }
@@ -9868,6 +9885,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineIsFeatured(false)
       setTimelineStorySlot("")
       setTimelineShowInCollapsed(true)
+      setTimelineImageFocalX(50)
+      setTimelineImageFocalY(50)
+      setTimelineImageObjectFit('cover')
+      setTimelineImageSourceMode('url')
+      setTimelineImageUploadError('')
       setTimelineError("")
     }
 
@@ -9896,6 +9918,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             isPublished: timelineIsPublished,
             storySlot: timelineStorySlot || null,
             showInCollapsed: timelineShowInCollapsed,
+            imageFocalX: timelineImageFocalX,
+            imageFocalY: timelineImageFocalY,
+            imageObjectFit: timelineImageObjectFit,
           }),
         })
         const data = await res.json()
@@ -9910,6 +9935,37 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         setTimelineError("Network error. Please try again.")
       } finally {
         setTimelineSaving(false)
+      }
+    }
+
+    async function handleTimelineImageUpload(file: File) {
+      const ALLOWED = ['image/jpeg', 'image/png', 'image/webp']
+      if (!ALLOWED.includes(file.type)) {
+        setTimelineImageUploadError('Only JPG, PNG, and WebP images are supported.')
+        return
+      }
+      if (file.size > 10_000_000) {
+        setTimelineImageUploadError('Image must be under 10 MB.')
+        return
+      }
+      setTimelineImageUploading(true)
+      setTimelineImageUploadError('')
+      try {
+        const ext = file.name.split('.').pop() ?? 'jpg'
+        const params = new URLSearchParams({ artistId: artist.id, filename: file.name, fileExt: ext })
+        const res = await fetch(`/api/artists/career-media-upload?${params}`)
+        const json = await res.json()
+        if (!res.ok || !json.signedUrl) throw new Error(json.error ?? 'Upload URL failed')
+        const { supabase: client } = await import('@/lib/supabase/client')
+        const { error: upErr } = await client.storage
+          .from('brand-sources')
+          .uploadToSignedUrl(json.filePath, json.token, file, { contentType: file.type })
+        if (upErr) throw new Error(upErr.message)
+        setTimelineImageUrl(json.publicUrl)
+      } catch (e) {
+        setTimelineImageUploadError(e instanceof Error ? e.message : 'Upload failed.')
+      } finally {
+        setTimelineImageUploading(false)
       }
     }
 
@@ -10023,6 +10079,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const slotMap = resolveSlotMap()
     const publishedCollapsedCount = timelineItems.filter((i) => i.isPublished && i.showInCollapsed !== false).length
     const mosaicActive = publishedCollapsedCount >= 7
+
+    const SLOT_PREVIEW_ASPECT: Record<string, string> = {
+      'left-tall-story': 'aspect-[1/2]',
+      'hero':            'aspect-[3/1]',
+      'right-top':       'aspect-[3/2]',
+      'compact-a':       'aspect-[3/2]',
+      'compact-b':       'aspect-[3/2]',
+      'right-bottom':    'aspect-[3/4]',
+      'wide-bottom':     'aspect-[3/1]',
+    }
+    const previewAspect = SLOT_PREVIEW_ASPECT[timelineStorySlot] ?? 'aspect-square'
 
     return (
       <div className="space-y-5">
@@ -10338,27 +10405,156 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 />
               </div>
 
-              {/* Cover Image URL */}
-              <div className="sm:col-span-2 space-y-1.5">
+              {/* Media — cover image + focal point */}
+              <div className="sm:col-span-2 space-y-3">
                 <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                  Cover Image URL <span className="normal-case text-muted-foreground/30">(optional)</span>
+                  Cover Image <span className="normal-case text-muted-foreground/30">(optional)</span>
                 </label>
-                <Input
-                  value={timelineImageUrl}
-                  onChange={(e) => setTimelineImageUrl(e.target.value)}
-                  placeholder="https://... or a Google Drive share link"
-                  className="h-9 text-sm"
-                />
-                <p className="text-[10px] text-muted-foreground/38">
-                  Shown publicly on the Career Updates card when published. Google Drive share links are supported — paste the link and DJHQ will convert it for display if the file is publicly accessible.
-                </p>
+
+                {/* URL / Upload tab toggle */}
+                <div className="flex gap-0 rounded-md border border-border/50 bg-muted/30 p-0.5 w-fit">
+                  {(['url', 'upload'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setTimelineImageSourceMode(mode)}
+                      className={`px-3 py-1 rounded-[5px] text-[11px] font-medium transition-colors ${timelineImageSourceMode === mode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
+                    >
+                      {mode === 'url' ? 'URL' : 'Upload'}
+                    </button>
+                  ))}
+                </div>
+
+                {timelineImageSourceMode === 'url' ? (
+                  <div className="space-y-1">
+                    <Input
+                      value={timelineImageUrl}
+                      onChange={(e) => setTimelineImageUrl(e.target.value)}
+                      placeholder="https://... or a Google Drive share link"
+                      className="h-9 text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground/38">
+                      Google Drive share links are automatically converted for display.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <label className="cursor-pointer rounded-md border border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors">
+                        Choose image
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.webp"
+                          className="sr-only"
+                          disabled={timelineImageUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) void handleTimelineImageUpload(file)
+                            e.target.value = ''
+                          }}
+                        />
+                      </label>
+                      {timelineImageUploading && (
+                        <span className="text-[11px] text-muted-foreground/50">Uploading…</span>
+                      )}
+                      {!timelineImageUploading && timelineImageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setTimelineImageUrl('')}
+                          className="text-[11px] text-muted-foreground/40 hover:text-destructive transition-colors"
+                        >
+                          Clear image
+                        </button>
+                      )}
+                    </div>
+                    {timelineImageUploadError && (
+                      <p className="text-[11px] text-destructive">{timelineImageUploadError}</p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground/38">JPG, PNG, or WebP — max 10 MB</p>
+                  </div>
+                )}
+
+                {/* Focal point controls — only when an image URL is set */}
+                {timelineImageUrl && (
+                  <div className="flex gap-4 pt-1">
+                    {/* Slot-shaped preview */}
+                    <div className={`relative shrink-0 w-[80px] overflow-hidden rounded-md border border-border/40 bg-muted/30 ${previewAspect}`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={normalizeExternalImageUrl(timelineImageUrl).renderUrl}
+                        alt="Image preview"
+                        className="absolute inset-0 h-full w-full"
+                        style={{
+                          objectFit: timelineImageObjectFit,
+                          objectPosition: `${timelineImageFocalX}% ${timelineImageFocalY}%`,
+                        }}
+                      />
+                    </div>
+
+                    {/* Position controls */}
+                    <div className="flex-1 space-y-2.5">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground/55">Image Position</p>
+                      <p className="text-[10px] text-muted-foreground/38 -mt-1.5">Adjust focus so the image crops correctly in the assigned story slot.</p>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[10px] text-muted-foreground/50">Focus X</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={timelineImageFocalX}
+                            onChange={(e) => setTimelineImageFocalX(Number(e.target.value))}
+                            className="flex-1 accent-accent"
+                          />
+                          <span className="w-7 text-right text-[10px] tabular-nums text-muted-foreground/50">{timelineImageFocalX}%</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[10px] text-muted-foreground/50">Focus Y</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={timelineImageFocalY}
+                            onChange={(e) => setTimelineImageFocalY(Number(e.target.value))}
+                            className="flex-1 accent-accent"
+                          />
+                          <span className="w-7 text-right text-[10px] tabular-nums text-muted-foreground/50">{timelineImageFocalY}%</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground/50">Fit</span>
+                        <div className="flex gap-0 rounded border border-border/50 bg-muted/30 p-0.5">
+                          {(['cover', 'contain'] as const).map((fit) => (
+                            <button
+                              key={fit}
+                              type="button"
+                              onClick={() => setTimelineImageObjectFit(fit)}
+                              className={`px-2.5 py-0.5 rounded-[3px] text-[10px] font-medium capitalize transition-colors ${timelineImageObjectFit === fit ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+                            >
+                              {fit}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setTimelineImageFocalX(50); setTimelineImageFocalY(50); setTimelineImageObjectFit('cover') }}
+                          className="ml-1 text-[10px] text-muted-foreground/35 hover:text-muted-foreground transition-colors"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Preview Image URL — HQ only */}
               <div className="sm:col-span-2 space-y-1.5">
-                <label className="flex items-center gap-[6px] text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                <label className="flex items-center gap-[6px] text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
                   Preview Image URL
-                  <span className="rounded-[3px] bg-amber-500/10 px-[5px] py-[1px] text-[8px] font-bold uppercase tracking-[0.12em] text-amber-500/70">
+                  <span className="rounded-[3px] bg-amber-500/10 px-[5px] py-[1px] text-[8px] font-bold uppercase tracking-[0.12em] text-amber-500/60">
                     HQ only — never public
                   </span>
                 </label>
@@ -10368,8 +10564,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   placeholder="https://..."
                   className="h-9 text-sm"
                 />
-                <p className="text-[10px] text-muted-foreground/38">
-                  Design preview only. This image is never shown on the public profile — use it to evaluate how the card will look with imagery before a real image is ready.
+                <p className="text-[10px] text-muted-foreground/30">
+                  Design preview only. Never shown on the public profile.
                 </p>
               </div>
 

@@ -213,6 +213,9 @@ type CareerTimelineRow = {
   layout_size: string | null
   story_slot: string | null
   show_in_collapsed: boolean
+  image_focal_x: number
+  image_focal_y: number
+  image_object_fit: string
 }
 
 const VALID_TIMELINE_CATEGORIES = new Set<string>([
@@ -486,7 +489,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<VideoRow[]>(),
       supabase
         .from("artist_career_timeline")
-        .select("id, title, category, event_date, location, description, link, image_url, is_featured, is_published, sort_order, layout_size, story_slot, show_in_collapsed")
+        .select("id, title, category, event_date, location, description, link, image_url, is_featured, is_published, sort_order, layout_size, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit")
         .eq("artist_id", artistRow.id)
         .eq("is_published", true)
         .order("sort_order", { ascending: true, nullsFirst: false })
@@ -644,6 +647,9 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         layoutSize: (r.layout_size as CareerTimelineItem['layoutSize']) ?? null,
         storySlot: (r.story_slot as CareerTimelineItem['storySlot']) ?? null,
         showInCollapsed: r.show_in_collapsed,
+        imageFocalX: r.image_focal_x ?? 50,
+        imageFocalY: r.image_focal_y ?? 50,
+        imageObjectFit: (r.image_object_fit as CareerTimelineItem['imageObjectFit']) ?? 'cover',
       })),
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,

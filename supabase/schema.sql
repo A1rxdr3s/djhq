@@ -1020,6 +1020,9 @@ create table if not exists public.artist_career_timeline (
   layout_size         text        check (layout_size is null or layout_size in ('hero', 'tall', 'wide', 'compact')),
   story_slot          text        check (story_slot is null or story_slot in ('left-tall-story', 'hero', 'right-top', 'right-bottom', 'compact-a', 'compact-b', 'wide-bottom')),
   show_in_collapsed   boolean     not null default true,
+  image_focal_x       smallint    not null default 50 check (image_focal_x between 0 and 100),
+  image_focal_y       smallint    not null default 50 check (image_focal_y between 0 and 100),
+  image_object_fit    text        not null default 'cover' check (image_object_fit in ('cover', 'contain')),
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
