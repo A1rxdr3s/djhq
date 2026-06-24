@@ -1752,25 +1752,25 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               <div className="mx-auto max-w-5xl">
                 <SectionHeader>Artist Story</SectionHeader>
 
-                <div className="mt-6 space-y-0 divide-y divide-white/[0.05]">
+                <div className="mt-5 divide-y divide-white/[0.04]">
                   {items.map((item) => {
                     const year = item.eventDate.slice(0, 4)
                     const categoryLabel = CATEGORY_LABELS[item.category] ?? item.category
 
                     return (
-                      <div key={item.id} className="group flex gap-5 py-4 sm:gap-7 sm:py-5">
+                      <div key={item.id} className="group flex gap-3 py-3 sm:gap-4 sm:py-3.5">
 
-                        {/* Year column */}
-                        <div className="w-10 shrink-0 sm:w-14">
-                          <p className="text-[13px] font-black tabular-nums text-foreground/28 sm:text-[15px]">
+                        {/* Year — quiet anchor, not a dominant column */}
+                        <div className="w-8 shrink-0 sm:w-10">
+                          <p className="text-[11px] font-bold tabular-nums text-foreground/22 sm:text-[12px]">
                             {year}
                           </p>
                         </div>
 
                         {/* Category + content */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <span className="text-[9px] font-bold uppercase tracking-[0.20em] text-accent/65">
+                          <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent/60">
                               {categoryLabel}
                             </span>
                             {item.link ? (
@@ -1778,26 +1778,26 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                 href={item.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[15px] font-black leading-snug tracking-[-0.01em] text-foreground/90 transition-colors duration-150 hover:text-foreground sm:text-[17px]"
+                                className="text-[14px] font-black leading-snug tracking-[-0.01em] text-foreground/88 transition-colors duration-150 hover:text-foreground sm:text-[15px]"
                               >
                                 {item.title}
-                                <ExternalLink className="ml-1.5 inline-block h-3 w-3 translate-y-[-1px] text-foreground/25 transition-colors duration-150 group-hover:text-accent/50" aria-hidden />
+                                <ExternalLink className="ml-1 inline-block h-2.5 w-2.5 translate-y-[-1px] text-foreground/22 transition-colors duration-150 group-hover:text-accent/45" aria-hidden />
                               </a>
                             ) : (
-                              <p className="text-[15px] font-black leading-snug tracking-[-0.01em] text-foreground/90 sm:text-[17px]">
+                              <p className="text-[14px] font-black leading-snug tracking-[-0.01em] text-foreground/88 sm:text-[15px]">
                                 {item.title}
                               </p>
                             )}
                           </div>
 
                           {item.location && (
-                            <p className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-foreground/30">
+                            <p className="mt-0.5 text-[10px] uppercase tracking-[0.10em] text-foreground/28">
                               {item.location}
                             </p>
                           )}
 
                           {item.description && (
-                            <p className="mt-1.5 max-w-prose text-[12px] leading-[1.7] text-foreground/40 sm:text-[13px]">
+                            <p className="mt-1 max-w-prose text-[12px] leading-[1.65] text-foreground/45 sm:text-[12px]">
                               {item.description}
                             </p>
                           )}
