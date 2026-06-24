@@ -10110,6 +10110,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {timelineIsPublished ? "Published — visible on public profile" : "Draft — hidden from public profile"}
                 </span>
               </div>
+
+              {/* Featured toggle */}
+              <div className="sm:col-span-2 flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setTimelineIsFeatured((v) => !v)}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-150 focus:outline-none ${timelineIsFeatured ? "bg-amber-500/80" : "bg-muted"}`}
+                >
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 ${timelineIsFeatured ? "translate-x-4" : "translate-x-0.5"}`} />
+                </button>
+                <span className="text-xs text-muted-foreground/60">
+                  {timelineIsFeatured
+                    ? "Featured — appears first in the public Career Updates grid"
+                    : "Not featured — sorted by order and date"}
+                </span>
+              </div>
             </div>
 
             {timelineError && (
@@ -10180,7 +10196,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground/90 leading-snug">{item.title}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-foreground/90 leading-snug truncate">{item.title}</p>
+                    {item.isFeatured && (
+                      <span title="Featured — appears first publicly" className="shrink-0 rounded-[3px] bg-amber-500/12 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/70">
+                        Featured
+                      </span>
+                    )}
+                    {item.imageUrl && (
+                      <span title="Has real cover image" className="shrink-0 text-[9px] text-foreground/28">📷</span>
+                    )}
+                    {!item.imageUrl && item.previewImageUrl && (
+                      <span title="Has HQ preview image only — not shown publicly" className="shrink-0 rounded-[3px] bg-amber-500/8 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/50">
+                        Preview img
+                      </span>
+                    )}
+                  </div>
                   {item.location && (
                     <p className="mt-0.5 text-[11px] text-muted-foreground/45">{item.location}</p>
                   )}
@@ -10255,7 +10286,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <p className="text-sm font-medium text-foreground/55">No milestones yet.</p>
             <p className="mt-1.5 mx-auto max-w-xs text-[12px] leading-[1.6] text-muted-foreground/35">
-              Add residencies, festival debuts, press achievements, chart positions and other career highlights.
+              Add residencies, festival debuts, press achievements, chart positions, and other career moments.
             </p>
             <button
               type="button"
@@ -10263,14 +10294,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add First Milestone
+              Add First Career Update
             </button>
           </div>
         )}
 
         {timelineLoaded && itemCount > 0 && (
           <p className="text-[10px] text-muted-foreground/22">
-            Items are sorted by sort order then date (newest first). Only published items appear on your public profile.
+            Featured updates appear first on the public profile. Remaining items sort by order then date (newest first). Only published updates are visible publicly.
           </p>
         )}
 
