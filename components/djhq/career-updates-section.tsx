@@ -206,9 +206,9 @@ function PrimaryCard({
       ) : (
         <>
           <div className="absolute inset-0 bg-[oklch(0.108_0.006_160)] transition-colors duration-200 group-hover:bg-[oklch(0.113_0.006_160)]" />
-          {/* Oversized year watermark — editorial depth without fake imagery */}
+          {/* Subtle year watermark */}
           <div
-            className="pointer-events-none absolute -right-3 bottom-0 select-none text-[88px] font-black leading-none tabular-nums text-white/[0.038]"
+            className="pointer-events-none absolute right-3 bottom-3 select-none text-[52px] font-black leading-none tabular-nums text-white/[0.024]"
             aria-hidden
           >
             {itemYear(item)}
@@ -225,13 +225,13 @@ function PrimaryCard({
       {/* Content */}
       <div className={cn(
         "relative flex flex-col h-full",
-        hasImage ? "justify-end p-5 sm:p-[22px]" : "justify-start p-4 sm:p-5",
+        hasImage ? "justify-end p-5 sm:p-[22px]" : "justify-start p-[14px] sm:p-[16px]",
       )}>
         <MetaChip item={item} />
 
         <h3 className={cn(
           "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/95",
-          hasImage ? "text-[18px] sm:text-[20px]" : "text-[17px] sm:text-[19px]",
+          hasImage ? "text-[18px] sm:text-[20px]" : "text-[15px] sm:text-[17px]",
         )}>
           {item.title}
         </h3>
