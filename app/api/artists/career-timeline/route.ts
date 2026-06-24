@@ -99,7 +99,7 @@ export async function POST(request: Request) {
   if (!user) return unauthorized("Authentication required.")
 
   const body = await request.json()
-  const { artistId, title, category, eventDate, location, description, link, isPublished = true, sortOrder } = body
+  const { artistId, title, category, eventDate, location, description, link, imageUrl, isPublished = true, sortOrder } = body
 
   if (!artistId || !title?.trim() || !category || !eventDate) {
     return NextResponse.json({ error: "artistId, title, category and eventDate are required." }, { status: 400 })
@@ -123,6 +123,7 @@ export async function POST(request: Request) {
       location: location?.trim() || null,
       description: description?.trim() || null,
       link: link?.trim() || null,
+      image_url: imageUrl?.trim() || null,
       is_published: isPublished,
       sort_order: sortOrder ?? null,
     })
@@ -140,7 +141,7 @@ export async function PATCH(request: Request) {
   if (!user) return unauthorized("Authentication required.")
 
   const body = await request.json()
-  const { id, artistId, title, category, eventDate, location, description, link, isPublished, sortOrder } = body
+  const { id, artistId, title, category, eventDate, location, description, link, imageUrl, isPublished, sortOrder } = body
 
   if (!id || !artistId) {
     return NextResponse.json({ error: "id and artistId are required." }, { status: 400 })
@@ -160,6 +161,7 @@ export async function PATCH(request: Request) {
   if (location !== undefined) patch.location = location?.trim() || null
   if (description !== undefined) patch.description = description?.trim() || null
   if (link !== undefined) patch.link = link?.trim() || null
+  if (imageUrl !== undefined) patch.image_url = imageUrl?.trim() || null
   if (isPublished !== undefined) patch.is_published = isPublished
   if (sortOrder !== undefined) patch.sort_order = sortOrder
 

@@ -373,7 +373,7 @@ const navGroups: NavGroup[] = [
       { id: "sets",     label: "Sets",         icon: Headphones },
       { id: "media",    label: "Videos",       icon: Play },
       { id: "gallery",  label: "Gallery",      icon: ImageIcon },
-      { id: "timeline", label: "Career Story", icon: TrendingUp },
+      { id: "timeline", label: "Career Updates", icon: TrendingUp },
     ],
   },
   {
@@ -1295,6 +1295,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineDescription, setTimelineDescription] = useState("")
   const [timelineLink, setTimelineLink] = useState("")
   const [timelineIsPublished, setTimelineIsPublished] = useState(true)
+  const [timelineImageUrl, setTimelineImageUrl] = useState("")
   const [timelineSaving, setTimelineSaving] = useState(false)
   const [timelineError, setTimelineError] = useState("")
   const [timelineDeleteId, setTimelineDeleteId] = useState<string | null>(null)
@@ -9803,6 +9804,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineLocation("")
       setTimelineDescription("")
       setTimelineLink("")
+      setTimelineImageUrl("")
       setTimelineIsPublished(true)
       setTimelineError("")
       setTimelineFormOpen(true)
@@ -9816,6 +9818,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineLocation(item.location ?? "")
       setTimelineDescription(item.description ?? "")
       setTimelineLink(item.link ?? "")
+      setTimelineImageUrl(item.imageUrl ?? "")
       setTimelineIsPublished(item.isPublished)
       setTimelineError("")
       setTimelineFormOpen(true)
@@ -9824,6 +9827,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     function closeForm() {
       setTimelineFormOpen(false)
       setTimelineEditId(null)
+      setTimelineImageUrl("")
       setTimelineError("")
     }
 
@@ -9846,6 +9850,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             location: timelineLocation.trim() || undefined,
             description: timelineDescription.trim() || undefined,
             link: timelineLink.trim() || undefined,
+            imageUrl: timelineImageUrl.trim() || undefined,
             isPublished: timelineIsPublished,
           }),
         })
@@ -9935,15 +9940,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-foreground">
-              Career Story
+              Career Updates
               {itemCount > 0 && (
                 <span className="ml-2 text-sm font-normal text-muted-foreground/40">
-                  · {itemCount} {itemCount === 1 ? "milestone" : "milestones"}
+                  · {itemCount} {itemCount === 1 ? "update" : "updates"}
                 </span>
               )}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground/52">
-              Editorial career milestones shown on your public profile. Only published items are visible publicly.
+              Career updates shown on your public profile as a clickable bento grid. Only published items are visible publicly.
             </p>
           </div>
           <button
@@ -9953,7 +9958,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Milestone
+            Add Update
           </button>
         </div>
 
@@ -9961,7 +9966,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {timelineFormOpen && (
           <div className="rounded-xl border border-border bg-card/30 p-5 space-y-4">
             <p className="text-sm font-semibold text-foreground">
-              {timelineEditId ? "Edit Milestone" : "New Milestone"}
+              {timelineEditId ? "Edit Career Update" : "New Career Update"}
             </p>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -10033,6 +10038,22 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 />
               </div>
 
+              {/* Cover Image URL */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Cover Image URL <span className="normal-case text-muted-foreground/30">(optional)</span>
+                </label>
+                <Input
+                  value={timelineImageUrl}
+                  onChange={(e) => setTimelineImageUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="h-9 text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground/38">
+                  Used as the background image on the public Career Updates card.
+                </p>
+              </div>
+
               {/* Description */}
               <div className="sm:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
@@ -10073,7 +10094,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 disabled={timelineSaving}
                 className="h-8 bg-accent/90 px-4 text-[11px] text-accent-foreground hover:bg-accent"
               >
-                {timelineSaving ? "Saving…" : timelineEditId ? "Save Changes" : "Add Milestone"}
+                {timelineSaving ? "Saving…" : timelineEditId ? "Save Changes" : "Add Update"}
               </Button>
               <button
                 type="button"

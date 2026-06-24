@@ -35,7 +35,7 @@ import { GigsSection } from "@/components/djhq/gigs-section"
 import { GallerySection } from "@/components/djhq/gallery-section"
 import { SelectedTracksSection } from "@/components/djhq/selected-tracks-section"
 import { ProfileClosing } from "@/components/djhq/profile-closing"
-import { ArtistStory } from "@/components/djhq/artist-story"
+import { CareerUpdatesSection } from "@/components/djhq/career-updates-section"
 import { MobileTabManager, MobileSection } from "@/components/profile/mobile-tab-manager"
 import { MobileScrollNav } from "@/components/profile/mobile-scroll-nav"
 import { SectionHeader } from "@/components/djhq/section-header"
@@ -1732,12 +1732,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           </MobileSection>
         )}
 
-        {/* ── Artist Story ─────────────────────────────────────────────── */}
+        {/* ── Career Updates ────────────────────────────────────────────── */}
         {/* Data: artist.careerTimeline — published items ordered by sort_order asc (DB query). */}
-        {/* TODO: headline + intro should come from editable artist profile fields. */}
-        <ArtistStory
+        <CareerUpdatesSection
           items={artist.careerTimeline ?? []}
-          headline="Career signals from Chile to international stages."
+          headline="Career updates from Chile to international stages."
           intro="Selected public milestones from the artist’s residencies, releases, and international appearances."
         />
 
