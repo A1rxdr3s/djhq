@@ -1462,7 +1462,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         href={resolveSafeHref(featuredVideo.platformUrl) ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group block overflow-hidden rounded-[16px] bg-white/[0.04]"
+                        className="group block overflow-hidden rounded-[16px]"
                       >
                         <div className="relative aspect-[19/9] w-full bg-secondary">
                           {(featuredVideo.customThumbnailUrl ?? featuredVideo.thumbnailUrl) ? (
@@ -1475,24 +1475,24 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           ) : (
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_hsl(var(--accent)/0.22),_transparent_42%),linear-gradient(135deg,_hsl(var(--secondary)),_hsl(var(--background)))]" />
                           )}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/[0.88] via-black/[0.45] to-transparent px-4 pb-4 pt-12 sm:px-5 sm:pb-5">
+                            <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/85">
+                              VIDEO PERFORMANCE
+                            </p>
+                            <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[24px] xl:text-[28px]">
+                              {displayTitle}
+                            </h3>
+                            {metaParts.length > 0 ? (
+                              <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-white/55">
+                                {metaParts.join(" · ")}
+                              </p>
+                            ) : null}
+                          </div>
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                               <Play className="h-6 w-6 fill-white text-white" />
                             </div>
                           </div>
-                        </div>
-                        <div className="px-4 py-2.5 sm:px-5 sm:py-3.5">
-                          <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/75">
-                            VIDEO PERFORMANCE
-                          </p>
-                          <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px] xl:text-[28px]">
-                            {displayTitle}
-                          </h3>
-                          {metaParts.length > 0 ? (
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-foreground/50">
-                              {metaParts.join(" · ")}
-                            </p>
-                          ) : null}
                         </div>
                       </a>
                     )
@@ -1575,7 +1575,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                         href={resolveSafeHref(featuredSet.platformUrl) ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group block overflow-hidden rounded-[16px] bg-white/[0.04]"
+                        className="group block overflow-hidden rounded-[16px]"
                       >
                         <div className="relative aspect-[19/9] w-full bg-secondary">
                           {featuredSet.imageUrl ? (
@@ -1591,24 +1591,24 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                           {featuredSet.imageUrl && (
                             <div className="absolute inset-0 bg-gradient-to-b from-black/[0.05] to-black/[0.48]" aria-hidden />
                           )}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/[0.88] via-black/[0.45] to-transparent px-4 pb-4 pt-12 sm:px-5 sm:pb-5">
+                            <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/85">
+                              DJ SET
+                            </p>
+                            <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[24px] xl:text-[28px]">
+                              {setTitle}
+                            </h3>
+                            {metaParts.length > 0 ? (
+                              <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-white/55">
+                                {metaParts.join(" · ")}
+                              </p>
+                            ) : null}
+                          </div>
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                               <Play className="h-6 w-6 fill-white text-white" />
                             </div>
                           </div>
-                        </div>
-                        <div className="px-4 py-2.5 sm:px-5 sm:py-3.5">
-                          <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-accent/75">
-                            DJ SET
-                          </p>
-                          <h3 className="text-balance text-[20px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-foreground sm:text-[24px] xl:text-[28px]">
-                            {setTitle}
-                          </h3>
-                          {metaParts.length > 0 ? (
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-foreground/50">
-                              {metaParts.join(" · ")}
-                            </p>
-                          ) : null}
                         </div>
                       </a>
                     )
