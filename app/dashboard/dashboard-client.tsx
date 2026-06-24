@@ -1284,6 +1284,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     { value: "tour",         label: "Tour" },
     { value: "other",        label: "Other" },
   ]
+
+  // Named slots in the public Artist Story mosaic, in fill order.
+  const STORY_SLOTS: { id: string; label: string; desc: string; needsImage?: boolean }[] = [
+    { id: "left-anchor",  label: "Left Feature",  desc: "3-col anchor, left of center row", needsImage: false },
+    { id: "hero",         label: "Hero Wide",      desc: "6-col wide centre — most prominent", needsImage: true },
+    { id: "right-tall",   label: "Right Tall",     desc: "3-col tall right anchor", needsImage: true },
+    { id: "compact-a",    label: "Compact A",      desc: "3-col centre compact tile" },
+    { id: "compact-b",    label: "Compact B",      desc: "3-col centre compact tile" },
+    { id: "text-left",    label: "Lower Left",     desc: "3-col bottom-left tile" },
+    { id: "wide-bottom",  label: "Wide Bottom",    desc: "6-col bottom wide tile" },
+    { id: "text-right",   label: "Lower Right",    desc: "3-col bottom-right tile" },
+  ]
+
+  // Grid positions for the Artist Story preview panel (12-col, 6-row grid).
+  // Matches SLOT_DESKTOP_CLASSES in career-updates-section.tsx exactly.
+  const SLOT_PREVIEW_GRID: Record<string, string> = {
+    "hero":         "[grid-column:4/10] [grid-row:1/3]",
+    "right-tall":   "[grid-column:10/13] [grid-row:1/5]",
+    "left-anchor":  "[grid-column:1/4] [grid-row:3/5]",
+    "compact-a":    "[grid-column:4/7] [grid-row:3/5]",
+    "compact-b":    "[grid-column:7/10] [grid-row:3/5]",
+    "text-left":    "[grid-column:1/4] [grid-row:5/7]",
+    "wide-bottom":  "[grid-column:4/10] [grid-row:5/7]",
+    "text-right":   "[grid-column:10/13] [grid-row:5/7]",
+  }
   const [timelineItems, setTimelineItems] = useState<CareerTimelineItem[]>([])
   const [timelineLoaded, setTimelineLoaded] = useState(false)
   const [timelineFormOpen, setTimelineFormOpen] = useState(false)
@@ -1304,6 +1329,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineDeleteConfirm, setTimelineDeleteConfirm] = useState(false)
   const [timelineDragIndex, setTimelineDragIndex] = useState<number | null>(null)
   const [timelineDragOverIndex, setTimelineDragOverIndex] = useState<number | null>(null)
+  const [timelineStorySlot, setTimelineStorySlot] = useState<string>("")
+  const [timelineShowInCollapsed, setTimelineShowInCollapsed] = useState(true)
 
   type HomeBooking = {
     id: string; referenceId: string; fullName: string
@@ -9810,6 +9837,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelinePreviewImageUrl("")
       setTimelineIsFeatured(false)
       setTimelineIsPublished(true)
+      setTimelineStorySlot("")
+      setTimelineShowInCollapsed(true)
       setTimelineError("")
       setTimelineFormOpen(true)
     }
@@ -9826,6 +9855,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelinePreviewImageUrl(item.previewImageUrl ?? "")
       setTimelineIsFeatured(item.isFeatured)
       setTimelineIsPublished(item.isPublished)
+      setTimelineStorySlot(item.storySlot ?? "")
+      setTimelineShowInCollapsed(item.showInCollapsed !== false)
       setTimelineError("")
       setTimelineFormOpen(true)
     }
@@ -9836,6 +9867,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageUrl("")
       setTimelinePreviewImageUrl("")
       setTimelineIsFeatured(false)
+      setTimelineStorySlot("")
+      setTimelineShowInCollapsed(true)
       setTimelineError("")
     }
 
@@ -9862,6 +9895,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             isFeatured: timelineIsFeatured,
             previewImageUrl: timelinePreviewImageUrl.trim() || undefined,
             isPublished: timelineIsPublished,
+            storySlot: timelineStorySlot || null,
+            showInCollapsed: timelineShowInCollapsed,
           }),
         })
         const data = await res.json()
@@ -9933,6 +9968,49 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       }
     }
 
+    async function handleSlotChange(item: CareerTimelineItem, slot: string | null) {
+      setTimelineItems((prev) => prev.map((t) => t.id === item.id ? { ...t, storySlot: (slot as CareerTimelineItem['storySlot']) } : t))
+      try {
+        await fetch("/api/artists/career-timeline", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: item.id, artistId: artist.id, storySlot: slot }),
+        })
+      } catch { /* fire-and-forget — optimistic update already applied */ }
+    }
+
+    async function handleShowInCollapsedToggle(item: CareerTimelineItem) {
+      const next = !item.showInCollapsed
+      setTimelineItems((prev) => prev.map((t) => t.id === item.id ? { ...t, showInCollapsed: next } : t))
+      try {
+        await fetch("/api/artists/career-timeline", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: item.id, artistId: artist.id, showInCollapsed: next }),
+        })
+      } catch { /* fire-and-forget */ }
+    }
+
+    // Build the resolved slot map for the preview: mirrors public resolveSlots() logic.
+    function resolveSlotMap(): Map<string, CareerTimelineItem> {
+      const slotOrder = ["left-anchor", "hero", "right-tall", "compact-a", "compact-b", "text-left", "wide-bottom", "text-right"]
+      const eligible = timelineItems.filter((i) => i.isPublished && i.showInCollapsed !== false)
+      const result = new Map<string, CareerTimelineItem>()
+      const unassigned: CareerTimelineItem[] = []
+      for (const item of eligible) {
+        if (item.storySlot && SLOT_PREVIEW_GRID[item.storySlot] && !result.has(item.storySlot)) {
+          result.set(item.storySlot, item)
+        } else {
+          unassigned.push(item)
+        }
+      }
+      let fi = 0
+      for (const slot of slotOrder) {
+        if (!result.has(slot) && fi < unassigned.length) result.set(slot, unassigned[fi++])
+      }
+      return result
+    }
+
     function categoryLabel(cat: CareerTimelineCategory): string {
       return TIMELINE_CATEGORIES.find((c) => c.value === cat)?.label ?? cat
     }
@@ -9943,6 +10021,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     const itemCount = timelineItems.length
 
+    const slotMap = resolveSlotMap()
+    const publishedCollapsedCount = timelineItems.filter((i) => i.isPublished && i.showInCollapsed !== false).length
+    const mosaicActive = publishedCollapsedCount >= 7
+
     return (
       <div className="space-y-5">
 
@@ -9950,15 +10032,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-foreground">
-              Career Updates
+              Artist Story
               {itemCount > 0 && (
                 <span className="ml-2 text-sm font-normal text-muted-foreground/40">
                   · {itemCount} {itemCount === 1 ? "update" : "updates"}
                 </span>
               )}
             </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground/52">
-              Career updates shown on your public profile as a clickable bento grid. Only published items are visible publicly.
+            <p className="mt-0.5 text-[11.5px] text-muted-foreground/52">
+              Control which updates appear in your public Artist Story and where they appear in the editorial mosaic.{" "}
+              <span className="text-muted-foreground/30">Story Slot controls visual placement · Show in Collapsed controls default visibility.</span>
             </p>
           </div>
           <button
@@ -9971,6 +10054,103 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             Add Update
           </button>
         </div>
+
+        {/* Artist Story Layout Preview — visual slot map */}
+        {timelineLoaded && (
+          <div className="rounded-xl border border-border/50 bg-card/20 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/40">
+                  Public Layout Preview
+                </span>
+                {mosaicActive ? (
+                  <span className="rounded-[3px] bg-accent/10 px-[5px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-accent/60">
+                    Mosaic active
+                  </span>
+                ) : (
+                  <span className="rounded-[3px] bg-secondary/60 px-[5px] py-[1px] text-[7px] font-medium uppercase tracking-[0.10em] text-muted-foreground/35">
+                    {publishedCollapsedCount < 7 ? `${publishedCollapsedCount}/7 to activate mosaic` : "Standard grid"}
+                  </span>
+                )}
+              </div>
+              <span className="text-[9px] text-muted-foreground/25">12-column editorial mosaic</span>
+            </div>
+
+            {/* Slot grid — mirrors the public 6-row 12-col mosaic proportionally */}
+            <div className="grid grid-cols-12 gap-[3px] [grid-auto-rows:26px]">
+
+              {/* Intro cell — represents the section header/description text area */}
+              <div className="[grid-column:1/4] [grid-row:1/3] rounded-[3px] border border-dashed border-border/20 bg-secondary/20 flex flex-col items-start justify-center px-1.5">
+                <span className="text-[6px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/20">Intro</span>
+              </div>
+
+              {/* Slot tiles */}
+              {STORY_SLOTS.map((slot) => {
+                const assigned = slotMap.get(slot.id)
+                const isExplicit = assigned?.storySlot === slot.id
+                const noImage = assigned && !assigned.imageUrl && slot.needsImage
+                const isConflict = timelineItems.filter(
+                  (i) => i.isPublished && i.storySlot === slot.id
+                ).length > 1
+                return (
+                  <div
+                    key={slot.id}
+                    className={`${SLOT_PREVIEW_GRID[slot.id]} rounded-[3px] border flex flex-col justify-between p-1.5 transition-colors duration-100 ${
+                      assigned
+                        ? isExplicit
+                          ? "border-accent/20 bg-accent/[0.06]"
+                          : "border-border/40 bg-secondary/30"
+                        : "border-dashed border-border/20 bg-secondary/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1 justify-between">
+                      <span className="text-[6px] font-bold uppercase tracking-[0.12em] text-muted-foreground/35 truncate">
+                        {slot.label}
+                      </span>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {isExplicit && (
+                          <span title="Slot explicitly assigned" className="h-[5px] w-[5px] rounded-full bg-accent/50" />
+                        )}
+                        {noImage && (
+                          <span title="No image — text-only display" className="text-[7px] text-amber-500/50">!</span>
+                        )}
+                        {isConflict && (
+                          <span title="Multiple items claim this slot — first wins" className="text-[7px] text-orange-400/60">⚡</span>
+                        )}
+                      </div>
+                    </div>
+                    {assigned ? (
+                      <p className="mt-0.5 text-[7px] font-semibold text-foreground/55 truncate leading-tight">
+                        {assigned.title}
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-[7px] text-muted-foreground/22">Empty</p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
+                <span className="inline-block h-[5px] w-[5px] rounded-full bg-accent/50" />
+                Slot explicitly assigned in HQ
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
+                <span className="inline-block h-[5px] w-[5px] rounded-full bg-border/50" />
+                Auto-filled by fallback order
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
+                <span className="text-amber-500/60 text-[8px]">!</span>
+                Important slot has no image
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
+                <span className="text-orange-400/60 text-[8px]">⚡</span>
+                Slot conflict — first item wins
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Add / Edit form */}
         {timelineFormOpen && (
@@ -10122,8 +10302,44 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 </button>
                 <span className="text-xs text-muted-foreground/60">
                   {timelineIsFeatured
-                    ? "Featured — appears first in the public Career Updates grid"
+                    ? "Featured — sorted first in fallback order"
                     : "Not featured — sorted by order and date"}
+                </span>
+              </div>
+
+              {/* Story Slot */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Story Slot <span className="normal-case text-muted-foreground/30">(optional)</span>
+                </label>
+                <select
+                  value={timelineStorySlot}
+                  onChange={(e) => setTimelineStorySlot(e.target.value)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <option value="">Auto — fill next available slot by fallback order</option>
+                  {STORY_SLOTS.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label} — {s.desc}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-muted-foreground/38">
+                  Controls which visual position this update occupies in the public Artist Story mosaic. If two updates claim the same slot, the one ranked first by sort order wins.
+                </p>
+              </div>
+
+              {/* Show in Collapsed toggle */}
+              <div className="sm:col-span-2 flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setTimelineShowInCollapsed((v) => !v)}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-150 focus:outline-none ${timelineShowInCollapsed ? "bg-accent/70" : "bg-muted"}`}
+                >
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 ${timelineShowInCollapsed ? "translate-x-4" : "translate-x-0.5"}`} />
+                </button>
+                <span className="text-xs text-muted-foreground/60">
+                  {timelineShowInCollapsed
+                    ? "Show in collapsed view — appears in the default public Artist Story (up to 8 slots)"
+                    : "Archive only — appears under \"View all\" but not in the default mosaic"}
                 </span>
               </div>
             </div>
@@ -10196,18 +10412,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="text-sm font-semibold text-foreground/90 leading-snug truncate">{item.title}</p>
                     {item.isFeatured && (
-                      <span title="Featured — appears first publicly" className="shrink-0 rounded-[3px] bg-amber-500/12 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/70">
+                      <span title="Featured — sorted first in fallback order" className="shrink-0 rounded-[3px] bg-amber-500/12 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/70">
                         Featured
                       </span>
                     )}
                     {item.imageUrl && (
-                      <span title="Has real cover image" className="shrink-0 text-[9px] text-foreground/28">📷</span>
+                      <span title="Has cover image" className="shrink-0 text-[9px] text-foreground/28">📷</span>
                     )}
                     {!item.imageUrl && item.previewImageUrl && (
-                      <span title="Has HQ preview image only — not shown publicly" className="shrink-0 rounded-[3px] bg-amber-500/8 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/50">
+                      <span title="HQ preview image only — not shown publicly" className="shrink-0 rounded-[3px] bg-amber-500/8 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/50">
                         Preview img
                       </span>
                     )}
@@ -10215,9 +10431,51 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {item.location && (
                     <p className="mt-0.5 text-[11px] text-muted-foreground/45">{item.location}</p>
                   )}
-                  {item.description && (
-                    <p className="mt-1 text-[11px] text-muted-foreground/40 line-clamp-2">{item.description}</p>
-                  )}
+
+                  {/* Story Slot + Collapsed — inline editorial controls */}
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                    {/* Slot inline select */}
+                    <select
+                      value={item.storySlot ?? ""}
+                      disabled={busy}
+                      onChange={(e) => handleSlotChange(item, e.target.value || null)}
+                      className="h-[22px] rounded border border-border/50 bg-background/60 px-1.5 text-[9px] font-medium text-muted-foreground/70 transition-colors hover:border-border hover:text-foreground/80 focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 cursor-pointer"
+                      title="Story Slot — controls visual position in the public mosaic"
+                    >
+                      <option value="">Auto slot</option>
+                      {STORY_SLOTS.map((s) => (
+                        <option key={s.id} value={s.id}>{s.label}</option>
+                      ))}
+                    </select>
+
+                    {/* Show in Collapsed toggle */}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleShowInCollapsedToggle(item)}
+                      title={item.showInCollapsed !== false ? "In default mosaic — click to move to archive only" : "Archive only — click to show in default mosaic"}
+                      className={`h-[22px] rounded border px-2 text-[9px] font-medium transition-colors duration-100 disabled:opacity-40 ${
+                        item.showInCollapsed !== false
+                          ? "border-accent/20 bg-accent/5 text-accent/60 hover:bg-accent/10"
+                          : "border-border/40 bg-secondary/30 text-muted-foreground/35 hover:text-foreground/55"
+                      }`}
+                    >
+                      {item.showInCollapsed !== false ? "In view" : "Archive"}
+                    </button>
+
+                    {/* Slot conflict warning */}
+                    {item.storySlot && timelineItems.filter((t) => t.isPublished && t.storySlot === item.storySlot).length > 1 && (
+                      <span title="Multiple published items claim this slot — first in sort order wins" className="text-[9px] text-orange-400/60">
+                        ⚡ slot conflict
+                      </span>
+                    )}
+                    {/* Image warning for image-preferred slots */}
+                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "right-tall") && (
+                      <span title="Hero and Right Tall slots look best with a cover image" className="text-[9px] text-amber-500/50">
+                        ! no image
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Actions */}
@@ -10301,7 +10559,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {timelineLoaded && itemCount > 0 && (
           <p className="text-[10px] text-muted-foreground/22">
-            Featured updates appear first on the public profile. Remaining items sort by order then date (newest first). Only published updates are visible publicly.
+            Story Slot controls visual placement in the public mosaic. &quot;In view&quot; items appear in the default 8-slot layout; &quot;Archive&quot; items appear only after expanding. Featured items sort first in fallback order. Drag to set fallback position.
           </p>
         )}
 
