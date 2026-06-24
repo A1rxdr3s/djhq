@@ -587,17 +587,16 @@ function UpdateDetail({
 
 // ── CareerUpdatesSection ──────────────────────────────────────────────────────
 //
-// Data-driven public Career Updates bento grid.
+// Data-driven public Career Updates mosaic grid.
 //
-// Grid layout (desktop, 3 cols):
-//   Row 1 — col1: primary card (height adaptive: tall with image, compact without)
-//          — col2+col3: 2 shorter cards (self-start, ~160px)
-//   Row 2 — cols 1-3: up to 3 standard-height cards
-//   Row 3 — cols 1-2: up to 2 cards (shown when count >= 8, partial row is expected)
+// Desktop layout (≥7 items): 12-column CSS Grid, grid-auto-rows: 120px.
+//   See getMosaicDesktopClass() for the deterministic placement map.
+//   Layout A (primary has image): hero left anchor (4col×3row) + right tiles.
+//   Layout B (primary has no image): uniform 4-col medium grid.
 //
-// computeGridLimit(): shows 8 when ≥8 items available, 6 when count=7 (avoids
-// a single-card last row), and count otherwise.
-// Items beyond the grid limit are shown in a compact year-grouped archive.
+// Desktop layout (<7 items): standard 3-col grid with self-start secondary tiles.
+//
+// Items beyond computeGridLimit() are shown in a compact year-grouped archive.
 //
 // Visibility contract:
 //   • items pre-filtered by DB query (is_published = true)
@@ -667,57 +666,63 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
           </p>
         )}
 
-        {/* ── Mosaic grid ──────────────────────────────────────────────────
-            ≥7 items (row-span mode):
-              Desktop (3 col) — primary spans rows 1+2 (left anchor):
-                Row 1 — col1: primary [row-span-2]  | col2: sec0  | col3: sec1
-                Row 2 —                             | col2: sec2  | col3: sec3
-                Row 3 — col1: sec4  | col2: sec5  | col3: sec6 (if count=8)
-            <7 items (standard mode):
-              Row 1 — col1: primary (self-height) | col2: sec0 | col3: sec1
-              Row 2 — col1: sec2 | col2: sec3 | col3: sec4
-            Tablet (2 col): primary spans full width; secondary fills 2-col grid.
-            Mobile: stacked in DOM order.                                         */}
-        <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
+        {/* ── Grid ───────────────────────────────────────────────────────────
+            ≥7 items → 12-col mosaic (explicit placement, grid-auto-rows:120px).
+            <7 items → standard 3-col grid (primary col-span varies by tablet).  */}
 
-          {/* Primary card */}
-          <div className={cn(
-            "sm:col-span-2 lg:col-span-1",
-            useRowSpanLayout
-              // Row-span mode: grid rows control height; just set a mobile floor
-              ? "min-h-[240px] sm:min-h-[280px] lg:row-span-2"
-              // Standard mode: explicit height based on image availability
-              : primaryHasImage
-                ? "min-h-[280px] sm:min-h-[320px] lg:min-h-[380px]"
-                : "min-h-[210px] sm:min-h-[240px] lg:min-h-[230px]",
-          )}>
-            <PrimaryCard item={primary} onClick={() => setSelectedItem(primary)} />
+        {useMosaicLayout ? (
+
+          // ── 12-col mosaic — see getMosaicDesktopClass for placement map ─────
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:[grid-auto-rows:120px]">
+            {gridItems.map((item, index) => (
+              <div
+                key={item.id}
+                className={cn(
+                  // Mobile / tablet floor heights
+                  "min-h-[200px]",
+                  index === 0 && "sm:col-span-2 sm:min-h-[240px]",
+                  // Desktop explicit placement (overrides auto-flow)
+                  getMosaicDesktopClass(index, primaryHasImage, gridItems.length),
+                  "lg:min-h-0",
+                )}
+              >
+                {index === 0 ? (
+                  <PrimaryCard item={item} onClick={() => setSelectedItem(item)} />
+                ) : (
+                  <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
+                )}
+              </div>
+            ))}
           </div>
 
-          {useRowSpanLayout ? (
-            // Mosaic mode: all secondary items fill their grid cells uniformly
-            secondary.map((item) => (
-              <div key={item.id} className="min-h-[150px]">
+        ) : (
+
+          // ── Standard 3-col grid (fewer than 7 items) ─────────────────────────
+          <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
+            {/* Primary card */}
+            <div className={cn(
+              "sm:col-span-2 lg:col-span-1",
+              primaryHasImage
+                ? "min-h-[280px] sm:min-h-[320px] lg:min-h-[380px]"
+                : "min-h-[210px] sm:min-h-[240px] lg:min-h-[230px]",
+            )}>
+              <PrimaryCard item={primary} onClick={() => setSelectedItem(primary)} />
+            </div>
+            {/* Top-right pair — self-start so they don't stretch to primary height */}
+            {topRight.map((item) => (
+              <div key={item.id} className="min-h-[160px] lg:self-start">
                 <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
               </div>
-            ))
-          ) : (
-            // Standard mode: top-right cards don't stretch to primary height
-            <>
-              {topRight.map((item) => (
-                <div key={item.id} className="min-h-[160px] lg:self-start">
-                  <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
-                </div>
-              ))}
-              {bottomRow.map((item) => (
-                <div key={item.id} className="min-h-[160px]">
-                  <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
-                </div>
-              ))}
-            </>
-          )}
+            ))}
+            {/* Bottom row */}
+            {bottomRow.map((item) => (
+              <div key={item.id} className="min-h-[160px]">
+                <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
+              </div>
+            ))}
+          </div>
 
-        </div>
+        )}
 
         {/* ── View all control + compact archive ──────────────────────────── */}
         {hasMore && (
