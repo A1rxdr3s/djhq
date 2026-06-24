@@ -506,13 +506,15 @@ function UpdateDetail({
 //
 // Data-driven public Career Updates bento grid.
 //
-// Grid layout (desktop, 3 cols, 2 rows):
-//   Row 1 — col1: primary card (tall, min-h-[380px])
-//          — col2+col3: 2 shorter cards (self-start, ~170px)
+// Grid layout (desktop, 3 cols):
+//   Row 1 — col1: primary card (height adaptive: tall with image, compact without)
+//          — col2+col3: 2 shorter cards (self-start, ~160px)
 //   Row 2 — cols 1-3: up to 3 standard-height cards
+//   Row 3 — cols 1-2: up to 2 cards (shown when count >= 8, partial row is expected)
 //
-// Items beyond GRID_LIMIT are shown in a compact year-grouped archive
-// revealed by the "View all career updates" action.
+// computeGridLimit(): shows 8 when ≥8 items available, 6 when count=7 (avoids
+// a single-card last row), and count otherwise.
+// Items beyond the grid limit are shown in a compact year-grouped archive.
 //
 // Visibility contract:
 //   • items pre-filtered by DB query (is_published = true)
@@ -575,9 +577,10 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         {/* ── Bento grid ───────────────────────────────────────────────────
             Desktop (3 col):
-              Row 1 — col1: primary (tall, min-h-[380px])
+              Row 1 — col1: primary (height = image→380px, text→230px)
                     — col2+col3: shorter cards with lg:self-start
-              Row 2 — cols 1-3: standard-height cards
+              Row 2 — cols 1-3: up to 3 standard-height cards
+              Row 3 — cols 1-2: up to 2 cards (when count >= 8; partial row)
             Tablet (2 col): primary spans full width; secondary fills 2-col grid.
             Mobile: stacked in DOM order.                                        */}
         <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
