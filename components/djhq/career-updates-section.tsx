@@ -626,18 +626,21 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
   const [primary, ...secondary] = gridItems
 
-  // Mosaic row-span layout: when we have 7+ items, the primary card spans 2
-  // grid rows (left anchor), creating the mosaic/hero effect from the reference.
-  // ≥7 items → row-span-2 primary; produces a clean 2-row right section + optional partial row3.
-  // <7 items → standard layout with topRight self-start + bottomRow.
-  const useRowSpanLayout = gridItems.length >= 7
+  // ≥7 items → 12-col mosaic; <7 items → standard 3-col grid.
+  const useMosaicLayout = gridItems.length >= 7
 
-  // Standard-mode layout slots (only used when !useRowSpanLayout)
+  // Standard-mode layout slots (only used when !useMosaicLayout)
   const topRight  = secondary.slice(0, 2)
   const bottomRow = secondary.slice(2)
 
-  // Height for primary wrapper (only relevant in standard mode; row-span mode is grid-controlled)
-  const primaryHasImage = !!primary.imageUrl
+  // Whether the primary card has a renderable image URL.
+  // Used to select mosaic variant (hero 4×3 vs. medium 4×2 for slot 0) and
+  // to set min-height in the standard layout. Checked against the normalized
+  // URL so Drive share links count as renderable.
+  const primaryNormalized = primary.imageUrl
+    ? normalizeExternalImageUrl(primary.imageUrl)
+    : null
+  const primaryHasImage = !!primaryNormalized?.isRenderable
 
   // Build chronology groups for the "View all" archive
   const archiveGroups = buildChronologyGroups(
