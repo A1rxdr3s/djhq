@@ -1733,10 +1733,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         )}
 
         {/* ── Artist Story ─────────────────────────────────────────────── */}
+        {/* TODO: headline + intro should come from editable artist profile fields */}
         <ArtistStory
           items={artist.careerTimeline ?? []}
-          headline={artist.tagline}
-          intro={artist.shortBio}
+          headline="From Santiago residencies to global dance floors."
+          intro={`A compact view of the milestones shaping ${artist.artistName}’s career — from Chilean club residencies and vinyl releases to Barcelona, Miami, Bali, and the Euro Tour 2026.`}
         />
 
         <div id="contact" className="scroll-mt-16">
