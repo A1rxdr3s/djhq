@@ -17,12 +17,17 @@ import {
 } from "@/lib/djhq/career-updates"
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-//
-// Default bento grid limit — 6 items balances visual density and layout rhythm
-// on a 3-column desktop grid. Items beyond this are shown in the "View all"
-// compact chronological archive.
 
-const GRID_LIMIT = 6
+// How many items to show in the bento grid before "View all" kicks in.
+// Rules:
+//   ≥ 8 → show 8 (3-col desktop: 1 primary + 2 top-right + 3 row2 + 2 row3)
+//   = 7 → show 6 (7 in 3-col = 3+3+1: single card in last row looks unfinished)
+//   ≤ 6 → show all
+function computeGridLimit(count: number): number {
+  if (count >= 8) return 8
+  if (count === 7) return 6
+  return count
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   residency:     "Residency",
