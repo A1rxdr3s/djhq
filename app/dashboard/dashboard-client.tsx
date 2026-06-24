@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
+import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -1299,6 +1299,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineError, setTimelineError] = useState("")
   const [timelineDeleteId, setTimelineDeleteId] = useState<string | null>(null)
   const [timelineDeleteConfirm, setTimelineDeleteConfirm] = useState(false)
+  const [timelineDragIndex, setTimelineDragIndex] = useState<number | null>(null)
+  const [timelineDragOverIndex, setTimelineDragOverIndex] = useState<number | null>(null)
 
   type HomeBooking = {
     id: string; referenceId: string; fullName: string
@@ -9891,6 +9893,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       }
     }
 
+    async function handleTimelineDrop(fromIndex: number, toIndex: number) {
+      if (fromIndex === toIndex) return
+      const reordered = [...timelineItems]
+      const [moved] = reordered.splice(fromIndex, 1)
+      reordered.splice(toIndex, 0, moved)
+      const updated = reordered.map((item, i) => ({ ...item, sortOrder: i + 1 }))
+      setTimelineItems(updated)
+      setTimelineDragIndex(null)
+      setTimelineDragOverIndex(null)
+      setTimelineSaving(true)
+      try {
+        await Promise.all(
+          updated.map((item) =>
+            fetch("/api/artists/career-timeline", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: item.id, artistId: artist.id, sortOrder: item.sortOrder }),
+            })
+          )
+        )
+      } finally {
+        setTimelineSaving(false)
+      }
+    }
+
     function categoryLabel(cat: CareerTimelineCategory): string {
       return TIMELINE_CATEGORIES.find((c) => c.value === cat)?.label ?? cat
     }
@@ -10072,13 +10099,27 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Item list */}
         {timelineLoaded && itemCount > 0 && (
           <div className="space-y-2">
-            {timelineItems.map((item) => (
+            {timelineItems.map((item, i) => (
               <div
                 key={item.id}
+                draggable
+                onDragStart={() => setTimelineDragIndex(i)}
+                onDragOver={(e) => { e.preventDefault(); setTimelineDragOverIndex(i) }}
+                onDrop={() => { if (timelineDragIndex !== null) handleTimelineDrop(timelineDragIndex, i) }}
+                onDragEnd={() => { setTimelineDragIndex(null); setTimelineDragOverIndex(null) }}
                 className={`flex items-start gap-4 rounded-xl border px-4 py-3 transition-colors duration-150 ${
-                  item.isPublished ? "border-border bg-card/20" : "border-dashed border-border/50 bg-transparent"
-                }`}
+                  timelineDragOverIndex === i && timelineDragIndex !== i
+                    ? "border-accent/40 bg-accent/[0.04]"
+                    : item.isPublished
+                    ? "border-border bg-card/20"
+                    : "border-dashed border-border/50 bg-transparent"
+                } ${timelineDragIndex === i ? "opacity-40" : ""}`}
               >
+                {/* Drag handle */}
+                <div className="mt-0.5 shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-muted-foreground/50 transition-colors duration-100">
+                  <GripVertical className="h-4 w-4" />
+                </div>
+
                 {/* Year + category */}
                 <div className="shrink-0 min-w-[72px]">
                   <p className="text-[11px] font-black tabular-nums text-foreground/60">{formatYear(item.eventDate)}</p>

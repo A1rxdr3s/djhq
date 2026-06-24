@@ -1734,17 +1734,64 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {/* ── Career Story ─────────────────────────────────────────────── */}
         {(artist.careerTimeline?.length ?? 0) > 0 && (() => {
           const items = artist.careerTimeline!
+          const mid = Math.ceil(items.length / 2)
+          const currentChapter = items.slice(0, mid)
+          const foundations = items.slice(mid)
 
           const CATEGORY_LABELS: Record<string, string> = {
-            residency:    "Residency",
-            festival:     "Festival",
-            club_show:    "Club Show",
-            international:"International",
-            release:      "Release",
-            press:        "Press",
-            chart:        "Chart",
-            tour:         "Tour",
-            other:        "Other",
+            residency:     "Residency",
+            festival:      "Festival",
+            club_show:     "Club Show",
+            international: "International",
+            release:       "Release",
+            press:         "Press",
+            chart:         "Chart",
+            tour:          "Tour",
+            other:         "Other",
+          }
+
+          function renderEntry(item: CareerTimelineItem) {
+            const year = item.eventDate.slice(0, 4)
+            const catLabel = CATEGORY_LABELS[item.category] ?? item.category
+            return (
+              <div key={item.id} className="group border-t border-white/[0.05] pb-6 pt-5">
+                <p className="text-[40px] font-black tabular-nums leading-none tracking-[-0.03em] text-foreground/[0.08] lg:text-[46px]">
+                  {year}
+                </p>
+                <div className="mt-2.5">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-accent/55">
+                    {catLabel}
+                  </p>
+                  <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0">
+                    {item.link ? (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[17px] font-black leading-tight tracking-[-0.015em] text-foreground/88 transition-colors duration-150 hover:text-foreground sm:text-[19px]"
+                      >
+                        {item.title}
+                        <ExternalLink className="ml-1 inline-block h-3 w-3 translate-y-[-1px] text-foreground/20 transition-colors duration-150 group-hover:text-accent/50" aria-hidden />
+                      </a>
+                    ) : (
+                      <span className="text-[17px] font-black leading-tight tracking-[-0.015em] text-foreground/88 sm:text-[19px]">
+                        {item.title}
+                      </span>
+                    )}
+                    {item.location && (
+                      <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-foreground/25">
+                        {item.location}
+                      </span>
+                    )}
+                  </div>
+                  {item.description && (
+                    <p className="mt-1.5 max-w-sm text-[12px] leading-[1.62] text-foreground/38">
+                      {item.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )
           }
 
           return (
@@ -1752,60 +1799,26 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               <div className="mx-auto max-w-5xl">
                 <SectionHeader>Artist Story</SectionHeader>
 
-                <div className="mt-5 divide-y divide-white/[0.04]">
-                  {items.map((item) => {
-                    const year = item.eventDate.slice(0, 4)
-                    const categoryLabel = CATEGORY_LABELS[item.category] ?? item.category
+                <div className="mt-8 grid grid-cols-1 gap-x-14 lg:grid-cols-2">
 
-                    return (
-                      <div key={item.id} className="group flex gap-3 py-3 sm:gap-4 sm:py-3.5">
+                  {/* Left — Current Chapter */}
+                  <div>
+                    <h3 className="mb-5 text-[28px] font-black tracking-[-0.025em] text-foreground/75 sm:text-[32px]">
+                      Current Chapter
+                    </h3>
+                    {currentChapter.map(renderEntry)}
+                  </div>
 
-                        {/* Year — quiet anchor, not a dominant column */}
-                        <div className="w-8 shrink-0 sm:w-10">
-                          <p className="text-[11px] font-bold tabular-nums text-foreground/22 sm:text-[12px]">
-                            {year}
-                          </p>
-                        </div>
+                  {/* Right — Foundations */}
+                  {foundations.length > 0 && (
+                    <div className="mt-12 lg:mt-0">
+                      <h3 className="mb-5 text-[28px] font-black tracking-[-0.025em] text-foreground/75 sm:text-[32px]">
+                        Foundations
+                      </h3>
+                      {foundations.map(renderEntry)}
+                    </div>
+                  )}
 
-                        {/* Category + content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent/60">
-                              {categoryLabel}
-                            </span>
-                            {item.link ? (
-                              <a
-                                href={item.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[14px] font-black leading-snug tracking-[-0.01em] text-foreground/88 transition-colors duration-150 hover:text-foreground sm:text-[15px]"
-                              >
-                                {item.title}
-                                <ExternalLink className="ml-1 inline-block h-2.5 w-2.5 translate-y-[-1px] text-foreground/22 transition-colors duration-150 group-hover:text-accent/45" aria-hidden />
-                              </a>
-                            ) : (
-                              <p className="text-[14px] font-black leading-snug tracking-[-0.01em] text-foreground/88 sm:text-[15px]">
-                                {item.title}
-                              </p>
-                            )}
-                          </div>
-
-                          {item.location && (
-                            <p className="mt-0.5 text-[10px] uppercase tracking-[0.10em] text-foreground/28">
-                              {item.location}
-                            </p>
-                          )}
-
-                          {item.description && (
-                            <p className="mt-1 max-w-prose text-[12px] leading-[1.65] text-foreground/45 sm:text-[12px]">
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-
-                      </div>
-                    )
-                  })}
                 </div>
               </div>
             </section>
