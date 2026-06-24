@@ -10060,7 +10060,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   className="h-9 text-sm"
                 />
                 <p className="text-[10px] text-muted-foreground/38">
-                  Used as the background image on the public Career Updates card.
+                  Shown publicly on the Career Updates card when the update is published.
+                </p>
+              </div>
+
+              {/* Preview Image URL — HQ only */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="flex items-center gap-[6px] text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                  Preview Image URL
+                  <span className="rounded-[3px] bg-amber-500/10 px-[5px] py-[1px] text-[8px] font-bold uppercase tracking-[0.12em] text-amber-500/70">
+                    HQ only — never public
+                  </span>
+                </label>
+                <Input
+                  value={timelinePreviewImageUrl}
+                  onChange={(e) => setTimelinePreviewImageUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="h-9 text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground/38">
+                  Design preview only. This image is never shown on the public profile — use it to evaluate how the card will look with imagery before a real image is ready.
                 </p>
               </div>
 
