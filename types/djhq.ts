@@ -435,6 +435,17 @@ export interface CareerTimelineItem {
   isPublished: boolean
   /** Display sort position. Null means unset; sorted by event_date desc as fallback. */
   sortOrder: number | null
+  /**
+   * Editorial tile size for the public Career Updates mosaic.
+   * Set via HQ — never inferred from milestone title or venue.
+   * Null uses the component's positional fallback (sort order determines slot).
+   *
+   * hero    — wide horizontal anchor; the standout milestone of the section
+   * tall    — vertical anchor; cinematic or foundational appearance
+   * wide    — horizontal secondary; releases, archive moments
+   * compact — smaller tile; concise metadata, high-density row
+   */
+  layoutSize?: 'hero' | 'tall' | 'wide' | 'compact' | null
 }
 
 /**

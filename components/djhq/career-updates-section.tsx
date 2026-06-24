@@ -26,71 +26,74 @@ function computeGridLimit(count: number): number {
   return count
 }
 
-// ── Mosaic desktop placement ──────────────────────────────────────────────────
+// ── Editorial mosaic — slot system ───────────────────────────────────────────
 //
-// Returns Tailwind arbitrary grid-column/grid-row classes for the desktop
-// 12-column mosaic (grid-auto-rows: 86px, so each row unit = 86 px).
+// 12-column CSS grid, grid-auto-rows: 86px. 7 rows total.
+// The section intro (eyebrow + heading + description) occupies the intro cell
+// (col 1-3, rows 1-3). Tile slots fill the remaining 12×7 area.
 //
-// Layout A — primary has image (tall anchor + strip pairs + 3-image row):
+//   Row 1: [INTRO  3col r3] [HERO    6col r3          ] [RIGHT-TALL 3col r5]
+//   Row 2: [INTRO  r3     ] [HERO    r3               ] [RIGHT-TALL r5     ]
+//   Row 3: [INTRO  r3     ] [HERO    r3               ] [RIGHT-TALL r5     ]
+//   Row 4: [ANCHOR 3col r2] [COMPACT-1 3col][COMPACT-2 3col][RIGHT-TALL r5 ]
+//   Row 5: [ANCHOR r2     ] [COMPACT-1 r2  ][COMPACT-2 r2  ][RIGHT-TALL r5 ]
+//   Row 6: [TEXT-L 3col r2] [WIDE    6col r2          ] [TEXT-R     3col r2]
+//   Row 7: [TEXT-L r2     ] [WIDE    r2               ] [TEXT-R     r2     ]
 //
-//   Row 1: [0  4col anchor r2][1  4col strip r1][2  4col strip r1]
-//   Row 2: [0  4col anchor   ][3  4col strip r1][4  4col strip r1]
-//   Row 3: [5  4col image r2 ][6  4col image r2][7  4col image r2]
-//   Row 4: [5  4col image    ][6  4col image   ][7  4col image   ]
+// Slot assignment: layoutSize field from HQ drives placement.
+// Fallback without layoutSize data: positional (anchor=item0, hero=item1…).
 //
-//   TABU Bali (index 0) = 4-col × 2-row anchor (184 px tall).
-//   Items 1–4 = 4-col × 1-row compact strips (86 px) flanking the anchor.
-//   Items 5–7 = 4-col × 2-row image tiles — the "3 image tiles" row.
-//   For 7 items: same positions — col 9-12 in rows 3-4 stays empty (accepted).
-//
-//   Total height: 4 × 86 + 3 × gap ≈ 380 px (vs. 576 px before)
-//
-// Layout B — primary has no image (3-band editorial mosaic):
-//
-//   Row 1: [0  3col anchor][1  6col wide       ][2  3col compact]  ← 3+6+3 = 12
-//   Row 2: [0  3col anchor][1  6col wide       ][2  3col compact]
-//   Row 3: [3  4col image ][4  4col image      ][5  4col image  ]  ← 4+4+4 = 12
-//   Row 4: [3  4col image ][4  4col image      ][5  4col image  ]
-//   Row 5: [6  6col text  ][7  6col text                        ]  ← 6+6 = 12
-//   Row 6: [6  6col text  ][7  6col text                        ]
-//
-//   Index 0 = narrow (3-col) tall anchor — not the 6-col wide slab from before.
-//   Index 1 = wide center tile (6-col) — carries visual weight when image-backed.
-//   Indices 3–5 = the "3 image tiles" row — 4-col each, 2-row tall.
-//   Indices 6–7 = text tiles at 6-col each (readable, not giant empty slabs).
-//   For 7 items: row 5-6 col 7-12 stays empty (accepted).
+// Total grid height: 7 × 86 + 6 × 12 = 674 px (vs. ~765 px section before).
 
-function getMosaicDesktopClass(
-  index: number,
-  primaryHasImage: boolean,
-): string {
-  if (primaryHasImage) {
-    // Layout A: tall anchor (2-row) + compact strips + 3-image bottom row
-    switch (index) {
-      case 0: return "lg:[grid-column:1/5] lg:[grid-row:1/3]"     // anchor, 4col × 2row
-      case 1: return "lg:[grid-column:5/9] lg:[grid-row:1/2]"     // strip,  4col × 1row
-      case 2: return "lg:[grid-column:9/13] lg:[grid-row:1/2]"    // strip,  4col × 1row
-      case 3: return "lg:[grid-column:5/9] lg:[grid-row:2/3]"     // strip,  4col × 1row
-      case 4: return "lg:[grid-column:9/13] lg:[grid-row:2/3]"    // strip,  4col × 1row
-      case 5: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // image,  4col × 2row
-      case 6: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"     // image,  4col × 2row
-      case 7: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"    // image,  4col × 2row
-      default: return ""
-    }
-  } else {
-    // Layout B: 3-band editorial mosaic (narrow anchor | wide center | image row | text row)
-    switch (index) {
-      case 0: return "lg:[grid-column:1/4] lg:[grid-row:1/3]"     // anchor,  3col × 2row
-      case 1: return "lg:[grid-column:4/10] lg:[grid-row:1/3]"    // wide,    6col × 2row
-      case 2: return "lg:[grid-column:10/13] lg:[grid-row:1/3]"   // compact, 3col × 2row
-      case 3: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // image,   4col × 2row
-      case 4: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"     // image,   4col × 2row
-      case 5: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"    // image,   4col × 2row
-      case 6: return "lg:[grid-column:1/7] lg:[grid-row:5/7]"     // text,    6col × 2row
-      case 7: return "lg:[grid-column:7/13] lg:[grid-row:5/7]"    // text,    6col × 2row
-      default: return ""
-    }
+type TileSlot = 'hero' | 'anchor' | 'rightTall' | 'compact1' | 'compact2' | 'textLeft' | 'wide' | 'textRight'
+
+const SLOT_DESKTOP_CLASSES: Record<TileSlot, string> = {
+  hero:      "lg:[grid-column:4/10] lg:[grid-row:1/4]",   // 6col × 3row — wide center hero
+  anchor:    "lg:[grid-column:1/4] lg:[grid-row:4/6]",    // 3col × 2row — left anchor
+  rightTall: "lg:[grid-column:10/13] lg:[grid-row:1/6]",  // 3col × 5row — tall right anchor
+  compact1:  "lg:[grid-column:4/7] lg:[grid-row:4/6]",    // 3col × 2row
+  compact2:  "lg:[grid-column:7/10] lg:[grid-row:4/6]",   // 3col × 2row
+  textLeft:  "lg:[grid-column:1/4] lg:[grid-row:6/8]",    // 3col × 2row — bottom-left
+  wide:      "lg:[grid-column:4/10] lg:[grid-row:6/8]",   // 6col × 2row — bottom-wide
+  textRight: "lg:[grid-column:10/13] lg:[grid-row:6/8]",  // 3col × 2row — bottom-right
+}
+
+// Slots rendered with PrimaryCard (the primary/featured anchor position).
+const PRIMARY_SLOTS = new Set<TileSlot>(['anchor'])
+
+// Preferred layoutSize per slot. Without layoutSize data, items fall through
+// in source order (featured-first sort from getPublicCareerUpdates).
+const SLOT_PREFERRED_SIZES: [TileSlot, string | null][] = [
+  ['anchor',    'tall'],
+  ['hero',      'hero'],
+  ['rightTall', 'tall'],
+  ['compact1',  'compact'],
+  ['compact2',  'compact'],
+  ['textLeft',  null],
+  ['wide',      'wide'],
+  ['textRight', null],
+]
+
+function assignTileSlots(
+  items: CareerTimelineItem[],
+): Array<{ item: CareerTimelineItem; slot: TileSlot }> {
+  const pool = [...items]
+
+  function consumeBySize(size: string): CareerTimelineItem | undefined {
+    const idx = pool.findIndex(i => i.layoutSize === size)
+    return idx >= 0 ? pool.splice(idx, 1)[0] : undefined
   }
+
+  function consumeNext(): CareerTimelineItem | undefined {
+    return pool.length > 0 ? pool.splice(0, 1)[0] : undefined
+  }
+
+  return SLOT_PREFERRED_SIZES
+    .map(([slot, size]) => {
+      const item = (size ? consumeBySize(size) : undefined) ?? consumeNext()
+      return item ? { item, slot } : null
+    })
+    .filter((x): x is { item: CareerTimelineItem; slot: TileSlot } => x !== null)
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -637,6 +640,8 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
   // ≥7 items → 12-col mosaic; <7 items → standard 3-col grid.
   const useMosaicLayout = gridItems.length >= 7
+  // Slot assignment for mosaic: layoutSize-driven with positional fallback.
+  const tileSlots = useMosaicLayout ? assignTileSlots(gridItems) : []
 
   // Standard-mode layout slots (only used when !useMosaicLayout)
   const topRight  = secondary.slice(0, 2)
@@ -662,75 +667,92 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
           No inner max-width — the mosaic grid uses all available horizontal space. */}
       <div>
 
-        <SectionHeader>Career Updates</SectionHeader>
-
-        {headline && (
-          <h3 className="mt-3 max-w-2xl text-[19px] font-black tracking-[-0.022em] text-foreground/84 sm:text-[21px]">
-            {headline}
-          </h3>
-        )}
-
-        {intro && (
-          <p className="mt-[7px] max-w-2xl text-[12px] leading-[1.62] text-foreground/44 sm:text-[12.5px]">
-            {intro}
-          </p>
-        )}
-
-        {/* ── Grid ───────────────────────────────────────────────────────────
-            ≥7 items → 12-col mosaic (explicit placement, grid-auto-rows:120px).
-            <7 items → standard 3-col grid (primary col-span varies by tablet).  */}
-
         {useMosaicLayout ? (
 
-          // ── 12-col mosaic — see getMosaicDesktopClass for placement map ─────
+          // ── Editorial mosaic (≥7 items): intro inside grid, slots by layoutSize ──
+          // Section header + heading + intro move into the top-left intro cell.
+          // This reduces total section height vs. stacking intro above the grid.
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:[grid-auto-rows:86px]">
-            {gridItems.map((item, index) => (
+
+            {/* Intro cell — col 1-3, rows 1-3 on desktop. First on mobile. */}
+            <div className={cn(
+              "flex flex-col justify-start",
+              "sm:col-span-2",
+              "lg:[grid-column:1/4] lg:[grid-row:1/4]",
+            )}>
+              <SectionHeader>Career Updates</SectionHeader>
+              {headline && (
+                <h3 className="mt-2 text-[16px] font-black leading-[1.10] tracking-[-0.018em] text-foreground/84 sm:text-[17px]">
+                  {headline}
+                </h3>
+              )}
+              {intro && (
+                <p className="mt-[6px] text-[11px] leading-[1.56] text-foreground/40 sm:text-[11.5px]">
+                  {intro}
+                </p>
+              )}
+            </div>
+
+            {/* Tile slots — positioned by SLOT_DESKTOP_CLASSES */}
+            {tileSlots.map(({ item, slot }) => (
               <div
                 key={item.id}
                 className={cn(
-                  // Mobile / tablet floor heights
                   "min-h-[160px]",
-                  index === 0 && "sm:col-span-2 sm:min-h-[200px]",
-                  // Desktop explicit placement (overrides auto-flow)
-                  getMosaicDesktopClass(index, primaryHasImage),
+                  (slot === 'anchor' || slot === 'hero') && "sm:col-span-2 sm:min-h-[200px]",
+                  SLOT_DESKTOP_CLASSES[slot],
                   "lg:min-h-0",
                 )}
               >
-                {index === 0 ? (
+                {PRIMARY_SLOTS.has(slot) ? (
                   <PrimaryCard item={item} onClick={() => setSelectedItem(item)} />
                 ) : (
                   <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
                 )}
               </div>
             ))}
+
           </div>
 
         ) : (
 
-          // ── Standard 3-col grid (fewer than 7 items) ─────────────────────────
-          <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
-            {/* Primary card */}
-            <div className={cn(
-              "sm:col-span-2 lg:col-span-1",
-              primaryHasImage
-                ? "min-h-[280px] sm:min-h-[320px] lg:min-h-[380px]"
-                : "min-h-[210px] sm:min-h-[240px] lg:min-h-[230px]",
-            )}>
-              <PrimaryCard item={primary} onClick={() => setSelectedItem(primary)} />
+          // ── Standard 3-col grid (fewer than 7 items): intro above grid ─────────
+          <>
+            <SectionHeader>Career Updates</SectionHeader>
+            {headline && (
+              <h3 className="mt-3 max-w-2xl text-[19px] font-black tracking-[-0.022em] text-foreground/84 sm:text-[21px]">
+                {headline}
+              </h3>
+            )}
+            {intro && (
+              <p className="mt-[7px] max-w-2xl text-[12px] leading-[1.62] text-foreground/44 sm:text-[12.5px]">
+                {intro}
+              </p>
+            )}
+            <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
+              {/* Primary card */}
+              <div className={cn(
+                "sm:col-span-2 lg:col-span-1",
+                primaryHasImage
+                  ? "min-h-[280px] sm:min-h-[320px] lg:min-h-[380px]"
+                  : "min-h-[210px] sm:min-h-[240px] lg:min-h-[230px]",
+              )}>
+                <PrimaryCard item={primary} onClick={() => setSelectedItem(primary)} />
+              </div>
+              {/* Top-right pair — self-start so they don't stretch to primary height */}
+              {topRight.map((item) => (
+                <div key={item.id} className="min-h-[160px] lg:self-start">
+                  <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
+                </div>
+              ))}
+              {/* Bottom row */}
+              {bottomRow.map((item) => (
+                <div key={item.id} className="min-h-[160px]">
+                  <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
+                </div>
+              ))}
             </div>
-            {/* Top-right pair — self-start so they don't stretch to primary height */}
-            {topRight.map((item) => (
-              <div key={item.id} className="min-h-[160px] lg:self-start">
-                <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
-              </div>
-            ))}
-            {/* Bottom row */}
-            {bottomRow.map((item) => (
-              <div key={item.id} className="min-h-[160px]">
-                <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
-              </div>
-            ))}
-          </div>
+          </>
 
         )}
 

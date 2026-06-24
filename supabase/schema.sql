@@ -1017,6 +1017,7 @@ create table if not exists public.artist_career_timeline (
   preview_image_url   text,
   is_published        boolean     not null default true,
   sort_order          integer,
+  layout_size         text        check (layout_size is null or layout_size in ('hero', 'tall', 'wide', 'compact')),
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
