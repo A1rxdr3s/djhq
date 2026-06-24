@@ -45,16 +45,20 @@ function computeGridLimit(count: number): number {
 //
 //   Total height: 4 × 86 + 3 × gap ≈ 380 px (vs. 576 px before)
 //
-// Layout B — primary has no image (2+3+3 structure, 3-tile balanced bottom):
+// Layout B — primary has no image (3-band editorial mosaic):
 //
-//   Row 1: [0  6col wide          ][1  6col wide         ]  ← wide pair
-//   Row 2: [0  6col wide          ][1  6col wide         ]
-//   Row 3: [2  4col med][3  5col wide ][4  3col compact]     ← varied middle
-//   Row 4: [2  4col med][3  5col wide ][4  3col compact]
-//   Row 5: [5  4col    ][6  4col     ][7  4col    ]          ← 3 balanced compact tiles
-//   Row 6: [5  4col    ][6  4col     ][7  4col    ]
+//   Row 1: [0  3col anchor][1  6col wide       ][2  3col compact]  ← 3+6+3 = 12
+//   Row 2: [0  3col anchor][1  6col wide       ][2  3col compact]
+//   Row 3: [3  4col image ][4  4col image      ][5  4col image  ]  ← 4+4+4 = 12
+//   Row 4: [3  4col image ][4  4col image      ][5  4col image  ]
+//   Row 5: [6  6col text  ][7  6col text                        ]  ← 6+6 = 12
+//   Row 6: [6  6col text  ][7  6col text                        ]
 //
-//   For 7 items: same positions — col 9-12 in rows 5-6 stays empty (accepted).
+//   Index 0 = narrow (3-col) tall anchor — not the 6-col wide slab from before.
+//   Index 1 = wide center tile (6-col) — carries visual weight when image-backed.
+//   Indices 3–5 = the "3 image tiles" row — 4-col each, 2-row tall.
+//   Indices 6–7 = text tiles at 6-col each (readable, not giant empty slabs).
+//   For 7 items: row 5-6 col 7-12 stays empty (accepted).
 
 function getMosaicDesktopClass(
   index: number,
@@ -74,16 +78,16 @@ function getMosaicDesktopClass(
       default: return ""
     }
   } else {
-    // Layout B: 2+3+3 structure — wide pair at top, varied middle, 3 compact tiles at bottom
+    // Layout B: 3-band editorial mosaic (narrow anchor | wide center | image row | text row)
     switch (index) {
-      case 0: return "lg:[grid-column:1/7] lg:[grid-row:1/3]"     // wide,    6col × 2row
-      case 1: return "lg:[grid-column:7/13] lg:[grid-row:1/3]"    // wide,    6col × 2row
-      case 2: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // medium,  4col × 2row
-      case 3: return "lg:[grid-column:5/10] lg:[grid-row:3/5]"    // wide,    5col × 2row
-      case 4: return "lg:[grid-column:10/13] lg:[grid-row:3/5]"   // compact, 3col × 2row
-      case 5: return "lg:[grid-column:1/5] lg:[grid-row:5/7]"     // compact, 4col × 2row
-      case 6: return "lg:[grid-column:5/9] lg:[grid-row:5/7]"     // compact, 4col × 2row
-      case 7: return "lg:[grid-column:9/13] lg:[grid-row:5/7]"    // compact, 4col × 2row
+      case 0: return "lg:[grid-column:1/4] lg:[grid-row:1/3]"     // anchor,  3col × 2row
+      case 1: return "lg:[grid-column:4/10] lg:[grid-row:1/3]"    // wide,    6col × 2row
+      case 2: return "lg:[grid-column:10/13] lg:[grid-row:1/3]"   // compact, 3col × 2row
+      case 3: return "lg:[grid-column:1/5] lg:[grid-row:3/5]"     // image,   4col × 2row
+      case 4: return "lg:[grid-column:5/9] lg:[grid-row:3/5]"     // image,   4col × 2row
+      case 5: return "lg:[grid-column:9/13] lg:[grid-row:3/5]"    // image,   4col × 2row
+      case 6: return "lg:[grid-column:1/7] lg:[grid-row:5/7]"     // text,    6col × 2row
+      case 7: return "lg:[grid-column:7/13] lg:[grid-row:5/7]"    // text,    6col × 2row
       default: return ""
     }
   }
