@@ -1735,6 +1735,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {/* ── Artist Story ─────────────────────────────────────────────── */}
         <ArtistStory
           items={artist.careerTimeline ?? []}
+          headline={artist.tagline}
+          intro={artist.shortBio}
         />
 
         <div id="contact" className="scroll-mt-16">
