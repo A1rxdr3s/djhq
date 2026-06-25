@@ -1288,27 +1288,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   // Named slots in the public Artist Story mosaic, in fill order.
   const STORY_SLOTS: { id: string; label: string; desc: string; needsImage?: boolean }[] = [
-    { id: "left-tall-story", label: "Left Tall",     desc: "3-col × 6-row full left column — dominant vertical anchor", needsImage: true },
-    { id: "hero",            label: "Hero Wide",     desc: "6-col × 2-row wide centre — most prominent horizontal", needsImage: true },
-    { id: "right-top",       label: "Right Top",     desc: "3-col × 2-row top-right compact tile" },
-    { id: "compact-a",       label: "Compact A",     desc: "3-col × 2-row centre compact tile (row 3)" },
-    { id: "compact-b",       label: "Compact B",     desc: "3-col × 2-row centre compact tile (row 3)" },
-    { id: "right-bottom",    label: "Right Bottom",  desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
-    { id: "bottom-left",     label: "Bottom Left",   desc: "3-col × 2-row lower-left tile (row 5)", needsImage: true },
-    { id: "bottom-right",    label: "Bottom Right",  desc: "3-col × 2-row lower-right tile (row 5)", needsImage: true },
+    { id: "left-tall-story",     label: "Left Tall",             desc: "3-col × 6-row full left column — dominant vertical anchor", needsImage: true },
+    { id: "top-feature-primary", label: "Top Feature Primary",   desc: "4-col × 2-row top-centre dominant — ~60% editorial weight", needsImage: true },
+    { id: "top-feature-secondary", label: "Top Feature Secondary", desc: "2-col × 2-row top-centre supporting — ~40% editorial weight", needsImage: true },
+    { id: "right-top",           label: "Right Top",             desc: "3-col × 2-row top-right compact tile" },
+    { id: "compact-a",           label: "Compact A",             desc: "3-col × 2-row centre compact tile (row 3)" },
+    { id: "compact-b",           label: "Compact B",             desc: "3-col × 2-row centre compact tile (row 3)" },
+    { id: "right-bottom",        label: "Right Bottom",          desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
+    { id: "bottom-left",         label: "Bottom Left",           desc: "3-col × 2-row lower-left tile (row 5)", needsImage: true },
+    { id: "bottom-right",        label: "Bottom Right",          desc: "3-col × 2-row lower-right tile (row 5)", needsImage: true },
   ]
 
   // Grid positions for the Artist Story preview panel (12-col, 6-row grid).
   // Matches SLOT_DESKTOP_CLASSES in career-updates-section.tsx exactly.
   const SLOT_PREVIEW_GRID: Record<string, string> = {
-    "left-tall-story": "[grid-column:1/4] [grid-row:1/7]",
-    "hero":            "[grid-column:4/10] [grid-row:1/3]",
-    "right-top":       "[grid-column:10/13] [grid-row:1/3]",
-    "compact-a":       "[grid-column:4/7] [grid-row:3/5]",
-    "compact-b":       "[grid-column:7/10] [grid-row:3/5]",
-    "right-bottom":    "[grid-column:10/13] [grid-row:3/7]",
-    "bottom-left":     "[grid-column:4/7] [grid-row:5/7]",
-    "bottom-right":    "[grid-column:7/10] [grid-row:5/7]",
+    "left-tall-story":     "[grid-column:1/4] [grid-row:1/7]",
+    "top-feature-primary": "[grid-column:4/8] [grid-row:1/3]",
+    "top-feature-secondary": "[grid-column:8/10] [grid-row:1/3]",
+    "right-top":           "[grid-column:10/13] [grid-row:1/3]",
+    "compact-a":           "[grid-column:4/7] [grid-row:3/5]",
+    "compact-b":           "[grid-column:7/10] [grid-row:3/5]",
+    "right-bottom":        "[grid-column:10/13] [grid-row:3/7]",
+    "bottom-left":         "[grid-column:4/7] [grid-row:5/7]",
+    "bottom-right":        "[grid-column:7/10] [grid-row:5/7]",
   }
   const [timelineItems, setTimelineItems] = useState<CareerTimelineItem[]>([])
   const [timelineLoaded, setTimelineLoaded] = useState(false)
@@ -10082,7 +10084,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     // Build the resolved slot map for the preview: mirrors public resolveSlots() logic.
     function resolveSlotMap(): Map<string, CareerTimelineItem> {
-      const slotOrder = ["left-tall-story", "hero", "right-bottom", "compact-a", "compact-b", "right-top", "bottom-left", "bottom-right", "left-anchor", "right-tall", "text-left", "wide-bottom", "text-right"]
+      const slotOrder = ["left-tall-story", "top-feature-primary", "top-feature-secondary", "right-bottom", "compact-a", "compact-b", "right-top", "bottom-left", "bottom-right", "hero", "left-anchor", "right-tall", "text-left", "wide-bottom", "text-right"]
       const eligible = timelineItems.filter((i) => i.isPublished && i.showInCollapsed !== false)
       const result = new Map<string, CareerTimelineItem>()
       const unassigned: CareerTimelineItem[] = []
@@ -10115,29 +10117,31 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const mosaicActive = publishedCollapsedCount >= 7
 
     const SLOT_PREVIEW_ASPECT: Record<string, string> = {
-      'left-tall-story': 'aspect-[1/2]',
-      'hero':            'aspect-[3/1]',
-      'right-top':       'aspect-[3/2]',
-      'compact-a':       'aspect-[3/2]',
-      'compact-b':       'aspect-[3/2]',
-      'right-bottom':    'aspect-[3/4]',
-      'bottom-left':     'aspect-[3/2]',
-      'bottom-right':    'aspect-[3/2]',
+      'left-tall-story':     'aspect-[1/2]',
+      'top-feature-primary': 'aspect-[2/1]',
+      'top-feature-secondary': 'aspect-square',
+      'right-top':           'aspect-[3/2]',
+      'compact-a':           'aspect-[3/2]',
+      'compact-b':           'aspect-[3/2]',
+      'right-bottom':        'aspect-[3/4]',
+      'bottom-left':         'aspect-[3/2]',
+      'bottom-right':        'aspect-[3/2]',
     }
     const previewAspect = SLOT_PREVIEW_ASPECT[timelineStorySlot] ?? 'aspect-square'
 
     const SLOT_DISPLAY_NAMES: Record<string, string> = {
-      'left-tall-story': 'Left Tall Story',
-      'hero':            'Hero Wide',
-      'right-top':       'Right Top',
-      'compact-a':       'Compact A',
-      'compact-b':       'Compact B',
-      'right-bottom':    'Right Bottom',
-      'bottom-left':     'Bottom Left',
-      'bottom-right':    'Bottom Right',
+      'left-tall-story':     'Left Tall Story',
+      'top-feature-primary': 'Top Feature Primary',
+      'top-feature-secondary': 'Top Feature Secondary',
+      'right-top':           'Right Top',
+      'compact-a':           'Compact A',
+      'compact-b':           'Compact B',
+      'right-bottom':        'Right Bottom',
+      'bottom-left':         'Bottom Left',
+      'bottom-right':        'Bottom Right',
     }
 
-    const WIDE_SLOTS = new Set(['hero'])
+    const WIDE_SLOTS = new Set(['top-feature-primary'])
 
     const TREATMENT_OPTIONS: Array<{
       value: 'cover' | 'contain' | 'blurred-fill' | 'text-only'
@@ -11020,7 +11024,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </span>
                     )}
                     {/* Image warning for image-preferred slots */}
-                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom" || item.storySlot === "bottom-left" || item.storySlot === "bottom-right") && (
+                    {item.isPublished && !item.imageUrl && (item.storySlot === "top-feature-primary" || item.storySlot === "top-feature-secondary" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom" || item.storySlot === "bottom-left" || item.storySlot === "bottom-right") && (
                       <span title="Image-preferred slot — card will render as text-only" className="text-[9px] text-amber-400/50">
                         ! no image
                       </span>

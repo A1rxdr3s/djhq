@@ -21,23 +21,27 @@ import { normalizeExternalImageUrl } from "@/lib/media"
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 // How many items to show in the mosaic grid before "View all" kicks in.
-// Show up to 8; fewer when count < 8.
+// Show up to 9 (one per slot); fewer when count < 9.
 function computeGridLimit(count: number): number {
-  if (count >= 8) return 8
+  if (count >= 9) return 9
   return count
 }
 
 // ── Editorial mosaic — slot system ───────────────────────────────────────────
 //
-// 12-column CSS grid, grid-auto-rows: 86px. 6 rows total.
-// Section title sits above the grid (not inside it). All 8 slots are content tiles.
+// 12-column CSS grid, grid-auto-rows: 86px. 6 rows total. 9 active slots.
+// Section title sits above the grid (not inside it). All slots are content tiles.
 //
-//   Row 1: [L-TALL  3col r6] [HERO       6col r2] [RIGHT-TOP   3col r2]
-//   Row 2: [L-TALL  r6     ] [HERO       r2     ] [RIGHT-TOP   r2     ]
-//   Row 3: [L-TALL  r6     ] [COMPACT-A  3col r2] [COMPACT-B  3col r2] [R-BOT 3col r4]
-//   Row 4: [L-TALL  r6     ] [COMPACT-A  r2     ] [COMPACT-B  r2     ] [R-BOT r4     ]
-//   Row 5: [L-TALL  r6     ] [BOTTOM-L   3col r2] [BOTTOM-R   3col r2] [R-BOT r4     ]
-//   Row 6: [L-TALL  r6     ] [BOTTOM-L   r2     ] [BOTTOM-R   r2     ] [R-BOT r4     ]
+//   Row 1: [L-TALL  3col r6] [TOP-FEAT-PRI  4col r2] [TOP-FEAT-SEC 2col r2] [R-TOP 3col r2]
+//   Row 2: [L-TALL  r6     ] [TOP-FEAT-PRI  r2     ] [TOP-FEAT-SEC r2     ] [R-TOP r2     ]
+//   Row 3: [L-TALL  r6     ] [COMPACT-A     3col r2] [COMPACT-B    3col r2] [R-BOT 3col r4]
+//   Row 4: [L-TALL  r6     ] [COMPACT-A     r2     ] [COMPACT-B    r2     ] [R-BOT r4     ]
+//   Row 5: [L-TALL  r6     ] [BOTTOM-L      3col r2] [BOTTOM-R     3col r2] [R-BOT r4     ]
+//   Row 6: [L-TALL  r6     ] [BOTTOM-L      r2     ] [BOTTOM-R     r2     ] [R-BOT r4     ]
+//
+// Top center 60/40 split (4+2 = 6 cols total, same footprint as old hero):
+//   top-feature-primary   — 4col × 2row = dominant/wider (~67% of top-center area)
+//   top-feature-secondary — 2col × 2row = supporting/narrower (~33%)
 //
 // Primary assignment: storySlot field from HQ maps directly to a named slot.
 // Conflicts (two items with the same storySlot): first in priority-sorted list wins.
@@ -47,7 +51,8 @@ function computeGridLimit(count: number): number {
 
 type StorySlotId =
   | 'left-tall-story'
-  | 'hero'
+  | 'top-feature-primary'
+  | 'top-feature-secondary'
   | 'right-top'
   | 'compact-a'
   | 'compact-b'
@@ -56,23 +61,25 @@ type StorySlotId =
   | 'bottom-right'
 
 const SLOT_DESKTOP_CLASSES: Record<StorySlotId, string> = {
-  'left-tall-story': "lg:[grid-column:1/4] lg:[grid-row:1/7]",   // 3col × 6row — full left column
-  'hero':            "lg:[grid-column:4/10] lg:[grid-row:1/3]",   // 6col × 2row — wide centre hero
-  'right-top':       "lg:[grid-column:10/13] lg:[grid-row:1/3]",  // 3col × 2row — top right
-  'compact-a':       "lg:[grid-column:4/7] lg:[grid-row:3/5]",    // 3col × 2row
-  'compact-b':       "lg:[grid-column:7/10] lg:[grid-row:3/5]",   // 3col × 2row
-  'right-bottom':    "lg:[grid-column:10/13] lg:[grid-row:3/7]",  // 3col × 4row — tall right bottom
-  'bottom-left':     "lg:[grid-column:4/7] lg:[grid-row:5/7]",    // 3col × 2row — lower left
-  'bottom-right':    "lg:[grid-column:7/10] lg:[grid-row:5/7]",   // 3col × 2row — lower right
+  'left-tall-story':     "lg:[grid-column:1/4] lg:[grid-row:1/7]",   // 3col × 6row — full left column
+  'top-feature-primary': "lg:[grid-column:4/8] lg:[grid-row:1/3]",   // 4col × 2row — top centre dominant (~60%)
+  'top-feature-secondary': "lg:[grid-column:8/10] lg:[grid-row:1/3]",// 2col × 2row — top centre supporting (~40%)
+  'right-top':           "lg:[grid-column:10/13] lg:[grid-row:1/3]",  // 3col × 2row — top right
+  'compact-a':           "lg:[grid-column:4/7] lg:[grid-row:3/5]",    // 3col × 2row
+  'compact-b':           "lg:[grid-column:7/10] lg:[grid-row:3/5]",   // 3col × 2row
+  'right-bottom':        "lg:[grid-column:10/13] lg:[grid-row:3/7]",  // 3col × 4row — tall right bottom
+  'bottom-left':         "lg:[grid-column:4/7] lg:[grid-row:5/7]",    // 3col × 2row — lower left
+  'bottom-right':        "lg:[grid-column:7/10] lg:[grid-row:5/7]",   // 3col × 2row — lower right
 }
 
 // Primary featured positions — use PrimaryCard for richer typographic treatment.
-const PRIMARY_SLOTS = new Set<StorySlotId>(['left-tall-story', 'hero'])
+const PRIMARY_SLOTS = new Set<StorySlotId>(['left-tall-story', 'top-feature-primary'])
 
 // Fill order when items have no explicit storySlot assignment.
 const ORDERED_SLOTS: StorySlotId[] = [
   'left-tall-story',
-  'hero',
+  'top-feature-primary',
+  'top-feature-secondary',
   'right-bottom',
   'compact-a',
   'compact-b',
@@ -82,13 +89,14 @@ const ORDERED_SLOTS: StorySlotId[] = [
 ]
 
 // Maps legacy slot IDs to current canonical names.
-// 'wide-bottom' is remapped to 'bottom-left' (migration 062 remaps existing DB rows,
-// this handles any lingering values in older/local data).
+// 'hero' → top-feature-primary (migration 064 remaps DB rows; this handles lingering values).
+// 'wide-bottom' → bottom-left (migration 062).
 const SLOT_MIGRATION: Record<string, StorySlotId> = {
   'left-anchor': 'left-tall-story',
   'text-left':   'left-tall-story',
   'right-tall':  'right-bottom',
   'text-right':  'right-top',
+  'hero':        'top-feature-primary',
   'wide-bottom': 'bottom-left',
 }
 
@@ -757,10 +765,8 @@ function UpdateDetail({
 //
 // Desktop layout (≥7 items): 12-column CSS Grid, grid-auto-rows: 120px.
 //   See getMosaicDesktopClass() for the deterministic placement map.
-//   Layout A (primary has image): hero left anchor (4col×3row) + right tiles.
-//   Layout B (primary has no image): uniform 4-col medium grid.
-//
-// Desktop layout (<7 items): standard 3-col grid with self-start secondary tiles.
+//   Desktop layout (≥9 items): named slot mosaic, 9 editorial slots, 576px total height.
+//   Desktop layout (<9 items): standard 3-col grid with self-start secondary tiles.
 //
 // Items beyond computeGridLimit() are shown in a compact year-grouped archive.
 //
@@ -825,7 +831,7 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         {useMosaicLayout ? (
 
-          // ── Editorial mosaic (≥7 items): section title above grid, 7 content slots ──
+          // ── Editorial mosaic (≥9 items): section title above grid, 9 content slots ──
           // Total grid height: 6 rows × 86px + 5 gaps × 12px = 576px.
           <>
             <SectionHeader>Artist Story</SectionHeader>
@@ -838,7 +844,7 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
                   key={item.id}
                   className={cn(
                     "min-h-[160px]",
-                    (slot === 'left-tall-story' || slot === 'hero') && "sm:col-span-2 sm:min-h-[200px]",
+                    (slot === 'left-tall-story' || slot === 'top-feature-primary') && "sm:col-span-2 sm:min-h-[200px]",
                     SLOT_DESKTOP_CLASSES[slot],
                     "lg:min-h-0",
                   )}
