@@ -100,6 +100,50 @@ const SLOT_MIGRATION: Record<string, StorySlotId> = {
   'wide-bottom': 'bottom-left',
 }
 
+// ── Text-density system ───────────────────────────────────────────────────────
+//
+// Resolves the concrete description display mode for a card.
+// Explicit overrides (anything other than 'auto') are passed through directly.
+// Auto rules are based on slot zone, image presence, and media treatment —
+// never on milestone title, venue, artist name, or any content-specific value.
+function resolveDescriptionMode(
+  slot: StorySlotId,
+  hasImage: boolean,
+  treatment: CareerTimelineItem['imageTreatment'],
+  explicit: CareerTimelineItem['descriptionMode'],
+): 'full' | 'short' | 'minimal' | 'hidden' {
+  if (explicit && explicit !== 'auto') return explicit
+
+  const isTextOnly = !hasImage
+  const isBlurred  = treatment === 'blurred-fill'
+
+  switch (slot) {
+    case 'left-tall-story':
+      // Dominant vertical anchor: image → minimal (no description overlay on poster)
+      return isTextOnly ? 'short' : 'minimal'
+    case 'top-feature-primary':
+      // Primary horizontal feature: can carry 1–2 lines unless blurred-fill
+      return isTextOnly ? 'short' : (isBlurred ? 'minimal' : 'short')
+    case 'top-feature-secondary':
+    case 'right-top':
+    case 'right-bottom':
+      // Supporting positions: text-only gets description; image → minimal
+      return isTextOnly ? 'short' : 'minimal'
+    case 'compact-a':
+    case 'compact-b':
+      // Proof cards — fast to scan; description hidden on image cards
+      return isTextOnly ? 'short' : 'hidden'
+    case 'bottom-left':
+    case 'bottom-right':
+      // Support / foundation: text-only can carry description; image → minimal
+      return isTextOnly ? 'short' : 'minimal'
+    default:
+      return isTextOnly ? 'short' : 'minimal'
+  }
+}
+
+// ── Slot resolver ─────────────────────────────────────────────────────────────
+//
 // Resolves which item occupies each slot:
 //   1. Items with storySlot claim that named slot (first-wins per slot; items are
 //      already priority-sorted by getPublicCareerUpdates → featured → sort_order → date).
@@ -338,9 +382,11 @@ function StoryCardBackground({
 
 function PrimaryCard({
   item,
+  slot = 'left-tall-story',
   onClick,
 }: {
   item:    CareerTimelineItem
+  slot?:   StorySlotId
   onClick: () => void
 }) {
   const [imgFailed, setImgFailed] = useState(false)
@@ -352,6 +398,9 @@ function PrimaryCard({
   // text-only treatment: render as text card even when an imageUrl is set.
   const hasImage    = rawHasImage && item.imageTreatment !== 'text-only'
   const isDrive     = normalized?.source === "google-drive"
+
+  const descMode = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
+  const descClamp = descMode === 'full' ? 'line-clamp-3' : descMode === 'short' ? 'line-clamp-2' : descMode === 'minimal' ? 'line-clamp-1' : null
 
   return (
     <button
@@ -395,12 +444,13 @@ function PrimaryCard({
       <div className={cn(
         "relative flex flex-col h-full",
         hasImage ? "justify-end p-5 sm:p-[22px]" : "justify-start p-[14px] sm:p-[16px]",
+        !hasImage && "border-l-2 border-accent/[0.18]",
       )}>
         <MetaChip item={item} />
 
         <h3 className={cn(
           "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/95",
-          hasImage ? "text-[18px] sm:text-[20px]" : "text-[15px] sm:text-[17px]",
+          hasImage ? "text-[18px] sm:text-[20px]" : "text-[16px] sm:text-[19px]",
         )}>
           {item.title}
         </h3>
@@ -411,8 +461,8 @@ function PrimaryCard({
           </p>
         )}
 
-        {!hasImage && item.description && (
-          <p className="mt-[8px] text-[11.5px] leading-[1.52] text-foreground/46 line-clamp-2">
+        {item.description && descClamp && (
+          <p className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/46", descClamp)}>
             {item.description}
           </p>
         )}
@@ -434,9 +484,11 @@ function PrimaryCard({
 
 function SecondaryCard({
   item,
+  slot = 'compact-a',
   onClick,
 }: {
   item:    CareerTimelineItem
+  slot?:   StorySlotId
   onClick: () => void
 }) {
   const [imgFailed, setImgFailed] = useState(false)
@@ -445,6 +497,10 @@ function SecondaryCard({
   const rawHasImage = !!normalized?.isRenderable && !imgFailed
   const hasImage    = rawHasImage && item.imageTreatment !== 'text-only'
   const isDrive     = normalized?.source === "google-drive"
+
+  const descMode = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
+  // SecondaryCard is smaller — cap at line-clamp-2; minimal/hidden → don't render
+  const descClamp = descMode === 'full' ? 'line-clamp-2' : descMode === 'short' ? 'line-clamp-1' : null
 
   return (
     <button
@@ -476,8 +532,14 @@ function SecondaryCard({
         </>
       )}
 
+      {/* Top accent stripe — stronger on text-only for intentional editorial feel */}
       <div
-        className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-accent/20 via-accent/6 to-transparent"
+        className={cn(
+          "absolute inset-x-0 top-0",
+          hasImage
+            ? "h-[1px] bg-gradient-to-r from-accent/20 via-accent/6 to-transparent"
+            : "h-[2px] bg-accent/[0.12]",
+        )}
         aria-hidden
       />
 
@@ -497,8 +559,8 @@ function SecondaryCard({
           </p>
         )}
 
-        {!hasImage && item.description && (
-          <p className="mt-[7px] text-[11px] leading-[1.46] text-foreground/36 line-clamp-2">
+        {item.description && descClamp && (
+          <p className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/36", descClamp)}>
             {item.description}
           </p>
         )}
@@ -850,9 +912,9 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
                   )}
                 >
                   {PRIMARY_SLOTS.has(slot) ? (
-                    <PrimaryCard item={item} onClick={() => setSelectedItem(item)} />
+                    <PrimaryCard item={item} slot={slot} onClick={() => setSelectedItem(item)} />
                   ) : (
-                    <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
+                    <SecondaryCard item={item} slot={slot} onClick={() => setSelectedItem(item)} />
                   )}
                 </div>
               ))}

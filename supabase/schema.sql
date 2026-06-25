@@ -1025,6 +1025,7 @@ create table if not exists public.artist_career_timeline (
   image_object_fit    text        not null default 'cover' check (image_object_fit in ('cover', 'contain')),
   image_zoom          real        not null default 1.0 check (image_zoom between 1.0 and 3.0),
   image_treatment     text        not null default 'cover' check (image_treatment in ('cover', 'contain', 'blurred-fill', 'text-only')),
+  description_mode    text        not null default 'auto' check (description_mode in ('auto', 'full', 'short', 'minimal', 'hidden')),
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );

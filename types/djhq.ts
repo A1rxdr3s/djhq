@@ -497,6 +497,12 @@ export interface CareerTimelineItem {
    * 'text-only'    — typographic card; image is not rendered even if imageUrl is set
    */
   imageTreatment: 'cover' | 'contain' | 'blurred-fill' | 'text-only'
+  /**
+   * Editorial text-density control for the public Artist Story card.
+   * 'auto' — system decides based on slot, image presence, and media treatment.
+   * 'full' | 'short' | 'minimal' | 'hidden' — explicit overrides.
+   */
+  descriptionMode?: 'auto' | 'full' | 'short' | 'minimal' | 'hidden'
 }
 
 /**

@@ -1343,6 +1343,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineImageUploadError, setTimelineImageUploadError] = useState('')
   const [timelineImageZoom, setTimelineImageZoom] = useState(1)
   const [timelineImageTreatment, setTimelineImageTreatment] = useState<'cover' | 'contain' | 'blurred-fill' | 'text-only'>('cover')
+  const [timelineDescriptionMode, setTimelineDescriptionMode] = useState<'auto' | 'full' | 'short' | 'minimal' | 'hidden'>('auto')
   const [timelinePreviewNaturalAspect, setTimelinePreviewNaturalAspect] = useState<number | null>(null)
   const timelinePreviewIsDragging = useRef(false)
 
@@ -9858,6 +9859,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageObjectFit('cover')
       setTimelineImageZoom(1)
       setTimelineImageTreatment('cover')
+      setTimelineDescriptionMode('auto')
       setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
@@ -9884,6 +9886,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageObjectFit(item.imageObjectFit ?? 'cover')
       setTimelineImageZoom(item.imageZoom ?? 1)
       setTimelineImageTreatment(item.imageTreatment ?? 'cover')
+      setTimelineDescriptionMode(item.descriptionMode ?? 'auto')
       setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
@@ -9904,6 +9907,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageObjectFit('cover')
       setTimelineImageZoom(1)
       setTimelineImageTreatment('cover')
+      setTimelineDescriptionMode('auto')
       setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
@@ -9940,6 +9944,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             imageObjectFit: timelineImageObjectFit,
             imageZoom: timelineImageZoom,
             imageTreatment: timelineImageTreatment,
+            descriptionMode: timelineDescriptionMode,
           }),
         })
         const data = await res.json()
@@ -10765,6 +10770,32 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           </button>
                         </>
                       )}
+
+                      {/* Description Display */}
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Description Display</p>
+                        <div className="flex gap-0 rounded border border-border/50 bg-muted/30 p-0.5 w-fit">
+                          {(['auto', 'full', 'short', 'minimal', 'hidden'] as const).map((mode) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => setTimelineDescriptionMode(mode)}
+                              className={`px-2.5 py-1 rounded-[3px] text-[10px] font-medium capitalize transition-colors ${
+                                timelineDescriptionMode === mode
+                                  ? 'bg-background text-foreground shadow-sm'
+                                  : 'text-muted-foreground/40 hover:text-muted-foreground'
+                              }`}
+                            >
+                              {mode}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground/35">
+                          {timelineDescriptionMode === 'auto'
+                            ? 'Uses slot size, image presence, and treatment to decide.'
+                            : 'Controls how much description appears on the public Artist Story card.'}
+                        </p>
+                      </div>
 
                     </div>
                   )
