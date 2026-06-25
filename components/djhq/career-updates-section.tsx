@@ -442,9 +442,14 @@ function PrimaryCard({
       ) : (
         <>
           <div className="absolute inset-0 bg-[oklch(0.108_0.006_160)] transition-colors duration-200 group-hover:bg-[oklch(0.113_0.006_160)]" />
-          {/* Year watermark — large editorial element for text-only cards */}
+          {/* Year watermark — large editorial element for text-only cards.
+               left-tall-story (6 rows, ~516px): 68px fits the tall canvas.
+               top-feature-primary (2 rows, ~184px): 48px avoids dominating the shorter card. */}
           <div
-            className="pointer-events-none absolute right-3 bottom-3 select-none text-[68px] font-black leading-none tabular-nums text-white/[0.062]"
+            className={cn(
+              "pointer-events-none absolute right-3 bottom-3 select-none font-black leading-none tabular-nums text-white/[0.062]",
+              slot === 'left-tall-story' ? "text-[68px]" : "text-[48px]",
+            )}
             aria-hidden
           >
             {itemYear(item)}
@@ -569,13 +574,17 @@ function SecondaryCard({
       ) : (
         <>
           <div className="absolute inset-0 bg-white/[0.024] transition-colors duration-200 group-hover:bg-white/[0.040]" />
-          {/* Year watermark — editorial element for text-only */}
-          <div
-            className="pointer-events-none absolute -right-1 -bottom-2 select-none text-[42px] font-black leading-none tabular-nums text-white/[0.056]"
-            aria-hidden
-          >
-            {itemYear(item)}
-          </div>
+          {/* Year watermark — only on right-bottom (4-row, ~380px).
+               Compact 2-row secondary slots are too small for a legible watermark;
+               those cards rely on the metadata row year instead. */}
+          {isTallSlot && (
+            <div
+              className="pointer-events-none absolute -right-1 -bottom-2 select-none text-[52px] font-black leading-none tabular-nums text-white/[0.062]"
+              aria-hidden
+            >
+              {itemYear(item)}
+            </div>
+          )}
         </>
       )}
 
@@ -941,7 +950,7 @@ function ArchiveCarouselCard({
             className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
             aria-hidden
           >
-            <span className="text-[40px] font-black leading-none tabular-nums text-white/[0.058]">
+            <span className="text-[40px] font-black leading-none tabular-nums text-white/[0.068]">
               {itemYear(item)}
             </span>
           </div>
