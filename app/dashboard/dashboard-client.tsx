@@ -1294,7 +1294,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     { id: "compact-a",       label: "Compact A",    desc: "3-col × 2-row centre compact tile" },
     { id: "compact-b",       label: "Compact B",    desc: "3-col × 2-row centre compact tile" },
     { id: "right-bottom",    label: "Right Bottom", desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
-    { id: "wide-bottom",     label: "Wide Bottom",  desc: "6-col × 2-row bottom wide tile" },
+    { id: "wide-bottom",     label: "Wide Bottom",  desc: "6-col × 2-row bottom wide tile", needsImage: true },
   ]
 
   // Grid positions for the Artist Story preview panel (12-col, 6-row grid).
@@ -9925,9 +9925,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             location: timelineLocation.trim() || undefined,
             description: timelineDescription.trim() || undefined,
             link: timelineLink.trim() || undefined,
-            imageUrl: timelineImageUrl.trim() || undefined,
+            imageUrl: timelineImageUrl.trim() || null,
             isFeatured: timelineIsFeatured,
-            previewImageUrl: timelinePreviewImageUrl.trim() || undefined,
+            previewImageUrl: timelinePreviewImageUrl.trim() || null,
             isPublished: timelineIsPublished,
             storySlot: timelineStorySlot || null,
             showInCollapsed: timelineShowInCollapsed,
@@ -9951,6 +9951,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       } finally {
         setTimelineSaving(false)
       }
+    }
+
+    function handleClearImage() {
+      setTimelineImageUrl('')
+      setTimelinePreviewImageUrl('')
+      setTimelineImageFocalX(50)
+      setTimelineImageFocalY(50)
+      setTimelineImageZoom(1)
+      setTimelineImageObjectFit('cover')
+      setTimelineImageTreatment('cover')
+      setTimelinePreviewNaturalAspect(null)
+      setTimelineImageUploadError('')
+      // Note: the referenced storage file is NOT deleted — only the URL reference
+      // is cleared. Physical deletion is not implemented (no safe abstraction exists).
     }
 
     const MAX_CAREER_IMAGE_MB = 20
@@ -10479,9 +10493,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
               {/* Media — cover image + focal point */}
               <div className="sm:col-span-2 space-y-3">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                  Cover Image <span className="normal-case text-muted-foreground/30">(optional)</span>
-                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+                    Cover Image <span className="normal-case text-muted-foreground/30">(optional)</span>
+                  </label>
+                  {timelineImageUrl && (
+                    <button
+                      type="button"
+                      onClick={handleClearImage}
+                      className="flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[10px] text-muted-foreground/40 hover:bg-destructive/8 hover:text-destructive/70 transition-colors"
+                    >
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                      Remove image
+                    </button>
+                  )}
+                </div>
 
                 {/* URL / Upload tab toggle */}
                 <div className="flex gap-0 rounded-md border border-border/50 bg-muted/30 p-0.5 w-fit">
@@ -10530,13 +10558,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <span className="text-[11px] text-muted-foreground/50">Uploading…</span>
                       )}
                       {!timelineImageUploading && timelineImageUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setTimelineImageUrl('')}
-                          className="text-[11px] text-muted-foreground/40 hover:text-destructive transition-colors"
-                        >
-                          Clear image
-                        </button>
+                        <span className="text-[10px] text-muted-foreground/30 italic">Image set</span>
                       )}
                     </div>
                     {timelineImageUploadError && (
@@ -10994,8 +11016,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </span>
                     )}
                     {/* Image warning for image-preferred slots */}
-                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom") && (
-                      <span title="Image-anchor slots look best with a cover image" className="text-[9px] text-amber-400/50">
+                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom" || item.storySlot === "wide-bottom") && (
+                      <span title="Image-preferred slot — card will render as text-only" className="text-[9px] text-amber-400/50">
                         ! no image
                       </span>
                     )}
