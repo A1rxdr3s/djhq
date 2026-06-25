@@ -30,14 +30,14 @@ function computeGridLimit(count: number): number {
 // ── Editorial mosaic — slot system ───────────────────────────────────────────
 //
 // 12-column CSS grid, grid-auto-rows: 86px. 6 rows total.
-// Section title sits above the grid (not inside it). All 7 slots are content tiles.
+// Section title sits above the grid (not inside it). All 8 slots are content tiles.
 //
-//   Row 1: [L-TALL  3col r6] [HERO      6col r2] [RIGHT-TOP  3col r2]
-//   Row 2: [L-TALL  r6     ] [HERO      r2     ] [RIGHT-TOP  r2     ]
-//   Row 3: [L-TALL  r6     ] [COMPACT-A 3col r2] [COMPACT-B 3col r2] [R-BOT 3col r4]
-//   Row 4: [L-TALL  r6     ] [COMPACT-A r2     ] [COMPACT-B r2     ] [R-BOT r4     ]
-//   Row 5: [L-TALL  r6     ] [WIDE-BOTTOM 6col r2              ] [R-BOT r4     ]
-//   Row 6: [L-TALL  r6     ] [WIDE-BOTTOM r2                   ] [R-BOT r4     ]
+//   Row 1: [L-TALL  3col r6] [HERO       6col r2] [RIGHT-TOP   3col r2]
+//   Row 2: [L-TALL  r6     ] [HERO       r2     ] [RIGHT-TOP   r2     ]
+//   Row 3: [L-TALL  r6     ] [COMPACT-A  3col r2] [COMPACT-B  3col r2] [R-BOT 3col r4]
+//   Row 4: [L-TALL  r6     ] [COMPACT-A  r2     ] [COMPACT-B  r2     ] [R-BOT r4     ]
+//   Row 5: [L-TALL  r6     ] [BOTTOM-L   3col r2] [BOTTOM-R   3col r2] [R-BOT r4     ]
+//   Row 6: [L-TALL  r6     ] [BOTTOM-L   r2     ] [BOTTOM-R   r2     ] [R-BOT r4     ]
 //
 // Primary assignment: storySlot field from HQ maps directly to a named slot.
 // Conflicts (two items with the same storySlot): first in priority-sorted list wins.
@@ -52,7 +52,8 @@ type StorySlotId =
   | 'compact-a'
   | 'compact-b'
   | 'right-bottom'
-  | 'wide-bottom'
+  | 'bottom-left'
+  | 'bottom-right'
 
 const SLOT_DESKTOP_CLASSES: Record<StorySlotId, string> = {
   'left-tall-story': "lg:[grid-column:1/4] lg:[grid-row:1/7]",   // 3col × 6row — full left column
@@ -61,7 +62,8 @@ const SLOT_DESKTOP_CLASSES: Record<StorySlotId, string> = {
   'compact-a':       "lg:[grid-column:4/7] lg:[grid-row:3/5]",    // 3col × 2row
   'compact-b':       "lg:[grid-column:7/10] lg:[grid-row:3/5]",   // 3col × 2row
   'right-bottom':    "lg:[grid-column:10/13] lg:[grid-row:3/7]",  // 3col × 4row — tall right bottom
-  'wide-bottom':     "lg:[grid-column:4/10] lg:[grid-row:5/7]",   // 6col × 2row — bottom wide
+  'bottom-left':     "lg:[grid-column:4/7] lg:[grid-row:5/7]",    // 3col × 2row — lower left
+  'bottom-right':    "lg:[grid-column:7/10] lg:[grid-row:5/7]",   // 3col × 2row — lower right
 }
 
 // Primary featured positions — use PrimaryCard for richer typographic treatment.
@@ -75,16 +77,19 @@ const ORDERED_SLOTS: StorySlotId[] = [
   'compact-a',
   'compact-b',
   'right-top',
-  'wide-bottom',
+  'bottom-left',
+  'bottom-right',
 ]
 
-// Maps legacy slot IDs (pre-058 migration) to current canonical names.
-// Handles any rows that weren't updated by the DB migration (e.g. local dev).
+// Maps legacy slot IDs to current canonical names.
+// 'wide-bottom' is remapped to 'bottom-left' (migration 062 remaps existing DB rows,
+// this handles any lingering values in older/local data).
 const SLOT_MIGRATION: Record<string, StorySlotId> = {
   'left-anchor': 'left-tall-story',
   'text-left':   'left-tall-story',
   'right-tall':  'right-bottom',
   'text-right':  'right-top',
+  'wide-bottom': 'bottom-left',
 }
 
 // Resolves which item occupies each slot:

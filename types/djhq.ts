@@ -458,9 +458,11 @@ export interface CareerTimelineItem {
    * compact-a       — 3-col × 2-row first centre compact
    * compact-b       — 3-col × 2-row second centre compact
    * right-bottom    — 3-col × 4-row tall bottom-right anchor
-   * wide-bottom     — 6-col × 2-row bottom wide tile
+   * bottom-left     — 3-col × 2-row lower-left tile (replaces wide-bottom)
+   * bottom-right    — 3-col × 2-row lower-right tile (replaces wide-bottom)
+   * wide-bottom     — deprecated (retained for backward-compatibility only)
    */
-  storySlot?: 'left-tall-story' | 'hero' | 'right-top' | 'compact-a' | 'compact-b' | 'right-bottom' | 'wide-bottom' | null
+  storySlot?: 'left-tall-story' | 'hero' | 'right-top' | 'compact-a' | 'compact-b' | 'right-bottom' | 'bottom-left' | 'bottom-right' | 'wide-bottom' | null
   /**
    * Whether this item appears in the collapsed mosaic grid.
    * true (default) — candidate for the 8-slot grid.

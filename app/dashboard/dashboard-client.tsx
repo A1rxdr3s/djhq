@@ -1288,13 +1288,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   // Named slots in the public Artist Story mosaic, in fill order.
   const STORY_SLOTS: { id: string; label: string; desc: string; needsImage?: boolean }[] = [
-    { id: "left-tall-story", label: "Left Tall",    desc: "3-col × 6-row full left column — dominant vertical anchor", needsImage: true },
-    { id: "hero",            label: "Hero Wide",    desc: "6-col × 2-row wide centre — most prominent horizontal", needsImage: true },
-    { id: "right-top",       label: "Right Top",    desc: "3-col × 2-row top-right compact tile" },
-    { id: "compact-a",       label: "Compact A",    desc: "3-col × 2-row centre compact tile" },
-    { id: "compact-b",       label: "Compact B",    desc: "3-col × 2-row centre compact tile" },
-    { id: "right-bottom",    label: "Right Bottom", desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
-    { id: "wide-bottom",     label: "Wide Bottom",  desc: "6-col × 2-row bottom wide tile", needsImage: true },
+    { id: "left-tall-story", label: "Left Tall",     desc: "3-col × 6-row full left column — dominant vertical anchor", needsImage: true },
+    { id: "hero",            label: "Hero Wide",     desc: "6-col × 2-row wide centre — most prominent horizontal", needsImage: true },
+    { id: "right-top",       label: "Right Top",     desc: "3-col × 2-row top-right compact tile" },
+    { id: "compact-a",       label: "Compact A",     desc: "3-col × 2-row centre compact tile (row 3)" },
+    { id: "compact-b",       label: "Compact B",     desc: "3-col × 2-row centre compact tile (row 3)" },
+    { id: "right-bottom",    label: "Right Bottom",  desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
+    { id: "bottom-left",     label: "Bottom Left",   desc: "3-col × 2-row lower-left tile (row 5)", needsImage: true },
+    { id: "bottom-right",    label: "Bottom Right",  desc: "3-col × 2-row lower-right tile (row 5)", needsImage: true },
   ]
 
   // Grid positions for the Artist Story preview panel (12-col, 6-row grid).
@@ -1306,7 +1307,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     "compact-a":       "[grid-column:4/7] [grid-row:3/5]",
     "compact-b":       "[grid-column:7/10] [grid-row:3/5]",
     "right-bottom":    "[grid-column:10/13] [grid-row:3/7]",
-    "wide-bottom":     "[grid-column:4/10] [grid-row:5/7]",
+    "bottom-left":     "[grid-column:4/7] [grid-row:5/7]",
+    "bottom-right":    "[grid-column:7/10] [grid-row:5/7]",
   }
   const [timelineItems, setTimelineItems] = useState<CareerTimelineItem[]>([])
   const [timelineLoaded, setTimelineLoaded] = useState(false)
@@ -10080,7 +10082,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     // Build the resolved slot map for the preview: mirrors public resolveSlots() logic.
     function resolveSlotMap(): Map<string, CareerTimelineItem> {
-      const slotOrder = ["left-anchor", "hero", "right-tall", "compact-a", "compact-b", "text-left", "wide-bottom", "text-right"]
+      const slotOrder = ["left-tall-story", "hero", "right-bottom", "compact-a", "compact-b", "right-top", "bottom-left", "bottom-right", "left-anchor", "right-tall", "text-left", "wide-bottom", "text-right"]
       const eligible = timelineItems.filter((i) => i.isPublished && i.showInCollapsed !== false)
       const result = new Map<string, CareerTimelineItem>()
       const unassigned: CareerTimelineItem[] = []
@@ -10119,7 +10121,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       'compact-a':       'aspect-[3/2]',
       'compact-b':       'aspect-[3/2]',
       'right-bottom':    'aspect-[3/4]',
-      'wide-bottom':     'aspect-[3/1]',
+      'bottom-left':     'aspect-[3/2]',
+      'bottom-right':    'aspect-[3/2]',
     }
     const previewAspect = SLOT_PREVIEW_ASPECT[timelineStorySlot] ?? 'aspect-square'
 
@@ -10130,10 +10133,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       'compact-a':       'Compact A',
       'compact-b':       'Compact B',
       'right-bottom':    'Right Bottom',
-      'wide-bottom':     'Wide Bottom',
+      'bottom-left':     'Bottom Left',
+      'bottom-right':    'Bottom Right',
     }
 
-    const WIDE_SLOTS = new Set(['hero', 'wide-bottom'])
+    const WIDE_SLOTS = new Set(['hero'])
 
     const TREATMENT_OPTIONS: Array<{
       value: 'cover' | 'contain' | 'blurred-fill' | 'text-only'
@@ -11016,7 +11020,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </span>
                     )}
                     {/* Image warning for image-preferred slots */}
-                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom" || item.storySlot === "wide-bottom") && (
+                    {item.isPublished && !item.imageUrl && (item.storySlot === "hero" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom" || item.storySlot === "bottom-left" || item.storySlot === "bottom-right") && (
                       <span title="Image-preferred slot — card will render as text-only" className="text-[9px] text-amber-400/50">
                         ! no image
                       </span>
