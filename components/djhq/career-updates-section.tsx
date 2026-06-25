@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { StoryImage } from "@/components/djhq/story-image"
-import { ArrowUpRight, ChevronDown, MapPin, Calendar, X, Link2, Play } from "lucide-react"
+import { ArrowUpRight, ChevronLeft, ChevronRight, MapPin, Calendar, X, Link2, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SectionHeader } from "@/components/djhq/section-header"
 import {
@@ -14,7 +14,6 @@ import {
 import type { CareerTimelineItem } from "@/types/djhq"
 import {
   getPublicCareerUpdates,
-  buildChronologyGroups,
 } from "@/lib/djhq/career-updates"
 import { normalizeExternalImageUrl } from "@/lib/media"
 
@@ -821,6 +820,134 @@ function UpdateDetail({
   )
 }
 
+// ── ArchiveCarousel ───────────────────────────────────────────────────────────
+// Compact horizontal scroll track for milestones not rendered in the main grid.
+// Shows only real items from the configured data source — no placeholders.
+
+function ArchiveCarouselCard({
+  item,
+  onClick,
+}: {
+  item:    CareerTimelineItem
+  onClick: () => void
+}) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
+  const hasThumb   = !!normalized?.isRenderable && !imgFailed && item.imageTreatment !== 'text-only'
+  const isDrive    = normalized?.source === "google-drive"
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-[210px] shrink-0 flex-col justify-between rounded-[7px] border border-white/[0.055] bg-white/[0.022] p-[10px] text-left transition-colors [scroll-snap-align:start] hover:border-white/[0.09] hover:bg-white/[0.036] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+    >
+      <div className="flex items-start gap-[9px]">
+        {hasThumb && (
+          <div className="relative h-[42px] w-[42px] shrink-0 overflow-hidden rounded-[4px]">
+            <Image
+              src={normalized!.renderUrl}
+              alt={item.title}
+              fill
+              unoptimized={isDrive}
+              sizes="42px"
+              className="object-cover"
+              style={{ objectPosition: `${item.imageFocalX ?? 50}% ${item.imageFocalY ?? 50}%` }}
+              onError={() => setImgFailed(true)}
+            />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-[5px]">
+            <span className="text-[7px] font-bold uppercase tracking-[0.15em] text-accent/50 transition-colors group-hover:text-accent/70">
+              {itemCatLabel(item)}
+            </span>
+            <span className="text-[7px] tabular-nums text-foreground/18">{itemYear(item)}</span>
+          </div>
+          <p className="mt-[3px] text-[12px] font-semibold leading-snug tracking-[-0.007em] text-foreground/76 line-clamp-2 transition-colors group-hover:text-foreground/92">
+            {item.title}
+          </p>
+        </div>
+      </div>
+      {item.location && (
+        <p className="mt-[7px] text-[7.5px] font-semibold uppercase tracking-[0.12em] text-foreground/20 truncate">
+          {item.location}
+        </p>
+      )}
+    </button>
+  )
+}
+
+function ArchiveCarousel({
+  items,
+  onSelect,
+}: {
+  items:    CareerTimelineItem[]
+  onSelect: (item: CareerTimelineItem) => void
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  if (items.length === 0) return null
+
+  function nudge(direction: 'left' | 'right') {
+    scrollRef.current?.scrollBy({ left: direction === 'left' ? -448 : 448, behavior: 'smooth' })
+  }
+
+  return (
+    <div className="relative mt-[22px]">
+      {/* Section label row */}
+      <div className="mb-[10px] flex items-center gap-3">
+        <span className="text-[8px] font-bold uppercase tracking-[0.18em] text-foreground/22">
+          More milestones
+        </span>
+        <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
+        {/* Desktop scroll controls */}
+        <div className="hidden gap-1 lg:flex">
+          <button
+            type="button"
+            onClick={() => nudge('left')}
+            aria-label="Scroll left"
+            className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-white/[0.07] text-foreground/30 transition-colors hover:border-white/[0.12] hover:text-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+          >
+            <ChevronLeft className="h-[9px] w-[9px]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => nudge('right')}
+            aria-label="Scroll right"
+            className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-white/[0.07] text-foreground/30 transition-colors hover:border-white/[0.12] hover:text-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+          >
+            <ChevronRight className="h-[9px] w-[9px]" />
+          </button>
+        </div>
+      </div>
+
+      {/* Scroll track with edge fade */}
+      <div
+        className="relative"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%)',
+        }}
+      >
+        <div
+          ref={scrollRef}
+          className="flex gap-2 overflow-x-auto pb-[2px] [scroll-snap-type:x_mandatory] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ paddingLeft: '2px', paddingRight: '2px' }}
+        >
+          {items.map((item) => (
+            <ArchiveCarouselCard
+              key={item.id}
+              item={item}
+              onClick={() => onSelect(item)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── CareerUpdatesSection ──────────────────────────────────────────────────────
 //
 // Data-driven public Career Updates mosaic grid.
@@ -846,7 +973,6 @@ export interface CareerUpdatesSectionProps {
 
 export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSectionProps) {
   const [selectedItem, setSelectedItem] = useState<CareerTimelineItem | null>(null)
-  const [showAll, setShowAll] = useState(false)
 
   // Apply public filter + featured-first sort
   const published = getPublicCareerUpdates(items)
@@ -859,7 +985,6 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
   const gridLimit    = computeGridLimit(collapsedEligible.length)
   const gridItems    = collapsedEligible.slice(0, gridLimit)
   const archiveItems = [...collapsedEligible.slice(gridLimit), ...archiveOnly]
-  const hasMore      = archiveItems.length > 0
 
   const [primary, ...secondary] = gridItems
 
@@ -880,10 +1005,8 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
     : null
   const primaryHasImage = !!primaryNormalized?.isRenderable
 
-  // Build chronology groups for the "View all" archive
-  const archiveGroups = buildChronologyGroups(
-    [...archiveItems].sort((a, b) => b.eventDate.localeCompare(a.eventDate)),
-  )
+  // Sort archive items reverse-chronologically for the carousel
+  const carouselItems = [...archiveItems].sort((a, b) => b.eventDate.localeCompare(a.eventDate))
 
   return (
     <section id="story" className="mt-10 lg:mt-12">
@@ -964,51 +1087,8 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         )}
 
-        {/* ── View all control + compact archive ──────────────────────────── */}
-        {hasMore && (
-          <>
-            <div className="mt-[18px]">
-              <button
-                type="button"
-                onClick={() => setShowAll((prev) => !prev)}
-                aria-expanded={showAll}
-                className="flex items-center gap-[7px] rounded-[5px] border border-white/[0.07] bg-white/[0.022] px-[14px] py-[7px] text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/44 transition-colors hover:border-white/[0.12] hover:bg-white/[0.038] hover:text-foreground/64 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                <ChevronDown
-                  className={cn(
-                    "h-[10px] w-[10px] transition-transform duration-200",
-                    showAll && "rotate-180",
-                  )}
-                  aria-hidden
-                />
-                {showAll ? "Show fewer updates" : "View all career updates"}
-              </button>
-            </div>
-
-            {/* Compact year-grouped archive — editorial, not another bento grid */}
-            {showAll && archiveGroups.length > 0 && (
-              <div className="mt-4 border-t border-white/[0.05] pt-4">
-                {archiveGroups.map((group, gi) => (
-                  <div key={group.year} className={gi > 0 ? "mt-4" : ""}>
-                    <div className="mb-[6px] flex items-center gap-[8px]">
-                      <span className="text-[8px] font-bold tabular-nums tracking-[0.04em] text-foreground/22">
-                        {group.year}
-                      </span>
-                      <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
-                    </div>
-                    {group.items.map((item) => (
-                      <ArchiveListItem
-                        key={item.id}
-                        item={item}
-                        onClick={() => setSelectedItem(item)}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        {/* ── Archive carousel — remaining milestones not in main grid ──── */}
+        <ArchiveCarousel items={carouselItems} onSelect={setSelectedItem} />
 
         {/* ── Detail modal ──────────────────────────────────────────────────── */}
         <UpdateDetail
