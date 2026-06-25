@@ -239,14 +239,14 @@ function MetaChip({
       <span
         className={cn(
           "shrink-0 text-[7px] font-bold uppercase tracking-[0.22em]",
-          onImage ? "text-accent/84" : "text-accent/68",
+          onImage ? "text-accent/84" : "text-accent/74",
         )}
         style={shadow}
       >
         {itemCatLabel(item)}
       </span>
       <span
-        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/32" : "text-foreground/16")}
+        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/38" : "text-foreground/26")}
         style={shadow}
         aria-hidden
       >
@@ -255,7 +255,7 @@ function MetaChip({
       <span
         className={cn(
           "shrink-0 text-[9px] font-medium tabular-nums",
-          onImage ? "text-foreground/44" : "text-foreground/26",
+          onImage ? "text-foreground/56" : "text-foreground/44",
         )}
         style={shadow}
       >
@@ -444,7 +444,7 @@ function PrimaryCard({
           <div className="absolute inset-0 bg-[oklch(0.108_0.006_160)] transition-colors duration-200 group-hover:bg-[oklch(0.113_0.006_160)]" />
           {/* Year watermark — large editorial element for text-only cards */}
           <div
-            className="pointer-events-none absolute right-3 bottom-3 select-none text-[68px] font-black leading-none tabular-nums text-white/[0.028]"
+            className="pointer-events-none absolute right-3 bottom-3 select-none text-[68px] font-black leading-none tabular-nums text-white/[0.062]"
             aria-hidden
           >
             {itemYear(item)}
@@ -571,7 +571,7 @@ function SecondaryCard({
           <div className="absolute inset-0 bg-white/[0.024] transition-colors duration-200 group-hover:bg-white/[0.040]" />
           {/* Year watermark — editorial element for text-only */}
           <div
-            className="pointer-events-none absolute -right-1 -bottom-2 select-none text-[42px] font-black leading-none tabular-nums text-white/[0.028]"
+            className="pointer-events-none absolute -right-1 -bottom-2 select-none text-[42px] font-black leading-none tabular-nums text-white/[0.056]"
             aria-hidden
           >
             {itemYear(item)}
@@ -941,7 +941,7 @@ function ArchiveCarouselCard({
             className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
             aria-hidden
           >
-            <span className="text-[40px] font-black leading-none tabular-nums text-white/[0.038]">
+            <span className="text-[40px] font-black leading-none tabular-nums text-white/[0.058]">
               {itemYear(item)}
             </span>
           </div>
@@ -970,14 +970,14 @@ function ArchiveCarouselCard({
               {itemCatLabel(item)}
             </span>
             <span
-              className="text-[6.5px] text-foreground/28"
+              className="text-[6.5px] text-foreground/38"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
               aria-hidden
             >
               ·
             </span>
             <span
-              className="text-[6.5px] tabular-nums text-foreground/38"
+              className="text-[6.5px] tabular-nums text-foreground/50"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
             >
               {itemYear(item)}
@@ -1009,11 +1009,11 @@ function ArchiveCarouselCard({
           {/* Top: category + year + title */}
           <div>
             <div className="flex items-center gap-[4px]">
-              <span className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/72 transition-colors group-hover:text-accent/90">
+              <span className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/80 transition-colors group-hover:text-accent/95">
                 {itemCatLabel(item)}
               </span>
-              <span className="text-[6.5px] text-foreground/18" aria-hidden>·</span>
-              <span className="text-[6.5px] tabular-nums text-foreground/28">{itemYear(item)}</span>
+              <span className="text-[6.5px] text-foreground/28" aria-hidden>·</span>
+              <span className="text-[6.5px] tabular-nums text-foreground/42">{itemYear(item)}</span>
             </div>
             <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
