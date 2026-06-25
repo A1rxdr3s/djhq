@@ -340,8 +340,8 @@ function StoryCardBackground({
           />
         </div>
         <div className={isPrimary
-          ? "absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"
-          : "absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"
+          ? "absolute inset-0 bg-gradient-to-t from-black/88 via-black/16 to-transparent"
+          : "absolute inset-0 bg-gradient-to-t from-black/82 via-black/6 to-transparent"
         } />
       </>
     )
@@ -366,8 +366,8 @@ function StoryCardBackground({
         />
       </div>
       <div className={isPrimary
-        ? "absolute inset-0 bg-gradient-to-t from-black/92 via-black/38 to-black/6"
-        : "absolute inset-0 bg-gradient-to-t from-black/90 via-black/48 to-black/16"
+        ? "absolute inset-0 bg-gradient-to-t from-black/96 via-black/54 to-black/0"
+        : "absolute inset-0 bg-gradient-to-t from-black/94 via-black/52 to-black/10"
       } />
     </>
   )
@@ -405,7 +405,7 @@ function PrimaryCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative w-full h-full text-left overflow-hidden rounded-[10px] border border-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+      className="group relative w-full h-full text-left overflow-hidden rounded-[10px] border border-white/[0.09] transition-[border-color] duration-200 hover:border-white/[0.19] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       {/* Background */}
       {hasImage ? (
@@ -447,10 +447,13 @@ function PrimaryCard({
       )}>
         <MetaChip item={item} />
 
-        <h3 className={cn(
-          "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/95",
-          hasImage ? "text-[18px] sm:text-[20px]" : "text-[16px] sm:text-[19px]",
-        )}>
+        <h3
+          className={cn(
+            "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/96",
+            hasImage ? "text-[18px] sm:text-[20px]" : "text-[16px] sm:text-[19px]",
+          )}
+          style={hasImage ? { textShadow: '0 1px 6px rgba(0,0,0,0.82)' } : undefined}
+        >
           {item.title}
         </h3>
 
@@ -461,7 +464,14 @@ function PrimaryCard({
         )}
 
         {item.description && descClamp && (
-          <p className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/46", descClamp)}>
+          <p
+            className={cn(
+              "mt-[8px] text-[11.5px] leading-[1.52]",
+              hasImage ? "text-foreground/64" : "text-foreground/50",
+              descClamp,
+            )}
+            style={hasImage ? { textShadow: '0 1px 4px rgba(0,0,0,0.65)' } : undefined}
+          >
             {item.description}
           </p>
         )}
@@ -505,7 +515,7 @@ function SecondaryCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative w-full h-full text-left overflow-hidden rounded-[8px] border border-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+      className="group relative w-full h-full text-left overflow-hidden rounded-[8px] border border-white/[0.06] transition-[border-color] duration-200 hover:border-white/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       {hasImage ? (
         <StoryCardBackground
@@ -548,12 +558,21 @@ function SecondaryCard({
       )}>
         <MetaChip item={item} />
 
-        <p className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/84 transition-colors duration-200 group-hover:text-foreground/96 line-clamp-2">
+        <p
+          className={cn(
+            "mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2",
+            hasImage ? "text-foreground/90" : "text-foreground/84",
+          )}
+          style={hasImage ? { textShadow: '0 1px 4px rgba(0,0,0,0.7)' } : undefined}
+        >
           {item.title}
         </p>
 
         {item.location && (
-          <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/24 truncate">
+          <p
+            className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/28 truncate"
+            style={hasImage ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
+          >
             {item.location}
           </p>
         )}
@@ -833,47 +852,96 @@ function ArchiveCarouselCard({
 }) {
   const [imgFailed, setImgFailed] = useState(false)
   const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
-  const hasThumb   = !!normalized?.isRenderable && !imgFailed && item.imageTreatment !== 'text-only'
+  const hasImage   = !!normalized?.isRenderable && !imgFailed && item.imageTreatment !== 'text-only'
   const isDrive    = normalized?.source === "google-drive"
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-[210px] shrink-0 flex-col justify-between rounded-[7px] border border-white/[0.055] bg-white/[0.022] p-[10px] text-left transition-colors [scroll-snap-align:start] hover:border-white/[0.09] hover:bg-white/[0.036] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+      className="group relative flex h-[158px] w-[158px] shrink-0 flex-col overflow-hidden rounded-[8px] border border-white/[0.065] text-left [scroll-snap-align:start] transition-[border-color] duration-200 hover:border-white/[0.14] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
     >
-      <div className="flex items-start gap-[9px]">
-        {hasThumb && (
-          <div className="relative h-[42px] w-[42px] shrink-0 overflow-hidden rounded-[4px]">
+      {/* Background */}
+      {hasImage ? (
+        <>
+          <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.05]">
             <Image
               src={normalized!.renderUrl}
               alt={item.title}
               fill
               unoptimized={isDrive}
-              sizes="42px"
+              sizes="158px"
               className="object-cover"
               style={{ objectPosition: `${item.imageFocalX ?? 50}% ${item.imageFocalY ?? 50}%` }}
               onError={() => setImgFailed(true)}
             />
           </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-[5px]">
-            <span className="text-[7px] font-bold uppercase tracking-[0.15em] text-accent/50 transition-colors group-hover:text-accent/70">
-              {itemCatLabel(item)}
-            </span>
-            <span className="text-[7px] tabular-nums text-foreground/18">{itemYear(item)}</span>
+          {/* Gradient scrim */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/40 to-black/8" />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0 bg-white/[0.026] transition-colors duration-200 group-hover:bg-white/[0.042]" />
+          {/* Year watermark */}
+          <div
+            className="pointer-events-none absolute -right-1 -bottom-1 select-none text-[44px] font-black leading-none tabular-nums text-white/[0.022]"
+            aria-hidden
+          >
+            {itemYear(item)}
           </div>
-          <p className="mt-[3px] text-[12px] font-semibold leading-snug tracking-[-0.007em] text-foreground/76 line-clamp-2 transition-colors group-hover:text-foreground/92">
-            {item.title}
+        </>
+      )}
+
+      {/* Top accent stripe */}
+      <div
+        className={cn(
+          "absolute inset-x-0 top-0",
+          hasImage
+            ? "h-[1px] bg-gradient-to-r from-accent/18 via-accent/5 to-transparent"
+            : "h-[2px] bg-accent/[0.13]",
+        )}
+        aria-hidden
+      />
+
+      {/* Content */}
+      <div className={cn(
+        "relative flex flex-col h-full p-[10px]",
+        hasImage ? "justify-end" : "justify-start",
+      )}>
+        {/* Category + year */}
+        <div className="flex items-center gap-[4px]">
+          <span className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/72 transition-colors group-hover:text-accent/90">
+            {itemCatLabel(item)}
+          </span>
+          <span className="text-[6.5px] text-foreground/20" aria-hidden>·</span>
+          <span className="text-[6.5px] tabular-nums text-foreground/30">{itemYear(item)}</span>
+        </div>
+
+        {/* Title */}
+        <p
+          className="mt-[4px] text-[11.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/90 line-clamp-3 transition-colors group-hover:text-foreground/100"
+          style={hasImage ? { textShadow: '0 1px 4px rgba(0,0,0,0.7)' } : undefined}
+        >
+          {item.title}
+        </p>
+
+        {/* Location */}
+        {item.location && (
+          <p
+            className="mt-[4px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/28 truncate"
+            style={hasImage ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
+          >
+            {item.location}
           </p>
+        )}
+
+        {/* Action hint — appears on hover */}
+        <div className="mt-[7px] opacity-0 transition-opacity duration-200 group-hover:opacity-100" aria-hidden>
+          <div className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-accent/34 bg-accent/14 text-accent/82">
+            <ArrowUpRight className="h-[7px] w-[7px]" />
+          </div>
         </div>
       </div>
-      {item.location && (
-        <p className="mt-[7px] text-[7.5px] font-semibold uppercase tracking-[0.12em] text-foreground/20 truncate">
-          {item.location}
-        </p>
-      )}
     </button>
   )
 }
@@ -890,17 +958,17 @@ function ArchiveCarousel({
   if (items.length === 0) return null
 
   function nudge(direction: 'left' | 'right') {
-    scrollRef.current?.scrollBy({ left: direction === 'left' ? -448 : 448, behavior: 'smooth' })
+    scrollRef.current?.scrollBy({ left: direction === 'left' ? -488 : 488, behavior: 'smooth' })
   }
 
   return (
     <div className="relative mt-[22px]">
       {/* Section label row */}
       <div className="mb-[10px] flex items-center gap-3">
-        <span className="text-[8px] font-bold uppercase tracking-[0.18em] text-foreground/22">
+        <span className="text-[8px] font-bold uppercase tracking-[0.18em] text-foreground/30">
           More milestones
         </span>
-        <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
+        <div className="h-px flex-1 bg-white/[0.05]" aria-hidden />
         {/* Desktop scroll controls */}
         <div className="hidden gap-1 lg:flex">
           <button
@@ -932,7 +1000,7 @@ function ArchiveCarousel({
       >
         <div
           ref={scrollRef}
-          className="flex gap-2 overflow-x-auto pb-[2px] [scroll-snap-type:x_mandatory] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-[10px] overflow-x-auto pb-[2px] [scroll-snap-type:x_mandatory] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ paddingLeft: '2px', paddingRight: '2px' }}
         >
           {items.map((item) => (
