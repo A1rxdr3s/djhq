@@ -113,31 +113,18 @@ function resolveDescriptionMode(
 ): 'full' | 'short' | 'minimal' | 'hidden' {
   if (explicit && explicit !== 'auto') return explicit
 
-  const isTextOnly = !hasImage
+  // Image-backed cards: hide description in auto mode regardless of slot or treatment.
+  // contain  = poster/artwork/flyer full composition
+  // blurred-fill = release/artwork treatment
+  // cover    = event photo or location image
+  // All benefit from clean overlay: category · year / title / location only.
+  // HQ can always override via explicit descriptionMode.
+  if (hasImage) return 'hidden'
 
-  // contain treatment = artwork/poster/flyer used as a full composition —
-  // the image already carries its own text; don't overlay a description.
-  if (hasImage && treatment === 'contain') return 'hidden'
-
-  switch (slot) {
-    case 'left-tall-story':
-      // Tall dominant anchor: image → 1 line max; text-only → 2 lines
-      return isTextOnly ? 'short' : 'minimal'
-    case 'top-feature-primary':
-      // Wide feature: image → 1 line max; text-only → 2 lines
-      return isTextOnly ? 'short' : 'minimal'
-    case 'top-feature-secondary':
-    case 'right-top':
-    case 'right-bottom':
-    case 'compact-a':
-    case 'compact-b':
-    case 'bottom-left':
-    case 'bottom-right':
-    default:
-      // Supporting slots: image → no description (image fills the card's voice);
-      // text-only → 2 lines
-      return isTextOnly ? 'short' : 'hidden'
-  }
+  // Text-only cards: description is the primary content — show it.
+  // Actual line clamp depth is determined by the card component (PrimaryCard vs SecondaryCard)
+  // and slot size (right-bottom gets an extra line via slot-aware clamping).
+  return 'short'
 }
 
 // ── Slot resolver ─────────────────────────────────────────────────────────────
@@ -927,7 +914,7 @@ function ArchiveCarouselCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex h-[158px] w-[158px] shrink-0 flex-col overflow-hidden rounded-[8px] border border-white/[0.065] text-left [scroll-snap-align:start] transition-[border-color] duration-200 hover:border-white/[0.15] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+      className="group relative flex h-[136px] w-[136px] shrink-0 flex-col overflow-hidden rounded-[8px] border border-white/[0.065] text-left [scroll-snap-align:start] transition-[border-color] duration-200 hover:border-white/[0.15] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
     >
       {/* Background */}
       {hasImage ? (
@@ -938,7 +925,7 @@ function ArchiveCarouselCard({
               alt={item.title}
               fill
               unoptimized={isDrive}
-              sizes="158px"
+              sizes="136px"
               className="object-cover"
               style={{ objectPosition: `${item.imageFocalX ?? 50}% ${item.imageFocalY ?? 50}%` }}
               onError={() => setImgFailed(true)}
@@ -954,7 +941,7 @@ function ArchiveCarouselCard({
             className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
             aria-hidden
           >
-            <span className="text-[54px] font-black leading-none tabular-nums text-white/[0.056]">
+            <span className="text-[40px] font-black leading-none tabular-nums text-white/[0.038]">
               {itemYear(item)}
             </span>
           </div>
@@ -1061,7 +1048,7 @@ function ArchiveCarousel({
   if (items.length === 0) return null
 
   function nudge(direction: 'left' | 'right') {
-    scrollRef.current?.scrollBy({ left: direction === 'left' ? -488 : 488, behavior: 'smooth' })
+    scrollRef.current?.scrollBy({ left: direction === 'left' ? -426 : 426, behavior: 'smooth' })
   }
 
   return (
