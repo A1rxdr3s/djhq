@@ -114,30 +114,29 @@ function resolveDescriptionMode(
   if (explicit && explicit !== 'auto') return explicit
 
   const isTextOnly = !hasImage
-  const isBlurred  = treatment === 'blurred-fill'
+
+  // contain treatment = artwork/poster/flyer used as a full composition —
+  // the image already carries its own text; don't overlay a description.
+  if (hasImage && treatment === 'contain') return 'hidden'
 
   switch (slot) {
     case 'left-tall-story':
-      // Dominant vertical anchor: image → minimal (no description overlay on poster)
+      // Tall dominant anchor: image → 1 line max; text-only → 2 lines
       return isTextOnly ? 'short' : 'minimal'
     case 'top-feature-primary':
-      // Primary horizontal feature: can carry 1–2 lines unless blurred-fill
-      return isTextOnly ? 'short' : (isBlurred ? 'minimal' : 'short')
+      // Wide feature: image → 1 line max; text-only → 2 lines
+      return isTextOnly ? 'short' : 'minimal'
     case 'top-feature-secondary':
     case 'right-top':
     case 'right-bottom':
-      // Supporting positions: text-only gets description; image → minimal
-      return isTextOnly ? 'short' : 'minimal'
     case 'compact-a':
     case 'compact-b':
-      // Proof cards — fast to scan; description hidden on image cards
-      return isTextOnly ? 'short' : 'hidden'
     case 'bottom-left':
     case 'bottom-right':
-      // Support / foundation: text-only can carry description; image → minimal
-      return isTextOnly ? 'short' : 'minimal'
     default:
-      return isTextOnly ? 'short' : 'minimal'
+      // Supporting slots: image → no description (image fills the card's voice);
+      // text-only → 2 lines
+      return isTextOnly ? 'short' : 'hidden'
   }
 }
 
@@ -238,14 +237,41 @@ function IconInstagram({ className }: { className?: string }) {
 
 // ── MetaChip — Category · Year ────────────────────────────────────────────────
 
-function MetaChip({ item, className }: { item: CareerTimelineItem; className?: string }) {
+function MetaChip({
+  item,
+  className,
+  onImage,
+}: {
+  item:     CareerTimelineItem
+  className?: string
+  onImage?:   boolean
+}) {
+  const shadow = onImage ? { textShadow: '0 1px 3px rgba(0,0,0,0.72)' } : undefined
   return (
     <div className={cn("flex items-center gap-[5px]", className)}>
-      <span className="shrink-0 text-[7px] font-bold uppercase tracking-[0.22em] text-accent/68">
+      <span
+        className={cn(
+          "shrink-0 text-[7px] font-bold uppercase tracking-[0.22em]",
+          onImage ? "text-accent/84" : "text-accent/68",
+        )}
+        style={shadow}
+      >
         {itemCatLabel(item)}
       </span>
-      <span className="shrink-0 text-[8px] text-foreground/16" aria-hidden>·</span>
-      <span className="shrink-0 text-[9px] font-medium tabular-nums text-foreground/26">
+      <span
+        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/32" : "text-foreground/16")}
+        style={shadow}
+        aria-hidden
+      >
+        ·
+      </span>
+      <span
+        className={cn(
+          "shrink-0 text-[9px] font-medium tabular-nums",
+          onImage ? "text-foreground/44" : "text-foreground/26",
+        )}
+        style={shadow}
+      >
         {itemYear(item)}
       </span>
     </div>
@@ -398,8 +424,14 @@ function PrimaryCard({
   const hasImage    = rawHasImage && item.imageTreatment !== 'text-only'
   const isDrive     = normalized?.source === "google-drive"
 
-  const descMode = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
+  const descMode  = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
   const descClamp = descMode === 'full' ? 'line-clamp-3' : descMode === 'short' ? 'line-clamp-2' : descMode === 'minimal' ? 'line-clamp-1' : null
+
+  const actionIcon = (
+    <div className="inline-flex h-[26px] w-[26px] items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent/80 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/20 group-hover:text-accent">
+      <ArrowUpRight className="h-[10px] w-[10px]" />
+    </div>
+  )
 
   return (
     <button
@@ -423,9 +455,9 @@ function PrimaryCard({
       ) : (
         <>
           <div className="absolute inset-0 bg-[oklch(0.108_0.006_160)] transition-colors duration-200 group-hover:bg-[oklch(0.113_0.006_160)]" />
-          {/* Subtle year watermark */}
+          {/* Year watermark — large editorial element for text-only cards */}
           <div
-            className="pointer-events-none absolute right-3 bottom-3 select-none text-[52px] font-black leading-none tabular-nums text-white/[0.024]"
+            className="pointer-events-none absolute right-3 bottom-3 select-none text-[68px] font-black leading-none tabular-nums text-white/[0.028]"
             aria-hidden
           >
             {itemYear(item)}
@@ -439,49 +471,55 @@ function PrimaryCard({
         aria-hidden
       />
 
-      {/* Content */}
-      <div className={cn(
-        "relative flex flex-col h-full",
-        hasImage ? "justify-end p-5 sm:p-[22px]" : "justify-start p-[14px] sm:p-[16px]",
-        !hasImage && "border-l-2 border-accent/[0.18]",
-      )}>
-        <MetaChip item={item} />
-
-        <h3
-          className={cn(
-            "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/96",
-            hasImage ? "text-[18px] sm:text-[20px]" : "text-[16px] sm:text-[19px]",
-          )}
-          style={hasImage ? { textShadow: '0 1px 6px rgba(0,0,0,0.82)' } : undefined}
-        >
-          {item.title}
-        </h3>
-
-        {item.location && (
-          <p className="mt-[4px] text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/30">
-            {item.location}
-          </p>
-        )}
-
-        {item.description && descClamp && (
-          <p
-            className={cn(
-              "mt-[8px] text-[11.5px] leading-[1.52]",
-              hasImage ? "text-foreground/64" : "text-foreground/50",
-              descClamp,
-            )}
-            style={hasImage ? { textShadow: '0 1px 4px rgba(0,0,0,0.65)' } : undefined}
+      {/* Content — split layout for image vs text-only */}
+      {hasImage ? (
+        <div className="relative flex flex-col h-full justify-end p-5 sm:p-[22px]">
+          <MetaChip item={item} onImage />
+          <h3
+            className="mt-2 text-[18px] sm:text-[20px] font-black leading-[1.05] tracking-[-0.020em] text-foreground/96"
+            style={{ textShadow: '0 1px 6px rgba(0,0,0,0.82)' }}
           >
-            {item.description}
-          </p>
-        )}
-
-        <div className={cn(hasImage ? "mt-4" : "mt-3")}>
-          <div className="inline-flex h-[26px] w-[26px] items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent/80 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/20 group-hover:text-accent">
-            <ArrowUpRight className="h-[10px] w-[10px]" />
-          </div>
+            {item.title}
+          </h3>
+          {item.location && (
+            <p
+              className="mt-[4px] text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/36"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
+            >
+              {item.location}
+            </p>
+          )}
+          {item.description && descClamp && (
+            <p
+              className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/62", descClamp)}
+              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.65)' }}
+            >
+              {item.description}
+            </p>
+          )}
+          <div className="mt-4">{actionIcon}</div>
         </div>
-      </div>
+      ) : (
+        <div className="relative flex flex-col h-full p-[14px] sm:p-[16px] border-l-2 border-accent/[0.18]">
+          <MetaChip item={item} />
+          <h3 className="mt-2 text-[16px] sm:text-[19px] font-black leading-[1.05] tracking-[-0.020em] text-foreground/96">
+            {item.title}
+          </h3>
+          {item.location && (
+            <p className="mt-[4px] text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/30">
+              {item.location}
+            </p>
+          )}
+          {item.description && descClamp && (
+            <p className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/50", descClamp)}>
+              {item.description}
+            </p>
+          )}
+          {/* Spacer pushes action icon to bottom regardless of content length */}
+          <div className="flex-1" />
+          <div className="mt-3">{actionIcon}</div>
+        </div>
+      )}
     </button>
   )
 }
@@ -507,9 +545,15 @@ function SecondaryCard({
   const hasImage    = rawHasImage && item.imageTreatment !== 'text-only'
   const isDrive     = normalized?.source === "google-drive"
 
-  const descMode = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
+  const descMode  = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
   // SecondaryCard is smaller — cap at line-clamp-2; minimal/hidden → don't render
   const descClamp = descMode === 'full' ? 'line-clamp-2' : descMode === 'short' ? 'line-clamp-1' : null
+
+  const actionIcon = (
+    <div className="inline-flex h-[20px] w-[20px] items-center justify-center rounded-full border border-accent/22 bg-accent/7 text-accent/56 transition-all duration-200 group-hover:border-accent/42 group-hover:bg-accent/14 group-hover:text-accent/86">
+      <ArrowUpRight className="h-[8px] w-[8px]" />
+    </div>
+  )
 
   return (
     <button
@@ -530,10 +574,10 @@ function SecondaryCard({
         />
       ) : (
         <>
-          <div className="absolute inset-0 bg-white/[0.023] transition-colors duration-200 group-hover:bg-white/[0.038]" />
-          {/* Subtle year watermark */}
+          <div className="absolute inset-0 bg-white/[0.024] transition-colors duration-200 group-hover:bg-white/[0.040]" />
+          {/* Year watermark — editorial element for text-only */}
           <div
-            className="pointer-events-none absolute -right-1 -bottom-1 select-none text-[36px] font-black leading-none tabular-nums text-white/[0.020]"
+            className="pointer-events-none absolute -right-1 -bottom-2 select-none text-[42px] font-black leading-none tabular-nums text-white/[0.028]"
             aria-hidden
           >
             {itemYear(item)}
@@ -541,54 +585,68 @@ function SecondaryCard({
         </>
       )}
 
-      {/* Top accent stripe — stronger on text-only for intentional editorial feel */}
+      {/* Top accent stripe */}
       <div
         className={cn(
           "absolute inset-x-0 top-0",
           hasImage
-            ? "h-[1px] bg-gradient-to-r from-accent/20 via-accent/6 to-transparent"
-            : "h-[2px] bg-accent/[0.12]",
+            ? "h-[1px] bg-gradient-to-r from-accent/22 via-accent/7 to-transparent"
+            : "h-[2px] bg-accent/[0.14]",
         )}
         aria-hidden
       />
 
-      <div className={cn(
-        "relative flex flex-col h-full p-[10px]",
-        hasImage ? "justify-end" : "justify-start",
-      )}>
-        <MetaChip item={item} />
-
-        <p
-          className={cn(
-            "mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2",
-            hasImage ? "text-foreground/90" : "text-foreground/84",
-          )}
-          style={hasImage ? { textShadow: '0 1px 4px rgba(0,0,0,0.7)' } : undefined}
-        >
-          {item.title}
-        </p>
-
-        {item.location && (
+      {/* Content — split layout for image vs text-only */}
+      {hasImage ? (
+        <div className="relative flex flex-col h-full p-[10px] justify-end">
+          <MetaChip item={item} onImage />
           <p
-            className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/28 truncate"
-            style={hasImage ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
+            className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 transition-colors duration-200 group-hover:text-foreground/100 line-clamp-2"
+            style={{ textShadow: '0 1px 4px rgba(0,0,0,0.72)' }}
           >
-            {item.location}
+            {item.title}
           </p>
-        )}
-
-        {item.description && descClamp && (
-          <p className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/36", descClamp)}>
-            {item.description}
-          </p>
-        )}
-
-        <div className="mt-[10px]">
-          <div className="inline-flex h-[20px] w-[20px] items-center justify-center rounded-full border border-accent/22 bg-accent/7 text-accent/56 transition-all duration-200 group-hover:border-accent/40 group-hover:bg-accent/13 group-hover:text-accent/84">
-            <ArrowUpRight className="h-[8px] w-[8px]" />
-          </div>
+          {item.location && (
+            <p
+              className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/30 truncate"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+            >
+              {item.location}
+            </p>
+          )}
+          {item.description && descClamp && (
+            <p
+              className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/50", descClamp)}
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+            >
+              {item.description}
+            </p>
+          )}
+          <div className="mt-[10px]">{actionIcon}</div>
         </div>
-      </div>
+      ) : (
+        <div className="relative flex flex-col h-full p-[10px] justify-between">
+          {/* Top: meta + title + location + description */}
+          <div>
+            <MetaChip item={item} />
+            <p className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/86 transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2">
+              {item.title}
+            </p>
+            {item.location && (
+              <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/26 truncate">
+                {item.location}
+              </p>
+            )}
+            {item.description && descClamp && (
+              <p className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/42", descClamp)}>
+                {item.description}
+              </p>
+            )}
+          </div>
+          {/* Bottom: action anchored regardless of content length */}
+          <div>{actionIcon}</div>
+        </div>
+      )}
     </button>
   )
 }
@@ -859,7 +917,7 @@ function ArchiveCarouselCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex h-[158px] w-[158px] shrink-0 flex-col overflow-hidden rounded-[8px] border border-white/[0.065] text-left [scroll-snap-align:start] transition-[border-color] duration-200 hover:border-white/[0.14] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+      className="group relative flex h-[158px] w-[158px] shrink-0 flex-col overflow-hidden rounded-[8px] border border-white/[0.065] text-left [scroll-snap-align:start] transition-[border-color] duration-200 hover:border-white/[0.15] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
     >
       {/* Background */}
       {hasImage ? (
@@ -876,18 +934,19 @@ function ArchiveCarouselCard({
               onError={() => setImgFailed(true)}
             />
           </div>
-          {/* Gradient scrim */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/40 to-black/8" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/94 via-black/44 to-black/10" />
         </>
       ) : (
         <>
-          <div className="absolute inset-0 bg-white/[0.026] transition-colors duration-200 group-hover:bg-white/[0.042]" />
-          {/* Year watermark */}
+          <div className="absolute inset-0 bg-white/[0.026] transition-colors duration-200 group-hover:bg-white/[0.044]" />
+          {/* Year as large centered background element */}
           <div
-            className="pointer-events-none absolute -right-1 -bottom-1 select-none text-[44px] font-black leading-none tabular-nums text-white/[0.022]"
+            className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
             aria-hidden
           >
-            {itemYear(item)}
+            <span className="text-[54px] font-black leading-none tabular-nums text-white/[0.046]">
+              {itemYear(item)}
+            </span>
           </div>
         </>
       )}
@@ -897,51 +956,85 @@ function ArchiveCarouselCard({
         className={cn(
           "absolute inset-x-0 top-0",
           hasImage
-            ? "h-[1px] bg-gradient-to-r from-accent/18 via-accent/5 to-transparent"
-            : "h-[2px] bg-accent/[0.13]",
+            ? "h-[1px] bg-gradient-to-r from-accent/20 via-accent/6 to-transparent"
+            : "h-[2px] bg-accent/[0.14]",
         )}
         aria-hidden
       />
 
-      {/* Content */}
-      <div className={cn(
-        "relative flex flex-col h-full p-[10px]",
-        hasImage ? "justify-end" : "justify-start",
-      )}>
-        {/* Category + year */}
-        <div className="flex items-center gap-[4px]">
-          <span className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/72 transition-colors group-hover:text-accent/90">
-            {itemCatLabel(item)}
-          </span>
-          <span className="text-[6.5px] text-foreground/20" aria-hidden>·</span>
-          <span className="text-[6.5px] tabular-nums text-foreground/30">{itemYear(item)}</span>
-        </div>
-
-        {/* Title */}
-        <p
-          className="mt-[4px] text-[11.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/90 line-clamp-3 transition-colors group-hover:text-foreground/100"
-          style={hasImage ? { textShadow: '0 1px 4px rgba(0,0,0,0.7)' } : undefined}
-        >
-          {item.title}
-        </p>
-
-        {/* Location */}
-        {item.location && (
+      {/* Content — split layout: image cards anchor to bottom; text-only split top/bottom */}
+      {hasImage ? (
+        <div className="relative flex flex-col h-full p-[10px] justify-end">
+          <div className="flex items-center gap-[4px]">
+            <span
+              className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/82 transition-colors group-hover:text-accent/96"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}
+            >
+              {itemCatLabel(item)}
+            </span>
+            <span
+              className="text-[6.5px] text-foreground/28"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+              aria-hidden
+            >
+              ·
+            </span>
+            <span
+              className="text-[6.5px] tabular-nums text-foreground/38"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+            >
+              {itemYear(item)}
+            </span>
+          </div>
           <p
-            className="mt-[4px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/28 truncate"
-            style={hasImage ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
+            className="mt-[4px] text-[11.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 line-clamp-2 transition-colors group-hover:text-white"
+            style={{ textShadow: '0 1px 4px rgba(0,0,0,0.72)' }}
           >
-            {item.location}
+            {item.title}
           </p>
-        )}
-
-        {/* Action hint — appears on hover */}
-        <div className="mt-[7px] opacity-0 transition-opacity duration-200 group-hover:opacity-100" aria-hidden>
-          <div className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-accent/34 bg-accent/14 text-accent/82">
-            <ArrowUpRight className="h-[7px] w-[7px]" />
+          {item.location && (
+            <p
+              className="mt-[3px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/32 truncate"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+            >
+              {item.location}
+            </p>
+          )}
+          {/* Action indicator — always lightly visible */}
+          <div className="mt-[7px]">
+            <div className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-accent/28 bg-accent/10 text-accent/62 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/22 group-hover:text-accent">
+              <ArrowUpRight className="h-[7px] w-[7px]" />
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative flex flex-col h-full p-[10px] justify-between">
+          {/* Top: category + year + title */}
+          <div>
+            <div className="flex items-center gap-[4px]">
+              <span className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/72 transition-colors group-hover:text-accent/90">
+                {itemCatLabel(item)}
+              </span>
+              <span className="text-[6.5px] text-foreground/18" aria-hidden>·</span>
+              <span className="text-[6.5px] tabular-nums text-foreground/28">{itemYear(item)}</span>
+            </div>
+            <p className="mt-[5px] text-[11.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
+              {item.title}
+            </p>
+          </div>
+          {/* Bottom: location + action — always visible */}
+          <div>
+            {item.location && (
+              <p className="mb-[6px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/26 truncate">
+                {item.location}
+              </p>
+            )}
+            <div className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-accent/22 bg-accent/8 text-accent/50 transition-all duration-200 group-hover:border-accent/42 group-hover:bg-accent/16 group-hover:text-accent/88">
+              <ArrowUpRight className="h-[7px] w-[7px]" />
+            </div>
+          </div>
+        </div>
+      )}
     </button>
   )
 }
