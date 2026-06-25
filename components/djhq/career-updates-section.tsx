@@ -502,7 +502,10 @@ function PrimaryCard({
       ) : (
         <div className="relative flex flex-col h-full p-[14px] sm:p-[16px] border-l-2 border-accent/[0.18]">
           <MetaChip item={item} />
-          <h3 className="mt-2 text-[16px] sm:text-[19px] font-black leading-[1.05] tracking-[-0.020em] text-foreground/96">
+          <h3 className={cn(
+            "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/96",
+            slot === 'top-feature-primary' ? "text-[17px] sm:text-[21px]" : "text-[16px] sm:text-[19px]",
+          )}>
             {item.title}
           </h3>
           {item.location && (
@@ -511,7 +514,7 @@ function PrimaryCard({
             </p>
           )}
           {item.description && descClamp && (
-            <p className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/50", descClamp)}>
+            <p className={cn("mt-[8px] text-[11.5px] leading-[1.55] text-foreground/52", descClamp)}>
               {item.description}
             </p>
           )}
@@ -547,7 +550,11 @@ function SecondaryCard({
 
   const descMode  = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
   // SecondaryCard is smaller — cap at line-clamp-2; minimal/hidden → don't render
-  const descClamp = descMode === 'full' ? 'line-clamp-2' : descMode === 'short' ? 'line-clamp-1' : null
+  // right-bottom is 4 rows tall — allow 2 description lines for text-only where space exists
+  const isTallSlot = slot === 'right-bottom'
+  const descClamp = descMode === 'full' ? 'line-clamp-2'
+    : descMode === 'short' ? (isTallSlot ? 'line-clamp-2' : 'line-clamp-1')
+    : null
 
   const actionIcon = (
     <div className="inline-flex h-[20px] w-[20px] items-center justify-center rounded-full border border-accent/22 bg-accent/7 text-accent/56 transition-all duration-200 group-hover:border-accent/42 group-hover:bg-accent/14 group-hover:text-accent/86">
@@ -625,20 +632,23 @@ function SecondaryCard({
           <div className="mt-[10px]">{actionIcon}</div>
         </div>
       ) : (
-        <div className="relative flex flex-col h-full p-[10px] justify-between">
+        <div className={cn(
+          "relative flex flex-col h-full p-[10px] justify-between",
+          isTallSlot && "border-l border-accent/[0.11]",
+        )}>
           {/* Top: meta + title + location + description */}
           <div>
             <MetaChip item={item} />
-            <p className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/86 transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2">
+            <p className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/88 transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2">
               {item.title}
             </p>
             {item.location && (
-              <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/26 truncate">
+              <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/28 truncate">
                 {item.location}
               </p>
             )}
             {item.description && descClamp && (
-              <p className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/42", descClamp)}>
+              <p className={cn("mt-[7px] text-[11px] leading-[1.48] text-foreground/46", descClamp)}>
                 {item.description}
               </p>
             )}
@@ -944,7 +954,7 @@ function ArchiveCarouselCard({
             className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
             aria-hidden
           >
-            <span className="text-[54px] font-black leading-none tabular-nums text-white/[0.046]">
+            <span className="text-[54px] font-black leading-none tabular-nums text-white/[0.056]">
               {itemYear(item)}
             </span>
           </div>
@@ -1018,14 +1028,14 @@ function ArchiveCarouselCard({
               <span className="text-[6.5px] text-foreground/18" aria-hidden>·</span>
               <span className="text-[6.5px] tabular-nums text-foreground/28">{itemYear(item)}</span>
             </div>
-            <p className="mt-[5px] text-[11.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
+            <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
             </p>
           </div>
           {/* Bottom: location + action — always visible */}
           <div>
             {item.location && (
-              <p className="mb-[6px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/26 truncate">
+              <p className="mb-[6px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/30 truncate">
                 {item.location}
               </p>
             )}
