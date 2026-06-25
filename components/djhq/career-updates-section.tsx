@@ -196,6 +196,127 @@ function MetaChip({ item, className }: { item: CareerTimelineItem; className?: s
   )
 }
 
+// ── StoryCardBackground ───────────────────────────────────────────────────────
+// Renders the image background of a story card according to the item's
+// imageTreatment. Handles cover, contain, and blurred-fill visual modes.
+// text-only treatment is handled by the caller (don't render this component).
+
+function StoryCardBackground({
+  src,
+  alt,
+  treatment,
+  positionX,
+  positionY,
+  zoom,
+  isDrive,
+  isPrimary,
+  onError,
+}: {
+  src: string
+  alt: string
+  treatment: CareerTimelineItem['imageTreatment']
+  positionX: number
+  positionY: number
+  zoom: number
+  isDrive: boolean
+  isPrimary?: boolean
+  onError: () => void
+}) {
+  const hoverScale    = isPrimary ? 'group-hover:scale-[1.03]' : 'group-hover:scale-[1.04]'
+  const sizes         = isPrimary
+    ? "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 33vw"
+    : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+  const coverImgClass = isPrimary ? undefined : "opacity-[0.72]"
+
+  if (treatment === 'blurred-fill') {
+    return (
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          aria-hidden
+          src={src}
+          alt=""
+          className="absolute inset-0 h-full w-full pointer-events-none select-none"
+          style={{
+            objectFit: 'cover',
+            objectPosition: `${positionX}% ${positionY}%`,
+            filter: 'blur(28px)',
+            transform: 'scale(1.2)',
+            opacity: 0.5,
+          }}
+        />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className={`absolute inset-0 transition-transform duration-700 ${hoverScale}`}>
+          <StoryImage
+            src={src}
+            alt={alt}
+            fill
+            unoptimized={isDrive}
+            objectFit="contain"
+            positionX={positionX}
+            positionY={positionY}
+            zoom={zoom}
+            sizes={sizes}
+            onError={onError}
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/10 to-transparent" />
+      </>
+    )
+  }
+
+  if (treatment === 'contain') {
+    return (
+      <>
+        <div className="absolute inset-0 bg-[oklch(0.08_0.004_160)]" />
+        <div className={`absolute inset-0 transition-transform duration-700 ${hoverScale}`}>
+          <StoryImage
+            src={src}
+            alt={alt}
+            fill
+            unoptimized={isDrive}
+            objectFit="contain"
+            positionX={positionX}
+            positionY={positionY}
+            zoom={zoom}
+            sizes={sizes}
+            onError={onError}
+          />
+        </div>
+        <div className={isPrimary
+          ? "absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"
+          : "absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"
+        } />
+      </>
+    )
+  }
+
+  // Default: cover
+  return (
+    <>
+      <div className={`absolute inset-0 transition-transform duration-700 ${hoverScale}`}>
+        <StoryImage
+          src={src}
+          alt={alt}
+          fill
+          unoptimized={isDrive}
+          objectFit="cover"
+          positionX={positionX}
+          positionY={positionY}
+          zoom={zoom}
+          className={coverImgClass}
+          sizes={sizes}
+          onError={onError}
+        />
+      </div>
+      <div className={isPrimary
+        ? "absolute inset-0 bg-gradient-to-t from-black/92 via-black/38 to-black/6"
+        : "absolute inset-0 bg-gradient-to-t from-black/90 via-black/48 to-black/16"
+      } />
+    </>
+  )
+}
+
 // ── PrimaryCard ───────────────────────────────────────────────────────────────
 // Top-left tile — tall. Image-assisted if imageUrl is present; premium
 // text-first surface with oversized year watermark if not.
@@ -213,9 +334,11 @@ function PrimaryCard({
 
   // Normalize the image URL (converts Google Drive share links to thumbnail URLs).
   // previewImageUrl is never read here — only imageUrl is used publicly.
-  const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
-  const hasImage   = !!normalized?.isRenderable && !imgFailed
-  const isDrive    = normalized?.source === "google-drive"
+  const normalized  = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
+  const rawHasImage = !!normalized?.isRenderable && !imgFailed
+  // text-only treatment: render as text card even when an imageUrl is set.
+  const hasImage    = rawHasImage && item.imageTreatment !== 'text-only'
+  const isDrive     = normalized?.source === "google-drive"
 
   return (
     <button
@@ -225,23 +348,17 @@ function PrimaryCard({
     >
       {/* Background */}
       {hasImage ? (
-        <>
-          <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.03]">
-            <StoryImage
-              src={normalized!.renderUrl}
-              alt={item.title}
-              fill
-              unoptimized={isDrive}
-              objectFit={item.imageObjectFit}
-              positionX={item.imageFocalX}
-              positionY={item.imageFocalY}
-              zoom={item.imageZoom}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 33vw"
-              onError={() => setImgFailed(true)}
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/38 to-black/6" />
-        </>
+        <StoryCardBackground
+          src={normalized!.renderUrl}
+          alt={item.title}
+          treatment={item.imageTreatment}
+          positionX={item.imageFocalX}
+          positionY={item.imageFocalY}
+          zoom={item.imageZoom}
+          isDrive={isDrive}
+          isPrimary
+          onError={() => setImgFailed(true)}
+        />
       ) : (
         <>
           <div className="absolute inset-0 bg-[oklch(0.108_0.006_160)] transition-colors duration-200 group-hover:bg-[oklch(0.113_0.006_160)]" />
@@ -311,9 +428,10 @@ function SecondaryCard({
 }) {
   const [imgFailed, setImgFailed] = useState(false)
 
-  const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
-  const hasImage   = !!normalized?.isRenderable && !imgFailed
-  const isDrive    = normalized?.source === "google-drive"
+  const normalized  = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
+  const rawHasImage = !!normalized?.isRenderable && !imgFailed
+  const hasImage    = rawHasImage && item.imageTreatment !== 'text-only'
+  const isDrive     = normalized?.source === "google-drive"
 
   return (
     <button
@@ -322,24 +440,16 @@ function SecondaryCard({
       className="group relative w-full h-full text-left overflow-hidden rounded-[8px] border border-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       {hasImage ? (
-        <>
-          <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.04]">
-            <StoryImage
-              src={normalized!.renderUrl}
-              alt={item.title}
-              fill
-              unoptimized={isDrive}
-              objectFit={item.imageObjectFit}
-              positionX={item.imageFocalX}
-              positionY={item.imageFocalY}
-              zoom={item.imageZoom}
-              className="opacity-[0.72]"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              onError={() => setImgFailed(true)}
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/48 to-black/16" />
-        </>
+        <StoryCardBackground
+          src={normalized!.renderUrl}
+          alt={item.title}
+          treatment={item.imageTreatment}
+          positionX={item.imageFocalX}
+          positionY={item.imageFocalY}
+          zoom={item.imageZoom}
+          isDrive={isDrive}
+          onError={() => setImgFailed(true)}
+        />
       ) : (
         <>
           <div className="absolute inset-0 bg-white/[0.023] transition-colors duration-200 group-hover:bg-white/[0.038]" />

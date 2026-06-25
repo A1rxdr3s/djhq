@@ -487,6 +487,14 @@ export interface CareerTimelineItem {
    * Applied as CSS transform: scale() centered on the focal point.
    */
   imageZoom: number
+  /**
+   * Editorial media treatment for how the image is rendered inside the card.
+   * 'cover'        — fills the card, may crop edges (default)
+   * 'contain'      — shows full image without cropping, may leave empty space
+   * 'blurred-fill' — blurred background + contained image inset (ideal for portrait in wide slots)
+   * 'text-only'    — typographic card; image is not rendered even if imageUrl is set
+   */
+  imageTreatment: 'cover' | 'contain' | 'blurred-fill' | 'text-only'
 }
 
 /**

@@ -217,6 +217,7 @@ type CareerTimelineRow = {
   image_focal_y: number
   image_object_fit: string
   image_zoom: number
+  image_treatment: string
 }
 
 const VALID_TIMELINE_CATEGORIES = new Set<string>([
@@ -490,7 +491,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<VideoRow[]>(),
       supabase
         .from("artist_career_timeline")
-        .select("id, title, category, event_date, location, description, link, image_url, is_featured, is_published, sort_order, layout_size, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, image_zoom")
+        .select("id, title, category, event_date, location, description, link, image_url, is_featured, is_published, sort_order, layout_size, story_slot, show_in_collapsed, image_focal_x, image_focal_y, image_object_fit, image_zoom, image_treatment")
         .eq("artist_id", artistRow.id)
         .eq("is_published", true)
         .order("sort_order", { ascending: true, nullsFirst: false })
@@ -652,6 +653,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         imageFocalY: r.image_focal_y ?? 50,
         imageObjectFit: (r.image_object_fit as CareerTimelineItem['imageObjectFit']) ?? 'cover',
         imageZoom: r.image_zoom ?? 1,
+        imageTreatment: (r.image_treatment as CareerTimelineItem['imageTreatment']) ?? 'cover',
       })),
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,

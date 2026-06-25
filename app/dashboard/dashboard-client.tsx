@@ -1338,6 +1338,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineImageUploading, setTimelineImageUploading] = useState(false)
   const [timelineImageUploadError, setTimelineImageUploadError] = useState('')
   const [timelineImageZoom, setTimelineImageZoom] = useState(1)
+  const [timelineImageTreatment, setTimelineImageTreatment] = useState<'cover' | 'contain' | 'blurred-fill' | 'text-only'>('cover')
+  const [timelinePreviewNaturalAspect, setTimelinePreviewNaturalAspect] = useState<number | null>(null)
+  const timelinePreviewIsDragging = useRef(false)
 
   type HomeBooking = {
     id: string; referenceId: string; fullName: string
@@ -9850,6 +9853,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageFocalY(50)
       setTimelineImageObjectFit('cover')
       setTimelineImageZoom(1)
+      setTimelineImageTreatment('cover')
+      setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
       setTimelineError("")
@@ -9874,6 +9879,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageFocalY(item.imageFocalY ?? 50)
       setTimelineImageObjectFit(item.imageObjectFit ?? 'cover')
       setTimelineImageZoom(item.imageZoom ?? 1)
+      setTimelineImageTreatment(item.imageTreatment ?? 'cover')
+      setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
       setTimelineError("")
@@ -9892,6 +9899,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageFocalY(50)
       setTimelineImageObjectFit('cover')
       setTimelineImageZoom(1)
+      setTimelineImageTreatment('cover')
+      setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
       setTimelineError("")
@@ -9926,6 +9935,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             imageFocalY: timelineImageFocalY,
             imageObjectFit: timelineImageObjectFit,
             imageZoom: timelineImageZoom,
+            imageTreatment: timelineImageTreatment,
           }),
         })
         const data = await res.json()
@@ -10109,19 +10119,40 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       'wide-bottom':     'Wide Bottom',
     }
 
-    const previewIsDragging = { current: false }
+    const WIDE_SLOTS = new Set(['hero', 'wide-bottom'])
+
+    const TREATMENT_OPTIONS: Array<{
+      value: 'cover' | 'contain' | 'blurred-fill' | 'text-only'
+      label: string
+      desc: string
+    }> = [
+      { value: 'cover',        label: 'Cover',        desc: 'Fills the card. Best for images matching this slot.' },
+      { value: 'contain',      label: 'Contain',      desc: 'Shows full image. May leave empty space on edges.' },
+      { value: 'blurred-fill', label: 'Blurred Fill', desc: 'Blurred background + preserved image. Best for portrait photos in wide cards.' },
+      { value: 'text-only',    label: 'Text Only',    desc: 'Typographic card without image.' },
+    ]
+
+    // Slot-suitability warning: portrait image in wide slot with cover treatment
+    const showPortraitInWideWarning =
+      WIDE_SLOTS.has(timelineStorySlot) &&
+      timelineImageTreatment === 'cover' &&
+      timelinePreviewNaturalAspect !== null &&
+      timelinePreviewNaturalAspect < 0.85
+
+    // timelinePreviewIsDragging lives at component level (useRef) so it survives
+    // re-renders triggered by setTimelineImageFocalX/Y during drag.
 
     function handlePreviewPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-      previewIsDragging.current = true
+      timelinePreviewIsDragging.current = true
       e.currentTarget.setPointerCapture(e.pointerId)
       applyPreviewPosition(e)
     }
     function handlePreviewPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-      if (!previewIsDragging.current) return
+      if (!timelinePreviewIsDragging.current) return
       applyPreviewPosition(e)
     }
     function handlePreviewPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-      previewIsDragging.current = false
+      timelinePreviewIsDragging.current = false
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
     function applyPreviewPosition(e: React.PointerEvent<HTMLDivElement>) {
@@ -10515,123 +10546,196 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 )}
 
-                {/* Slot image position editor — only when an image URL is set */}
-                {timelineImageUrl && (() => {
+                {/* Treatment selector — shown when an image URL is set or for text-only */}
+                {(timelineImageUrl || timelineImageTreatment === 'text-only') && (() => {
                   const slotLabel = SLOT_DISPLAY_NAMES[timelineStorySlot]
+                  const normalizedSrc = timelineImageUrl ? normalizeExternalImageUrl(timelineImageUrl).renderUrl : null
+                  const showPositionEditor = !!timelineImageUrl && timelineImageTreatment !== 'text-only'
+                  const showZoom = showPositionEditor && timelineImageTreatment !== 'contain'
+
                   return (
                     <div className="space-y-3 pt-1">
-                      {/* Crop preview label */}
-                      <p className="text-[10px] text-muted-foreground/45">
-                        {slotLabel
-                          ? <>Crop preview: <span className="font-medium text-foreground/60">{slotLabel}</span></>
-                          : <span className="italic">Assign a Story Slot above to preview the exact crop.</span>
-                        }
-                      </p>
 
-                      {/* Large draggable preview box */}
-                      <div
-                        className={`relative w-full max-w-[260px] overflow-hidden rounded-lg border border-border/40 cursor-crosshair select-none bg-muted/20 ${previewAspect}`}
-                        onPointerDown={handlePreviewPointerDown}
-                        onPointerMove={handlePreviewPointerMove}
-                        onPointerUp={handlePreviewPointerUp}
-                        onPointerLeave={handlePreviewPointerUp}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={normalizeExternalImageUrl(timelineImageUrl).renderUrl}
-                          alt="Crop preview"
-                          className="absolute inset-0 h-full w-full pointer-events-none"
-                          style={{
-                            objectFit: timelineImageObjectFit,
-                            objectPosition: `${timelineImageFocalX}% ${timelineImageFocalY}%`,
-                            ...(timelineImageZoom !== 1 ? {
-                              transform: `scale(${timelineImageZoom})`,
-                              transformOrigin: `${timelineImageFocalX}% ${timelineImageFocalY}%`,
-                            } : {}),
-                          }}
-                          draggable={false}
-                        />
-                        {/* Focal point crosshair */}
-                        <div
-                          className="pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 bg-white/20 shadow-sm ring-1 ring-black/30"
-                          style={{ left: `${timelineImageFocalX}%`, top: `${timelineImageFocalY}%` }}
-                        />
-                      </div>
-
-                      <p className="text-[10px] text-muted-foreground/35">Click or drag to reposition. The dot marks the focal point.</p>
-
-                      {/* Sliders */}
-                      <div className="space-y-2">
-                        {([
-                          { label: 'Horizontal', value: timelineImageFocalX, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalX(v) },
-                          { label: 'Vertical',   value: timelineImageFocalY, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalY(v) },
-                          { label: 'Zoom',       value: timelineImageZoom,   min: 1, max: 3,   step: 0.1, format: (v: number) => `${v.toFixed(1)}×`, onChange: (v: number) => setTimelineImageZoom(Math.round(v * 10) / 10) },
-                        ] as const).map(({ label, value, min, max, step, format, onChange }) => (
-                          <div key={label} className="flex items-center gap-2">
-                            <span className="w-20 shrink-0 text-[10px] text-muted-foreground/50">{label}</span>
-                            <input
-                              type="range"
-                              min={min}
-                              max={max}
-                              step={step}
-                              value={value}
-                              onChange={(e) => onChange(Number(e.target.value))}
-                              className="flex-1 accent-accent h-1"
-                            />
-                            <span className="w-9 text-right text-[10px] tabular-nums text-muted-foreground/50">{format(value)}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Quick position presets */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {([
-                          { label: 'Center', x: 50,  y: 50  },
-                          { label: 'Top',    x: 50,  y: 0   },
-                          { label: 'Bottom', x: 50,  y: 100 },
-                          { label: 'Left',   x: 0,   y: 50  },
-                          { label: 'Right',  x: 100, y: 50  },
-                        ] as const).map(({ label, x, y }) => (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={() => { setTimelineImageFocalX(x); setTimelineImageFocalY(y) }}
-                            className="rounded-full border border-border/50 px-2.5 py-0.5 text-[10px] text-muted-foreground/50 hover:border-accent/40 hover:text-accent transition-colors"
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Fit toggle */}
-                      <div className="space-y-1">
-                        <div className="flex gap-0 rounded border border-border/50 bg-muted/30 p-0.5 w-fit">
-                          {(['cover', 'contain'] as const).map((fit) => (
+                      {/* Treatment selector */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Media Treatment</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {TREATMENT_OPTIONS.map(({ value, label, desc }) => (
                             <button
-                              key={fit}
+                              key={value}
                               type="button"
-                              onClick={() => setTimelineImageObjectFit(fit)}
-                              className={`px-3 py-1 rounded-[3px] text-[10px] font-medium capitalize transition-colors ${timelineImageObjectFit === fit ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+                              onClick={() => setTimelineImageTreatment(value)}
+                              className={`rounded-[6px] border px-2.5 py-2 text-left transition-colors ${
+                                timelineImageTreatment === value
+                                  ? 'border-accent/40 bg-accent/8 text-foreground/80'
+                                  : 'border-border/40 bg-transparent text-muted-foreground/50 hover:border-border/70 hover:text-muted-foreground/70'
+                              }`}
                             >
-                              {fit}
+                              <span className="block text-[10px] font-semibold">{label}</span>
+                              <span className="block mt-0.5 text-[9px] leading-[1.4] opacity-70">{desc}</span>
                             </button>
                           ))}
                         </div>
-                        <p className="text-[10px] text-muted-foreground/35">
-                          {timelineImageObjectFit === 'cover'
-                            ? 'Cover: fills the card, may crop edges.'
-                            : 'Contain: shows full image, no cropping.'}
-                        </p>
                       </div>
 
-                      {/* Reset */}
-                      <button
-                        type="button"
-                        onClick={() => { setTimelineImageFocalX(50); setTimelineImageFocalY(50); setTimelineImageZoom(1); setTimelineImageObjectFit('cover') }}
-                        className="text-[10px] text-muted-foreground/35 hover:text-muted-foreground transition-colors"
-                      >
-                        Reset position
-                      </button>
+                      {/* Slot-suitability warning */}
+                      {showPortraitInWideWarning && (
+                        <div className="rounded-[6px] border border-amber-500/20 bg-amber-500/6 px-3 py-2">
+                          <p className="text-[10px] leading-[1.5] text-amber-400/80">
+                            Portrait image in a wide slot may crop awkwardly. Try <strong>Blurred Fill</strong> for a cinematic look, or <strong>Contain</strong> to preserve the full photo.
+                          </p>
+                        </div>
+                      )}
+
+                      {showPositionEditor && normalizedSrc && (
+                        <>
+                          {/* Crop preview label */}
+                          <p className="text-[10px] text-muted-foreground/45">
+                            {slotLabel
+                              ? <>Crop preview: <span className="font-medium text-foreground/60">{slotLabel}</span></>
+                              : <span className="italic">Assign a Story Slot above to preview the exact crop.</span>
+                            }
+                          </p>
+
+                          {/* Large draggable preview box */}
+                          <div
+                            className={`relative w-full max-w-[260px] overflow-hidden rounded-lg border border-border/40 cursor-crosshair select-none bg-[oklch(0.08_0.004_160)] ${previewAspect}`}
+                            onPointerDown={handlePreviewPointerDown}
+                            onPointerMove={handlePreviewPointerMove}
+                            onPointerUp={handlePreviewPointerUp}
+                            onPointerLeave={handlePreviewPointerUp}
+                          >
+                            {timelineImageTreatment === 'blurred-fill' ? (
+                              <>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  aria-hidden
+                                  src={normalizedSrc}
+                                  alt=""
+                                  className="absolute inset-0 h-full w-full pointer-events-none select-none"
+                                  style={{
+                                    objectFit: 'cover',
+                                    objectPosition: `${timelineImageFocalX}% ${timelineImageFocalY}%`,
+                                    filter: 'blur(16px)',
+                                    transform: 'scale(1.2)',
+                                    opacity: 0.5,
+                                  }}
+                                  draggable={false}
+                                />
+                                <div className="absolute inset-0 bg-black/65 pointer-events-none" />
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={normalizedSrc}
+                                  alt="Crop preview"
+                                  className="absolute inset-0 h-full w-full pointer-events-none"
+                                  style={{
+                                    objectFit: 'contain',
+                                    objectPosition: `${timelineImageFocalX}% ${timelineImageFocalY}%`,
+                                  }}
+                                  draggable={false}
+                                  onLoad={(e) => {
+                                    const img = e.currentTarget
+                                    if (img.naturalWidth && img.naturalHeight) {
+                                      setTimelinePreviewNaturalAspect(img.naturalWidth / img.naturalHeight)
+                                    }
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/8 to-transparent pointer-events-none" />
+                              </>
+                            ) : (
+                              <>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={normalizedSrc}
+                                  alt="Crop preview"
+                                  className="absolute inset-0 h-full w-full pointer-events-none"
+                                  style={{
+                                    objectFit: timelineImageTreatment === 'contain' ? 'contain' : 'cover',
+                                    objectPosition: `${timelineImageFocalX}% ${timelineImageFocalY}%`,
+                                    ...(timelineImageZoom !== 1 && timelineImageTreatment !== 'contain' ? {
+                                      transform: `scale(${timelineImageZoom})`,
+                                      transformOrigin: `${timelineImageFocalX}% ${timelineImageFocalY}%`,
+                                    } : {}),
+                                  }}
+                                  draggable={false}
+                                  onLoad={(e) => {
+                                    const img = e.currentTarget
+                                    if (img.naturalWidth && img.naturalHeight) {
+                                      setTimelinePreviewNaturalAspect(img.naturalWidth / img.naturalHeight)
+                                    }
+                                  }}
+                                />
+                              </>
+                            )}
+                            {/* Focal point crosshair — only for cover */}
+                            {timelineImageTreatment === 'cover' && (
+                              <div
+                                className="pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 bg-white/20 shadow-sm ring-1 ring-black/30"
+                                style={{ left: `${timelineImageFocalX}%`, top: `${timelineImageFocalY}%` }}
+                              />
+                            )}
+                          </div>
+
+                          <p className="text-[10px] text-muted-foreground/35">
+                            {timelineImageTreatment === 'cover'
+                              ? 'Click or drag to reposition. The dot marks the focal point.'
+                              : 'Click or drag to set the focal point.'}
+                          </p>
+
+                          {/* Sliders */}
+                          <div className="space-y-2">
+                            {([
+                              { label: 'Horizontal', value: timelineImageFocalX, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalX(v), show: true },
+                              { label: 'Vertical',   value: timelineImageFocalY, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalY(v), show: true },
+                              { label: 'Zoom',       value: timelineImageZoom,   min: 1, max: 3,   step: 0.1, format: (v: number) => `${v.toFixed(1)}×`, onChange: (v: number) => setTimelineImageZoom(Math.round(v * 10) / 10), show: showZoom },
+                            ] as const).filter(s => s.show).map(({ label, value, min, max, step, format, onChange }) => (
+                              <div key={label} className="flex items-center gap-2">
+                                <span className="w-20 shrink-0 text-[10px] text-muted-foreground/50">{label}</span>
+                                <input
+                                  type="range"
+                                  min={min}
+                                  max={max}
+                                  step={step}
+                                  value={value}
+                                  onChange={(e) => onChange(Number(e.target.value))}
+                                  className="flex-1 accent-accent h-1"
+                                />
+                                <span className="w-9 text-right text-[10px] tabular-nums text-muted-foreground/50">{format(value)}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Quick position presets */}
+                          <div className="flex flex-wrap gap-1.5">
+                            {([
+                              { label: 'Center', x: 50,  y: 50  },
+                              { label: 'Top',    x: 50,  y: 0   },
+                              { label: 'Bottom', x: 50,  y: 100 },
+                              { label: 'Left',   x: 0,   y: 50  },
+                              { label: 'Right',  x: 100, y: 50  },
+                            ] as const).map(({ label, x, y }) => (
+                              <button
+                                key={label}
+                                type="button"
+                                onClick={() => { setTimelineImageFocalX(x); setTimelineImageFocalY(y) }}
+                                className="rounded-full border border-border/50 px-2.5 py-0.5 text-[10px] text-muted-foreground/50 hover:border-accent/40 hover:text-accent transition-colors"
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Reset */}
+                          <button
+                            type="button"
+                            onClick={() => { setTimelineImageFocalX(50); setTimelineImageFocalY(50); setTimelineImageZoom(1); setTimelineImageTreatment('cover') }}
+                            className="text-[10px] text-muted-foreground/35 hover:text-muted-foreground transition-colors"
+                          >
+                            Reset position
+                          </button>
+                        </>
+                      )}
+
                     </div>
                   )
                 })()}
