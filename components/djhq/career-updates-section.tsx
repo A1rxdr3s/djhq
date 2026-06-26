@@ -246,7 +246,7 @@ function MetaChip({
         {itemCatLabel(item)}
       </span>
       <span
-        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/38" : "text-foreground/26")}
+        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/46" : "text-foreground/34")}
         style={shadow}
         aria-hidden
       >
@@ -254,8 +254,8 @@ function MetaChip({
       </span>
       <span
         className={cn(
-          "shrink-0 text-[10px] font-semibold tabular-nums",
-          onImage ? "text-foreground/64" : "text-foreground/56",
+          "shrink-0 text-[11px] font-bold tabular-nums",
+          onImage ? "text-foreground/78" : "text-foreground/68",
         )}
         style={shadow}
       >
@@ -986,7 +986,7 @@ function ArchiveCarouselCard({
               ·
             </span>
             <span
-              className="text-[7px] font-semibold tabular-nums text-foreground/60"
+              className="text-[8px] font-bold tabular-nums text-foreground/70"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
             >
               {itemYear(item)}
@@ -1022,7 +1022,7 @@ function ArchiveCarouselCard({
                 {itemCatLabel(item)}
               </span>
               <span className="text-[7px] text-foreground/30" aria-hidden>·</span>
-              <span className="text-[7px] font-semibold tabular-nums text-foreground/54">{itemYear(item)}</span>
+              <span className="text-[8px] font-bold tabular-nums text-foreground/64">{itemYear(item)}</span>
             </div>
             <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
