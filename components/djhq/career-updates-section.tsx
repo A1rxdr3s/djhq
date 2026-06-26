@@ -255,11 +255,11 @@ function MetaChip({
       {/* Year badge — pill container anchors the year to the category, preventing it from floating */}
       <span
         className={cn(
-          "shrink-0 inline-flex items-center rounded-[3px] px-[6px] py-[2px] leading-none",
-          "text-[12px] font-bold tabular-nums",
+          "shrink-0 inline-flex items-center rounded-[3px] px-[6px] py-[2.5px] leading-none",
+          "text-[14px] font-bold tabular-nums",
           onImage
-            ? "border border-white/[0.18] bg-black/[0.30] text-foreground/94"
-            : "border border-white/[0.12] bg-white/[0.07] text-foreground/82",
+            ? "border border-white/[0.28] bg-black/[0.38] text-foreground/96"
+            : "border border-white/[0.24] bg-white/[0.11] text-foreground/90",
         )}
         style={shadow}
       >
@@ -990,7 +990,7 @@ function ArchiveCarouselCard({
               ·
             </span>
             <span
-              className="inline-flex items-center rounded-[3px] border border-white/[0.18] bg-black/[0.28] px-[4px] py-[1.5px] text-[9px] font-bold tabular-nums leading-none text-foreground/92"
+              className="inline-flex items-center rounded-[3px] border border-white/[0.28] bg-black/[0.36] px-[5px] py-[2px] text-[11px] font-bold tabular-nums leading-none text-foreground/96"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
             >
               {itemYear(item)}
@@ -1026,7 +1026,7 @@ function ArchiveCarouselCard({
                 {itemCatLabel(item)}
               </span>
               <span className="text-[7px] text-foreground/22" aria-hidden>·</span>
-              <span className="inline-flex items-center rounded-[3px] border border-white/[0.11] bg-white/[0.06] px-[4px] py-[1.5px] text-[9px] font-bold tabular-nums leading-none text-foreground/78">{itemYear(item)}</span>
+              <span className="inline-flex items-center rounded-[3px] border border-white/[0.22] bg-white/[0.10] px-[5px] py-[2px] text-[11px] font-bold tabular-nums leading-none text-foreground/88">{itemYear(item)}</span>
             </div>
             <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
