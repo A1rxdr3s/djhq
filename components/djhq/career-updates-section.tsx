@@ -246,20 +246,16 @@ function MetaChip({
         {itemCatLabel(item)}
       </span>
       <span
-        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/30" : "text-foreground/20")}
+        className={cn("shrink-0 text-[10px]", onImage ? "text-foreground/44" : "text-foreground/34")}
         style={shadow}
         aria-hidden
       >
         ·
       </span>
-      {/* Year badge — pill container anchors the year to the category, preventing it from floating */}
       <span
         className={cn(
-          "shrink-0 inline-flex items-center rounded-[3px] px-[6px] py-[2.5px] leading-none",
-          "text-[14px] font-bold tabular-nums",
-          onImage
-            ? "border border-white/[0.28] bg-black/[0.38] text-foreground/96"
-            : "border border-white/[0.24] bg-white/[0.11] text-foreground/90",
+          "shrink-0 text-[13px] font-bold tabular-nums",
+          onImage ? "text-foreground/90" : "text-foreground/80",
         )}
         style={shadow}
       >
@@ -983,14 +979,14 @@ function ArchiveCarouselCard({
               {itemCatLabel(item)}
             </span>
             <span
-              className="text-[7px] text-foreground/28"
+              className="text-[7px] text-foreground/38"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
               aria-hidden
             >
               ·
             </span>
             <span
-              className="inline-flex items-center rounded-[3px] border border-white/[0.28] bg-black/[0.36] px-[5px] py-[2px] text-[11px] font-bold tabular-nums leading-none text-foreground/96"
+              className="text-[10px] font-bold tabular-nums text-foreground/84"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
             >
               {itemYear(item)}
@@ -1026,7 +1022,7 @@ function ArchiveCarouselCard({
                 {itemCatLabel(item)}
               </span>
               <span className="text-[7px] text-foreground/22" aria-hidden>·</span>
-              <span className="inline-flex items-center rounded-[3px] border border-white/[0.22] bg-white/[0.10] px-[5px] py-[2px] text-[11px] font-bold tabular-nums leading-none text-foreground/88">{itemYear(item)}</span>
+              <span className="text-[9px] font-medium tabular-nums text-foreground/52">{itemYear(item)}</span>
             </div>
             <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
