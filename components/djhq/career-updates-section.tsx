@@ -254,8 +254,8 @@ function MetaChip({
       </span>
       <span
         className={cn(
-          "shrink-0 text-[9px] font-medium tabular-nums",
-          onImage ? "text-foreground/56" : "text-foreground/44",
+          "shrink-0 text-[10px] font-semibold tabular-nums",
+          onImage ? "text-foreground/64" : "text-foreground/56",
         )}
         style={shadow}
       >
@@ -973,20 +973,20 @@ function ArchiveCarouselCard({
         <div className="relative flex flex-col h-full p-[10px] justify-end">
           <div className="flex items-center gap-[4px]">
             <span
-              className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/82 transition-colors group-hover:text-accent/96"
+              className="text-[7px] font-bold uppercase tracking-[0.17em] text-accent/82 transition-colors group-hover:text-accent/96"
               style={{ textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}
             >
               {itemCatLabel(item)}
             </span>
             <span
-              className="text-[6.5px] text-foreground/38"
+              className="text-[7px] text-foreground/38"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
               aria-hidden
             >
               ·
             </span>
             <span
-              className="text-[6.5px] tabular-nums text-foreground/50"
+              className="text-[7px] font-semibold tabular-nums text-foreground/60"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
             >
               {itemYear(item)}
@@ -1018,11 +1018,11 @@ function ArchiveCarouselCard({
           {/* Top: category + year + title */}
           <div>
             <div className="flex items-center gap-[4px]">
-              <span className="text-[6.5px] font-bold uppercase tracking-[0.17em] text-accent/80 transition-colors group-hover:text-accent/95">
+              <span className="text-[7px] font-bold uppercase tracking-[0.17em] text-accent/80 transition-colors group-hover:text-accent/95">
                 {itemCatLabel(item)}
               </span>
-              <span className="text-[6.5px] text-foreground/28" aria-hidden>·</span>
-              <span className="text-[6.5px] tabular-nums text-foreground/42">{itemYear(item)}</span>
+              <span className="text-[7px] text-foreground/30" aria-hidden>·</span>
+              <span className="text-[7px] font-semibold tabular-nums text-foreground/54">{itemYear(item)}</span>
             </div>
             <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
