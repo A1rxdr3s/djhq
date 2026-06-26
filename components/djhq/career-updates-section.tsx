@@ -246,16 +246,20 @@ function MetaChip({
         {itemCatLabel(item)}
       </span>
       <span
-        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/46" : "text-foreground/34")}
+        className={cn("shrink-0 text-[8px]", onImage ? "text-foreground/30" : "text-foreground/20")}
         style={shadow}
         aria-hidden
       >
         ·
       </span>
+      {/* Year badge — pill container anchors the year to the category, preventing it from floating */}
       <span
         className={cn(
-          "shrink-0 text-[11px] font-bold tabular-nums",
-          onImage ? "text-foreground/78" : "text-foreground/68",
+          "shrink-0 inline-flex items-center rounded-[3px] px-[5px] py-[1.5px] leading-none",
+          "text-[10px] font-bold tabular-nums",
+          onImage
+            ? "border border-white/[0.18] bg-black/[0.30] text-foreground/94"
+            : "border border-white/[0.12] bg-white/[0.07] text-foreground/80",
         )}
         style={shadow}
       >
@@ -945,9 +949,9 @@ function ArchiveCarouselCard({
       ) : (
         <>
           <div className="absolute inset-0 bg-white/[0.026] transition-colors duration-200 group-hover:bg-white/[0.044]" />
-          {/* Year as large centered background element */}
+          {/* Year watermark — anchored lower-right, consistent with mosaic card watermarks */}
           <div
-            className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
+            className="pointer-events-none absolute right-2 bottom-1 select-none"
             aria-hidden
           >
             <span className="text-[40px] font-black leading-none tabular-nums text-white/[0.068]">
@@ -979,14 +983,14 @@ function ArchiveCarouselCard({
               {itemCatLabel(item)}
             </span>
             <span
-              className="text-[7px] text-foreground/38"
+              className="text-[7px] text-foreground/28"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
               aria-hidden
             >
               ·
             </span>
             <span
-              className="text-[8px] font-bold tabular-nums text-foreground/70"
+              className="inline-flex items-center rounded-[3px] border border-white/[0.18] bg-black/[0.28] px-[4px] py-[1px] text-[7.5px] font-bold tabular-nums leading-none text-foreground/92"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
             >
               {itemYear(item)}
@@ -1021,8 +1025,8 @@ function ArchiveCarouselCard({
               <span className="text-[7px] font-bold uppercase tracking-[0.17em] text-accent/80 transition-colors group-hover:text-accent/95">
                 {itemCatLabel(item)}
               </span>
-              <span className="text-[7px] text-foreground/30" aria-hidden>·</span>
-              <span className="text-[8px] font-bold tabular-nums text-foreground/64">{itemYear(item)}</span>
+              <span className="text-[7px] text-foreground/22" aria-hidden>·</span>
+              <span className="inline-flex items-center rounded-[3px] border border-white/[0.11] bg-white/[0.06] px-[4px] py-[1px] text-[7.5px] font-bold tabular-nums leading-none text-foreground/76">{itemYear(item)}</span>
             </div>
             <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
