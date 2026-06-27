@@ -971,6 +971,188 @@ function UpdateDetail({
   )
 }
 
+// ── MobileStoryCard ───────────────────────────────────────────────────────────
+// Card used inside the mobile horizontal swipe rail (lg:hidden).
+// 84vw wide × 280px tall — one visible at a time with a natural peek of the next.
+// Mirrors PrimaryCard aesthetics: image-led or premium dark text-only surface.
+// IMPORTANT: never reads previewImageUrl — that field is HQ-only.
+
+function MobileStoryCard({
+  item,
+  onClick,
+}: {
+  item:    CareerTimelineItem
+  onClick: () => void
+}) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
+  const rawHasImage = !!normalized?.isRenderable && !imgFailed
+  const hasImage = rawHasImage && item.imageTreatment !== 'text-only'
+  const isDrive = normalized?.source === 'google-drive'
+
+  return (
+    <button
+      data-mobile-card=""
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group relative flex-none snap-start overflow-hidden rounded-[12px] border border-white/[0.09]',
+        'text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+      )}
+      style={{ width: '84vw', height: '280px' }}
+    >
+      {/* Background */}
+      {hasImage ? (
+        <StoryCardBackground
+          src={normalized!.renderUrl}
+          alt={item.title}
+          treatment={item.imageTreatment}
+          positionX={item.imageFocalX}
+          positionY={item.imageFocalY}
+          zoom={item.imageZoom}
+          isDrive={isDrive}
+          isPrimary
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <>
+          <div className="absolute inset-0 bg-[oklch(0.108_0.006_160)] transition-colors duration-200 group-hover:bg-[oklch(0.113_0.006_160)]" />
+          {/* Year watermark */}
+          <div
+            className="pointer-events-none absolute bottom-4 right-4 select-none text-[72px] font-black leading-none tabular-nums text-white/[0.04]"
+            aria-hidden
+          >
+            {itemYear(item)}
+          </div>
+          {/* Left accent stripe */}
+          <div
+            className="absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-accent/55 via-accent/18 to-transparent"
+            aria-hidden
+          />
+        </>
+      )}
+
+      {/* Top accent line — matches desktop PrimaryCard */}
+      <div
+        className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-accent/58 via-accent/18 to-transparent"
+        aria-hidden
+      />
+
+      {/* Content overlay — pinned to bottom */}
+      <div className="relative flex h-full flex-col justify-end p-5">
+        <MetaChip item={item} onImage={hasImage} yearSize="md" />
+        <h3
+          className="mt-2 line-clamp-2 text-[20px] font-black leading-[1.05] tracking-[-0.020em] text-white"
+          style={hasImage ? { textShadow: '0 1px 6px rgba(0,0,0,0.82)' } : undefined}
+        >
+          {item.title}
+        </h3>
+        {item.location && (
+          <p
+            className="mt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/50"
+            style={hasImage ? { textShadow: '0 1px 3px rgba(0,0,0,0.65)' } : undefined}
+          >
+            {item.location}
+          </p>
+        )}
+        <div className="mt-4">
+          <div className="inline-flex h-[26px] w-[26px] items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent/80 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/20 group-hover:text-accent">
+            <ArrowUpRight className="h-[10px] w-[10px]" />
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// ── MobileStoryCarousel ───────────────────────────────────────────────────────
+// Horizontal snap rail for Artist Story on mobile / tablet (lg:hidden).
+// Shows the same gridItems as the desktop grid, in swipeable card format.
+// Archive items (showInCollapsed=false + overflow) remain in ArchiveCarousel below.
+//
+// Breaking out of container padding: the rail uses -mx-6 (matches the page's
+// clamp(24px, 3vw, 48px) padding on most mobile viewports) + pl-6 inside so the
+// first card aligns with the content boundary. This gives ~26px of next-card peek.
+
+function MobileStoryCarousel({
+  items,
+  onSelect,
+}: {
+  items:    CareerTimelineItem[]
+  onSelect: (item: CareerTimelineItem) => void
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const handleScroll = () => {
+      const card = el.querySelector<HTMLElement>('[data-mobile-card]')
+      if (!card) return
+      const unit = card.offsetWidth + 12 // 12px = gap-3
+      const idx = Math.min(Math.round(el.scrollLeft / unit), items.length - 1)
+      setActiveIdx(idx)
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [items.length])
+
+  if (items.length === 0) return null
+
+  return (
+    <div className="mt-3">
+      {/* Full-bleed scroll track — breaks out of content-area padding */}
+      <div className="relative -mx-6 overflow-hidden">
+        <div
+          ref={scrollRef}
+          className="flex snap-x snap-mandatory gap-3 overflow-x-auto pl-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {items.map((item) => (
+            <MobileStoryCard
+              key={item.id}
+              item={item}
+              onClick={() => onSelect(item)}
+            />
+          ))}
+          {/* Breathing room after last card so the right fade doesn't overlay the final card's content */}
+          <div className="flex-none w-4" aria-hidden />
+        </div>
+        {/* Right-edge fade — primary swipe affordance */}
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 w-[18vw] bg-gradient-to-r from-transparent to-background/90"
+        />
+      </div>
+
+      {/* Progress indicator — pill dot for active, round dot for others */}
+      {items.length > 1 && (
+        <div className="mt-[10px] flex items-center justify-center gap-[5px]">
+          {items.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                const el = scrollRef.current
+                if (!el) return
+                const card = el.querySelector<HTMLElement>('[data-mobile-card]')
+                if (!card) return
+                el.scrollTo({ left: i * (card.offsetWidth + 12), behavior: 'smooth' })
+              }}
+              className={cn(
+                'rounded-full transition-all duration-200 focus:outline-none',
+                i === activeIdx
+                  ? 'h-[5px] w-[14px] bg-accent/65'
+                  : 'h-[5px] w-[5px] bg-white/[0.16] hover:bg-white/30',
+              )}
+              aria-label={`Go to story ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── ArchiveCarousel ───────────────────────────────────────────────────────────
 // Compact horizontal scroll track for milestones not rendered in the main grid.
 // Shows only real items from the configured data source — no placeholders.
@@ -1251,30 +1433,30 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
   const carouselItems = [...archiveItems].sort((a, b) => b.eventDate.localeCompare(a.eventDate))
 
   return (
-    <section id="story" className="mt-10 lg:mt-12">
+    <section id="story" className="mt-10 scroll-mt-16 lg:mt-12">
       {/* Section spans the full content-area width (outer container is max-w-[1600px]).
           No inner max-width — the mosaic grid uses all available horizontal space. */}
       <div>
 
-        {useMosaicLayout ? (
+        {/* ── Mobile / tablet: premium horizontal swipe carousel (lg:hidden) ─────
+            Replaces the vertical grid stack on narrow screens. Desktop layout is
+            fully preserved in the hidden lg:block sections below. */}
+        <div className="lg:hidden">
+          <SectionHeader>{useMosaicLayout ? 'Artist Story' : 'Career Updates'}</SectionHeader>
+          <MobileStoryCarousel items={gridItems} onSelect={setSelectedItem} />
+        </div>
 
-          // ── Editorial mosaic (≥9 items): section title above grid, 9 content slots ──
-          // Total grid height: 6 rows × 86px + 5 gaps × 12px = 576px.
-          <>
+        {/* ── Desktop: editorial mosaic (≥7 items) ─────────────────────────────
+            12-column CSS Grid, grid-auto-rows: 86px. 9 named editorial slots.
+            Total grid height: 6 rows × 86px + 5 gaps × 12px = 576px. */}
+        {useMosaicLayout && (
+          <div className="hidden lg:block">
             <SectionHeader>Artist Story</SectionHeader>
-
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:[grid-auto-rows:86px]">
-
-              {/* Tile slots — positioned by SLOT_DESKTOP_CLASSES */}
+            <div className="mt-3 grid grid-cols-12 gap-3 [grid-auto-rows:86px]">
               {tileSlots.map(({ item, slot }) => (
                 <div
                   key={item.id}
-                  className={cn(
-                    "min-h-[160px]",
-                    (slot === 'left-tall-story' || slot === 'top-feature-primary') && "sm:col-span-2 sm:min-h-[200px]",
-                    SLOT_DESKTOP_CLASSES[slot],
-                    "lg:min-h-0",
-                  )}
+                  className={cn(SLOT_DESKTOP_CLASSES[slot], "min-h-0")}
                 >
                   {PRIMARY_SLOTS.has(slot) ? (
                     <PrimaryCard item={item} slot={slot} onClick={() => setSelectedItem(item)} />
@@ -1283,14 +1465,13 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
                   )}
                 </div>
               ))}
-
             </div>
-          </>
+          </div>
+        )}
 
-        ) : (
-
-          // ── Standard 3-col grid (fewer than 7 items): intro above grid ─────────
-          <>
+        {/* ── Desktop: standard 3-col grid (fewer than 7 items) ────────────────── */}
+        {!useMosaicLayout && (
+          <div className="hidden lg:block">
             <SectionHeader>Career Updates</SectionHeader>
             {headline && (
               <h3 className="mt-3 max-w-2xl text-[19px] font-black tracking-[-0.022em] text-foreground/84 sm:text-[21px]">
@@ -1302,31 +1483,22 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
                 {intro}
               </p>
             )}
-            <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 lg:grid-cols-3">
-              {/* Primary card */}
-              <div className={cn(
-                "sm:col-span-2 lg:col-span-1",
-                primaryHasImage
-                  ? "min-h-[280px] sm:min-h-[320px] lg:min-h-[380px]"
-                  : "min-h-[210px] sm:min-h-[240px] lg:min-h-[230px]",
-              )}>
+            <div className="mt-5 grid grid-cols-3 gap-[10px]">
+              <div className={primaryHasImage ? "min-h-[380px]" : "min-h-[230px]"}>
                 <PrimaryCard item={primary} onClick={() => setSelectedItem(primary)} />
               </div>
-              {/* Top-right pair — self-start so they don't stretch to primary height */}
               {topRight.map((item) => (
-                <div key={item.id} className="min-h-[160px] lg:self-start">
+                <div key={item.id} className="min-h-[160px] self-start">
                   <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
                 </div>
               ))}
-              {/* Bottom row */}
               {bottomRow.map((item) => (
                 <div key={item.id} className="min-h-[160px]">
                   <SecondaryCard item={item} onClick={() => setSelectedItem(item)} />
                 </div>
               ))}
             </div>
-          </>
-
+          </div>
         )}
 
         {/* ── Archive reveal control ───────────────────────────────────────── */}

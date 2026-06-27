@@ -832,7 +832,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
                 url: ogImageUrl,
                 width: 1200,
                 height: 630,
-                alt: `${artist.artistName} press photo`,
+                alt: `${artist.artistName} official artist website hero image`,
               },
             ],
           }
@@ -998,8 +998,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {/* Artist-website navigation — integrated into hero */}
         <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 pt-3 sm:px-10 sm:pt-7 lg:px-12">
-          {/* Left: section navigation — 4 items on mobile (Performance hidden), all 5 on desktop */}
-          <nav className="flex items-center gap-4 sm:gap-12">
+          {/* Left: section navigation — 5 items on mobile (Performance hidden), all 6 on desktop */}
+          <nav className="flex items-center gap-3 sm:gap-12">
             {PUBLIC_SECTION_NAV
               .filter(({ label }) => label !== "Contact" || !!artist.bookingInfo.email.trim())
               .map(({ label, href: navHref }) => (
@@ -1007,7 +1007,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   key={label}
                   href={navHref}
                   className={cn(
-                    "text-[13px] font-semibold uppercase tracking-[0.12em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]",
+                    "text-[12px] font-semibold uppercase tracking-[0.10em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]",
                     label === "Performance" && "hidden sm:block",
                   )}
                 >

@@ -64,7 +64,7 @@ export function MobileScrollNav() {
         heroExited ? "opacity-100" : "opacity-0 pointer-events-none",
       )}
     >
-      <div className="grid h-12 grid-cols-4 items-center">
+      <div className="grid h-12 grid-cols-5 items-center">
         {SECTIONS.map(({ id, label }) => {
           const isActive = activeId === id
           return (
