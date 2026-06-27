@@ -24,7 +24,7 @@ async function getOgArtistData(handle: string): Promise<OgArtistData | null> {
     const { data } = await client
       .from("artists")
       .select(
-        "artist_name, handle, tagline, genres, location, hero_image_url, seo_canonical_url, artist_accent_theme",
+        "artist_name, handle, hero_tagline, genres, location, hero_image_url, seo_canonical_url, seo_og_description, seo_description, artist_accent_theme",
       )
       .eq("handle", handle)
       .eq("is_published", true)

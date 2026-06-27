@@ -21,11 +21,13 @@ import { ACCENT_THEMES } from "@/lib/accent-themes"
 export type OgArtistData = {
   artist_name: string
   handle: string
-  tagline: string | null
+  hero_tagline: string | null    // HQ-editable tagline (Hero section)
   genres: string[] | null
   location: string | null
   hero_image_url: string | null
   seo_canonical_url: string | null
+  seo_og_description: string | null
+  seo_description: string | null
   artist_accent_theme: string | null
 }
 
@@ -142,7 +144,22 @@ export async function buildArtistOgImageResponse(
     // ── Resolve display text (all null-safe) ─────────────────────────────────
     const rawName = artist.artist_name?.trim() || "Artist"
     const displayName = rawName.toUpperCase()
-    const displayRole = artist.tagline?.trim() || ""
+
+    // Secondary line fallback chain — only real configured data, never invented copy.
+    // 1. HQ-editable tagline (hero_tagline) — what the artist set in HQ
+    // 2. seo_og_description — if short enough to fit the card (≤ 80 chars)
+    // 3. seo_description — if short enough (≤ 80 chars)
+    // 4. Generic safe fallback
+    const SEO_LENGTH_LIMIT = 80
+    const displayRole =
+      artist.hero_tagline?.trim() ||
+      (artist.seo_og_description?.trim() && (artist.seo_og_description.trim().length <= SEO_LENGTH_LIMIT)
+        ? artist.seo_og_description.trim()
+        : null) ||
+      (artist.seo_description?.trim() && (artist.seo_description.trim().length <= SEO_LENGTH_LIMIT)
+        ? artist.seo_description.trim()
+        : null) ||
+      "DJ & Producer"
     const displayGenres = Array.isArray(artist.genres)
       ? artist.genres.slice(0, 3).join("  ·  ")
       : ""
