@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { resolveSafeHref } from "@/lib/safe-url"
+import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 import type { GalleryImage, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
 
@@ -447,6 +448,51 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           </div>
 
+          {/* ── Artist Bio & Positioning ──────────────────────────────── */}
+          {(artist.tagline || artist.shortBio.trim() || artist.genres.length > 0 || artist.location.trim()) && (
+            <div className="mt-6 rounded-[20px] border border-white/[0.06] bg-white/[0.015] px-6 py-8 sm:px-10 sm:py-10">
+              <div className="max-w-[700px]">
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/30">
+                  About
+                </p>
+
+                {artist.tagline && (
+                  <h2 className="text-[19px] font-black tracking-[-0.022em] text-foreground/88 sm:text-[22px]">
+                    {artist.tagline}
+                  </h2>
+                )}
+
+                {(artist.genres.length > 0 || artist.location.trim()) && (
+                  <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1.5", artist.tagline ? "mt-3" : "")}>
+                    {artist.genres.map((g) => (
+                      <span
+                        key={g}
+                        className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/70"
+                      >
+                        {g}
+                      </span>
+                    ))}
+                    {artist.genres.length > 0 && artist.location.trim() && (
+                      <span className="text-white/20" aria-hidden>·</span>
+                    )}
+                    {artist.location.trim() && (
+                      <span className="text-[11px] text-white/42">{artist.location}</span>
+                    )}
+                  </div>
+                )}
+
+                {artist.shortBio.trim() && (
+                  <p className={cn(
+                    "text-[14px] leading-[1.74] text-white/60 sm:text-[15px]",
+                    (artist.tagline || artist.genres.length > 0 || artist.location.trim()) ? "mt-5" : "",
+                  )}>
+                    {artist.shortBio}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ── Press Kit Assets ──────────────────────────────────────── */}
           {hasIndividualFolders && (
             <div className="pk-section-lazy mt-10">
@@ -532,13 +578,19 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 {resolveSafeHref(`mailto:${artist.bookingInfo.email}`) ? (
                   <a
                     href={resolveSafeHref(`mailto:${artist.bookingInfo.email}`) ?? "#"}
-                    className="text-[13px] text-white/58 transition-colors duration-150 hover:text-accent/80"
+                    className="block text-[13px] text-white/58 transition-colors duration-150 hover:text-accent/80"
                   >
                     {artist.bookingInfo.email}
                   </a>
                 ) : (
                   <span className="text-[13px] text-white/22">—</span>
                 )}
+                <div className="mt-4">
+                  <BookingInquiryModal
+                    artistHandle={artist.handle}
+                    artistName={artist.artistName}
+                  />
+                </div>
               </div>
 
               {/* Center: Connect */}
