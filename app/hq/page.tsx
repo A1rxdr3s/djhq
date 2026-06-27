@@ -64,6 +64,14 @@ type ArtistRow = {
   footer_contact_email: string | null
   footer_demos_email: string | null
   footer_copyright: string | null
+  seo_title: string | null
+  seo_description: string | null
+  seo_canonical_url: string | null
+  seo_og_title: string | null
+  seo_og_description: string | null
+  seo_og_image_url: string | null
+  seo_twitter_image_url: string | null
+  seo_robots: string | null
   created_at: string
   updated_at: string
 }
@@ -486,6 +494,16 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     footerContactEmail: artistRow.footer_contact_email ?? null,
     footerDemosEmail: artistRow.footer_demos_email ?? null,
     footerCopyright: artistRow.footer_copyright ?? null,
+    seo: {
+      title:           artistRow.seo_title ?? undefined,
+      description:     artistRow.seo_description ?? undefined,
+      canonicalUrl:    artistRow.seo_canonical_url ?? undefined,
+      ogTitle:         artistRow.seo_og_title ?? undefined,
+      ogDescription:   artistRow.seo_og_description ?? undefined,
+      ogImageUrl:      artistRow.seo_og_image_url ?? undefined,
+      twitterImageUrl: artistRow.seo_twitter_image_url ?? undefined,
+      robots:          (artistRow.seo_robots as 'index,follow' | 'noindex,nofollow' | undefined) ?? undefined,
+    },
     createdAt: artistRow.created_at,
     updatedAt: artistRow.updated_at,
   }
