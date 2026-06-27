@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
+import { buildArtistDescription, buildArtistJsonLd, getPublicBaseUrl, toAbsoluteUrl } from "@/lib/djhq/seo"
 import type { Artist, CareerTimelineCategory, CareerTimelineItem, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { isSafeInternalPath, resolveSafeHref } from "@/lib/safe-url"
@@ -112,6 +113,14 @@ type ArtistRow = {
   footer_newsletter_enabled: boolean | null
   footer_socials_enabled: boolean | null
   footer_copyright: string | null
+  seo_title: string | null
+  seo_description: string | null
+  seo_canonical_url: string | null
+  seo_og_title: string | null
+  seo_og_description: string | null
+  seo_og_image_url: string | null
+  seo_twitter_image_url: string | null
+  seo_robots: string | null
   created_at: string
   updated_at: string
 }
@@ -636,6 +645,16 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       footerNewsletterEnabled: artistRow.footer_newsletter_enabled ?? true,
       footerSocialsEnabled: artistRow.footer_socials_enabled ?? true,
       footerCopyright: artistRow.footer_copyright ?? null,
+      seo: {
+        title:           artistRow.seo_title ?? undefined,
+        description:     artistRow.seo_description ?? undefined,
+        canonicalUrl:    artistRow.seo_canonical_url ?? undefined,
+        ogTitle:         artistRow.seo_og_title ?? undefined,
+        ogDescription:   artistRow.seo_og_description ?? undefined,
+        ogImageUrl:      artistRow.seo_og_image_url ?? undefined,
+        twitterImageUrl: artistRow.seo_twitter_image_url ?? undefined,
+        robots:          (artistRow.seo_robots as 'index,follow' | 'noindex,nofollow' | undefined) ?? undefined,
+      },
       careerTimeline: (careerTimelineResult.data ?? []).map((r): CareerTimelineItem => ({
         id: r.id,
         title: r.title,
@@ -715,24 +734,73 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     cacheKey: faviconCacheKey,
   })
 
+  const baseUrl = getPublicBaseUrl()
+
+  // ── Fallback chain for each metadata field ────────────────────────────────
+  // seo.* fields are explicit HQ overrides; all others derive from real data.
+
+  const seoTitle = artist.seo?.title?.trim() || title
+  const seoDescription =
+    artist.seo?.description?.trim() || buildArtistDescription(artist)
+
+  // Canonical: explicit config > custom domain (not yet mapped here) > DJHQ route
+  const canonicalUrl =
+    artist.seo?.canonicalUrl?.trim() || `${baseUrl}/${artist.handle}`
+
+  const ogTitle =
+    artist.seo?.ogTitle?.trim() ||
+    seoTitle ||
+    `${artist.artistName} — Official Artist Website`
+  const ogDescription = artist.seo?.ogDescription?.trim() || seoDescription
+
+  // OG image must be absolute; skip entirely if not resolvable
+  const ogImageRaw = artist.seo?.ogImageUrl || artist.heroImageUrl
+  const ogImageUrl  = toAbsoluteUrl(ogImageRaw, baseUrl)
+
+  // Twitter falls back to OG values
+  const twitterImageUrl =
+    toAbsoluteUrl(artist.seo?.twitterImageUrl, baseUrl) ?? ogImageUrl
+
+  const robotsValue =
+    (artist.seo?.robots as string | undefined) ?? "index,follow"
+
   return {
-    metadataBase: new URL("https://djhq.com"),
-    title,
-    description: artist.shortBio,
+    metadataBase: new URL(baseUrl),
+    title: seoTitle,
+    description: seoDescription,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    robots: robotsValue,
     icons: {
       icon: faviconHref,
       shortcut: faviconHref,
       apple: faviconHref,
     },
     openGraph: {
-      title,
-      description: artist.shortBio,
-      images: [
-        {
-          url: artist.heroImageUrl,
-          alt: `${artist.artistName} press photo`,
-        },
-      ],
+      type: "profile",
+      url: canonicalUrl,
+      siteName: artist.artistName,
+      title: ogTitle,
+      description: ogDescription,
+      ...(ogImageUrl
+        ? {
+            images: [
+              {
+                url: ogImageUrl,
+                width: 1200,
+                height: 630,
+                alt: `${artist.artistName} press photo`,
+              },
+            ],
+          }
+        : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      ...(twitterImageUrl ? { images: [twitterImageUrl] } : {}),
     },
   }
 }
@@ -849,8 +917,17 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   })
 
 
+  // Canonical URL for JSON-LD — mirrors the fallback logic in generateMetadata
+  const pageBaseUrl     = getPublicBaseUrl()
+  const pageCanonical   = artist.seo?.canonicalUrl?.trim() || `${pageBaseUrl}/${artist.handle}`
+  const pageJsonLd      = buildArtistJsonLd(artist, pageCanonical)
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
+      />
       <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}`}</style>
       <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">

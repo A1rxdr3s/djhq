@@ -62,6 +62,16 @@ create table if not exists public.artists (
   browser_title           text        null,
   favicon_url             text        null,
 
+  -- Search & Share (SEO) — migration 068
+  seo_title               text        null,
+  seo_description         text        null,
+  seo_canonical_url       text        null,
+  seo_og_title            text        null,
+  seo_og_description      text        null,
+  seo_og_image_url        text        null,
+  seo_twitter_image_url   text        null,
+  seo_robots              text        null check (seo_robots is null or seo_robots in ('index,follow', 'noindex,nofollow')),
+
   -- Hero branding
   hero_logo_url           text        null,
   hero_identity_mode      text        not null default 'text',

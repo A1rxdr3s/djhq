@@ -1113,6 +1113,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroImageY, setHeroImageY] = useState(50)
   const [heroImageZoom, setHeroImageZoom] = useState(100)
   const [accentTheme, setAccentTheme] = useState<ArtistAccentTheme>(initialArtist.accentTheme ?? "matrix")
+  // Search & Share (SEO) state
+  const [seoTitle,            setSeoTitle]            = useState(initialArtist.seo?.title ?? "")
+  const [seoDescription,      setSeoDescription]      = useState(initialArtist.seo?.description ?? "")
+  const [seoCanonicalUrl,     setSeoCanonicalUrl]     = useState(initialArtist.seo?.canonicalUrl ?? "")
+  const [seoOgTitle,          setSeoOgTitle]          = useState(initialArtist.seo?.ogTitle ?? "")
+  const [seoOgDescription,    setSeoOgDescription]    = useState(initialArtist.seo?.ogDescription ?? "")
+  const [seoOgImageUrl,       setSeoOgImageUrl]       = useState(initialArtist.seo?.ogImageUrl ?? "")
+  const [seoTwitterImageUrl,  setSeoTwitterImageUrl]  = useState(initialArtist.seo?.twitterImageUrl ?? "")
+  const [seoRobots,           setSeoRobots]           = useState<'index,follow' | 'noindex,nofollow'>(initialArtist.seo?.robots ?? "index,follow")
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const [previewScale, setPreviewScale] = useState(0.4)
   const [openHeroPanel, setOpenHeroPanel] = useState<"content"|"branding"|"media"|"appearance"|null>("content")
@@ -1565,7 +1574,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     heroContentSurface !== (artist.heroContentSurface ?? "soft") ||
     heroLogoPlacement !== (artist.heroLogoPlacement ?? "editorial") ||
     heroContentWidth !== (artist.heroContentWidth ?? "standard") ||
-    accentTheme !== (artist.accentTheme ?? "matrix")
+    accentTheme !== (artist.accentTheme ?? "matrix") ||
+    seoTitle            !== (artist.seo?.title ?? "") ||
+    seoDescription      !== (artist.seo?.description ?? "") ||
+    seoCanonicalUrl     !== (artist.seo?.canonicalUrl ?? "") ||
+    seoOgTitle          !== (artist.seo?.ogTitle ?? "") ||
+    seoOgDescription    !== (artist.seo?.ogDescription ?? "") ||
+    seoOgImageUrl       !== (artist.seo?.ogImageUrl ?? "") ||
+    seoTwitterImageUrl  !== (artist.seo?.twitterImageUrl ?? "") ||
+    seoRobots           !== (artist.seo?.robots ?? "index,follow")
   const isLinksDirty = JSON.stringify(linkUrls) !== JSON.stringify(initialLinkUrls)
   const isReleasesDirty = JSON.stringify(releases) !== JSON.stringify(initialReleases)
   const isGigsDirty = JSON.stringify(upcomingGigs) !== JSON.stringify(initialUpcomingGigs)
@@ -1642,6 +1659,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           heroLogoPlacement,
           heroContentWidth,
           accentTheme,
+          seoTitle,
+          seoDescription,
+          seoCanonicalUrl,
+          seoOgTitle,
+          seoOgDescription,
+          seoOgImageUrl,
+          seoTwitterImageUrl,
+          seoRobots,
         },
         socialLinks: PLATFORM_CONFIG
           .filter(({ id }) => linkUrls[id]?.trim())
@@ -1763,6 +1788,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       heroLogoPlacement,
       heroContentWidth,
       accentTheme,
+      seo: {
+        title:           seoTitle.trim() || undefined,
+        description:     seoDescription.trim() || undefined,
+        canonicalUrl:    seoCanonicalUrl.trim() || undefined,
+        ogTitle:         seoOgTitle.trim() || undefined,
+        ogDescription:   seoOgDescription.trim() || undefined,
+        ogImageUrl:      seoOgImageUrl.trim() || undefined,
+        twitterImageUrl: seoTwitterImageUrl.trim() || undefined,
+        robots:          seoRobots,
+      },
       isPublished: nextPublished,
       socialLinks: PLATFORM_CONFIG
         .filter(({ id }) => linkUrls[id]?.trim())
@@ -1913,6 +1948,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     setHeroLogoPlacement(savedArtist.heroLogoPlacement ?? "editorial")
     setHeroContentWidth(savedArtist.heroContentWidth ?? "standard")
     setAccentTheme(savedArtist.accentTheme ?? "matrix")
+    setSeoTitle(savedArtist.seo?.title ?? "")
+    setSeoDescription(savedArtist.seo?.description ?? "")
+    setSeoCanonicalUrl(savedArtist.seo?.canonicalUrl ?? "")
+    setSeoOgTitle(savedArtist.seo?.ogTitle ?? "")
+    setSeoOgDescription(savedArtist.seo?.ogDescription ?? "")
+    setSeoOgImageUrl(savedArtist.seo?.ogImageUrl ?? "")
+    setSeoTwitterImageUrl(savedArtist.seo?.twitterImageUrl ?? "")
+    setSeoRobots(savedArtist.seo?.robots ?? "index,follow")
     setLinkUrls(getLinkUrlsFromArtist(savedArtist))
     setReleases(getReleaseFormState(savedArtist))
     setUpcomingGigs(getGigFormState(savedArtist))
@@ -3996,6 +4039,149 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             )}
           </div>
         </div>
+
+        {/* Search & Share */}
+        <div className="rounded-xl border border-border bg-card/40 p-5 sm:p-6">
+          <div className="mb-5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Search &amp; Share</p>
+            <p className="mt-0.5 text-xs text-muted-foreground/45">Control how this artist profile appears in search engines and shared links.</p>
+          </div>
+          <div className="space-y-5">
+
+            {/* SEO Title */}
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="seoTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">SEO Title</label>
+                <span className={cn("text-[10px] tabular-nums transition-colors duration-150", seoTitle.length > 55 ? "text-amber-400/60" : "text-muted-foreground/30")}>{seoTitle.length}/70</span>
+              </div>
+              <Input
+                id="seoTitle"
+                value={seoTitle}
+                maxLength={70}
+                placeholder={`${artist.artistName} — DJ & Producer`}
+                onChange={(e) => setSeoTitle(e.target.value)}
+              />
+              <p className="text-[10px] text-muted-foreground/38">Shown in search results and browser previews.</p>
+            </div>
+
+            {/* Meta Description */}
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="seoDescription" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Meta Description</label>
+                <span className={cn("text-[10px] tabular-nums transition-colors duration-150", seoDescription.length > 150 ? "text-amber-400/60" : "text-muted-foreground/30")}>{seoDescription.length}/160</span>
+              </div>
+              <textarea
+                id="seoDescription"
+                value={seoDescription}
+                maxLength={160}
+                rows={3}
+                placeholder={`Official website of ${artist.artistName}. Explore upcoming shows, releases, artist story, and booking information.`}
+                onChange={(e) => setSeoDescription(e.target.value)}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/38 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+              />
+              <p className="text-[10px] text-muted-foreground/38">Short summary for search engines and shared links.</p>
+            </div>
+
+            {/* Canonical URL */}
+            <div className="space-y-2">
+              <label htmlFor="seoCanonicalUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Canonical URL</label>
+              <Input
+                id="seoCanonicalUrl"
+                type="url"
+                value={seoCanonicalUrl}
+                placeholder="https://yourdomain.com"
+                onChange={(e) => setSeoCanonicalUrl(e.target.value)}
+              />
+              <p className="text-[10px] text-muted-foreground/38">The official public URL for this artist profile. Leave blank to use the default DJHQ URL.</p>
+            </div>
+
+            {/* Open Graph */}
+            <div className="space-y-4 border-t border-border pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Open Graph</p>
+
+              <div className="space-y-2">
+                <label htmlFor="seoOgTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Open Graph Title</label>
+                <Input
+                  id="seoOgTitle"
+                  value={seoOgTitle}
+                  maxLength={95}
+                  placeholder={seoTitle || `${artist.artistName} — Official Artist Website`}
+                  onChange={(e) => setSeoOgTitle(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground/38">Title shown when this profile is shared. Defaults to SEO Title.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="seoOgDescription" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Open Graph Description</label>
+                <textarea
+                  id="seoOgDescription"
+                  value={seoOgDescription}
+                  maxLength={200}
+                  rows={2}
+                  placeholder={seoDescription || `Official artist profile for ${artist.artistName}.`}
+                  onChange={(e) => setSeoOgDescription(e.target.value)}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/38 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                />
+                <p className="text-[10px] text-muted-foreground/38">Description shown in social link previews. Defaults to Meta Description.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="seoOgImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Open Graph Image</label>
+                <Input
+                  id="seoOgImageUrl"
+                  type="url"
+                  value={seoOgImageUrl}
+                  placeholder="https://… (1200×630 recommended)"
+                  onChange={(e) => setSeoOgImageUrl(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground/38">Recommended 1200×630. Defaults to hero image. Must be an absolute HTTPS URL.</p>
+              </div>
+            </div>
+
+            {/* Twitter/X */}
+            <div className="space-y-4 border-t border-border pt-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Twitter / X</p>
+              <div className="space-y-2">
+                <label htmlFor="seoTwitterImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Twitter/X Image</label>
+                <Input
+                  id="seoTwitterImageUrl"
+                  type="url"
+                  value={seoTwitterImageUrl}
+                  placeholder="https://… (optional — uses Open Graph image if empty)"
+                  onChange={(e) => setSeoTwitterImageUrl(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground/38">Optional. Uses the Open Graph image if empty.</p>
+              </div>
+            </div>
+
+            {/* Search indexing toggle */}
+            <div className="flex items-start justify-between gap-4 border-t border-border pt-4">
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Allow Search Indexing</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/38">Let search engines index this public profile.</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={seoRobots === "index,follow"}
+                onClick={() => setSeoRobots(seoRobots === "index,follow" ? "noindex,nofollow" : "index,follow")}
+                className={cn(
+                  "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  seoRobots === "index,follow" ? "bg-accent" : "bg-input",
+                )}
+              >
+                <span
+                  className={cn(
+                    "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out",
+                    seoRobots === "index,follow" ? "translate-x-4" : "translate-x-0",
+                  )}
+                />
+              </button>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     )
   }

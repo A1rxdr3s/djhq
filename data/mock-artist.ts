@@ -115,7 +115,7 @@ export const mockArtist: Artist = {
     useGalleryPhotos: true,
   },
   plan: "pro",
-  browserTitle: "ANDRES:HERRERA — Official Site",
+  browserTitle: "ANDRES:HERRERA — DJ & Producer",
   faviconUrl: "",
   heroLogoUrl: null,
   heroIdentityMode: "text",
@@ -123,6 +123,16 @@ export const mockArtist: Artist = {
   customDomains: [],
   isPublished: true,
   showHeaderBranding: true,
+  seo: {
+    title: "ANDRES:HERRERA — DJ & Producer",
+    description:
+      "Official website of ANDRES:HERRERA, Chilean DJ and producer. Explore upcoming shows, releases, artist story, booking information, and international milestones including Pacha Barcelona, Miami Music Week, TABU Bali, and Euro Tour 2026.",
+    canonicalUrl: "https://andresherrera.music",
+    ogTitle: "ANDRES:HERRERA — Official Artist Website",
+    ogDescription:
+      "Chilean DJ and producer ANDRES:HERRERA. Shows, releases, booking, artist story, and international milestones.",
+    robots: "index,follow",
+  },
   createdAt: "2026-05-01T12:00:00.000Z",
   updatedAt: "2026-05-20T15:30:00.000Z",
 }

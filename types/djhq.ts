@@ -552,6 +552,30 @@ export interface ArtistStoryChapter {
 }
 
 /**
+ * Search-engine and social-share metadata for a public artist profile.
+ * All fields are optional; rendering falls back through a documented chain
+ * (see generateMetadata in app/[handle]/page.tsx).
+ */
+export interface ArtistSeo {
+  /** Shown in search results and browser previews. */
+  title?: string
+  /** Short summary for search engines and shared links. */
+  description?: string
+  /** The official public URL for this artist profile. */
+  canonicalUrl?: string
+  /** Title shown when this profile is shared. Falls back to title. */
+  ogTitle?: string
+  /** Description shown in social link previews. Falls back to description. */
+  ogDescription?: string
+  /** Share image URL (recommended 1200×630). */
+  ogImageUrl?: string
+  /** Optional Twitter/X card image. Falls back to ogImageUrl. */
+  twitterImageUrl?: string
+  /** Robots directive. Default: 'index,follow'. */
+  robots?: 'index,follow' | 'noindex,nofollow'
+}
+
+/**
  * Core DJHQ artist profile aggregate for the MVP.
  */
 export interface Artist {
@@ -649,6 +673,8 @@ export interface Artist {
   footerContactEmail?: string | null
   footerDemosEmail?: string | null
   footerCopyright?: string | null
+  /** SEO and social-share metadata. All fields optional; fallbacks applied at render time. */
+  seo?: ArtistSeo
   /** Career milestones shown in the editorial career story section. */
   careerTimeline?: CareerTimelineItem[]
   /** Record creation timestamp. */

@@ -30,6 +30,15 @@ type SaveProfilePayload = {
   heroLogoPlacement: string
   heroContentWidth: string
   accentTheme: string
+  // SEO & social-share metadata
+  seoTitle?: string
+  seoDescription?: string
+  seoCanonicalUrl?: string
+  seoOgTitle?: string
+  seoOgDescription?: string
+  seoOgImageUrl?: string
+  seoTwitterImageUrl?: string
+  seoRobots?: string
 }
 
 type SaveSocialLinkPayload = {
@@ -449,6 +458,14 @@ export async function PATCH(request: Request) {
         hero_logo_placement: ["editorial", "top_center", "center", "custom"].includes(payload.profile.heroLogoPlacement) ? payload.profile.heroLogoPlacement : "editorial",
         hero_content_width: ["compact", "standard", "wide"].includes(payload.profile.heroContentWidth) ? payload.profile.heroContentWidth : "standard",
         artist_accent_theme: ["matrix", "electric_blue", "signal_red"].includes(payload.profile.accentTheme) ? payload.profile.accentTheme : "matrix",
+        seo_title:             payload.profile.seoTitle?.trim() || null,
+        seo_description:       payload.profile.seoDescription?.trim() || null,
+        seo_canonical_url:     payload.profile.seoCanonicalUrl?.trim() || null,
+        seo_og_title:          payload.profile.seoOgTitle?.trim() || null,
+        seo_og_description:    payload.profile.seoOgDescription?.trim() || null,
+        seo_og_image_url:      payload.profile.seoOgImageUrl?.trim() || null,
+        seo_twitter_image_url: payload.profile.seoTwitterImageUrl?.trim() || null,
+        seo_robots:            (["index,follow", "noindex,nofollow"] as const).includes(payload.profile.seoRobots as "index,follow" | "noindex,nofollow") ? payload.profile.seoRobots : null,
         is_published: payload.isPublished,
         booking_email: payload.booking.email.trim(),
         booking_url: payload.booking.bookingUrl?.trim() || null,
