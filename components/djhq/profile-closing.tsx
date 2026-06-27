@@ -1,9 +1,7 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
 import { Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar } from "lucide-react"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
 import { resolveSafeHref } from "@/lib/safe-url"
 import { brand } from "@/lib/brand"
 import type { SocialLink, SocialPlatform } from "@/types/djhq"
@@ -64,20 +62,6 @@ export function ProfileClosing({
   footerSocialsEnabled = true,
   footerCopyright,
 }: Props) {
-  const [email, setEmail]   = useState("")
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const trimmed = email.trim()
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setStatus("error")
-      return
-    }
-    setStatus("loading")
-    setTimeout(() => setStatus("success"), 750)
-  }
-
   const year = new Date().getFullYear()
 
   const resolvedLogoUrl =
@@ -112,12 +96,6 @@ export function ProfileClosing({
     .filter((l): l is typeof l & { href: string; Icon: LucideIcon } =>
       l.href !== null && l.Icon !== undefined,
     )
-
-  const legalLinks = [
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms",          href: "/terms" },
-    { label: "Cookies Policy", href: "/cookies" },
-  ]
 
   const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
 
@@ -174,63 +152,12 @@ export function ProfileClosing({
           </div>
         )}
 
-        {/* 4. Newsletter */}
-        {footerNewsletterEnabled && (
-          <div className="mt-6">
-            <div className="mb-5 border-t border-white/[0.05]" />
-            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
-              STAY CONNECTED
-            </p>
-            {status === "success" ? (
-              <p className="text-[12px] text-white/45">You&apos;re on the list.</p>
-            ) : (
-              <>
-                <p className="mb-1.5 text-[14px] font-semibold leading-snug text-white/78">
-                  Get updates directly from {artistName}
-                </p>
-                <p className="mb-3 text-[12px] text-white/35">New music, shows, and guest list access.</p>
-                <form onSubmit={handleSubmit} noValidate className="flex gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
-                      if (status === "error") setStatus("idle")
-                    }}
-                    placeholder="your@email.com"
-                    aria-label="Email address"
-                    className={cn(
-                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
-                      status === "error"
-                        ? "border-red-500/30 focus:border-red-500/50"
-                        : "border-white/[0.18] focus:border-accent/50",
-                    )}
-                  />
-                  <button
-                    type="submit"
-                    disabled={status === "loading"}
-                    className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
-                  >
-                    {status === "loading" ? "···" : "Join"}
-                  </button>
-                </form>
-                {status === "error" && (
-                  <p className="mt-1.5 text-[10px] text-red-400/55">Enter a valid email address.</p>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
 
       </div>
       {/* ── end mobile ───────────────────────────────────────────────── */}
 
       {/* ── Desktop editorial grid ───────────────────────────────────── */}
-      <div className={cn(
-        "hidden sm:grid sm:items-start sm:gap-x-10 sm:py-9 lg:gap-x-16 lg:py-11",
-        footerNewsletterEnabled ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
-      )}>
+      <div className="hidden sm:grid sm:grid-cols-[2fr_1.2fr] sm:items-start sm:gap-x-10 sm:py-9 lg:gap-x-16 lg:py-11">
 
         {/* Col 1: Artist identity */}
         <div>
@@ -292,52 +219,6 @@ export function ProfileClosing({
           )}
         </div>
 
-        {/* Col 3: Newsletter */}
-        {footerNewsletterEnabled && (
-          <div>
-            <p className={headingClass}>STAY CONNECTED</p>
-            {status === "success" ? (
-              <p className="text-[13px] text-white/45">You&apos;re on the list.</p>
-            ) : (
-              <>
-                <p className="mb-1.5 text-[15px] font-semibold leading-snug text-white/78">
-                  Get updates directly from {artistName}
-                </p>
-                <p className="mb-4 text-[12px] text-white/38">New music, shows, and guest list access.</p>
-                <form onSubmit={handleSubmit} noValidate className="flex gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
-                      if (status === "error") setStatus("idle")
-                    }}
-                    placeholder="your@email.com"
-                    aria-label="Email address"
-                    className={cn(
-                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
-                      status === "error"
-                        ? "border-red-500/30 focus:border-red-500/50"
-                        : "border-white/[0.18] focus:border-accent/50",
-                    )}
-                  />
-                  <button
-                    type="submit"
-                    disabled={status === "loading"}
-                    className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
-                  >
-                    {status === "loading" ? "···" : "Join"}
-                  </button>
-                </form>
-                {status === "error" ? (
-                  <p className="mt-2 text-[10px] text-red-400/55">Enter a valid email address.</p>
-                ) : (
-                  <p className="mt-2 text-[10px] text-white/18">Occasional updates only.</p>
-                )}
-              </>
-            )}
-          </div>
-        )}
 
       </div>
       {/* ── end desktop grid ─────────────────────────────────────────── */}
@@ -356,14 +237,6 @@ export function ProfileClosing({
               </>
             )}
           </span>
-          {legalLinks.map(({ label, href }) => (
-            <span key={label} className="flex items-center">
-              <span className="mx-2 text-[11px] text-white/28" aria-hidden>·</span>
-              <Link href={href} className="text-[10px] text-white/40 transition-colors duration-150 hover:text-white/62">
-                {label}
-              </Link>
-            </span>
-          ))}
         </div>
       </div>
 

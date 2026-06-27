@@ -529,9 +529,9 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.26em] text-white/28">
                   Booking
                 </p>
-                {artist.bookingInfo.email.trim() ? (
+                {resolveSafeHref(`mailto:${artist.bookingInfo.email}`) ? (
                   <a
-                    href={`mailto:${artist.bookingInfo.email}`}
+                    href={resolveSafeHref(`mailto:${artist.bookingInfo.email}`) ?? "#"}
                     className="text-[13px] text-white/58 transition-colors duration-150 hover:text-accent/80"
                   >
                     {artist.bookingInfo.email}
@@ -567,26 +567,11 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 )}
               </div>
 
-              {/* Right: Copyright + legal */}
+              {/* Right: Copyright + branding */}
               <div className="sm:text-right">
                 <p className="text-[11px] text-white/35">
                   © {footerYear} {artist.artistName}
                 </p>
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 sm:justify-end">
-                  {[
-                    { label: "Privacy Policy", href: "/privacy" },
-                    { label: "Terms", href: "/terms" },
-                    { label: "Cookies", href: "/cookies" },
-                  ].map(({ label, href }) => (
-                    <Link
-                      key={label}
-                      href={href}
-                      className="text-[10px] text-white/25 transition-colors duration-150 hover:text-white/48"
-                    >
-                      {label}
-                    </Link>
-                  ))}
-                </div>
                 {artist.showHeaderBranding && (
                   <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/15">
                     Powered by{" "}
