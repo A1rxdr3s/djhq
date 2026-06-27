@@ -222,44 +222,42 @@ function IconInstagram({ className }: { className?: string }) {
   )
 }
 
-// ── MetaChip — Category · Year ────────────────────────────────────────────────
+// ── MetaChip — Year / Category stacked ───────────────────────────────────────
+// Vertical editorial stack: YEAR on top, CATEGORY below.
+// year is the chronological anchor; category classifies the milestone.
 
 function MetaChip({
   item,
   className,
   onImage,
+  yearSize = 'md',
 }: {
-  item:     CareerTimelineItem
+  item:       CareerTimelineItem
   className?: string
   onImage?:   boolean
+  yearSize?:  'lg' | 'md'
 }) {
   const shadow = onImage ? { textShadow: '0 1px 3px rgba(0,0,0,0.72)' } : undefined
   return (
-    <div className={cn("flex items-center gap-[5px]", className)}>
+    <div className={cn("flex flex-col gap-[2px]", className)}>
       <span
         className={cn(
-          "shrink-0 text-[7px] font-bold uppercase tracking-[0.22em]",
+          "tabular-nums font-bold leading-none",
+          onImage ? "text-foreground/90" : "text-foreground/82",
+          yearSize === 'lg' ? "text-[15px]" : "text-[13px]",
+        )}
+        style={shadow}
+      >
+        {itemYear(item)}
+      </span>
+      <span
+        className={cn(
+          "text-[7px] font-bold uppercase leading-none tracking-[0.22em]",
           onImage ? "text-accent/84" : "text-accent/74",
         )}
         style={shadow}
       >
         {itemCatLabel(item)}
-      </span>
-      <span
-        className={cn("shrink-0 text-[10px]", onImage ? "text-foreground/44" : "text-foreground/34")}
-        style={shadow}
-        aria-hidden
-      >
-        ·
-      </span>
-      <span
-        className={cn(
-          "shrink-0 text-[13px] font-bold tabular-nums",
-          onImage ? "text-foreground/90" : "text-foreground/80",
-        )}
-        style={shadow}
-      >
-        {itemYear(item)}
       </span>
     </div>
   )
@@ -447,7 +445,7 @@ function PrimaryCard({
                top-feature-primary (2 rows, ~184px): 48px avoids dominating the shorter card. */}
           <div
             className={cn(
-              "pointer-events-none absolute right-3 bottom-3 select-none font-black leading-none tabular-nums text-white/[0.062]",
+              "pointer-events-none absolute right-3 bottom-3 select-none font-black leading-none tabular-nums text-white/[0.038]",
               slot === 'left-tall-story' ? "text-[68px]" : "text-[48px]",
             )}
             aria-hidden
@@ -466,7 +464,7 @@ function PrimaryCard({
       {/* Content — split layout for image vs text-only */}
       {hasImage ? (
         <div className="relative flex flex-col h-full justify-end p-5 sm:p-[22px]">
-          <MetaChip item={item} onImage />
+          <MetaChip item={item} onImage yearSize={slot === 'left-tall-story' ? 'lg' : 'md'} />
           <h3
             className="mt-2 text-[18px] sm:text-[20px] font-black leading-[1.05] tracking-[-0.020em] text-foreground/96"
             style={{ textShadow: '0 1px 6px rgba(0,0,0,0.82)' }}
@@ -493,7 +491,7 @@ function PrimaryCard({
         </div>
       ) : (
         <div className="relative flex flex-col h-full p-[14px] sm:p-[16px] border-l-2 border-accent/[0.18]">
-          <MetaChip item={item} />
+          <MetaChip item={item} yearSize={slot === 'left-tall-story' ? 'lg' : 'md'} />
           <h3 className={cn(
             "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/96",
             slot === 'top-feature-primary' ? "text-[17px] sm:text-[21px]" : "text-[16px] sm:text-[19px]",
@@ -579,7 +577,7 @@ function SecondaryCard({
                those cards rely on the metadata row year instead. */}
           {isTallSlot && (
             <div
-              className="pointer-events-none absolute -right-1 -bottom-2 select-none text-[52px] font-black leading-none tabular-nums text-white/[0.062]"
+              className="pointer-events-none absolute -right-1 -bottom-2 select-none text-[52px] font-black leading-none tabular-nums text-white/[0.038]"
               aria-hidden
             >
               {itemYear(item)}
@@ -943,18 +941,7 @@ function ArchiveCarouselCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/94 via-black/44 to-black/10" />
         </>
       ) : (
-        <>
-          <div className="absolute inset-0 bg-white/[0.026] transition-colors duration-200 group-hover:bg-white/[0.044]" />
-          {/* Year watermark — anchored lower-right, consistent with mosaic card watermarks */}
-          <div
-            className="pointer-events-none absolute right-2 bottom-1 select-none"
-            aria-hidden
-          >
-            <span className="text-[40px] font-black leading-none tabular-nums text-white/[0.068]">
-              {itemYear(item)}
-            </span>
-          </div>
-        </>
+        <div className="absolute inset-0 bg-white/[0.026] transition-colors duration-200 group-hover:bg-white/[0.044]" />
       )}
 
       {/* Top accent stripe */}
@@ -971,25 +958,18 @@ function ArchiveCarouselCard({
       {/* Content — split layout: image cards anchor to bottom; text-only split top/bottom */}
       {hasImage ? (
         <div className="relative flex flex-col h-full p-[10px] justify-end">
-          <div className="flex items-center gap-[4px]">
+          <div className="flex flex-col gap-[2px]">
             <span
-              className="text-[7px] font-bold uppercase tracking-[0.17em] text-accent/82 transition-colors group-hover:text-accent/96"
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}
-            >
-              {itemCatLabel(item)}
-            </span>
-            <span
-              className="text-[7px] text-foreground/38"
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
-              aria-hidden
-            >
-              ·
-            </span>
-            <span
-              className="text-[10px] font-bold tabular-nums text-foreground/84"
+              className="text-[11px] font-bold tabular-nums leading-none text-foreground/88"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
             >
               {itemYear(item)}
+            </span>
+            <span
+              className="text-[6px] font-bold uppercase tracking-[0.17em] leading-none text-accent/82 transition-colors group-hover:text-accent/96"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}
+            >
+              {itemCatLabel(item)}
             </span>
           </div>
           <p
@@ -1015,14 +995,15 @@ function ArchiveCarouselCard({
         </div>
       ) : (
         <div className="relative flex flex-col h-full p-[10px] justify-between">
-          {/* Top: category + year + title */}
+          {/* Top: year + category + title */}
           <div>
-            <div className="flex items-center gap-[4px]">
-              <span className="text-[7px] font-bold uppercase tracking-[0.17em] text-accent/80 transition-colors group-hover:text-accent/95">
+            <div className="flex flex-col gap-[2px]">
+              <span className="text-[11px] font-bold tabular-nums leading-none text-foreground/82">
+                {itemYear(item)}
+              </span>
+              <span className="text-[6px] font-bold uppercase tracking-[0.17em] leading-none text-accent/72 transition-colors group-hover:text-accent/90">
                 {itemCatLabel(item)}
               </span>
-              <span className="text-[7px] text-foreground/22" aria-hidden>·</span>
-              <span className="text-[9px] font-medium tabular-nums text-foreground/52">{itemYear(item)}</span>
             </div>
             <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
               {item.title}
