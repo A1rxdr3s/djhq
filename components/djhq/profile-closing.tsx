@@ -1,11 +1,11 @@
 "use client"
 
+import { useState, type FormEvent } from "react"
 import { Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { resolveSafeHref } from "@/lib/safe-url"
 import { brand } from "@/lib/brand"
-import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 import type { SocialLink, SocialPlatform } from "@/types/djhq"
 import type { LucideIcon } from "lucide-react"
 
@@ -21,6 +21,8 @@ const SOCIAL_ICONS: Partial<Record<SocialPlatform, LucideIcon>> = {
   website:            Globe,
   other:              Link2,
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 type Props = {
   artistName: string
@@ -65,6 +67,29 @@ export function ProfileClosing({
   footerSocialsEnabled = true,
   footerCopyright,
 }: Props) {
+  const [email,  setEmail]  = useState("")
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const trimmed = email.trim()
+    if (!trimmed || !EMAIL_RE.test(trimmed)) {
+      setStatus("error")
+      return
+    }
+    setStatus("loading")
+    try {
+      const res = await fetch("/api/newsletter-signup", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email: trimmed, artistHandle }),
+      })
+      setStatus(res.ok ? "success" : "error")
+    } catch {
+      setStatus("error")
+    }
+  }
+
   const year = new Date().getFullYear()
 
   const resolvedLogoUrl =
@@ -100,10 +125,10 @@ export function ProfileClosing({
       l.href !== null && l.Icon !== undefined,
     )
 
-  const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
+  // Newsletter column is shown only when enabled AND we have a handle to identify the artist.
+  const showNewsletter = footerNewsletterEnabled && Boolean(artistHandle)
 
-  // Three-column desktop when a booking inquiry CTA is available; two-column otherwise.
-  const hasBookingCta = Boolean(artistHandle)
+  const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
 
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
@@ -124,7 +149,7 @@ export function ProfileClosing({
           <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
         )}
 
-        {/* 2. Booking email */}
+        {/* 2. Booking */}
         {contacts[0] && (
           <div className="mt-4">
             <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
@@ -158,25 +183,53 @@ export function ProfileClosing({
           </div>
         )}
 
-        {/* 4. Booking inquiry CTA — replaces the previous newsletter section,
-            preserving the visual weight and divider rhythm of the approved footer */}
-        {hasBookingCta && (
+        {/* 4. Stay Connected newsletter */}
+        {showNewsletter && (
           <div className="mt-6">
             <div className="mb-5 border-t border-white/[0.05]" />
             <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
-              Booking Inquiry
+              Stay Connected
             </p>
-            <p className="mb-1.5 text-[14px] font-semibold leading-snug text-white/78">
-              Book {artistName}
-            </p>
-            <p className="mb-4 text-[12px] text-white/35">
-              For club nights, festivals, private events, and press.
-            </p>
-            <BookingInquiryModal
-              artistHandle={artistHandle!}
-              artistName={artistName}
-              pressKitUrl={pressKitHref ?? undefined}
-            />
+            {status === "success" ? (
+              <p className="text-[12px] text-white/45">Thanks — you&apos;re on the list.</p>
+            ) : (
+              <>
+                <p className="mb-1.5 text-[14px] font-semibold leading-snug text-white/78">
+                  Get updates directly from {artistName}
+                </p>
+                <p className="mb-3 text-[12px] text-white/35">New music, shows, and guest list access.</p>
+                <form onSubmit={handleSubmit} noValidate className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (status === "error") setStatus("idle")
+                    }}
+                    placeholder="your@email.com"
+                    aria-label="Email address"
+                    className={cn(
+                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
+                      status === "error"
+                        ? "border-red-500/30 focus:border-red-500/50"
+                        : "border-white/[0.18] focus:border-accent/50",
+                    )}
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === "loading"}
+                    className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
+                  >
+                    {status === "loading" ? "···" : "Join"}
+                  </button>
+                </form>
+                {status === "error" && (
+                  <p className="mt-1.5 text-[10px] text-red-400/55">
+                    Couldn&apos;t join right now. Please try again.
+                  </p>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -184,12 +237,9 @@ export function ProfileClosing({
       {/* ── end mobile ───────────────────────────────────────────────── */}
 
       {/* ── Desktop editorial grid ───────────────────────────────────── */}
-      {/* Three-column layout mirrors the approved pre-cleanup structure.
-          Col 3 (booking inquiry) replaces the newsletter column — same visual
-          weight, real functionality via BookingInquiryModal + Resend. */}
       <div className={cn(
         "hidden sm:grid sm:items-start sm:gap-x-10 sm:py-9 lg:gap-x-16 lg:py-11",
-        hasBookingCta ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
+        showNewsletter ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
       )}>
 
         {/* Col 1: Artist identity */}
@@ -207,7 +257,7 @@ export function ProfileClosing({
           )}
         </div>
 
-        {/* Col 2: Booking emails + Connect icons */}
+        {/* Col 2: Booking + Connect */}
         <div className="space-y-8">
           {contacts.length > 0 && (
             <div>
@@ -252,23 +302,52 @@ export function ProfileClosing({
           )}
         </div>
 
-        {/* Col 3: Booking inquiry — occupies the third column position from the
-            approved layout, giving the footer its balanced three-column presence.
-            Replaces the newsletter which had no backend and has been removed. */}
-        {hasBookingCta && (
+        {/* Col 3: Stay Connected newsletter — real /api/newsletter-signup endpoint */}
+        {showNewsletter && (
           <div>
-            <p className={headingClass}>Booking Inquiry</p>
-            <p className="mb-1.5 text-[15px] font-semibold leading-snug text-white/78">
-              Book {artistName}
-            </p>
-            <p className="mb-4 text-[12px] text-white/38">
-              For club nights, festivals, private events, and press inquiries.
-            </p>
-            <BookingInquiryModal
-              artistHandle={artistHandle!}
-              artistName={artistName}
-              pressKitUrl={pressKitHref ?? undefined}
-            />
+            <p className={headingClass}>Stay Connected</p>
+            {status === "success" ? (
+              <p className="text-[13px] text-white/45">Thanks — you&apos;re on the list.</p>
+            ) : (
+              <>
+                <p className="mb-1.5 text-[15px] font-semibold leading-snug text-white/78">
+                  Get updates directly from {artistName}
+                </p>
+                <p className="mb-4 text-[12px] text-white/38">New music, shows, and guest list access.</p>
+                <form onSubmit={handleSubmit} noValidate className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (status === "error") setStatus("idle")
+                    }}
+                    placeholder="your@email.com"
+                    aria-label="Email address"
+                    className={cn(
+                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
+                      status === "error"
+                        ? "border-red-500/30 focus:border-red-500/50"
+                        : "border-white/[0.18] focus:border-accent/50",
+                    )}
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === "loading"}
+                    className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
+                  >
+                    {status === "loading" ? "···" : "Join"}
+                  </button>
+                </form>
+                {status === "error" ? (
+                  <p className="mt-2 text-[10px] text-red-400/55">
+                    Couldn&apos;t join right now. Please try again.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-[10px] text-white/18">Occasional updates only.</p>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -276,8 +355,8 @@ export function ProfileClosing({
       {/* ── end desktop grid ─────────────────────────────────────────── */}
 
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
-      {/* Legal links (/privacy, /terms, /cookies) are not rendered — those
-          pages do not yet exist and would 404. Re-add when real pages ship. */}
+      {/* Legal links (/privacy, /terms, /cookies) are not rendered —
+          those pages do not yet exist. Re-add when real pages ship. */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
         <div className="flex flex-wrap items-center">
           <span className="whitespace-nowrap text-[11px] text-white/48">
