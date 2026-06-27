@@ -687,6 +687,23 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
 }
 
 
+/**
+ * Validates a hero image URL for use as an OG image.
+ * Only absolute HTTPS URLs are accepted — OG images must be served over HTTPS.
+ * Returns undefined for empty strings, http:// URLs, and malformed values.
+ */
+function resolveHeroImageUrl(url: string | null | undefined): string | undefined {
+  const trimmed = url?.trim()
+  if (!trimmed) return undefined
+  if (!trimmed.startsWith("https://")) return undefined
+  try {
+    new URL(trimmed)
+    return trimmed
+  } catch {
+    return undefined
+  }
+}
+
 export function generateStaticParams() {
   return [{ handle: mockArtist.handle }]
 }
@@ -753,7 +770,11 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     `${artist.artistName} — Official Artist Website`
   const ogDescription = artist.seo?.ogDescription?.trim() || seoDescription
 
-  // OG image: explicit HQ override → dynamic generated image for this artist.
+  // OG image fallback order:
+  //   1. Custom SEO Open Graph Image URL — explicit HQ override, overrides everything.
+  //   2. Artist hero image — the configured public hero photo (must be absolute HTTPS).
+  //      Chosen because it gives the most realistic preview of the actual page.
+  //   3. Dynamic /opengraph-image route — typographic fallback, always stable.
   //
   // Dynamic URL strategy:
   //   - Custom domain (seo.canonicalUrl configured): use {canonicalOrigin}/opengraph-image
@@ -768,10 +789,17 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
       dynamicOgImageUrl = `${origin}/opengraph-image`
     } catch { /* malformed canonical URL — fall back to DJHQ host URL */ }
   }
-  const ogImageUrl =
-    toAbsoluteUrl(artist.seo?.ogImageUrl, baseUrl) ?? dynamicOgImageUrl
 
-  // Twitter: explicit twitter image → OG image (custom or dynamic)
+  const heroImageForOg = resolveHeroImageUrl(artist.heroImageUrl)
+
+  const ogImageUrl =
+    toAbsoluteUrl(artist.seo?.ogImageUrl, baseUrl) ??
+    heroImageForOg ??
+    dynamicOgImageUrl
+
+  // Twitter fallback order:
+  //   1. Custom Twitter/X Image URL
+  //   2. ogImageUrl (which already encodes: custom OG → hero → dynamic)
   const twitterImageUrl =
     toAbsoluteUrl(artist.seo?.twitterImageUrl, baseUrl) ?? ogImageUrl
 
