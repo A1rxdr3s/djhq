@@ -75,11 +75,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(APP_URL)
   }
 
+  // Platform-level routes that must be served directly, never rewritten to /{handle}/...
+  const RESERVED_PLATFORM_PATHS = new Set(["/privacy", "/terms", "/cookies", "/robots.txt", "/sitemap.xml"])
+  const originalPath = request.nextUrl.pathname
+  if (RESERVED_PLATFORM_PATHS.has(originalPath)) {
+    return NextResponse.next()
+  }
+
   // Internally serve /[handle][/sub-path] while the browser URL stays on the custom domain.
   // e.g. artistname.com/ → /[handle]
   //      artistname.com/presskit → /[handle]/presskit
   const url = request.nextUrl.clone()
-  const originalPath = url.pathname
   if (originalPath === "/" || originalPath === `/${artist.handle}`) {
     url.pathname = `/${artist.handle}`
   } else {
