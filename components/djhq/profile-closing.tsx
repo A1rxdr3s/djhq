@@ -4,6 +4,7 @@ import { Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar 
 import Link from "next/link"
 import { resolveSafeHref } from "@/lib/safe-url"
 import { brand } from "@/lib/brand"
+import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 import type { SocialLink, SocialPlatform } from "@/types/djhq"
 import type { LucideIcon } from "lucide-react"
 
@@ -45,11 +46,14 @@ type Props = {
 
 export function ProfileClosing({
   artistName,
+  location,
   bookingEmail,
   isPro,
+  genres,
   socialLinks = [],
   hasPressKit = false,
   pressKitHref = null,
+  artistHandle,
   heroLogoUrl,
   heroIdentityMode,
   footerLogoUrl,
@@ -97,15 +101,21 @@ export function ProfileClosing({
       l.href !== null && l.Icon !== undefined,
     )
 
-  const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
+  // Identity descriptor — genre tags (max 3) and/or location.
+  // Falls back to "Official artist website" so the column is never empty.
+  const genreLabel   = genres?.length ? genres.slice(0, 3).join(' · ') : null
+  const locationLabel = location?.trim() || null
+  const officialDescriptor = !genreLabel && !locationLabel ? 'Official artist website' : null
+
+  const headingClass = "mb-3 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
 
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
       {/* ── Mobile layout ─────────────────────────────────────────────── */}
-      <div className="sm:hidden py-5">
+      <div className="py-8 sm:hidden">
 
-        {/* 1. Identity: logo / name + genres + location */}
+        {/* 1. Identity: logo / name */}
         {resolvedLogoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -118,10 +128,26 @@ export function ProfileClosing({
           <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
         )}
 
+        {/* Genre / location descriptor */}
+        {genreLabel && (
+          <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent/60">
+            {genreLabel}
+          </p>
+        )}
+        {locationLabel && (
+          <p className="mt-1 text-[11px] text-white/36">{locationLabel}</p>
+        )}
+        {officialDescriptor && (
+          <p className="mt-2 text-[11px] text-white/32">{officialDescriptor}</p>
+        )}
+
+        {/* Divider */}
+        <div className="mt-6 border-t border-white/[0.05]" />
+
         {/* 2. Booking */}
         {contacts[0] && (
-          <div className="mt-4">
-            <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
+          <div className="mt-5">
+            <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
               {contacts[0].label}
             </p>
             <a
@@ -130,37 +156,59 @@ export function ProfileClosing({
             >
               {contacts[0].email}
             </a>
+            {contacts.slice(1).map(({ label, email: addr }) => (
+              <div key={label} className="mt-2">
+                <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white/22">{label}</p>
+                <a
+                  href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
+                  className="text-[13px] text-white/60 transition-colors duration-200 hover:text-white/85"
+                >
+                  {addr}
+                </a>
+              </div>
+            ))}
+            {artistHandle && (
+              <div className="mt-4">
+                <BookingInquiryModal
+                  artistHandle={artistHandle}
+                  artistName={artistName}
+                  pressKitUrl={pressKitHref ?? undefined}
+                />
+              </div>
+            )}
           </div>
         )}
 
         {/* 3. Connect */}
         {footerSocialsEnabled && iconLinks.length > 0 && (
-          <div className="mt-5 flex flex-wrap items-center gap-x-[22px] gap-y-3">
-            {iconLinks.map(({ platform, url, label, href, Icon }) => (
-              <a
-                key={`m-${platform}-${url}`}
-                href={href}
-                aria-label={label}
-                title={label}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/62 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
-              >
-                <Icon className="h-[22px] w-[22px]" />
-              </a>
-            ))}
+          <div className="mt-7">
+            <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">Connect</p>
+            <div className="flex flex-wrap items-center gap-x-[22px] gap-y-3">
+              {iconLinks.map(({ platform, url, label, href, Icon }) => (
+                <a
+                  key={`m-${platform}-${url}`}
+                  href={href}
+                  aria-label={label}
+                  title={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/55 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                >
+                  <Icon className="h-[22px] w-[22px]" />
+                </a>
+              ))}
+            </div>
           </div>
         )}
-
 
       </div>
       {/* ── end mobile ───────────────────────────────────────────────── */}
 
       {/* ── Desktop editorial grid ───────────────────────────────────── */}
-      <div className="hidden sm:grid sm:grid-cols-[2fr_1.2fr] sm:items-start sm:gap-x-10 sm:py-9 lg:gap-x-16 lg:py-11">
+      <div className="hidden sm:grid sm:grid-cols-[2fr_1.2fr] sm:items-start sm:gap-x-12 sm:py-10 lg:gap-x-20 lg:py-12">
 
         {/* Col 1: Artist identity */}
-        <div>
+        <div className="max-w-[440px]">
           {resolvedLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -172,6 +220,23 @@ export function ProfileClosing({
           ) : (
             <p className="text-[15px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
           )}
+
+          {/* Genre descriptor */}
+          {genreLabel && (
+            <p className="mt-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-accent/55">
+              {genreLabel}
+            </p>
+          )}
+
+          {/* Location */}
+          {locationLabel && (
+            <p className="mt-1.5 text-[12px] text-white/34">{locationLabel}</p>
+          )}
+
+          {/* Fallback descriptor */}
+          {officialDescriptor && (
+            <p className="mt-3 text-[12px] text-white/30">{officialDescriptor}</p>
+          )}
         </div>
 
         {/* Col 2: Booking + Connect */}
@@ -179,7 +244,10 @@ export function ProfileClosing({
           {contacts.length > 0 && (
             <div>
               <p className={headingClass}>Booking</p>
-              <div className="space-y-4">
+              <p className="mb-3 text-[11px] leading-[1.6] text-white/28">
+                For bookings, press, and professional inquiries.
+              </p>
+              <div className="space-y-3">
                 {contacts.map(({ label, email: addr }) => (
                   <div key={label}>
                     {contacts.length > 1 && (
@@ -194,6 +262,15 @@ export function ProfileClosing({
                   </div>
                 ))}
               </div>
+              {artistHandle && (
+                <div className="mt-5">
+                  <BookingInquiryModal
+                    artistHandle={artistHandle}
+                    artistName={artistName}
+                    pressKitUrl={pressKitHref ?? undefined}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -209,7 +286,7 @@ export function ProfileClosing({
                     title={label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white/65 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                    className="text-white/55 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
                   >
                     <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
                   </a>
@@ -218,7 +295,6 @@ export function ProfileClosing({
             </div>
           )}
         </div>
-
 
       </div>
       {/* ── end desktop grid ─────────────────────────────────────────── */}
