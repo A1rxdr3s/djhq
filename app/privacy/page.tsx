@@ -75,10 +75,10 @@ export default async function PrivacyPage() {
           <Section n={1} title="What We Collect">
             <p>
               <span className="font-semibold text-white/70">Stay Connected / Audience Signup.</span>{" "}
-              When you submit your email through the Stay Connected form on an artist profile, we
+              When you submit your email through the Stay Connected form on this artist website, we
               collect your email address, the date and time of signup, the source of the signup, and
-              limited technical information such as browser type and a one-way cryptographic hash of
-              your IP address for security and abuse prevention. Your IP address is not stored in a
+              limited technical information such as browser type, referral source, and a one-way
+              cryptographic hash of your IP address for security and abuse prevention. Your IP address is not stored in a
               reversible form.
             </p>
             <p>
@@ -133,7 +133,7 @@ export default async function PrivacyPage() {
 
           <Section n={4} title="Third-Party Services">
             <p>
-              We work with the following third-party services to operate this platform:
+              We use the following third-party services to operate artist websites powered by {brand.name}:
             </p>
             <div className="mt-4 overflow-x-auto rounded-lg border border-white/[0.06]">
               <table className="w-full text-[13px]">
@@ -214,7 +214,7 @@ export default async function PrivacyPage() {
           <Section n={9} title="Contact">
             {artist?.contactEmail && (
               <p>
-                {artist.artistName} contact:{" "}
+                {artist.artistName} website contact:{" "}
                 <a
                   href={`mailto:${artist.contactEmail}`}
                   className="text-white/60 underline decoration-white/20 underline-offset-2 transition-colors duration-150 hover:text-white/80"
