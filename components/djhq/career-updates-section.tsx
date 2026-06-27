@@ -271,7 +271,7 @@ function MetaChip({
       <span
         className={cn(
           "tabular-nums font-bold leading-none",
-          onImage ? "text-foreground/90" : "text-foreground/82",
+          onImage ? "text-foreground/82" : "text-foreground/70",
           yearSize === 'lg' ? "text-[15px]" : "text-[13px]",
         )}
         style={shadow}
@@ -1034,7 +1034,7 @@ function ArchiveCarouselCard({
           {showArchiveMeta ? (
             <div className="flex flex-col gap-[2px]">
               <span
-                className="text-[11px] font-bold tabular-nums leading-none text-foreground/88"
+                className="text-[11px] font-bold tabular-nums leading-none text-foreground/78"
                 style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
               >
                 {itemYear(item)}
@@ -1082,7 +1082,7 @@ function ArchiveCarouselCard({
           <div>
             {showArchiveMeta ? (
               <div className="flex flex-col gap-[2px]">
-                <span className="text-[11px] font-bold tabular-nums leading-none text-foreground/82">
+                <span className="text-[11px] font-bold tabular-nums leading-none text-foreground/70">
                   {itemYear(item)}
                 </span>
                 <span className="text-[6px] font-bold uppercase tracking-[0.17em] leading-none text-accent/72 transition-colors group-hover:text-accent/90">
@@ -1331,14 +1331,14 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         {/* ── Archive reveal control ───────────────────────────────────────── */}
         {carouselItems.length > 0 && (
-          <div className="mt-[18px] flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/[0.045]" aria-hidden />
+          <div className="mt-[22px] flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
             <button
               type="button"
               onClick={() => setIsArchiveExpanded((v) => !v)}
               aria-expanded={isArchiveExpanded}
               aria-controls="more-milestones-archive"
-              className="flex items-center gap-[5px] rounded-[3px] text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground/34 transition-colors hover:text-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+              className="flex items-center gap-[6px] rounded-full border border-white/[0.13] px-[14px] py-[6px] text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground/52 transition-all duration-200 hover:border-white/[0.22] hover:text-foreground/76 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {isArchiveExpanded
                 ? 'Show less'
@@ -1350,7 +1350,7 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
                 )}
               />
             </button>
-            <div className="h-px flex-1 bg-white/[0.045]" aria-hidden />
+            <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
           </div>
         )}
 
