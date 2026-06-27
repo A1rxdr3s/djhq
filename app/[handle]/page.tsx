@@ -753,11 +753,13 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     `${artist.artistName} — Official Artist Website`
   const ogDescription = artist.seo?.ogDescription?.trim() || seoDescription
 
-  // OG image must be absolute; skip entirely if not resolvable
-  const ogImageRaw = artist.seo?.ogImageUrl || artist.heroImageUrl
-  const ogImageUrl  = toAbsoluteUrl(ogImageRaw, baseUrl)
+  // OG image: explicit HQ override → dynamic generated image for this artist
+  // The dynamic route /[handle]/opengraph-image generates a 1200×630 image from real artist data.
+  const dynamicOgImageUrl = `${baseUrl}/${artist.handle}/opengraph-image`
+  const ogImageUrl =
+    toAbsoluteUrl(artist.seo?.ogImageUrl, baseUrl) ?? dynamicOgImageUrl
 
-  // Twitter falls back to OG values
+  // Twitter: explicit twitter image → OG image (custom or dynamic)
   const twitterImageUrl =
     toAbsoluteUrl(artist.seo?.twitterImageUrl, baseUrl) ?? ogImageUrl
 

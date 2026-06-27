@@ -4134,7 +4134,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   placeholder="https://… (1200×630 recommended)"
                   onChange={(e) => setSeoOgImageUrl(e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground/38">Recommended 1200×630. Defaults to hero image. Must be an absolute HTTPS URL.</p>
+                <p className="text-[10px] text-muted-foreground/38">Optional custom image URL. If empty, DJHQ generates a share image from this artist profile.</p>
               </div>
             </div>
 
