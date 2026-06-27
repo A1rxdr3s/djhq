@@ -7,10 +7,11 @@
  *
  * Always runs in Node.js runtime (no edge runtime — Supabase JS requires Node).
  *
- * Hero image is not included in the main JSX to avoid a satori streaming-layer
- * 500: satori fetches <img> URLs lazily, after the function returns, so those
- * failures bypass all try/catch. Hero images can be re-enabled once basic
- * rendering is fully confirmed stable in production.
+ * Hero image safety: images are pre-fetched and converted to base64 data URLs
+ * BEFORE creating the ImageResponse. This means satori never makes network
+ * requests during the lazy streaming render phase, which was the root cause of
+ * the previous 500 errors. If the pre-fetch fails for any reason, we render
+ * without the image — the route never crashes.
  */
 
 import { ImageResponse } from "next/og"
@@ -35,13 +36,44 @@ export type OgArtistData = {
 
 const W = 1200
 const H = 630
-const LEFT_W = 640
-const RIGHT_W = 560       // W - LEFT_W
+const PAD_X = 88   // horizontal safe-area padding
+const PAD_Y = 54   // vertical padding (top/bottom)
 const DARK_BG = "#090909"
 const FALLBACK_ACCENT_RGB = "0, 230, 167"
 
+// Max raw image size we'll accept — prevents OOM in satori/resvg.
+const MAX_IMAGE_BYTES = 6_000_000
+// Network timeout for hero image pre-fetch.
+const IMAGE_FETCH_TIMEOUT_MS = 3500
+
+// ─── Hero image pre-fetch ─────────────────────────────────────────────────────
+//
+// Called before new ImageResponse() so satori never makes network requests
+// during the streaming render phase. Returns a data URL or null.
+
+async function fetchHeroImageDataUrl(url: string | null): Promise<string | null> {
+  if (!url || !url.startsWith("https://")) return null
+  try {
+    const controller = new AbortController()
+    const tid = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS)
+    const res = await fetch(url, { signal: controller.signal })
+    clearTimeout(tid)
+    if (!res.ok) return null
+    // Skip oversized images.
+    const cl = res.headers.get("content-length")
+    if (cl && parseInt(cl, 10) > MAX_IMAGE_BYTES) return null
+    const buf = await res.arrayBuffer()
+    if (buf.byteLength > MAX_IMAGE_BYTES) return null
+    const ct = (res.headers.get("content-type") || "image/jpeg").split(";")[0]
+    const b64 = Buffer.from(buf).toString("base64")
+    return `data:${ct};base64,${b64}`
+  } catch {
+    return null
+  }
+}
+
 // ─── Ultra-minimal panic card ─────────────────────────────────────────────────
-// No external resources, no images, no gradients — cannot fail in satori.
+// No external resources whatsoever — cannot fail in satori.
 
 function minimalFallbackCard(label: string | null): Response {
   return new ImageResponse(
@@ -73,9 +105,11 @@ function minimalFallbackCard(label: string | null): Response {
 /**
  * Build a 1200×630 PNG ImageResponse for an artist OG card.
  *
- * Visual layout:
- *   Left 640px  — artist identity: eyebrow, name, tagline, location/genres, section nav, URL
- *   Right 560px — site preview stack: SHOWS, ARTIST STORY, RELEASES, BOOKING bento cards
+ * Visual layout: hero-style full-canvas cinematic composition.
+ *   Background  — near-black base + optional hero image as dark atmosphere
+ *   Top bar     — eyebrow (● OFFICIAL ARTIST WEBSITE) + DJHQ brand
+ *   Middle      — artist identity: accent bar, name, tagline, location/genres
+ *   Bottom      — separator, section labels, canonical URL
  *
  * Falls back to minimalFallbackCard on any render error. Does not throw.
  */
@@ -117,6 +151,10 @@ export async function buildArtistOgImageResponse(
     const accentHex = accentTheme.hex
     const accentRgb = accentTheme.glowRgb
 
+    // ── Pre-fetch hero image (safe, outside streaming phase) ─────────────────
+    const heroDataUrl = await fetchHeroImageDataUrl(artist.hero_image_url)
+    console.log(`[og-image] hero image: ${heroDataUrl ? "loaded" : "absent"}`)
+
     // ── Resolve display text ─────────────────────────────────────────────────
     const rawName = artist.artist_name?.trim() || "Artist"
     const displayName = rawName.toUpperCase()
@@ -141,68 +179,178 @@ export async function buildArtistOgImageResponse(
     const rawUrl = artist.seo_canonical_url?.trim() || `${baseUrl}/${artist.handle}`
     const displayUrl = rawUrl.replace(/^https?:\/\//, "")
 
-    // Name font size: scale down for longer names
+    // Name font size: safe-text-width = W - 2 * PAD_X = 1024px.
+    // Scales down for longer display names.
+    const nameLen = displayName.length
     const nameFontSize =
-      displayName.length > 22 ? 50
-      : displayName.length > 18 ? 60
-      : displayName.length > 14 ? 72
-      : displayName.length > 10 ? 82
-      : 94
+      nameLen > 28 ? 48
+      : nameLen > 22 ? 58
+      : nameLen > 18 ? 68
+      : nameLen > 14 ? 80
+      : nameLen > 10 ? 92
+      : 104
 
-    console.log(`[og-image] rendering card for "${rawName}" (${displayName.length} chars, ${nameFontSize}px)`)
+    console.log(`[og-image] rendering "${rawName}" (${nameLen} chars, ${nameFontSize}px)`)
 
     // ── Render ───────────────────────────────────────────────────────────────
     return new ImageResponse(
+
       // ── Canvas ─────────────────────────────────────────────────────────────
       <div
         style={{
+          position: "relative",
           width: W,
           height: H,
           display: "flex",
-          flexDirection: "row",
           backgroundColor: DARK_BG,
-          // Very subtle accent gradient in the top-left corner
-          backgroundImage: `linear-gradient(145deg, rgba(${accentRgb}, 0.028) 0%, transparent 45%)`,
         }}
       >
-        {/* ── LEFT: Artist identity (640px) ─────────────────────────────── */}
+        {/* ── Layer 1: Hero image (pre-fetched data URL — no satori network fetch) */}
+        {heroDataUrl ? (
+          <img
+            src={heroDataUrl}
+            width={W}
+            height={H}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: W,
+              height: H,
+              objectFit: "cover",
+              // Keep it very subtle — atmosphere, not dominant
+              opacity: 0.22,
+            }}
+          />
+        ) : null}
+
+        {/* ── Layer 2a: Bottom-up gradient (footer legibility) */}
         <div
           style={{
-            width: LEFT_W,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: W,
+            height: H,
+            display: "flex",
+            backgroundImage:
+              "linear-gradient(to top, rgba(9,9,9,1) 0%, rgba(9,9,9,0.88) 28%, rgba(9,9,9,0.4) 60%, rgba(9,9,9,0.15) 100%)",
+          }}
+        />
+
+        {/* ── Layer 2b: Left-to-right gradient (text-area legibility) */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: W,
+            height: H,
+            display: "flex",
+            backgroundImage:
+              "linear-gradient(to right, rgba(9,9,9,0.88) 0%, rgba(9,9,9,0.55) 40%, rgba(9,9,9,0.10) 100%)",
+          }}
+        />
+
+        {/* ── Layer 2c: Accent glow — top-left corner (when no image) */}
+        {!heroDataUrl ? (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: W,
+              height: H,
+              display: "flex",
+              backgroundImage: `linear-gradient(145deg, rgba(${accentRgb}, 0.055) 0%, transparent 45%)`,
+            }}
+          />
+        ) : null}
+
+        {/* ── Layer 3: Left accent edge line */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: 2,
+            height: H,
+            display: "flex",
+            backgroundImage: `linear-gradient(to bottom, ${accentHex} 0%, rgba(${accentRgb}, 0.0) 100%)`,
+            opacity: 0.55,
+          }}
+        />
+
+        {/* ── Layer 4: Content ────────────────────────────────────────────── */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: W,
             height: H,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "52px 56px 48px",
+            padding: `${PAD_Y}px ${PAD_X}px ${PAD_Y - 4}px`,
           }}
         >
-          {/* Eyebrow */}
-          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {/* ── Top bar: eyebrow + DJHQ ─────────────────────────────────── */}
+          <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+            {/* Eyebrow */}
+            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <div
+                style={{
+                  display: "flex",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  backgroundColor: accentHex,
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  color: accentHex,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.22em",
+                }}
+              >
+                OFFICIAL ARTIST WEBSITE
+              </div>
+            </div>
+            <div style={{ display: "flex", flex: 1 }} />
+            {/* DJHQ brand mark */}
             <div
               style={{
                 display: "flex",
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                backgroundColor: accentHex,
-              }}
-            />
-            <div
-              style={{
-                display: "flex",
-                color: accentHex,
+                color: "rgba(255,255,255,0.22)",
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.22em",
               }}
             >
-              OFFICIAL ARTIST WEBSITE
+              DJHQ
             </div>
           </div>
 
-          {/* Main identity block */}
+          {/* ── Flex spacer: pushes identity block toward lower third ───── */}
+          <div style={{ display: "flex", flex: 1 }} />
+
+          {/* ── Artist identity block ────────────────────────────────────── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Artist name */}
+            {/* Short accent bar above name */}
+            <div
+              style={{
+                display: "flex",
+                width: 28,
+                height: 2,
+                backgroundColor: accentHex,
+                opacity: 0.9,
+              }}
+            />
+
+            {/* Artist name — full safe-text-width, no overflow container */}
             <div
               style={{
                 display: "flex",
@@ -211,6 +359,8 @@ export async function buildArtistOgImageResponse(
                 fontWeight: 800,
                 letterSpacing: "-0.022em",
                 lineHeight: 1,
+                // Explicit max width to prevent layout artifacts
+                maxWidth: W - PAD_X * 2,
               }}
             >
               {displayName}
@@ -220,16 +370,17 @@ export async function buildArtistOgImageResponse(
             <div
               style={{
                 display: "flex",
-                color: "rgba(255,255,255,0.52)",
-                fontSize: 19,
+                color: "rgba(255,255,255,0.55)",
+                fontSize: 22,
                 fontWeight: 400,
                 letterSpacing: "0.01em",
+                maxWidth: W - PAD_X * 2,
               }}
             >
               {displayRole}
             </div>
 
-            {/* Location · genres */}
+            {/* Location · genres (only if configured) */}
             {displayLocation || displayGenres ? (
               <div
                 style={{
@@ -241,15 +392,31 @@ export async function buildArtistOgImageResponse(
                 }}
               >
                 {displayLocation ? (
-                  <div style={{ display: "flex", color: "rgba(255,255,255,0.30)", fontSize: 13, letterSpacing: "0.04em" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      color: "rgba(255,255,255,0.32)",
+                      fontSize: 14,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
                     {displayLocation}
                   </div>
                 ) : null}
                 {displayLocation && displayGenres ? (
-                  <div style={{ display: "flex", color: "rgba(255,255,255,0.14)", fontSize: 13 }}>·</div>
+                  <div style={{ display: "flex", color: "rgba(255,255,255,0.16)", fontSize: 14 }}>
+                    ·
+                  </div>
                 ) : null}
                 {displayGenres ? (
-                  <div style={{ display: "flex", color: "rgba(255,255,255,0.30)", fontSize: 13, letterSpacing: "0.04em" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      color: "rgba(255,255,255,0.32)",
+                      fontSize: 14,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
                     {displayGenres}
                   </div>
                 ) : null}
@@ -257,214 +424,48 @@ export async function buildArtistOgImageResponse(
             ) : null}
           </div>
 
-          {/* Bottom: section nav + URL */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", width: "100%", height: 1, backgroundColor: "rgba(255,255,255,0.07)" }} />
+          {/* ── Fixed gap between identity and footer ──────────────────── */}
+          <div style={{ display: "flex", height: 32 }} />
+
+          {/* ── Footer ──────────────────────────────────────────────────── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+            {/* Separator */}
             <div
               style={{
                 display: "flex",
-                color: "rgba(255,255,255,0.20)",
-                fontSize: 10,
-                letterSpacing: "0.19em",
+                width: "100%",
+                height: 1,
+                backgroundColor: "rgba(255,255,255,0.08)",
               }}
-            >
-              Shows  ·  Releases  ·  Booking  ·  Artist Story
-            </div>
-            <div
-              style={{
-                display: "flex",
-                color: `rgba(${accentRgb}, 0.80)`,
-                fontSize: 13,
-                letterSpacing: "0.04em",
-              }}
-            >
-              {displayUrl}
-            </div>
-          </div>
-        </div>
-
-        {/* ── RIGHT: Site preview stack (560px) ─────────────────────────── */}
-        <div
-          style={{
-            width: RIGHT_W,
-            height: H,
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-            padding: 18,
-            backgroundColor: "#0d0d0d",
-            borderLeft: "1px solid rgba(255,255,255,0.055)",
-          }}
-        >
-          {/* ── SHOWS card ─────────────────────────────────────────────── */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              height: 226,
-              backgroundColor: "#111111",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 6,
-              overflow: "hidden",
-            }}
-          >
-            {/* Accent top strip */}
-            <div style={{ display: "flex", width: "100%", height: 2, backgroundColor: accentHex }} />
-
-            {/* Card inner */}
-            <div style={{ display: "flex", flexDirection: "column", padding: "16px 20px", flex: 1, gap: 14 }}>
-              {/* Label row */}
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                <div style={{ display: "flex", color: "rgba(255,255,255,0.20)", fontSize: 9, fontWeight: 700, letterSpacing: "0.24em" }}>
-                  SHOWS
-                </div>
-                <div style={{ display: "flex", flex: 1 }} />
-                <div style={{ display: "flex", width: 5, height: 5, borderRadius: "50%", backgroundColor: accentHex, opacity: 0.65 }} />
-              </div>
-
-              {/* Mock event rows */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                {/* Row 1 */}
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <div style={{ display: "flex", width: 38, height: 6, backgroundColor: "rgba(255,255,255,0.07)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", width: 110, height: 6, backgroundColor: "rgba(255,255,255,0.10)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", flex: 1 }} />
-                  <div style={{ display: "flex", width: 64, height: 6, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 2 }} />
-                </div>
-                {/* Row 2 */}
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <div style={{ display: "flex", width: 38, height: 6, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", width: 130, height: 6, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", flex: 1 }} />
-                  <div style={{ display: "flex", width: 52, height: 6, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 2 }} />
-                </div>
-                {/* Row 3 */}
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <div style={{ display: "flex", width: 38, height: 6, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", width: 90, height: 6, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", flex: 1 }} />
-                  <div style={{ display: "flex", width: 70, height: 6, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 2 }} />
-                </div>
-                {/* Row 4 – faintest */}
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <div style={{ display: "flex", width: 38, height: 6, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", width: 100, height: 6, backgroundColor: "rgba(255,255,255,0.045)", borderRadius: 2 }} />
-                  <div style={{ display: "flex", flex: 1 }} />
-                  <div style={{ display: "flex", width: 56, height: 6, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 2 }} />
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flex: 1 }} />
-
-              {/* Bottom accent line */}
-              <div style={{ display: "flex", width: 36, height: 1, backgroundColor: `rgba(${accentRgb}, 0.28)` }} />
-            </div>
-          </div>
-
-          {/* ── Bento row: ARTIST STORY + RELEASES ─────────────────────── */}
-          <div style={{ display: "flex", flexDirection: "row", gap: 8, width: "100%", height: 194 }}>
-            {/* ARTIST STORY card */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                backgroundColor: "#101010",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 6,
-                overflow: "hidden",
-                padding: "16px 18px",
-                gap: 12,
-              }}
-            >
-              <div style={{ display: "flex", color: "rgba(255,255,255,0.18)", fontSize: 8, fontWeight: 700, letterSpacing: "0.24em" }}>
-                ARTIST STORY
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                <div style={{ display: "flex", width: "88%", height: 5, backgroundColor: "rgba(255,255,255,0.07)", borderRadius: 2 }} />
-                <div style={{ display: "flex", width: "72%", height: 5, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 2 }} />
-                <div style={{ display: "flex", width: "60%", height: 5, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 2 }} />
-                <div style={{ display: "flex", width: "78%", height: 5, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 2 }} />
-                <div style={{ display: "flex", width: "50%", height: 5, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 2 }} />
+            />
+            {/* Sections row + URL */}
+            <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  color: "rgba(255,255,255,0.22)",
+                  fontSize: 11,
+                  letterSpacing: "0.18em",
+                }}
+              >
+                Shows  ·  Releases  ·  Booking  ·  Artist Story
               </div>
               <div style={{ display: "flex", flex: 1 }} />
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <div style={{ display: "flex", width: 4, height: 4, borderRadius: "50%", backgroundColor: accentHex, opacity: 0.5 }} />
-                <div style={{ display: "flex", width: "45%", height: 4, backgroundColor: `rgba(${accentRgb}, 0.11)`, borderRadius: 2 }} />
+              <div
+                style={{
+                  display: "flex",
+                  color: `rgba(${accentRgb}, 0.82)`,
+                  fontSize: 13,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {displayUrl}
               </div>
-            </div>
-
-            {/* RELEASES card */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                backgroundColor: "#121212",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 6,
-                overflow: "hidden",
-                padding: "16px 18px",
-                gap: 12,
-              }}
-            >
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                <div style={{ display: "flex", color: "rgba(255,255,255,0.18)", fontSize: 8, fontWeight: 700, letterSpacing: "0.24em" }}>
-                  RELEASES
-                </div>
-                <div style={{ display: "flex", flex: 1 }} />
-                <div style={{ display: "flex", width: 4, height: 4, borderRadius: "50%", backgroundColor: accentHex, opacity: 0.55 }} />
-              </div>
-              {/* Mock release items */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <div style={{ display: "flex", width: 30, height: 30, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 3 }} />
-                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                    <div style={{ display: "flex", width: 72, height: 5, backgroundColor: "rgba(255,255,255,0.09)", borderRadius: 2 }} />
-                    <div style={{ display: "flex", width: 50, height: 4, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 2 }} />
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <div style={{ display: "flex", width: 30, height: 30, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 3 }} />
-                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                    <div style={{ display: "flex", width: 60, height: 5, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 2 }} />
-                    <div style={{ display: "flex", width: 42, height: 4, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 2 }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── BOOKING strip ───────────────────────────────────────────── */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              flex: 1,
-              backgroundColor: "#0d0d0d",
-              border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: 6,
-              padding: "0 20px",
-              gap: 14,
-            }}
-          >
-            <div style={{ display: "flex", width: 5, height: 5, borderRadius: "50%", backgroundColor: accentHex, opacity: 0.75 }} />
-            <div style={{ display: "flex", color: "rgba(255,255,255,0.22)", fontSize: 9, fontWeight: 700, letterSpacing: "0.22em" }}>
-              BOOKING
-            </div>
-            <div style={{ display: "flex", color: "rgba(255,255,255,0.10)", fontSize: 9 }}>·</div>
-            <div style={{ display: "flex", color: "rgba(255,255,255,0.14)", fontSize: 9, letterSpacing: "0.18em" }}>
-              PRESS
-            </div>
-            <div style={{ display: "flex", flex: 1 }} />
-            <div style={{ display: "flex", color: `rgba(${accentRgb}, 0.35)`, fontSize: 9, fontWeight: 700, letterSpacing: "0.22em" }}>
-              DJHQ
             </div>
           </div>
         </div>
       </div>,
+
       { width: W, height: H },
     )
   } catch (err) {
