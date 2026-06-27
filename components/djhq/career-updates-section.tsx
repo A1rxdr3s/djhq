@@ -1439,11 +1439,12 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
       <div>
 
         {/* ── Mobile / tablet: premium horizontal swipe carousel (lg:hidden) ─────
-            Replaces the vertical grid stack on narrow screens. Desktop layout is
-            fully preserved in the hidden lg:block sections below. */}
+            Shows ALL eligible published items in a single swipeable carousel.
+            No "View all" control — the full set is immediately available.
+            Desktop layout is fully preserved in the hidden lg:block sections below. */}
         <div className="lg:hidden">
           <SectionHeader>{useMosaicLayout ? 'Artist Story' : 'Career Updates'}</SectionHeader>
-          <MobileStoryCarousel items={gridItems} onSelect={setSelectedItem} />
+          <MobileStoryCarousel items={published} onSelect={setSelectedItem} />
         </div>
 
         {/* ── Desktop: editorial mosaic (≥7 items) ─────────────────────────────
@@ -1501,9 +1502,9 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
           </div>
         )}
 
-        {/* ── Archive reveal control ───────────────────────────────────────── */}
+        {/* ── Archive reveal control (desktop only) ────────────────────────── */}
         {carouselItems.length > 0 && (
-          <div className="mt-[12px] flex items-center gap-3">
+          <div className="mt-[12px] hidden items-center gap-3 lg:flex">
             <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
             <button
               type="button"
@@ -1526,9 +1527,9 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
           </div>
         )}
 
-        {/* ── Archive carousel — hidden until revealed ─────────────────────── */}
+        {/* ── Archive carousel — desktop only, hidden until revealed ──────── */}
         {isArchiveExpanded && (
-          <div id="more-milestones-archive">
+          <div id="more-milestones-archive" className="hidden lg:block">
             <ArchiveCarousel items={carouselItems} onSelect={setSelectedItem} />
           </div>
         )}
