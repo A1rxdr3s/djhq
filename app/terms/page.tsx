@@ -64,7 +64,7 @@ export default async function TermsPage() {
 
         {/* Intro */}
         <p className="mb-9 rounded-lg border border-white/[0.06] bg-white/[0.02] px-5 py-4 text-[13px] leading-relaxed text-white/40">
-          By using this artist website you agree to the following terms. This website is an
+          By using this artist website, you agree to the following terms. This website is an
           official artist presence powered by {brand.name}, which provides the underlying
           technical platform.
         </p>
@@ -74,95 +74,120 @@ export default async function TermsPage() {
 
           <Section n={1} title="Use of This Website">
             <p>
-              This website is an official artist presence powered by {brand.name}. You may view,
-              download for personal use, and share links to this website. You may not scrape, copy,
-              republish, or reproduce content from this site for commercial purposes without prior
-              written permission from the artist or their representatives.
+              This website is an official artist presence powered by {brand.name}. You may view
+              this website and share links to it.
+            </p>
+            <p>
+              You may not scrape, copy, republish, reproduce, or commercially exploit content from
+              this site without prior written permission from the artist, their representatives, or
+              the relevant rights holders.
             </p>
           </Section>
 
           <Section n={2} title="Content Ownership">
             <p>
               All artist content on this website — including name, likeness, biography, photos,
-              logos, music, and related creative assets — remains the property of the artist or
-              their respective rights holders. {brand.name} does not claim ownership of artist
-              content.
+              logos, music references, and related creative assets — remains the property of the
+              artist or their respective rights holders. {brand.name} does not claim ownership of
+              artist content.
             </p>
             <p>
-              Press and editorial assets provided via the Press Kit section are made available for
-              legitimate press, booking, and promotional use only. They may not be used for
-              commercial purposes, altered to misrepresent the artist, or republished out of
-              context.
+              Press and editorial assets provided through the Press Kit section are made available
+              for legitimate press, booking, editorial, and promotional use only. They may not be
+              used for unrelated commercial purposes, altered to misrepresent the artist, or
+              republished out of context.
             </p>
           </Section>
 
           <Section n={3} title="Booking Inquiries">
             <p>
               Submitting a booking inquiry through this website does not guarantee a booking,
-              commitment, or response. Inquiries are forwarded to the artist or their team for
-              review. Availability, pricing, and terms are determined solely by the artist or
-              their representatives.
+              commitment, availability, pricing, or response.
+            </p>
+            <p>
+              Inquiries are forwarded to the artist or their team for review. Availability,
+              pricing, technical requirements, and booking terms are determined solely by the
+              artist or their representatives.
             </p>
           </Section>
 
           <Section n={4} title="Audience Signup">
             <p>
-              Subscribing via the Stay Connected form adds your email address to the artist&apos;s
-              audience list. You may unsubscribe at any time by contacting the artist or by
-              submitting a data request via our{" "}
+              Subscribing through the Stay Connected form adds your email address to the
+              artist&apos;s audience list. You may request removal from that list at any time by
+              contacting the artist or by submitting a data request through the{" "}
               <Link href="/privacy" className="text-white/60 underline decoration-white/20 underline-offset-2 hover:text-white/80">
                 Privacy
               </Link>{" "}
-              page. Subscribing does not constitute a commercial relationship or entitle you to
-              any services or products.
+              page.
+            </p>
+            <p>
+              Subscribing does not create a commercial relationship and does not entitle you to any
+              products, services, tickets, guest list access, or other benefits unless explicitly
+              stated by the artist or their team.
             </p>
           </Section>
 
           <Section n={5} title="External Links">
             <p>
               This website may contain links to third-party platforms including Spotify, SoundCloud,
-              Apple Music, Beatport, YouTube, Instagram, TikTok, and others. These are independent
-              services with their own terms and privacy policies. {brand.name} and the artist are
-              not responsible for the content or practices of external platforms.
+              Apple Music, Beatport, YouTube, Instagram, TikTok, and others.
+            </p>
+            <p>
+              These are independent services with their own terms and privacy policies.{" "}
+              {brand.name} and the artist are not responsible for the content, availability,
+              policies, or practices of external platforms.
             </p>
           </Section>
 
           <Section n={6} title="Platform Provider">
             <p>
               {brand.name} provides the technical platform, hosting infrastructure, and tooling
-              that powers this artist website. {brand.name} is not a party to booking agreements
-              or fan communications between you and the artist or their team.
+              that powers this artist website.
+            </p>
+            <p>
+              {brand.name} is not a party to booking agreements, event contracts, fan
+              communications, press arrangements, or other direct relationships between you and the
+              artist or their team.
             </p>
           </Section>
 
           <Section n={7} title="Site Availability">
             <p>
               This website may be updated, modified, taken offline temporarily, or permanently
-              discontinued at any time. {brand.name} provides this service on an &ldquo;as
-              available&rdquo; basis and makes no guarantee of continuous uptime or availability.
+              discontinued at any time.
+            </p>
+            <p>
+              {brand.name} provides this website on an &ldquo;as available&rdquo; basis and does
+              not guarantee continuous uptime, availability, or error-free operation.
             </p>
           </Section>
 
           <Section n={8} title="Disclaimer">
             <p>
-              This website is provided as-is. To the fullest extent permitted by applicable law,
-              {" "}{brand.name} and the artist disclaim all warranties and liability for any loss,
-              damage, or harm resulting from your use of this site.
+              This website is provided for informational and promotional purposes. To the fullest
+              extent permitted by applicable law, {brand.name} and the artist disclaim warranties
+              related to the website and are not responsible for losses or damages resulting from
+              your use of, or inability to use, the site.
+            </p>
+            <p>
+              Nothing on this website should be interpreted as a guaranteed offer, confirmed
+              booking, endorsement, or contractual commitment unless separately agreed in writing
+              by the relevant parties.
             </p>
           </Section>
 
-          <Section n={9} title="Changes">
+          <Section n={9} title="Changes to These Terms">
             <p>
-              These terms may be updated from time to time. The date at the top reflects the most
-              recent revision. Continued use of this website after changes constitutes your
-              acceptance of the updated terms.
+              These terms may be updated from time to time. The &ldquo;Last updated&rdquo; date
+              above shows when they were most recently revised.
             </p>
           </Section>
 
           <Section n={10} title="Contact">
             {artist?.contactEmail && (
               <p>
-                {artist.artistName} contact:{" "}
+                {artist.artistName ? `${artist.artistName} contact` : "Artist website contact"}:{" "}
                 <a
                   href={`mailto:${artist.contactEmail}`}
                   className="text-white/60 underline decoration-white/20 underline-offset-2 transition-colors duration-150 hover:text-white/80"
