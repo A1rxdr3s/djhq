@@ -365,10 +365,8 @@ export function ProfileClosing({
       {/* ── end desktop grid ─────────────────────────────────────────── */}
 
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
-      {/* Legal links (/privacy, /terms, /cookies) are not rendered —
-          those pages do not yet exist. Re-add when real pages ship. */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
-        <div className="flex flex-wrap items-center">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <span className="whitespace-nowrap text-[11px] text-white/48">
             {copyrightLine}
             {!isPro && (
@@ -380,6 +378,17 @@ export function ProfileClosing({
               </>
             )}
           </span>
+          <div className="flex items-center gap-x-4">
+            <Link href="/privacy" className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55">
+              Privacy
+            </Link>
+            <Link href="/terms"   className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55">
+              Terms
+            </Link>
+            <Link href="/cookies" className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55">
+              Cookies
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -619,7 +619,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 )}
               </div>
 
-              {/* Right: Copyright + branding */}
+              {/* Right: Copyright + branding + legal */}
               <div className="sm:text-right">
                 <p className="text-[11px] text-white/35">
                   © {footerYear} {artist.artistName}
@@ -632,6 +632,17 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     </Link>
                   </p>
                 )}
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 sm:justify-end">
+                  <Link href="/privacy" className="text-[10px] text-white/22 transition-colors duration-150 hover:text-white/48">
+                    Privacy
+                  </Link>
+                  <Link href="/terms" className="text-[10px] text-white/22 transition-colors duration-150 hover:text-white/48">
+                    Terms
+                  </Link>
+                  <Link href="/cookies" className="text-[10px] text-white/22 transition-colors duration-150 hover:text-white/48">
+                    Cookies
+                  </Link>
+                </div>
               </div>
 
             </div>
