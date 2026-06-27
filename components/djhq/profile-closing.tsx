@@ -2,6 +2,7 @@
 
 import { Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar } from "lucide-react"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 import { resolveSafeHref } from "@/lib/safe-url"
 import { brand } from "@/lib/brand"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
@@ -46,10 +47,8 @@ type Props = {
 
 export function ProfileClosing({
   artistName,
-  location,
   bookingEmail,
   isPro,
-  genres,
   socialLinks = [],
   hasPressKit = false,
   pressKitHref = null,
@@ -101,19 +100,16 @@ export function ProfileClosing({
       l.href !== null && l.Icon !== undefined,
     )
 
-  // Identity descriptor — genre tags (max 3) and/or location.
-  // Falls back to "Official artist website" so the column is never empty.
-  const genreLabel   = genres?.length ? genres.slice(0, 3).join(' · ') : null
-  const locationLabel = location?.trim() || null
-  const officialDescriptor = !genreLabel && !locationLabel ? 'Official artist website' : null
+  const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
 
-  const headingClass = "mb-3 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
+  // Three-column desktop when a booking inquiry CTA is available; two-column otherwise.
+  const hasBookingCta = Boolean(artistHandle)
 
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
 
       {/* ── Mobile layout ─────────────────────────────────────────────── */}
-      <div className="py-8 sm:hidden">
+      <div className="sm:hidden py-5">
 
         {/* 1. Identity: logo / name */}
         {resolvedLogoUrl ? (
@@ -128,26 +124,10 @@ export function ProfileClosing({
           <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
         )}
 
-        {/* Genre / location descriptor */}
-        {genreLabel && (
-          <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent/60">
-            {genreLabel}
-          </p>
-        )}
-        {locationLabel && (
-          <p className="mt-1 text-[11px] text-white/36">{locationLabel}</p>
-        )}
-        {officialDescriptor && (
-          <p className="mt-2 text-[11px] text-white/32">{officialDescriptor}</p>
-        )}
-
-        {/* Divider */}
-        <div className="mt-6 border-t border-white/[0.05]" />
-
-        {/* 2. Booking */}
+        {/* 2. Booking email */}
         {contacts[0] && (
-          <div className="mt-5">
-            <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
+          <div className="mt-4">
+            <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
               {contacts[0].label}
             </p>
             <a
@@ -156,48 +136,47 @@ export function ProfileClosing({
             >
               {contacts[0].email}
             </a>
-            {contacts.slice(1).map(({ label, email: addr }) => (
-              <div key={label} className="mt-2">
-                <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white/22">{label}</p>
-                <a
-                  href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
-                  className="text-[13px] text-white/60 transition-colors duration-200 hover:text-white/85"
-                >
-                  {addr}
-                </a>
-              </div>
-            ))}
-            {artistHandle && (
-              <div className="mt-4">
-                <BookingInquiryModal
-                  artistHandle={artistHandle}
-                  artistName={artistName}
-                  pressKitUrl={pressKitHref ?? undefined}
-                />
-              </div>
-            )}
           </div>
         )}
 
         {/* 3. Connect */}
         {footerSocialsEnabled && iconLinks.length > 0 && (
-          <div className="mt-7">
-            <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">Connect</p>
-            <div className="flex flex-wrap items-center gap-x-[22px] gap-y-3">
-              {iconLinks.map(({ platform, url, label, href, Icon }) => (
-                <a
-                  key={`m-${platform}-${url}`}
-                  href={href}
-                  aria-label={label}
-                  title={label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/55 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
-                >
-                  <Icon className="h-[22px] w-[22px]" />
-                </a>
-              ))}
-            </div>
+          <div className="mt-5 flex flex-wrap items-center gap-x-[22px] gap-y-3">
+            {iconLinks.map(({ platform, url, label, href, Icon }) => (
+              <a
+                key={`m-${platform}-${url}`}
+                href={href}
+                aria-label={label}
+                title={label}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/62 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+              >
+                <Icon className="h-[22px] w-[22px]" />
+              </a>
+            ))}
+          </div>
+        )}
+
+        {/* 4. Booking inquiry CTA — replaces the previous newsletter section,
+            preserving the visual weight and divider rhythm of the approved footer */}
+        {hasBookingCta && (
+          <div className="mt-6">
+            <div className="mb-5 border-t border-white/[0.05]" />
+            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
+              Booking Inquiry
+            </p>
+            <p className="mb-1.5 text-[14px] font-semibold leading-snug text-white/78">
+              Book {artistName}
+            </p>
+            <p className="mb-4 text-[12px] text-white/35">
+              For club nights, festivals, private events, and press.
+            </p>
+            <BookingInquiryModal
+              artistHandle={artistHandle!}
+              artistName={artistName}
+              pressKitUrl={pressKitHref ?? undefined}
+            />
           </div>
         )}
 
@@ -205,10 +184,16 @@ export function ProfileClosing({
       {/* ── end mobile ───────────────────────────────────────────────── */}
 
       {/* ── Desktop editorial grid ───────────────────────────────────── */}
-      <div className="hidden sm:grid sm:grid-cols-[2fr_1.2fr] sm:items-start sm:gap-x-12 sm:py-10 lg:gap-x-20 lg:py-12">
+      {/* Three-column layout mirrors the approved pre-cleanup structure.
+          Col 3 (booking inquiry) replaces the newsletter column — same visual
+          weight, real functionality via BookingInquiryModal + Resend. */}
+      <div className={cn(
+        "hidden sm:grid sm:items-start sm:gap-x-10 sm:py-9 lg:gap-x-16 lg:py-11",
+        hasBookingCta ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
+      )}>
 
         {/* Col 1: Artist identity */}
-        <div className="max-w-[440px]">
+        <div>
           {resolvedLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -220,34 +205,14 @@ export function ProfileClosing({
           ) : (
             <p className="text-[15px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
           )}
-
-          {/* Genre descriptor */}
-          {genreLabel && (
-            <p className="mt-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-accent/55">
-              {genreLabel}
-            </p>
-          )}
-
-          {/* Location */}
-          {locationLabel && (
-            <p className="mt-1.5 text-[12px] text-white/34">{locationLabel}</p>
-          )}
-
-          {/* Fallback descriptor */}
-          {officialDescriptor && (
-            <p className="mt-3 text-[12px] text-white/30">{officialDescriptor}</p>
-          )}
         </div>
 
-        {/* Col 2: Booking + Connect */}
+        {/* Col 2: Booking emails + Connect icons */}
         <div className="space-y-8">
           {contacts.length > 0 && (
             <div>
               <p className={headingClass}>Booking</p>
-              <p className="mb-3 text-[11px] leading-[1.6] text-white/28">
-                For bookings, press, and professional inquiries.
-              </p>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {contacts.map(({ label, email: addr }) => (
                   <div key={label}>
                     {contacts.length > 1 && (
@@ -262,15 +227,6 @@ export function ProfileClosing({
                   </div>
                 ))}
               </div>
-              {artistHandle && (
-                <div className="mt-5">
-                  <BookingInquiryModal
-                    artistHandle={artistHandle}
-                    artistName={artistName}
-                    pressKitUrl={pressKitHref ?? undefined}
-                  />
-                </div>
-              )}
             </div>
           )}
 
@@ -286,7 +242,7 @@ export function ProfileClosing({
                     title={label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white/55 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                    className="text-white/65 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
                   >
                     <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
                   </a>
@@ -296,10 +252,32 @@ export function ProfileClosing({
           )}
         </div>
 
+        {/* Col 3: Booking inquiry — occupies the third column position from the
+            approved layout, giving the footer its balanced three-column presence.
+            Replaces the newsletter which had no backend and has been removed. */}
+        {hasBookingCta && (
+          <div>
+            <p className={headingClass}>Booking Inquiry</p>
+            <p className="mb-1.5 text-[15px] font-semibold leading-snug text-white/78">
+              Book {artistName}
+            </p>
+            <p className="mb-4 text-[12px] text-white/38">
+              For club nights, festivals, private events, and press inquiries.
+            </p>
+            <BookingInquiryModal
+              artistHandle={artistHandle!}
+              artistName={artistName}
+              pressKitUrl={pressKitHref ?? undefined}
+            />
+          </div>
+        )}
+
       </div>
       {/* ── end desktop grid ─────────────────────────────────────────── */}
 
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
+      {/* Legal links (/privacy, /terms, /cookies) are not rendered — those
+          pages do not yet exist and would 404. Re-add when real pages ship. */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
         <div className="flex flex-wrap items-center">
           <span className="whitespace-nowrap text-[11px] text-white/48">
