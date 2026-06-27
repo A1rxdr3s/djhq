@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { StoryImage } from "@/components/djhq/story-image"
-import { ArrowUpRight, ChevronLeft, ChevronRight, MapPin, Calendar, X, Link2, Play } from "lucide-react"
+import { ArrowUpRight, ChevronDown, ChevronLeft, ChevronRight, MapPin, Calendar, X, Link2, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SectionHeader } from "@/components/djhq/section-header"
 import {
@@ -125,6 +125,34 @@ function resolveDescriptionMode(
   // Actual line clamp depth is determined by the card component (PrimaryCard vs SecondaryCard)
   // and slot size (right-bottom gets an extra line via slot-aware clamping).
   return 'short'
+}
+
+// ── Metadata overlay density resolver ────────────────────────────────────────
+//
+// Resolves the concrete overlay mode for a card.
+// Explicit values (anything other than 'auto') are passed through directly.
+// Auto rules derive from hasImage and imageTreatment — never from title, venue, or slot name.
+//
+// Resolved values (never 'auto'):
+//   full    — year / category / title / location / description (when descriptionMode allows)
+//   compact — year / category / title / location; description suppressed
+//   minimal — title and location visible; year/category are sr-only for accessibility
+//   hidden  — all text overlay suppressed; sr-only fallback for screen readers
+//
+// Auto behavior preserves exact current defaults:
+//   text-only cards (no image or text-only treatment) → full
+//   any image-backed card (cover / contain / blurred-fill) → compact
+//   archive carousel cards → always compact regardless of hasImage
+function resolveMetadataOverlayMode(
+  hasImage: boolean,
+  treatment: CareerTimelineItem['imageTreatment'],
+  explicit: CareerTimelineItem['metadataOverlayMode'],
+  isArchive: boolean,
+): 'full' | 'compact' | 'minimal' | 'hidden' {
+  if (explicit && explicit !== 'auto') return explicit
+  if (isArchive) return 'compact'
+  if (!hasImage || treatment === 'text-only') return 'full'
+  return 'compact'
 }
 
 // ── Slot resolver ─────────────────────────────────────────────────────────────
@@ -409,8 +437,12 @@ function PrimaryCard({
   const hasImage    = rawHasImage && item.imageTreatment !== 'text-only'
   const isDrive     = normalized?.source === "google-drive"
 
-  const descMode  = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
-  const descClamp = descMode === 'full' ? 'line-clamp-3' : descMode === 'short' ? 'line-clamp-2' : descMode === 'minimal' ? 'line-clamp-1' : null
+  const descMode     = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
+  const descClamp    = descMode === 'full' ? 'line-clamp-3' : descMode === 'short' ? 'line-clamp-2' : descMode === 'minimal' ? 'line-clamp-1' : null
+  const overlayMode  = resolveMetadataOverlayMode(hasImage, item.imageTreatment, item.metadataOverlayMode, false)
+  const showMeta     = overlayMode !== 'minimal' && overlayMode !== 'hidden'
+  const showDesc     = overlayMode === 'full' && item.description != null && descClamp != null
+  const isHidden     = overlayMode === 'hidden'
 
   const actionIcon = (
     <div className="inline-flex h-[26px] w-[26px] items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent/80 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/20 group-hover:text-accent">
@@ -464,22 +496,31 @@ function PrimaryCard({
       {/* Content — split layout for image vs text-only */}
       {hasImage ? (
         <div className="relative flex flex-col h-full justify-end p-5 sm:p-[22px]">
-          <MetaChip item={item} onImage yearSize={slot === 'left-tall-story' ? 'lg' : 'md'} />
+          {showMeta
+            ? <MetaChip item={item} onImage yearSize={slot === 'left-tall-story' ? 'lg' : 'md'} />
+            : <span className="sr-only">{itemYear(item)} {itemCatLabel(item)}</span>
+          }
           <h3
-            className="mt-2 text-[18px] sm:text-[20px] font-black leading-[1.05] tracking-[-0.020em] text-foreground/96"
-            style={{ textShadow: '0 1px 6px rgba(0,0,0,0.82)' }}
+            className={cn(
+              "text-[18px] sm:text-[20px] font-black leading-[1.05] tracking-[-0.020em] text-foreground/96",
+              !isHidden ? "mt-2" : "sr-only",
+            )}
+            style={!isHidden ? { textShadow: '0 1px 6px rgba(0,0,0,0.82)' } : undefined}
           >
             {item.title}
           </h3>
           {item.location && (
             <p
-              className="mt-[4px] text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/36"
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
+              className={cn(
+                "text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/36",
+                !isHidden ? "mt-[4px]" : "sr-only",
+              )}
+              style={!isHidden ? { textShadow: '0 1px 3px rgba(0,0,0,0.65)' } : undefined}
             >
               {item.location}
             </p>
           )}
-          {item.description && descClamp && (
+          {showDesc && (
             <p
               className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/62", descClamp)}
               style={{ textShadow: '0 1px 4px rgba(0,0,0,0.65)' }}
@@ -487,23 +528,30 @@ function PrimaryCard({
               {item.description}
             </p>
           )}
-          <div className="mt-4">{actionIcon}</div>
+          <div className={isHidden ? "mt-0" : "mt-4"}>{actionIcon}</div>
         </div>
       ) : (
         <div className="relative flex flex-col h-full p-[14px] sm:p-[16px] border-l-2 border-accent/[0.18]">
-          <MetaChip item={item} yearSize={slot === 'left-tall-story' ? 'lg' : 'md'} />
+          {showMeta
+            ? <MetaChip item={item} yearSize={slot === 'left-tall-story' ? 'lg' : 'md'} />
+            : <span className="sr-only">{itemYear(item)} {itemCatLabel(item)}</span>
+          }
           <h3 className={cn(
-            "mt-2 font-black leading-[1.05] tracking-[-0.020em] text-foreground/96",
+            "font-black leading-[1.05] tracking-[-0.020em] text-foreground/96",
+            !isHidden ? "mt-2" : "sr-only",
             slot === 'top-feature-primary' ? "text-[17px] sm:text-[21px]" : "text-[16px] sm:text-[19px]",
           )}>
             {item.title}
           </h3>
           {item.location && (
-            <p className="mt-[4px] text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/30">
+            <p className={cn(
+              "text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/30",
+              !isHidden ? "mt-[4px]" : "sr-only",
+            )}>
               {item.location}
             </p>
           )}
-          {item.description && descClamp && (
+          {showDesc && (
             <p className={cn("mt-[8px] text-[11.5px] leading-[1.55] text-foreground/52", descClamp)}>
               {item.description}
             </p>
@@ -541,10 +589,14 @@ function SecondaryCard({
   const descMode  = resolveDescriptionMode(slot, hasImage, item.imageTreatment, item.descriptionMode)
   // SecondaryCard is smaller — cap at line-clamp-2; minimal/hidden → don't render
   // right-bottom is 4 rows tall — allow 2 description lines for text-only where space exists
-  const isTallSlot = slot === 'right-bottom'
-  const descClamp = descMode === 'full' ? 'line-clamp-2'
+  const isTallSlot   = slot === 'right-bottom'
+  const descClamp    = descMode === 'full' ? 'line-clamp-2'
     : descMode === 'short' ? (isTallSlot ? 'line-clamp-2' : 'line-clamp-1')
     : null
+  const overlayMode  = resolveMetadataOverlayMode(hasImage, item.imageTreatment, item.metadataOverlayMode, false)
+  const showMeta     = overlayMode !== 'minimal' && overlayMode !== 'hidden'
+  const showDesc     = overlayMode === 'full' && item.description != null && descClamp != null
+  const isHidden     = overlayMode === 'hidden'
 
   const actionIcon = (
     <div className="inline-flex h-[20px] w-[20px] items-center justify-center rounded-full border border-accent/22 bg-accent/7 text-accent/56 transition-all duration-200 group-hover:border-accent/42 group-hover:bg-accent/14 group-hover:text-accent/86">
@@ -600,22 +652,31 @@ function SecondaryCard({
       {/* Content — split layout for image vs text-only */}
       {hasImage ? (
         <div className="relative flex flex-col h-full p-[10px] justify-end">
-          <MetaChip item={item} onImage />
+          {showMeta
+            ? <MetaChip item={item} onImage />
+            : <span className="sr-only">{itemYear(item)} {itemCatLabel(item)}</span>
+          }
           <p
-            className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 transition-colors duration-200 group-hover:text-foreground/100 line-clamp-2"
-            style={{ textShadow: '0 1px 4px rgba(0,0,0,0.72)' }}
+            className={cn(
+              "text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 transition-colors duration-200 group-hover:text-foreground/100 line-clamp-2",
+              !isHidden ? "mt-[5px]" : "sr-only",
+            )}
+            style={!isHidden ? { textShadow: '0 1px 4px rgba(0,0,0,0.72)' } : undefined}
           >
             {item.title}
           </p>
           {item.location && (
             <p
-              className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/30 truncate"
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+              className={cn(
+                "text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/30 truncate",
+                !isHidden ? "mt-[3px]" : "sr-only",
+              )}
+              style={!isHidden ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
             >
               {item.location}
             </p>
           )}
-          {item.description && descClamp && (
+          {showDesc && (
             <p
               className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/50", descClamp)}
               style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
@@ -623,7 +684,7 @@ function SecondaryCard({
               {item.description}
             </p>
           )}
-          <div className="mt-[10px]">{actionIcon}</div>
+          <div className={isHidden ? "mt-0" : "mt-[10px]"}>{actionIcon}</div>
         </div>
       ) : (
         <div className={cn(
@@ -632,16 +693,25 @@ function SecondaryCard({
         )}>
           {/* Top: meta + title + location + description */}
           <div>
-            <MetaChip item={item} />
-            <p className="mt-[5px] text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/88 transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2">
+            {showMeta
+              ? <MetaChip item={item} />
+              : <span className="sr-only">{itemYear(item)} {itemCatLabel(item)}</span>
+            }
+            <p className={cn(
+              "text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/88 transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2",
+              !isHidden ? "mt-[5px]" : "sr-only",
+            )}>
               {item.title}
             </p>
             {item.location && (
-              <p className="mt-[3px] text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/28 truncate">
+              <p className={cn(
+                "text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/28 truncate",
+                !isHidden ? "mt-[3px]" : "sr-only",
+              )}>
                 {item.location}
               </p>
             )}
-            {item.description && descClamp && (
+            {showDesc && (
               <p className={cn("mt-[7px] text-[11px] leading-[1.48] text-foreground/46", descClamp)}>
                 {item.description}
               </p>
@@ -913,9 +983,12 @@ function ArchiveCarouselCard({
   onClick: () => void
 }) {
   const [imgFailed, setImgFailed] = useState(false)
-  const normalized = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
-  const hasImage   = !!normalized?.isRenderable && !imgFailed && item.imageTreatment !== 'text-only'
-  const isDrive    = normalized?.source === "google-drive"
+  const normalized    = item.imageUrl ? normalizeExternalImageUrl(item.imageUrl) : null
+  const hasImage      = !!normalized?.isRenderable && !imgFailed && item.imageTreatment !== 'text-only'
+  const isDrive       = normalized?.source === "google-drive"
+  const overlayMode   = resolveMetadataOverlayMode(hasImage, item.imageTreatment, item.metadataOverlayMode, true)
+  const showArchiveMeta = overlayMode !== 'minimal' && overlayMode !== 'hidden'
+  const isHidden      = overlayMode === 'hidden'
 
   return (
     <button
@@ -958,36 +1031,46 @@ function ArchiveCarouselCard({
       {/* Content — split layout: image cards anchor to bottom; text-only split top/bottom */}
       {hasImage ? (
         <div className="relative flex flex-col h-full p-[10px] justify-end">
-          <div className="flex flex-col gap-[2px]">
-            <span
-              className="text-[11px] font-bold tabular-nums leading-none text-foreground/88"
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
-            >
-              {itemYear(item)}
-            </span>
-            <span
-              className="text-[6px] font-bold uppercase tracking-[0.17em] leading-none text-accent/82 transition-colors group-hover:text-accent/96"
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}
-            >
-              {itemCatLabel(item)}
-            </span>
-          </div>
+          {showArchiveMeta ? (
+            <div className="flex flex-col gap-[2px]">
+              <span
+                className="text-[11px] font-bold tabular-nums leading-none text-foreground/88"
+                style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+              >
+                {itemYear(item)}
+              </span>
+              <span
+                className="text-[6px] font-bold uppercase tracking-[0.17em] leading-none text-accent/82 transition-colors group-hover:text-accent/96"
+                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}
+              >
+                {itemCatLabel(item)}
+              </span>
+            </div>
+          ) : (
+            <span className="sr-only">{itemYear(item)} {itemCatLabel(item)}</span>
+          )}
           <p
-            className="mt-[4px] text-[11.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 line-clamp-2 transition-colors group-hover:text-white"
-            style={{ textShadow: '0 1px 4px rgba(0,0,0,0.72)' }}
+            className={cn(
+              "text-[11.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 line-clamp-2 transition-colors group-hover:text-white",
+              !isHidden ? "mt-[4px]" : "sr-only",
+            )}
+            style={!isHidden ? { textShadow: '0 1px 4px rgba(0,0,0,0.72)' } : undefined}
           >
             {item.title}
           </p>
           {item.location && (
             <p
-              className="mt-[3px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/32 truncate"
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+              className={cn(
+                "text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/32 truncate",
+                !isHidden ? "mt-[3px]" : "sr-only",
+              )}
+              style={!isHidden ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
             >
               {item.location}
             </p>
           )}
           {/* Action indicator — always lightly visible */}
-          <div className="mt-[7px]">
+          <div className={isHidden ? "mt-0" : "mt-[7px]"}>
             <div className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-accent/28 bg-accent/10 text-accent/62 transition-all duration-200 group-hover:border-accent/52 group-hover:bg-accent/22 group-hover:text-accent">
               <ArrowUpRight className="h-[7px] w-[7px]" />
             </div>
@@ -997,22 +1080,32 @@ function ArchiveCarouselCard({
         <div className="relative flex flex-col h-full p-[10px] justify-between">
           {/* Top: year + category + title */}
           <div>
-            <div className="flex flex-col gap-[2px]">
-              <span className="text-[11px] font-bold tabular-nums leading-none text-foreground/82">
-                {itemYear(item)}
-              </span>
-              <span className="text-[6px] font-bold uppercase tracking-[0.17em] leading-none text-accent/72 transition-colors group-hover:text-accent/90">
-                {itemCatLabel(item)}
-              </span>
-            </div>
-            <p className="mt-[5px] text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100">
+            {showArchiveMeta ? (
+              <div className="flex flex-col gap-[2px]">
+                <span className="text-[11px] font-bold tabular-nums leading-none text-foreground/82">
+                  {itemYear(item)}
+                </span>
+                <span className="text-[6px] font-bold uppercase tracking-[0.17em] leading-none text-accent/72 transition-colors group-hover:text-accent/90">
+                  {itemCatLabel(item)}
+                </span>
+              </div>
+            ) : (
+              <span className="sr-only">{itemYear(item)} {itemCatLabel(item)}</span>
+            )}
+            <p className={cn(
+              "text-[12px] font-bold leading-[1.35] tracking-[-0.010em] text-foreground/88 line-clamp-3 transition-colors group-hover:text-foreground/100",
+              !isHidden ? "mt-[5px]" : "sr-only",
+            )}>
               {item.title}
             </p>
           </div>
           {/* Bottom: location + action — always visible */}
           <div>
             {item.location && (
-              <p className="mb-[6px] text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/30 truncate">
+              <p className={cn(
+                "text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/30 truncate",
+                !isHidden ? "mb-[6px]" : "sr-only",
+              )}>
                 {item.location}
               </p>
             )}
@@ -1120,7 +1213,8 @@ export interface CareerUpdatesSectionProps {
 }
 
 export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSectionProps) {
-  const [selectedItem, setSelectedItem] = useState<CareerTimelineItem | null>(null)
+  const [selectedItem,      setSelectedItem]      = useState<CareerTimelineItem | null>(null)
+  const [isArchiveExpanded, setIsArchiveExpanded] = useState(false)
 
   // Apply public filter + featured-first sort
   const published = getPublicCareerUpdates(items)
@@ -1235,8 +1329,37 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         )}
 
-        {/* ── Archive carousel — remaining milestones not in main grid ──── */}
-        <ArchiveCarousel items={carouselItems} onSelect={setSelectedItem} />
+        {/* ── Archive reveal control ───────────────────────────────────────── */}
+        {carouselItems.length > 0 && (
+          <div className="mt-[18px] flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/[0.045]" aria-hidden />
+            <button
+              type="button"
+              onClick={() => setIsArchiveExpanded((v) => !v)}
+              aria-expanded={isArchiveExpanded}
+              aria-controls="more-milestones-archive"
+              className="flex items-center gap-[5px] rounded-[3px] text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground/34 transition-colors hover:text-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+            >
+              {isArchiveExpanded
+                ? 'Show less'
+                : `View all career updates · +${carouselItems.length}`}
+              <ChevronDown
+                className={cn(
+                  "h-[9px] w-[9px] transition-transform duration-200",
+                  isArchiveExpanded && "rotate-180",
+                )}
+              />
+            </button>
+            <div className="h-px flex-1 bg-white/[0.045]" aria-hidden />
+          </div>
+        )}
+
+        {/* ── Archive carousel — hidden until revealed ─────────────────────── */}
+        {isArchiveExpanded && (
+          <div id="more-milestones-archive">
+            <ArchiveCarousel items={carouselItems} onSelect={setSelectedItem} />
+          </div>
+        )}
 
         {/* ── Detail modal ──────────────────────────────────────────────────── */}
         <UpdateDetail

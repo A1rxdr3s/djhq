@@ -503,6 +503,16 @@ export interface CareerTimelineItem {
    * 'full' | 'short' | 'minimal' | 'hidden' — explicit overrides.
    */
   descriptionMode?: 'auto' | 'full' | 'short' | 'minimal' | 'hidden'
+  /**
+   * Per-card metadata overlay density for the public Artist Story.
+   * Controls how much UI text appears over the card image or surface.
+   * 'auto'    — resolves generically from hasImage and imageTreatment; preserves current behavior.
+   * 'full'    — year / category / title / location / description (when descriptionMode allows)
+   * 'compact' — year / category / title / location; description suppressed
+   * 'minimal' — title and location only; year/category are sr-only
+   * 'hidden'  — all visible overlay suppressed; semantic text preserved for accessibility
+   */
+  metadataOverlayMode?: 'auto' | 'full' | 'compact' | 'minimal' | 'hidden'
 }
 
 /**

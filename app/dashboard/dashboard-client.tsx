@@ -1344,6 +1344,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [timelineImageZoom, setTimelineImageZoom] = useState(1)
   const [timelineImageTreatment, setTimelineImageTreatment] = useState<'cover' | 'contain' | 'blurred-fill' | 'text-only'>('cover')
   const [timelineDescriptionMode, setTimelineDescriptionMode] = useState<'auto' | 'full' | 'short' | 'minimal' | 'hidden'>('auto')
+  const [timelineMetadataOverlayMode, setTimelineMetadataOverlayMode] = useState<'auto' | 'full' | 'compact' | 'minimal' | 'hidden'>('auto')
   const [timelinePreviewNaturalAspect, setTimelinePreviewNaturalAspect] = useState<number | null>(null)
   const timelinePreviewIsDragging = useRef(false)
 
@@ -9860,6 +9861,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageZoom(1)
       setTimelineImageTreatment('cover')
       setTimelineDescriptionMode('auto')
+      setTimelineMetadataOverlayMode('auto')
       setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
@@ -9887,6 +9889,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageZoom(item.imageZoom ?? 1)
       setTimelineImageTreatment(item.imageTreatment ?? 'cover')
       setTimelineDescriptionMode(item.descriptionMode ?? 'auto')
+      setTimelineMetadataOverlayMode(item.metadataOverlayMode ?? 'auto')
       setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
@@ -9908,6 +9911,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setTimelineImageZoom(1)
       setTimelineImageTreatment('cover')
       setTimelineDescriptionMode('auto')
+      setTimelineMetadataOverlayMode('auto')
       setTimelinePreviewNaturalAspect(null)
       setTimelineImageSourceMode('url')
       setTimelineImageUploadError('')
@@ -9945,6 +9949,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             imageZoom: timelineImageZoom,
             imageTreatment: timelineImageTreatment,
             descriptionMode: timelineDescriptionMode,
+            metadataOverlayMode: timelineMetadataOverlayMode,
           }),
         })
         const data = await res.json()
@@ -10794,6 +10799,38 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           {timelineDescriptionMode === 'auto'
                             ? 'Uses slot size, image presence, and treatment to decide.'
                             : 'Controls how much description appears on the public Artist Story card.'}
+                        </p>
+                      </div>
+
+                      {/* Metadata Overlay */}
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Metadata Overlay</p>
+                        <div className="flex gap-0 rounded border border-border/50 bg-muted/30 p-0.5 w-fit">
+                          {(['auto', 'full', 'compact', 'minimal', 'hidden'] as const).map((mode) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => setTimelineMetadataOverlayMode(mode)}
+                              className={`px-2.5 py-1 rounded-[3px] text-[10px] font-medium capitalize transition-colors ${
+                                timelineMetadataOverlayMode === mode
+                                  ? 'bg-background text-foreground shadow-sm'
+                                  : 'text-muted-foreground/40 hover:text-muted-foreground'
+                              }`}
+                            >
+                              {mode}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground/35">
+                          {timelineMetadataOverlayMode === 'auto'
+                            ? 'Uses image presence and treatment to decide. Preserves current behavior.'
+                            : timelineMetadataOverlayMode === 'full'
+                            ? 'Year · category · title · location · description (if allowed).'
+                            : timelineMetadataOverlayMode === 'compact'
+                            ? 'Year · category · title · location. No description.'
+                            : timelineMetadataOverlayMode === 'minimal'
+                            ? 'Title and location only. Use for poster/flyer cards.'
+                            : 'All visible overlay suppressed. Accessibility text preserved.'}
                         </p>
                       </div>
 
