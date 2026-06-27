@@ -753,9 +753,21 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
     `${artist.artistName} — Official Artist Website`
   const ogDescription = artist.seo?.ogDescription?.trim() || seoDescription
 
-  // OG image: explicit HQ override → dynamic generated image for this artist
-  // The dynamic route /[handle]/opengraph-image generates a 1200×630 image from real artist data.
-  const dynamicOgImageUrl = `${baseUrl}/${artist.handle}/opengraph-image`
+  // OG image: explicit HQ override → dynamic generated image for this artist.
+  //
+  // Dynamic URL strategy:
+  //   - Custom domain (seo.canonicalUrl configured): use {canonicalOrigin}/opengraph-image
+  //     because Vercel path-prefix routing means andresherrera.music/opengraph-image
+  //     resolves to /[handle]/opengraph-image internally.
+  //   - No custom domain: use {baseUrl}/{handle}/opengraph-image on the DJHQ host.
+  let dynamicOgImageUrl = `${baseUrl}/${artist.handle}/opengraph-image`
+  const canonicalUrlConfigured = artist.seo?.canonicalUrl?.trim()
+  if (canonicalUrlConfigured) {
+    try {
+      const origin = new URL(canonicalUrlConfigured).origin
+      dynamicOgImageUrl = `${origin}/opengraph-image`
+    } catch { /* malformed canonical URL — fall back to DJHQ host URL */ }
+  }
   const ogImageUrl =
     toAbsoluteUrl(artist.seo?.ogImageUrl, baseUrl) ?? dynamicOgImageUrl
 
