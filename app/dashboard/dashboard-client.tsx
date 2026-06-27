@@ -4134,7 +4134,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   placeholder="https://… (1200×630 recommended)"
                   onChange={(e) => setSeoOgImageUrl(e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground/38">Optional custom image URL. If empty, DJHQ uses this artist&apos;s Hero image when available, then falls back to an automatically generated share image.</p>
+                <p className="text-[10px] text-muted-foreground/38">Optional advanced override. If empty, DJHQ uses this artist&apos;s Hero image as the share preview. If no Hero image exists, DJHQ generates a fallback image.</p>
               </div>
             </div>
 
@@ -4150,7 +4150,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   placeholder="https://… (optional — uses Open Graph image if empty)"
                   onChange={(e) => setSeoTwitterImageUrl(e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground/38">Optional. Uses the Open Graph image if empty.</p>
+                <p className="text-[10px] text-muted-foreground/38">Optional advanced override. Uses the Open Graph image, then Hero image, if empty.</p>
               </div>
             </div>
 
