@@ -1331,7 +1331,7 @@ export function CareerUpdatesSection({ items, headline, intro }: CareerUpdatesSe
 
         {/* ── Archive reveal control ───────────────────────────────────────── */}
         {carouselItems.length > 0 && (
-          <div className="mt-[22px] flex items-center gap-3">
+          <div className="mt-[12px] flex items-center gap-3">
             <div className="h-px flex-1 bg-white/[0.04]" aria-hidden />
             <button
               type="button"
