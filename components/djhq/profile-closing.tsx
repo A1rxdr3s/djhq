@@ -68,7 +68,7 @@ export function ProfileClosing({
   footerCopyright,
 }: Props) {
   const [email,  setEmail]  = useState("")
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "duplicate" | "error">("idle")
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -79,12 +79,18 @@ export function ProfileClosing({
     }
     setStatus("loading")
     try {
-      const res = await fetch("/api/newsletter-signup", {
+      const res  = await fetch("/api/newsletter-signup", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ email: trimmed, artistHandle }),
       })
-      setStatus(res.ok ? "success" : "error")
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setStatus(data.alreadySubscribed ? "duplicate" : "success")
+        if (!data.alreadySubscribed) setEmail("")
+      } else {
+        setStatus("error")
+      }
     } catch {
       setStatus("error")
     }
@@ -192,6 +198,8 @@ export function ProfileClosing({
             </p>
             {status === "success" ? (
               <p className="text-[12px] text-white/45">Thanks — you&apos;re on the list.</p>
+            ) : status === "duplicate" ? (
+              <p className="text-[12px] text-white/45">You&apos;re already subscribed.</p>
             ) : (
               <>
                 <p className="mb-1.5 text-[14px] font-semibold leading-snug text-white/78">
@@ -220,7 +228,7 @@ export function ProfileClosing({
                     disabled={status === "loading"}
                     className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
                   >
-                    {status === "loading" ? "···" : "Join"}
+                    {status === "loading" ? "Joining…" : "Join"}
                   </button>
                 </form>
                 {status === "error" && (
@@ -308,6 +316,8 @@ export function ProfileClosing({
             <p className={headingClass}>Stay Connected</p>
             {status === "success" ? (
               <p className="text-[13px] text-white/45">Thanks — you&apos;re on the list.</p>
+            ) : status === "duplicate" ? (
+              <p className="text-[13px] text-white/45">You&apos;re already subscribed.</p>
             ) : (
               <>
                 <p className="mb-1.5 text-[15px] font-semibold leading-snug text-white/78">
@@ -336,7 +346,7 @@ export function ProfileClosing({
                     disabled={status === "loading"}
                     className="h-9 shrink-0 rounded-full border border-accent/35 bg-transparent px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/65 transition-all duration-200 hover:border-accent/55 hover:text-accent/90 disabled:opacity-40"
                   >
-                    {status === "loading" ? "···" : "Join"}
+                    {status === "loading" ? "Joining…" : "Join"}
                   </button>
                 </form>
                 {status === "error" ? (

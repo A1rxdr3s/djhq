@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Wrench, X, Youtube } from "lucide-react"
+import { AlertTriangle, ArrowRight, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Users, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { normalizeExternalImageUrl } from "@/lib/media"
@@ -19,6 +19,7 @@ import { GigCard } from "@/components/dashboard/gig-card"
 import { ShowModal } from "@/components/dashboard/add-show-modal"
 import { VenueAutocomplete } from "@/components/dashboard/venue-autocomplete"
 import { BookingsSection } from "@/components/dashboard/bookings-section"
+import { AudienceSection } from "@/components/dashboard/audience-section"
 import { TourCalendar, type TourCalendarGig, type TourCalendarStay } from "@/components/djhq/tour-calendar"
 import { hqListBookingLeads } from "@/app/actions/booking-lead-actions"
 import { HqPageHeader } from "@/components/djhq/hq-page-header"
@@ -381,6 +382,7 @@ const navGroups: NavGroup[] = [
     label: "Business",
     items: [
       { id: "bookings",  label: "Bookings",     icon: Inbox },
+      { id: "audience",  label: "Audience",     icon: Users },
       { id: "tours",     label: "Tour Planner", icon: Route },
       { id: "press-kit", label: "Press Kit",    icon: FileText },
     ],
@@ -7548,6 +7550,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     )
   }
 
+  function renderAudience() {
+    return (
+      <div className="space-y-6">
+        <HqPageHeader
+          title="Audience"
+          description="Everyone who signed up via your public Stay Connected form."
+        />
+        <AudienceSection artistId={artist.id} />
+      </div>
+    )
+  }
+
   function renderPressKit() {
     const pressKitUrlInvalid = Boolean(pressKitEnabled && pressKitUrl && !pressKitUrl.startsWith("http"))
     const activeDomain = customDomains.find((d) => d.status === "active")
@@ -11397,6 +11411,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         return renderTimeline()
       case "bookings":
         return renderBookings()
+      case "audience":
+        return renderAudience()
       case "tours":
         return renderTourPlanner()
       case "press-kit":
