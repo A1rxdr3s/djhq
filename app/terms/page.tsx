@@ -142,13 +142,13 @@ export default async function TermsPage() {
 
           <Section n={6} title="Platform Provider">
             <p>
-              {brand.name} provides the technical platform, hosting infrastructure, and tooling
-              that powers this artist website.
+              This artist website is powered by {brand.name}, which provides the technical
+              platform, hosting infrastructure, and underlying tooling.
             </p>
             <p>
-              {brand.name} is not a party to booking agreements, event contracts, fan
-              communications, press arrangements, or other direct relationships between you and the
-              artist or their team.
+              As a platform provider, {brand.name} is not a party to booking agreements, event
+              contracts, fan communications, press arrangements, or other direct relationships
+              between you and the artist or their team.
             </p>
           </Section>
 
@@ -158,8 +158,9 @@ export default async function TermsPage() {
               discontinued at any time.
             </p>
             <p>
-              {brand.name} provides this website on an &ldquo;as available&rdquo; basis and does
-              not guarantee continuous uptime, availability, or error-free operation.
+              This website is provided on an &ldquo;as available&rdquo; basis.{" "}
+              {brand.name} does not guarantee continuous uptime, availability, or error-free
+              operation.
             </p>
           </Section>
 
@@ -197,7 +198,7 @@ export default async function TermsPage() {
               </p>
             )}
             <p>
-              {brand.name} support:{" "}
+              {brand.name}{" "}support:{" "}
               <a
                 href={`mailto:${brand.supportEmail}`}
                 className="text-white/60 underline decoration-white/20 underline-offset-2 transition-colors duration-150 hover:text-white/80"
