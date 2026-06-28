@@ -64,7 +64,7 @@ export default async function CookiesPage() {
 
         {/* Summary callout */}
         <div className="mb-9 rounded-lg border border-white/[0.06] bg-white/[0.02] px-5 py-4">
-          <p className="text-[13px] font-semibold text-white/62">Short answer</p>
+          <p className="text-[13px] font-semibold text-white/62">Summary</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-white/42">
             No persistent marketing or cross-site tracking cookies are currently used by this
             website. No cookie consent banner is shown because no non-essential tracking cookies
@@ -78,9 +78,9 @@ export default async function CookiesPage() {
             <p>
               Cookies are small text files or similar technical storage mechanisms that a website
               may place on your device. They can be used for authentication, session management,
-              preferences, analytics, and advertising. Not all cookies require consent — session-
-              critical and technically necessary storage is generally exempt under most privacy
-              regulations.
+              preferences, analytics, and advertising. Some strictly necessary technologies may be
+              used without a separate consent banner when they are required for the website to
+              function.
             </p>
           </Section>
 
@@ -121,10 +121,10 @@ export default async function CookiesPage() {
                     <td className="px-4 py-3 text-white/35">No</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 font-medium text-white/60">Authentication (HQ only)</td>
+                    <td className="px-4 py-3 font-medium text-white/60">Authentication / session storage (HQ only)</td>
                     <td className="px-4 py-3 text-white/42">
-                      Session storage used for artist dashboard login. Only active when
-                      you sign in to the management area — not set on public pages.
+                      Used only when an artist or team member signs in to the management area.
+                      Not required for normal public browsing.
                     </td>
                     <td className="px-4 py-3 text-white/35">Necessary</td>
                   </tr>
@@ -158,8 +158,8 @@ export default async function CookiesPage() {
               Vercel Analytics uses a privacy-first model that does not rely on cookies or
               browser fingerprinting to identify individual visitors. Visitor counts use
               an aggregation approach that does not store or transmit personally identifiable
-              information. It is designed for GDPR and CCPA compliance without requiring a
-              cookie consent banner.
+              information. It is designed to support privacy-friendly analytics without using
+              persistent tracking cookies.
             </p>
           </Section>
 
