@@ -8,6 +8,7 @@ import { resolveSafeHref } from "@/lib/safe-url"
 import { brand } from "@/lib/brand"
 import type { SocialLink, SocialPlatform } from "@/types/djhq"
 import type { LucideIcon } from "lucide-react"
+import { LegalModal } from "@/components/legal/legal-modal"
 
 const SOCIAL_ICONS: Partial<Record<SocialPlatform, LucideIcon>> = {
   spotify:            Radio,
@@ -69,6 +70,7 @@ export function ProfileClosing({
 }: Props) {
   const [email,  setEmail]  = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "duplicate" | "error">("idle")
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | "cookies" | null>(null)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -379,18 +381,22 @@ export function ProfileClosing({
             )}
           </span>
           <div className="flex items-center gap-x-4">
-            <Link href="/privacy" className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55">
-              Privacy
-            </Link>
-            <Link href="/terms"   className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55">
-              Terms
-            </Link>
-            <Link href="/cookies" className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55">
-              Cookies
-            </Link>
+            <button type="button" onClick={() => setLegalModal("privacy")} className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55 cursor-pointer">Privacy</button>
+            <button type="button" onClick={() => setLegalModal("terms")}   className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55 cursor-pointer">Terms</button>
+            <button type="button" onClick={() => setLegalModal("cookies")} className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55 cursor-pointer">Cookies</button>
           </div>
         </div>
       </div>
+
+      <LegalModal
+        open={legalModal !== null}
+        type={legalModal}
+        artist={{
+          artistName:   artistName,
+          contactEmail: footerContactEmail?.trim() || footerBookingEmail?.trim() || bookingEmail?.trim() || null,
+        }}
+        onClose={() => setLegalModal(null)}
+      />
 
     </footer>
   )
