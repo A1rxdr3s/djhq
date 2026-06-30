@@ -275,7 +275,7 @@ with inserted_artist as (
     'andresherrera',
     'ANDRES:HERRERA',
     'Andres Herrera',
-    'Peak-time house and techno for modern club rooms.',
+    null,
     array['House', 'Tech House', 'Melodic Techno'],
     'Miami / Berlin',
     'ANDRES:HERRERA delivers dark, groove-led house and techno shaped for peak-time dance floors. His recent releases and club sets bridge underground energy with polished, international booking-ready presentation.',
