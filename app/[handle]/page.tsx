@@ -1035,6 +1035,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               fill
               priority
               loading="eager"
+              quality={70}
               sizes="100vw"
               className="object-cover saturate-[0.92] contrast-[1.10] brightness-[0.86]"
             />

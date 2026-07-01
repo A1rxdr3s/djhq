@@ -54,12 +54,27 @@ export default function RootLayout({
     <html lang="en" className="bg-background">
       <head>
         {/* Satoshi — geometric editorial sans by Indian Type Foundry via Fontshare.
-            Used for display headings on the landing page. Not loaded on dashboard routes. */}
+            Used for display headings on the landing page (font-heading class).
+            Loaded non-blocking: artist profile and dashboard routes are unaffected by
+            Fontshare network latency. Landing page headings fall back to Inter until
+            Satoshi arrives (FOUT is minimal; both fonts are geometric sans-serif). */}
         <link rel="preconnect" href="https://api.fontshare.com" />
         <link
-          rel="stylesheet"
+          rel="preload"
+          as="style"
           href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap';document.head.appendChild(l)})();`,
+          }}
+        />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
+          />
+        </noscript>
       </head>
       <body className={`${inter.variable} ${geistMono.variable} font-sans antialiased`}>
         {children}
