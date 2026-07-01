@@ -92,39 +92,65 @@ export async function POST(request: Request) {
       })
   }
 
-  // Send notification to artist — non-blocking; a delivery failure never fails the signup.
-  // Recipient priority: footer_contact_email → booking_email → skip.
-  // booking_email is reserved for booking requests; contact email is preferred for audience alerts.
-  const resendApiKey    = process.env.RESEND_API_KEY
-  const recipientEmail  =
+  // ── Audience notification ────────────────────────────────────────────────
+  // Awaited so the send completes before the serverless function returns.
+  // DB insert above is always the source of truth — notification failure never
+  // fails the signup. Recipient priority: footer_contact_email → booking_email → skip.
+  const resendApiKey   = process.env.RESEND_API_KEY
+  const recipientEmail =
     (artistRow.footer_contact_email as string | null)?.trim() ||
-    (artistRow.booking_email as string | null)?.trim() ||
+    (artistRow.booking_email       as string | null)?.trim() ||
     null
-  if (resendApiKey && recipientEmail) {
+
+  if (!resendApiKey) {
+    console.warn("[newsletter-signup] RESEND_API_KEY not configured — notification skipped", {
+      artistHandle: handle,
+    })
+  } else if (!recipientEmail) {
+    console.warn("[newsletter-signup] No notification recipient configured — notification skipped", {
+      artistHandle:        handle,
+      footer_contact_email: (artistRow.footer_contact_email as string | null) ?? null,
+      booking_email:        (artistRow.booking_email        as string | null) ?? null,
+    })
+  } else {
     const fromAddress = process.env.AUDIENCE_EMAIL_FROM ?? "DJHQ Audience <audience@djhq.app>"
     const resend = new Resend(resendApiKey)
-    resend.emails
-      .send({
-        from:    fromAddress,
-        to:      recipientEmail,
-        replyTo: emailStr,
-        subject: `New subscriber — ${artistRow.artist_name}`,
-        html: `
-          <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:24px">
-            <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6b7280">DJHQ · New Subscriber</p>
-            <p style="margin:0 0 20px;font-size:18px;font-weight:700;color:#111827">${existing ? "Re-subscribed" : "New subscriber"} — ${artistRow.artist_name}</p>
-            <p style="margin:0;font-size:14px;color:#374151">
-              <strong>Email:</strong>
-              <a href="mailto:${emailStr}" style="color:#6366f1;text-decoration:none">${emailStr}</a>
-            </p>
-            <p style="margin:16px 0 0;font-size:12px;color:#9ca3af">Signed up via the public artist profile footer.</p>
-          </div>
-        `,
-        text: `${existing ? "Re-subscribed" : "New subscriber"} for ${artistRow.artist_name}\n\nEmail: ${emailStr}\n\nSigned up via the public artist profile footer.`,
+    const eventLabel = existing ? "Re-subscribed" : "New subscriber"
+
+    const { data: sendData, error: sendError } = await resend.emails.send({
+      from:    fromAddress,
+      to:      recipientEmail,
+      replyTo: emailStr,
+      subject: `New subscriber — ${artistRow.artist_name}`,
+      html: `
+        <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:24px">
+          <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6b7280">DJHQ · New Subscriber</p>
+          <p style="margin:0 0 20px;font-size:18px;font-weight:700;color:#111827">${eventLabel} — ${artistRow.artist_name}</p>
+          <p style="margin:0;font-size:14px;color:#374151">
+            <strong>Email:</strong>
+            <a href="mailto:${emailStr}" style="color:#6366f1;text-decoration:none">${emailStr}</a>
+          </p>
+          <p style="margin:16px 0 0;font-size:12px;color:#9ca3af">Signed up via the public artist profile footer.</p>
+        </div>
+      `,
+      text: `${eventLabel} for ${artistRow.artist_name}\n\nEmail: ${emailStr}\n\nSigned up via the public artist profile footer.`,
+    })
+
+    if (sendError || !sendData?.id) {
+      console.error("[newsletter-signup] Notification send failed", {
+        artistHandle: handle,
+        recipient:    recipientEmail,
+        sender:       fromAddress,
+        error:        sendError?.message ?? "Unknown Resend error",
       })
-      .catch((err: Error) => {
-        console.error("[newsletter-signup] Resend error:", err.message)
+    } else {
+      console.log("[newsletter-signup] Notification sent", {
+        artistHandle: handle,
+        recipient:    recipientEmail,
+        sender:       fromAddress,
+        messageId:    sendData.id,
       })
+    }
   }
 
   return NextResponse.json({ ok: true })
