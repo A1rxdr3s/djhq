@@ -632,18 +632,18 @@ create policy "artists_select"
     or owner_user_id = (select auth.uid())
   );
 
-create policy "artists_owner_insert"
+create policy "artists_user_insert"
   on public.artists for insert
   to authenticated
   with check (owner_user_id = (select auth.uid()));
 
-create policy "artists_owner_update"
+create policy "artists_user_update"
   on public.artists for update
   to authenticated
   using (owner_user_id = (select auth.uid()))
   with check (owner_user_id = (select auth.uid()));
 
-create policy "artists_owner_delete"
+create policy "artists_user_delete"
   on public.artists for delete
   to authenticated
   using (owner_user_id = (select auth.uid()));
@@ -671,21 +671,21 @@ create policy "social_links_select"
     )
   );
 
-create policy "social_links_owner_insert"
+create policy "social_links_user_insert"
   on public.social_links for insert
   to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "social_links_owner_update"
+create policy "social_links_user_update"
   on public.social_links for update
   to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "social_links_owner_delete"
+create policy "social_links_user_delete"
   on public.social_links for delete
   to authenticated
   using (
@@ -715,21 +715,21 @@ create policy "releases_select"
     )
   );
 
-create policy "releases_owner_insert"
+create policy "releases_user_insert"
   on public.releases for insert
   to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "releases_owner_update"
+create policy "releases_user_update"
   on public.releases for update
   to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "releases_owner_delete"
+create policy "releases_user_delete"
   on public.releases for delete
   to authenticated
   using (
@@ -759,21 +759,21 @@ create policy "gigs_select"
     )
   );
 
-create policy "gigs_owner_insert"
+create policy "gigs_user_insert"
   on public.gigs for insert
   to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "gigs_owner_update"
+create policy "gigs_user_update"
   on public.gigs for update
   to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "gigs_owner_delete"
+create policy "gigs_user_delete"
   on public.gigs for delete
   to authenticated
   using (
@@ -806,21 +806,21 @@ create policy "dj_sets_select"
     )
   );
 
-create policy "dj_sets_owner_insert"
+create policy "dj_sets_user_insert"
   on public.dj_sets for insert
   to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "dj_sets_owner_update"
+create policy "dj_sets_user_update"
   on public.dj_sets for update
   to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "dj_sets_owner_delete"
+create policy "dj_sets_user_delete"
   on public.dj_sets for delete
   to authenticated
   using (
@@ -853,21 +853,21 @@ create policy "videos_select"
     )
   );
 
-create policy "videos_owner_insert"
+create policy "videos_user_insert"
   on public.videos for insert
   to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "videos_owner_update"
+create policy "videos_user_update"
   on public.videos for update
   to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "videos_owner_delete"
+create policy "videos_user_delete"
   on public.videos for delete
   to authenticated
   using (
@@ -897,21 +897,21 @@ create policy "gallery_images_select"
     )
   );
 
-create policy "gallery_images_owner_insert"
+create policy "gallery_images_user_insert"
   on public.gallery_images for insert
   to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "gallery_images_owner_update"
+create policy "gallery_images_user_update"
   on public.gallery_images for update
   to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "gallery_images_owner_delete"
+create policy "gallery_images_user_delete"
   on public.gallery_images for delete
   to authenticated
   using (
