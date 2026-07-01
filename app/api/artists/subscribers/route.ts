@@ -120,3 +120,70 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json({ ok: true })
 }
+
+// ── DELETE — permanently remove a subscriber ──────────────────────────────────
+// Body: { artistId, subscriberId }
+
+export async function DELETE(request: Request) {
+  const authClient = await createSupabaseServerClient()
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 })
+  }
+
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 })
+  }
+
+  const { artistId, subscriberId } = body as Record<string, unknown>
+
+  if (!artistId || typeof artistId !== "string") {
+    return NextResponse.json({ error: "artistId required." }, { status: 400 })
+  }
+  if (!subscriberId || typeof subscriberId !== "string") {
+    return NextResponse.json({ error: "subscriberId required." }, { status: 400 })
+  }
+
+  const adminClient = createSupabaseAdminClient()
+
+  // Verify the requesting user owns the artist.
+  const { data: artist } = await adminClient
+    .from("artists")
+    .select("id")
+    .eq("id", artistId)
+    .eq("owner_user_id", user.id)
+    .maybeSingle()
+
+  if (!artist) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 })
+  }
+
+  // Verify the subscriber belongs to this artist before deleting.
+  const { data: subscriber } = await adminClient
+    .from("artist_subscribers")
+    .select("id")
+    .eq("id", subscriberId)
+    .eq("artist_id", artistId)
+    .maybeSingle()
+
+  if (!subscriber) {
+    return NextResponse.json({ error: "Subscriber not found." }, { status: 404 })
+  }
+
+  // Hard delete — double-scoped by both id and artist_id as a safety net.
+  const { error } = await adminClient
+    .from("artist_subscribers")
+    .delete()
+    .eq("id", subscriberId)
+    .eq("artist_id", artistId)
+
+  if (error) {
+    console.error("[subscribers] delete error:", error.message)
+    return NextResponse.json({ error: "Failed to delete subscriber." }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

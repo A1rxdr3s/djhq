@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Download, Users, Copy, Check, UserMinus, RotateCcw } from "lucide-react"
+import { Download, Users, Copy, Check, UserMinus, RotateCcw, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -71,9 +71,10 @@ export function AudienceSection({ artistId }: { artistId: string }) {
   const [handle,       setHandle]       = useState("")
   const [filter,       setFilter]       = useState<Filter>("subscribed")
   const [copiedId,     setCopiedId]     = useState<string | null>(null)
-  const [confirmingId, setConfirmingId] = useState<string | null>(null)
-  const [pendingId,    setPendingId]    = useState<string | null>(null)
-  const [actionError,  setActionError]  = useState<string | null>(null)
+  const [confirmingId,       setConfirmingId]       = useState<string | null>(null)
+  const [deletingConfirmId,  setDeletingConfirmId]  = useState<string | null>(null)
+  const [pendingId,          setPendingId]          = useState<string | null>(null)
+  const [actionError,        setActionError]        = useState<string | null>(null)
 
   // ── Data fetch ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -106,6 +107,26 @@ export function AudienceSection({ artistId }: { artistId: string }) {
       setCopiedId(id)
       setTimeout(() => setCopiedId(null), 1800)
     })
+  }
+
+  async function handleDelete(subscriberId: string) {
+    setDeletingConfirmId(null)
+    setPendingId(subscriberId)
+    setActionError(null)
+    try {
+      const res = await fetch("/api/artists/subscribers", {
+        method:  "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ artistId, subscriberId }),
+      })
+      if (!res.ok) throw new Error("request failed")
+      setSubscribers((prev) => prev.filter((s) => s.id !== subscriberId))
+    } catch {
+      setActionError(subscriberId)
+      setTimeout(() => setActionError(null), 3000)
+    } finally {
+      setPendingId(null)
+    }
   }
 
   async function handleAction(subscriberId: string, action: "unsubscribe" | "resubscribe") {
@@ -216,7 +237,7 @@ export function AudienceSection({ artistId }: { artistId: string }) {
                 <button
                   key={f}
                   type="button"
-                  onClick={() => { setFilter(f); setConfirmingId(null) }}
+                  onClick={() => { setFilter(f); setConfirmingId(null); setDeletingConfirmId(null) }}
                   className={cn(
                     "rounded-md px-2.5 py-1 text-[10px] font-semibold transition-colors",
                     filter === f
@@ -267,10 +288,11 @@ export function AudienceSection({ artistId }: { artistId: string }) {
         {filtered.length > 0 && (
           <div className="divide-y divide-border/50">
             {filtered.map((sub) => {
-              const isConfirming = confirmingId === sub.id
-              const isPending    = pendingId    === sub.id
-              const hasError     = actionError  === sub.id
-              const isSubscribed = sub.status   === "subscribed"
+              const isConfirming       = confirmingId      === sub.id
+              const isDeleteConfirming = deletingConfirmId === sub.id
+              const isPending          = pendingId         === sub.id
+              const hasError           = actionError       === sub.id
+              const isSubscribed       = sub.status        === "subscribed"
 
               return (
                 <div
@@ -327,10 +349,10 @@ export function AudienceSection({ artistId }: { artistId: string }) {
                     )}
                   </button>
 
-                  {/* Action area */}
-                  {isSubscribed && !isConfirming && (
+                  {/* Action area — unsubscribe trigger or confirm */}
+                  {!isDeleteConfirming && isSubscribed && !isConfirming && (
                     <button
-                      onClick={() => setConfirmingId(sub.id)}
+                      onClick={() => { setConfirmingId(sub.id); setDeletingConfirmId(null) }}
                       disabled={isPending}
                       aria-label="Remove subscriber"
                       className="shrink-0 rounded p-1 text-muted-foreground/25 transition-colors hover:text-red-400/60 disabled:cursor-not-allowed"
@@ -339,7 +361,7 @@ export function AudienceSection({ artistId }: { artistId: string }) {
                     </button>
                   )}
 
-                  {isSubscribed && isConfirming && (
+                  {!isDeleteConfirming && isSubscribed && isConfirming && (
                     <div className="flex shrink-0 items-center gap-1.5">
                       <span className="hidden text-[10px] text-muted-foreground/50 sm:block">
                         Remove?
@@ -359,7 +381,7 @@ export function AudienceSection({ artistId }: { artistId: string }) {
                     </div>
                   )}
 
-                  {!isSubscribed && (
+                  {!isDeleteConfirming && !isSubscribed && (
                     <button
                       onClick={() => handleAction(sub.id, "resubscribe")}
                       disabled={isPending}
@@ -368,6 +390,38 @@ export function AudienceSection({ artistId }: { artistId: string }) {
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
                     </button>
+                  )}
+
+                  {/* Permanent delete — hidden while unsubscribe confirm is open */}
+                  {!isConfirming && (
+                    isDeleteConfirming ? (
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <span className="hidden text-[10px] text-muted-foreground/50 sm:block">
+                          Delete forever?
+                        </span>
+                        <button
+                          onClick={() => handleDelete(sub.id)}
+                          className="rounded-md bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-400/80 transition-colors hover:bg-red-500/20"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => setDeletingConfirmId(null)}
+                          className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setDeletingConfirmId(sub.id); setConfirmingId(null) }}
+                        disabled={isPending}
+                        aria-label="Permanently delete subscriber"
+                        className="shrink-0 rounded p-1 text-muted-foreground/25 transition-colors hover:text-red-500/80 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )
                   )}
                 </div>
               )
