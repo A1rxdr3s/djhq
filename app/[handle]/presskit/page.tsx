@@ -336,9 +336,16 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
       <div className="min-h-screen bg-background text-foreground">
 
         {/* ── Background atmosphere ────────────────────────────────── */}
+        {/* radial-gradient instead of blur filter — avoids expensive CPU rasterization on Safari */}
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute left-1/2 top-0 h-[700px] w-[700px] -translate-x-1/2 rounded-full bg-accent/[0.04] blur-[200px]" />
-          <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-accent/[0.025] blur-[160px]" />
+          <div
+            className="absolute left-1/2 top-0 h-[700px] w-[700px] -translate-x-1/2"
+            style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)", opacity: 0.04 }}
+          />
+          <div
+            className="absolute bottom-0 right-0 h-[400px] w-[400px]"
+            style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)", opacity: 0.025 }}
+          />
         </div>
 
         <div className="mx-auto max-w-[1400px] pb-12 pt-8" style={{ paddingInline: "clamp(20px, 4vw, 56px)" }}>
@@ -623,6 +630,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         alt={image.altText}
                         fill
                         loading="lazy"
+                        quality={70}
                         sizes="(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 280px"
                         className="object-cover transition-[transform] duration-500 group-hover:scale-[1.03]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
@@ -646,6 +654,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         alt={image.altText}
                         fill
                         loading="lazy"
+                        quality={70}
                         sizes="(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 280px"
                         className="object-cover sm:transition-[transform] sm:duration-500 sm:group-hover:scale-[1.03]"
                         style={{ objectPosition: `${image.focalX}% ${image.focalY}%` }}
