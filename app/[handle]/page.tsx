@@ -908,6 +908,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     artist.releases.length > 0 ? "#music" :
     !!(featuredVideo ?? featuredSet) ? "#performance" :
     "#contact"
+  // ── Experiment: post-hero ambient background ─────────────────────────────────
+  // Set to false to fully disable with no other changes needed.
+  const ENABLE_POST_HERO_AMBIENT_BACKGROUND = true
+
   const featuredReleaseYear = featuredRelease ? new Date(featuredRelease.releaseDate).getUTCFullYear() : null
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -1009,18 +1013,28 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           <nav className="flex items-center gap-3 sm:gap-12">
             {PUBLIC_SECTION_NAV
               .filter(({ label }) => label !== "Contact" || !!artist.bookingInfo.email.trim())
-              .map(({ label, href: navHref }) => (
-                <a
-                  key={label}
-                  href={navHref}
-                  className={cn(
-                    "text-[12px] font-semibold uppercase tracking-[0.10em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]",
-                    label === "Performance" && "hidden sm:block",
-                  )}
-                >
-                  {label}
-                </a>
-              ))}
+              .map(({ label, href: navHref }) => {
+                const navItemClass = cn(
+                  "text-[12px] font-semibold uppercase tracking-[0.10em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]",
+                  label === "Performance" && "hidden sm:block",
+                )
+                // Moments requires a different anchor on mobile vs desktop:
+                // desktop targets the lamina grid (id="media"), mobile targets
+                // the below-fold Moments section (id="media-mobile").
+                if (label === "Moments") {
+                  return (
+                    <span key={label} className="contents">
+                      <a href="#media" className={cn(navItemClass, "hidden sm:block")}>Moments</a>
+                      <a href="#media-mobile" className={cn(navItemClass, "sm:hidden")}>Moments</a>
+                    </span>
+                  )
+                }
+                return (
+                  <a key={label} href={navHref} className={navItemClass}>
+                    {label}
+                  </a>
+                )
+              })}
           </nav>
           {/* Right: social platform links */}
           <div className="flex items-center gap-3">
@@ -1349,6 +1363,41 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </a>
         </div>
       </section>
+
+      {/* ── Post-hero ambient background experiment (ENABLE_POST_HERO_AMBIENT_BACKGROUND) ────────
+          Uses the already-loaded hero image as a barely-visible depth layer behind content.
+          Desktop: ~7% image visible through a dark gradient veil that fades to solid black.
+          Mobile:  fully covered by an opaque overlay — no ambient effect.
+          Rollback: set ENABLE_POST_HERO_AMBIENT_BACKGROUND = false above. ── */}
+      <div
+        className="relative"
+        style={ENABLE_POST_HERO_AMBIENT_BACKGROUND ? {
+          backgroundImage: `url(${artist.heroImageUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        } : undefined}
+      >
+        {ENABLE_POST_HERO_AMBIENT_BACKGROUND && (
+          <>
+            {/* Mobile: opaque solid cover — keeps ambient effect off on mobile */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-0 lg:hidden"
+              style={{ background: "rgb(11,15,20)" }}
+            />
+            {/* Desktop: graduated dark veil leaving ~7% of image visible.
+                Fades to fully opaque black before the footer. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-0 hidden lg:block"
+              style={{
+                background: "linear-gradient(to bottom,rgba(11,15,20,0.93) 0%,rgba(11,15,20,0.92) 60%,rgba(11,15,20,0.97) 88%,rgba(11,15,20,1) 100%)"
+              }}
+            />
+          </>
+        )}
+        {/* Content sits above the background and overlay layers */}
+        <div className={ENABLE_POST_HERO_AMBIENT_BACKGROUND ? "relative z-[1]" : undefined}>
 
       {/* ── Sticky mobile scroll nav — outside padded wrapper so it spans the full viewport ── */}
       <MobileScrollNav />
@@ -1914,6 +1963,8 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         </MobileTabManager>
       </div>
+        </div>{/* /z-wrapper */}
+      </div>{/* /ambient wrapper */}
     </main>
     </>
   )
