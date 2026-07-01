@@ -430,18 +430,27 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         href={resolveSafeHref(pk.pdfEnUrl) ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group inline-flex items-center gap-2.5 rounded-full bg-accent/[0.15] px-5 py-2.5 ring-1 ring-accent/30 transition-all duration-200 hover:bg-accent/[0.22] hover:ring-accent/50"
+                        className="group inline-flex items-center gap-3 rounded-full bg-accent/[0.15] px-5 py-2.5 ring-1 ring-accent/30 transition-all duration-200 hover:bg-accent/[0.22] hover:ring-accent/50"
                       >
-                        <ArrowDownToLine className="h-3.5 w-3.5 shrink-0 text-accent/80 transition-colors duration-200 group-hover:text-accent" />
+                        {/* UK flag — geometric SVG */}
+                        <svg viewBox="0 0 20 14" className="h-[11px] w-[16px] shrink-0 rounded-[2px] opacity-80 transition-opacity duration-200 group-hover:opacity-100" aria-hidden="true">
+                          <rect width="20" height="14" fill="#012169" />
+                          <line x1="0" y1="0" x2="20" y2="14" stroke="white" strokeWidth="3.5" />
+                          <line x1="20" y1="0" x2="0" y2="14" stroke="white" strokeWidth="3.5" />
+                          <line x1="0" y1="0" x2="20" y2="14" stroke="#C8102E" strokeWidth="1.8" />
+                          <line x1="20" y1="0" x2="0" y2="14" stroke="#C8102E" strokeWidth="1.8" />
+                          <rect x="8.5" y="0" width="3" height="14" fill="white" />
+                          <rect x="0" y="5.5" width="20" height="3" fill="white" />
+                          <rect x="9" y="0" width="2" height="14" fill="#C8102E" />
+                          <rect x="0" y="6" width="20" height="2" fill="#C8102E" />
+                        </svg>
                         <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-accent/80 transition-colors duration-200 group-hover:text-accent">
-                          Download Press Kit
-                        </span>
-                        <span className="inline-flex items-center rounded border border-accent/22 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-accent/50 transition-colors duration-200 group-hover:border-accent/38 group-hover:text-accent/80">
-                          ENG
+                          English Press Kit
                         </span>
                         {pk.pdfEnSize && (
-                          <span className="text-[10px] text-accent/35">{pk.pdfEnSize}</span>
+                          <span className="text-[10px] text-accent/35 transition-colors duration-200 group-hover:text-accent/55">{pk.pdfEnSize}</span>
                         )}
+                        <ArrowDownToLine className="h-3.5 w-3.5 shrink-0 text-accent/60 transition-colors duration-200 group-hover:text-accent" />
                       </a>
                     )}
                     {/* Spanish PDF — secondary */}
@@ -450,18 +459,20 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                         href={resolveSafeHref(pk.pdfEsUrl) ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.10] bg-white/[0.03] px-5 py-2.5 transition-all duration-200 hover:border-white/[0.18] hover:bg-white/[0.05]"
+                        className="group inline-flex items-center gap-3 rounded-full border border-white/[0.10] bg-white/[0.03] px-5 py-2.5 transition-all duration-200 hover:border-white/[0.18] hover:bg-white/[0.05]"
                       >
-                        <ArrowDownToLine className="h-3.5 w-3.5 shrink-0 text-white/38 transition-colors duration-200 group-hover:text-white/62" />
+                        {/* Spanish flag — red/yellow/red stripes */}
+                        <svg viewBox="0 0 20 14" className="h-[11px] w-[16px] shrink-0 rounded-[2px] opacity-75 transition-opacity duration-200 group-hover:opacity-95" aria-hidden="true">
+                          <rect width="20" height="14" fill="#AA151B" />
+                          <rect y="3.5" width="20" height="7" fill="#F1BF00" />
+                        </svg>
                         <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-foreground/60 transition-colors duration-200 group-hover:text-foreground/82">
-                          Download Press Kit
-                        </span>
-                        <span className="inline-flex items-center rounded border border-white/[0.15] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white/40 transition-colors duration-200 group-hover:border-white/28 group-hover:text-white/62">
-                          ESP
+                          Spanish Press Kit
                         </span>
                         {pk.pdfEsSize && (
-                          <span className="text-[10px] text-white/22">{pk.pdfEsSize}</span>
+                          <span className="text-[10px] text-white/22 transition-colors duration-200 group-hover:text-white/38">{pk.pdfEsSize}</span>
                         )}
+                        <ArrowDownToLine className="h-3.5 w-3.5 shrink-0 text-white/35 transition-colors duration-200 group-hover:text-white/60" />
                       </a>
                     )}
                   </div>
@@ -486,54 +497,53 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           </section>
 
-          {/* ── 3. Artist Snapshot / About ───────────────────────────── */}
+          {/* ── 3. Artist Snapshot — compact metadata strip ──────────── */}
           {showAbout && (
-            <section className="mt-5 rounded-[20px] border border-white/[0.06] bg-white/[0.012] px-7 py-8 sm:px-10 sm:py-10">
-              <div className="max-w-[680px]">
+            <div className="mt-7 px-1">
 
-                <p className="mb-5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/26">
-                  About
+              {/* Genres + location — inline metadata row */}
+              {(hasGenres || hasLocation) && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {artist.genres.map((g) => (
+                    <span
+                      key={g}
+                      className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent/65"
+                    >
+                      {g}
+                    </span>
+                  ))}
+                  {hasGenres && hasLocation && (
+                    <span className="text-white/16 select-none" aria-hidden="true">·</span>
+                  )}
+                  {hasLocation && (
+                    <span className="text-[11px] font-medium tracking-[0.04em] text-white/32">
+                      {artist.location}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Tagline — only if non-null from DB */}
+              {hasTagline && (
+                <p className={cn(
+                  "text-[16px] font-bold leading-[1.28] tracking-[-0.01em] text-foreground/80 sm:text-[18px]",
+                  (hasGenres || hasLocation) ? "mt-4" : "",
+                )}>
+                  {artist.tagline}
                 </p>
+              )}
 
-                {/* Genres + location chips — only if configured */}
-                {(hasGenres || hasLocation) && (
-                  <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                    {artist.genres.map((g) => (
-                      <span
-                        key={g}
-                        className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent/62"
-                      >
-                        {g}
-                      </span>
-                    ))}
-                    {hasGenres && hasLocation && (
-                      <span className="text-white/18" aria-hidden>·</span>
-                    )}
-                    {hasLocation && (
-                      <span className="text-[11px] text-white/36">{artist.location}</span>
-                    )}
-                  </div>
-                )}
+              {/* Short bio — only if non-null from DB */}
+              {hasShortBio && (
+                <p className={cn(
+                  "max-w-[560px] text-[13px] leading-[1.7] text-white/38 sm:text-[14px]",
+                  (hasTagline || hasGenres || hasLocation) ? "mt-2" : "",
+                )}>
+                  {artist.shortBio}
+                </p>
+              )}
 
-                {/* Tagline — only if configured (non-null, non-empty from DB) */}
-                {hasTagline && (
-                  <h2 className="text-[20px] font-black leading-[1.22] tracking-[-0.025em] text-foreground/88 sm:text-[24px]">
-                    {artist.tagline}
-                  </h2>
-                )}
-
-                {/* Short bio — only if configured */}
-                {hasShortBio && (
-                  <p className={cn(
-                    "text-[14px] leading-[1.78] text-white/52 sm:text-[15px]",
-                    (hasTagline || hasGenres || hasLocation) ? "mt-5" : "",
-                  )}>
-                    {artist.shortBio}
-                  </p>
-                )}
-
-              </div>
-            </section>
+            </div>
           )}
 
           {/* ── 4. Downloadable Assets ───────────────────────────────── */}
