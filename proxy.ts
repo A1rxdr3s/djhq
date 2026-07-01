@@ -78,7 +78,13 @@ export async function proxy(request: NextRequest) {
   const originalPath = request.nextUrl.pathname
 
   // Platform-level routes that must be served directly, never rewritten to /{handle}/...
-  const RESERVED_PLATFORM_PATHS = new Set(["/privacy", "/terms", "/cookies", "/robots.txt", "/sitemap.xml"])
+  const RESERVED_PLATFORM_PATHS = new Set([
+    "/privacy", "/terms", "/cookies",
+    "/robots.txt", "/sitemap.xml",
+    // Decorative static assets used as CSS background references in page components.
+    // Without this guard the proxy rewrites /grid.svg → /{handle}/grid.svg → 404.
+    "/grid.svg",
+  ])
   if (RESERVED_PLATFORM_PATHS.has(originalPath)) {
     return NextResponse.next()
   }

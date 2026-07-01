@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import {
   ArrowLeft, ArrowDownToLine, Camera, ExternalLink,
@@ -238,11 +239,52 @@ export async function generateMetadata({ params }: PressKitPageProps): Promise<M
     artistName:  artist.artistName,
   })
 
+  // Resolve canonical URL — use the requesting host for custom domains so Search
+  // Console for andresherrera.music gets a canonical on its own origin.
+  let siteOrigin = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.app").replace(/\/$/, "")
+  let isCustomDomain = false
+  try {
+    const headersList = await headers()
+    const xfh = headersList.get("x-forwarded-host") ?? ""
+    const hostHeader = headersList.get("host") ?? ""
+    const hostname = (xfh || hostHeader).split(":")[0]
+    const appHost = new URL(siteOrigin).hostname
+    if (
+      hostname &&
+      hostname !== appHost &&
+      hostname !== `www.${appHost}` &&
+      !hostname.endsWith(".vercel.app") &&
+      hostname !== "localhost" &&
+      hostname !== "127.0.0.1"
+    ) {
+      siteOrigin = `https://${hostname}`
+      isCustomDomain = true
+    }
+  } catch { /* static generation context — keep platform URL */ }
+
+  const canonicalUrl = isCustomDomain
+    ? `${siteOrigin}/presskit`
+    : `${siteOrigin}/${handle}/presskit`
+
+  const title       = `${artist.artistName} — Press Kit`
+  const description = `Official press kit for ${artist.artistName}. Download bio, photos, logos, and rider.`
+
   return {
-    title:       `${artist.artistName} — Press Kit`,
-    description: `Official press kit for ${artist.artistName}. Download bio, photos, logos, and rider.`,
-    robots:      { index: false },
-    icons:       { icon: faviconHref },
+    title,
+    description,
+    // No robots restriction — this page only renders (200 OK) when press_kit_enabled is true.
+    // Disabled/unpublished press kits go to notFound() → 404, which search engines ignore.
+    icons:      { icon: faviconHref },
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title,
+      description,
+      type:   "website",
+      url:    canonicalUrl,
+      ...(artist.heroImageUrl
+        ? { images: [{ url: artist.heroImageUrl, width: 1200, height: 675, alt: title }] }
+        : {}),
+    },
   }
 }
 
