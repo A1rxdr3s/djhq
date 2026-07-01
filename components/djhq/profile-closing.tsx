@@ -113,7 +113,7 @@ export function ProfileClosing({
     (footerBookingEmail?.trim() || bookingEmail?.trim())
       ? { label: "Booking", email: (footerBookingEmail?.trim() || bookingEmail?.trim()) as string }
       : null,
-    footerContactEmail?.trim() ? { label: "Contact", email: footerContactEmail.trim() } : null,
+    footerContactEmail?.trim() ? { label: "General", email: footerContactEmail.trim() } : null,
     footerDemosEmail?.trim()   ? { label: "Demos",   email: footerDemosEmail.trim() }   : null,
   ].filter(Boolean) as { label: string; email: string }[]
 

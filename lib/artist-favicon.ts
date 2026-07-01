@@ -30,10 +30,15 @@ export function resolveArtistFavicon(opts: {
 }): string {
   const { isPro, faviconUrl, artistName, cacheKey } = opts
   if (!isPro) return "/favicon.ico"
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.com"
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://djhq.com").replace(/\/$/, "")
   const customUrl = faviconUrl?.trim()
   if (customUrl) {
-    return cacheKey ? `${customUrl}?v=${cacheKey}` : customUrl
+    // Route through the favicon compositor so the artist's logo is always shown on
+    // a solid dark background. Without this, white/transparent logos become invisible
+    // when Google composites them against its white search results background (white circle).
+    const params = new URLSearchParams({ url: customUrl })
+    if (cacheKey) params.set("v", cacheKey)
+    return `${appUrl}/api/favicon/artist-icon?${params.toString()}`
   }
   return `${appUrl}/api/favicon/${encodeURIComponent(getArtistInitials(artistName))}`
 }

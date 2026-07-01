@@ -76,7 +76,18 @@ export async function proxy(request: NextRequest) {
   }
 
   // Platform-level routes that must be served directly, never rewritten to /{handle}/...
-  const RESERVED_PLATFORM_PATHS = new Set(["/privacy", "/terms", "/cookies", "/robots.txt", "/sitemap.xml"])
+  // favicon.ico is already excluded by the middleware matcher, so it is not needed here.
+  const RESERVED_PLATFORM_PATHS = new Set([
+    "/privacy", "/terms", "/cookies",
+    "/robots.txt", "/sitemap.xml",
+    // Browser icon files — must reach public/ static assets, not the artist handle rewrite.
+    "/apple-touch-icon.png",
+    "/apple-touch-icon-precomposed.png",
+    "/apple-icon.png",
+    "/icon.svg",
+    "/icon-dark-32x32.png",
+    "/icon-light-32x32.png",
+  ])
   const originalPath = request.nextUrl.pathname
   if (RESERVED_PLATFORM_PATHS.has(originalPath)) {
     return NextResponse.next()

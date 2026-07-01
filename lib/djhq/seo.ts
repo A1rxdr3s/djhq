@@ -44,11 +44,22 @@ export function toAbsoluteUrl(
 /**
  * Generates a concise meta description grounded in real artist data.
  * Uses only published/visible data — never invents achievements.
- * Falls back to shortBio, then a generic safe string.
+ * Falls back to shortBio, then a factual generic string built from
+ * configured genres and location so it carries more search signal
+ * than a completely generic sentence.
  */
 export function buildArtistDescription(artist: Artist): string {
   if (artist.shortBio?.trim()) return artist.shortBio.trim()
-  return `Official artist profile for ${artist.artistName}. Explore shows, releases, artist story, and booking information.`
+
+  const genreStr = (artist.genres ?? []).slice(0, 2).join(" / ")
+  const loc = artist.location?.trim()
+
+  let desc = `Official website of ${artist.artistName}`
+  if (genreStr) desc += `, ${genreStr} DJ & producer`
+  if (loc) desc += ` based in ${loc}`
+  desc += ". Shows, releases, booking, and press."
+
+  return desc
 }
 
 /**

@@ -1,5 +1,11 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
   <style>
+    /* Default: dark background, white logo.
+       Google's favicon crawler and environments without CSS media query support
+       render the SVG without @media rules — explicit defaults prevent transparent
+       fill, which would cause the icon to appear as a plain white circle. */
+    .background { fill: #0a0a0a; }
+    .foreground { fill: #ffffff; }
     @media (prefers-color-scheme: light) {
       .background { fill: black; }
       .foreground { fill: white; }
