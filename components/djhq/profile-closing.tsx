@@ -296,7 +296,7 @@ export function ProfileClosing({
         <div>
           {contacts.length > 0 && (
             <div>
-              <p className={headingClass}>Booking</p>
+              <p className={headingClass}>Contact</p>
               <div className="space-y-4">
                 {contacts.map(({ label, email: addr }) => (
                   <div key={label}>
