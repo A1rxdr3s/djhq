@@ -613,12 +613,17 @@ create policy "venues_public_read"
   on public.venues for select using (true);
 
 -- artists
+drop policy if exists "Public can read published artists" on public.artists; -- migration 001 original name
 drop policy if exists "artists_public_read"   on public.artists;
 drop policy if exists "artists_owner_all"      on public.artists;
 drop policy if exists "artists_select"         on public.artists;
+drop policy if exists "artists_user_select"    on public.artists;
 drop policy if exists "artists_owner_insert"   on public.artists;
+drop policy if exists "artists_user_insert"    on public.artists;
 drop policy if exists "artists_owner_update"   on public.artists;
+drop policy if exists "artists_user_update"    on public.artists;
 drop policy if exists "artists_owner_delete"   on public.artists;
+drop policy if exists "artists_user_delete"    on public.artists;
 
 create policy "artists_select"
   on public.artists for select
@@ -629,24 +634,32 @@ create policy "artists_select"
 
 create policy "artists_owner_insert"
   on public.artists for insert
+  to authenticated
   with check (owner_user_id = (select auth.uid()));
 
 create policy "artists_owner_update"
   on public.artists for update
+  to authenticated
   using (owner_user_id = (select auth.uid()))
   with check (owner_user_id = (select auth.uid()));
 
 create policy "artists_owner_delete"
   on public.artists for delete
+  to authenticated
   using (owner_user_id = (select auth.uid()));
 
 -- social_links
+drop policy if exists "Public can read links for published artists" on public.social_links; -- migration 001 original name
 drop policy if exists "social_links_public_read"    on public.social_links;
 drop policy if exists "social_links_owner_all"       on public.social_links;
 drop policy if exists "social_links_select"          on public.social_links;
+drop policy if exists "social_links_user_select"     on public.social_links;
 drop policy if exists "social_links_owner_insert"    on public.social_links;
+drop policy if exists "social_links_user_insert"     on public.social_links;
 drop policy if exists "social_links_owner_update"    on public.social_links;
+drop policy if exists "social_links_user_update"     on public.social_links;
 drop policy if exists "social_links_owner_delete"    on public.social_links;
+drop policy if exists "social_links_user_delete"     on public.social_links;
 
 create policy "social_links_select"
   on public.social_links for select
@@ -660,29 +673,37 @@ create policy "social_links_select"
 
 create policy "social_links_owner_insert"
   on public.social_links for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "social_links_owner_update"
   on public.social_links for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "social_links_owner_delete"
   on public.social_links for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 -- releases
+drop policy if exists "Public can read releases for published artists" on public.releases; -- migration 001 original name
 drop policy if exists "releases_public_read"  on public.releases;
 drop policy if exists "releases_owner_all"     on public.releases;
 drop policy if exists "releases_select"        on public.releases;
+drop policy if exists "releases_user_select"   on public.releases;
 drop policy if exists "releases_owner_insert"  on public.releases;
+drop policy if exists "releases_user_insert"   on public.releases;
 drop policy if exists "releases_owner_update"  on public.releases;
+drop policy if exists "releases_user_update"   on public.releases;
 drop policy if exists "releases_owner_delete"  on public.releases;
+drop policy if exists "releases_user_delete"   on public.releases;
 
 create policy "releases_select"
   on public.releases for select
@@ -696,29 +717,37 @@ create policy "releases_select"
 
 create policy "releases_owner_insert"
   on public.releases for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "releases_owner_update"
   on public.releases for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "releases_owner_delete"
   on public.releases for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 -- gigs
+drop policy if exists "Public can read gigs for published artists" on public.gigs; -- migration 001 original name
 drop policy if exists "gigs_public_read"  on public.gigs;
 drop policy if exists "gigs_owner_all"    on public.gigs;
 drop policy if exists "gigs_select"       on public.gigs;
+drop policy if exists "gigs_user_select"  on public.gigs;
 drop policy if exists "gigs_owner_insert" on public.gigs;
+drop policy if exists "gigs_user_insert"  on public.gigs;
 drop policy if exists "gigs_owner_update" on public.gigs;
+drop policy if exists "gigs_user_update"  on public.gigs;
 drop policy if exists "gigs_owner_delete" on public.gigs;
+drop policy if exists "gigs_user_delete"  on public.gigs;
 
 create policy "gigs_select"
   on public.gigs for select
@@ -732,29 +761,37 @@ create policy "gigs_select"
 
 create policy "gigs_owner_insert"
   on public.gigs for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "gigs_owner_update"
   on public.gigs for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "gigs_owner_delete"
   on public.gigs for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 -- dj_sets (own is_published column — public read requires both set and artist published)
+drop policy if exists "Public can read published dj sets for published artists" on public.dj_sets; -- migration 005 original name
 drop policy if exists "dj_sets_public_read"  on public.dj_sets;
 drop policy if exists "dj_sets_owner_all"    on public.dj_sets;
 drop policy if exists "dj_sets_select"       on public.dj_sets;
+drop policy if exists "dj_sets_user_select"  on public.dj_sets;
 drop policy if exists "dj_sets_owner_insert" on public.dj_sets;
+drop policy if exists "dj_sets_user_insert"  on public.dj_sets;
 drop policy if exists "dj_sets_owner_update" on public.dj_sets;
+drop policy if exists "dj_sets_user_update"  on public.dj_sets;
 drop policy if exists "dj_sets_owner_delete" on public.dj_sets;
+drop policy if exists "dj_sets_user_delete"  on public.dj_sets;
 
 create policy "dj_sets_select"
   on public.dj_sets for select
@@ -771,29 +808,37 @@ create policy "dj_sets_select"
 
 create policy "dj_sets_owner_insert"
   on public.dj_sets for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "dj_sets_owner_update"
   on public.dj_sets for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "dj_sets_owner_delete"
   on public.dj_sets for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 -- videos (own is_published column — public read requires both video and artist published)
+drop policy if exists "Public can read published videos for published artists" on public.videos; -- migration 006 original name
 drop policy if exists "videos_public_read"  on public.videos;
 drop policy if exists "videos_owner_all"    on public.videos;
 drop policy if exists "videos_select"       on public.videos;
+drop policy if exists "videos_user_select"  on public.videos;
 drop policy if exists "videos_owner_insert" on public.videos;
+drop policy if exists "videos_user_insert"  on public.videos;
 drop policy if exists "videos_owner_update" on public.videos;
+drop policy if exists "videos_user_update"  on public.videos;
 drop policy if exists "videos_owner_delete" on public.videos;
+drop policy if exists "videos_user_delete"  on public.videos;
 
 create policy "videos_select"
   on public.videos for select
@@ -810,29 +855,37 @@ create policy "videos_select"
 
 create policy "videos_owner_insert"
   on public.videos for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "videos_owner_update"
   on public.videos for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "videos_owner_delete"
   on public.videos for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 -- gallery_images
-drop policy if exists "gallery_images_public_read"  on public.gallery_images;
-drop policy if exists "gallery_images_owner_all"     on public.gallery_images;
-drop policy if exists "gallery_images_select"        on public.gallery_images;
-drop policy if exists "gallery_images_owner_insert"  on public.gallery_images;
-drop policy if exists "gallery_images_owner_update"  on public.gallery_images;
-drop policy if exists "gallery_images_owner_delete"  on public.gallery_images;
+drop policy if exists "Public can read gallery images for published artists" on public.gallery_images; -- migration 001 original name
+drop policy if exists "gallery_images_public_read"   on public.gallery_images;
+drop policy if exists "gallery_images_owner_all"      on public.gallery_images;
+drop policy if exists "gallery_images_select"         on public.gallery_images;
+drop policy if exists "gallery_images_user_select"    on public.gallery_images;
+drop policy if exists "gallery_images_owner_insert"   on public.gallery_images;
+drop policy if exists "gallery_images_user_insert"    on public.gallery_images;
+drop policy if exists "gallery_images_owner_update"   on public.gallery_images;
+drop policy if exists "gallery_images_user_update"    on public.gallery_images;
+drop policy if exists "gallery_images_owner_delete"   on public.gallery_images;
+drop policy if exists "gallery_images_user_delete"    on public.gallery_images;
 
 create policy "gallery_images_select"
   on public.gallery_images for select
@@ -846,18 +899,21 @@ create policy "gallery_images_select"
 
 create policy "gallery_images_owner_insert"
   on public.gallery_images for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "gallery_images_owner_update"
   on public.gallery_images for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
 create policy "gallery_images_owner_delete"
   on public.gallery_images for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
