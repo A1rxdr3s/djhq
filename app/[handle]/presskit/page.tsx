@@ -365,7 +365,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
               {/* Image column */}
               {artist.heroImageUrl && (
-                <div className="relative aspect-[16/9] lg:aspect-auto lg:min-h-[520px]">
+                <div className="relative aspect-[16/9] lg:aspect-auto lg:min-h-[460px]">
                   <Image
                     src={artist.heroImageUrl}
                     alt={artist.artistName}
@@ -384,7 +384,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
               )}
 
               {/* Content column */}
-              <div className="flex flex-col justify-center px-7 py-9 lg:px-12 lg:py-14">
+              <div className="flex flex-col justify-center px-7 py-8 lg:px-12 lg:py-10">
 
                 {/* Eyebrow */}
                 <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.28em] text-accent/60">
@@ -539,8 +539,8 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── 3. Press Kit Assets ──────────────────────────────────── */}
           {hasAssets && (
-            <section className="mt-10">
-              <div className="mb-5">
+            <section className="mt-8">
+              <div className="mb-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-white/28">
                   Press Kit Assets
                 </p>
@@ -548,14 +548,14 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   Official files for promoters, venues, press, and media.
                 </p>
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                 {folderCards.map((card) => (
                   <a
                     key={card.id}
                     href={resolveSafeHref(card.url) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex flex-col overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.015] p-5 transition-all duration-200 hover:border-accent/[0.15] hover:bg-white/[0.04]"
+                    className="group flex flex-col overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.015] p-4 transition-all duration-200 hover:border-accent/[0.15] hover:bg-white/[0.04]"
                   >
                     <div className="flex items-start justify-between">
                       <div className="rounded-[8px] bg-white/[0.04] p-2 transition-colors duration-150 group-hover:bg-accent/[0.08]">
@@ -563,13 +563,13 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                       </div>
                       <ExternalLink className="h-3 w-3 text-white/10 transition-colors duration-150 group-hover:text-white/28" />
                     </div>
-                    <p className="mt-4 text-[13px] font-bold text-foreground/80 transition-colors duration-150 group-hover:text-foreground">
+                    <p className="mt-3 text-[13px] font-bold text-foreground/80 transition-colors duration-150 group-hover:text-foreground">
                       {card.label}
                     </p>
                     <p className="mt-1 text-[11px] leading-[1.55] text-white/24">
                       {card.description}
                     </p>
-                    <div className="mt-auto flex items-center gap-1.5 pt-4">
+                    <div className="mt-auto flex items-center gap-1.5 pt-3">
                       <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-accent/42 transition-colors duration-150 group-hover:text-accent/72">
                         {card.cta}
                       </span>
@@ -583,7 +583,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
 
           {/* ── 4. Press Photos ──────────────────────────────────────── */}
           {showPhotos && (
-            <section className="mt-10">
+            <section className="mt-8">
               <div className="mb-5 flex items-start justify-between gap-6">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-white/28">
@@ -616,7 +616,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                       href={mediaHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group relative aspect-[4/5] overflow-hidden rounded-[14px] bg-white/[0.03]"
+                      className="group relative aspect-[3/4] overflow-hidden rounded-[14px] bg-white/[0.03]"
                     >
                       <Image
                         src={image.imageUrl}
@@ -639,7 +639,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                   ) : (
                     <div
                       key={image.id}
-                      className="group relative aspect-[4/5] overflow-hidden rounded-[14px] bg-white/[0.03]"
+                      className="group relative aspect-[3/4] overflow-hidden rounded-[14px] bg-white/[0.03]"
                     >
                       <Image
                         src={image.imageUrl}
@@ -659,7 +659,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
           )}
 
           {/* ── 5. Booking / Contact Strip ───────────────────────────── */}
-          <section className="mt-12 rounded-[20px] border border-white/[0.06] bg-white/[0.012] px-7 py-8 sm:px-10 sm:py-9">
+          <section className="mt-10 rounded-[20px] border border-white/[0.06] bg-white/[0.012] px-7 py-8 sm:px-10 sm:py-9">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
 
               {/* Booking contact */}
