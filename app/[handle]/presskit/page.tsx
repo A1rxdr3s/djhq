@@ -492,66 +492,62 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     </span>
                   </a>
                 )}
+
+                {/* Artist Snapshot — anchored below CTAs inside the hero panel */}
+                {showAbout && (
+                  <div className="mt-7 border-t border-white/[0.05] pt-5">
+                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.28em] text-white/20">
+                      Artist Snapshot
+                    </p>
+                    {(hasGenres || hasLocation) && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        {artist.genres.map((g) => (
+                          <span key={g} className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent/65">
+                            {g}
+                          </span>
+                        ))}
+                        {hasGenres && hasLocation && (
+                          <span className="text-white/16 select-none" aria-hidden="true">·</span>
+                        )}
+                        {hasLocation && (
+                          <span className="text-[11px] font-medium text-white/32">{artist.location}</span>
+                        )}
+                      </div>
+                    )}
+                    {hasTagline && (
+                      <p className={cn(
+                        "text-[15px] font-bold leading-[1.28] tracking-[-0.01em] text-foreground/80",
+                        (hasGenres || hasLocation) ? "mt-3" : "",
+                      )}>
+                        {artist.tagline}
+                      </p>
+                    )}
+                    {hasShortBio && (
+                      <p className={cn(
+                        "text-[12px] leading-[1.7] text-white/35",
+                        (hasTagline || hasGenres || hasLocation) ? "mt-1.5" : "",
+                      )}>
+                        {artist.shortBio}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
             </div>
           </section>
 
-          {/* ── 3. Artist Snapshot — compact metadata strip ──────────── */}
-          {showAbout && (
-            <div className="mt-7 px-1">
-
-              {/* Genres + location — inline metadata row */}
-              {(hasGenres || hasLocation) && (
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  {artist.genres.map((g) => (
-                    <span
-                      key={g}
-                      className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent/65"
-                    >
-                      {g}
-                    </span>
-                  ))}
-                  {hasGenres && hasLocation && (
-                    <span className="text-white/16 select-none" aria-hidden="true">·</span>
-                  )}
-                  {hasLocation && (
-                    <span className="text-[11px] font-medium tracking-[0.04em] text-white/32">
-                      {artist.location}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Tagline — only if non-null from DB */}
-              {hasTagline && (
-                <p className={cn(
-                  "text-[16px] font-bold leading-[1.28] tracking-[-0.01em] text-foreground/80 sm:text-[18px]",
-                  (hasGenres || hasLocation) ? "mt-4" : "",
-                )}>
-                  {artist.tagline}
-                </p>
-              )}
-
-              {/* Short bio — only if non-null from DB */}
-              {hasShortBio && (
-                <p className={cn(
-                  "max-w-[560px] text-[13px] leading-[1.7] text-white/38 sm:text-[14px]",
-                  (hasTagline || hasGenres || hasLocation) ? "mt-2" : "",
-                )}>
-                  {artist.shortBio}
-                </p>
-              )}
-
-            </div>
-          )}
-
-          {/* ── 4. Downloadable Assets ───────────────────────────────── */}
+          {/* ── 3. Press Kit Assets ──────────────────────────────────── */}
           {hasAssets && (
             <section className="mt-10">
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.26em] text-white/26">
-                Assets
-              </p>
+              <div className="mb-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-white/28">
+                  Press Kit Assets
+                </p>
+                <p className="mt-1 text-[11px] text-white/18">
+                  Official files for promoters, venues, press, and media.
+                </p>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {folderCards.map((card) => (
                   <a
@@ -559,40 +555,52 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     href={resolveSafeHref(card.url) ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex flex-col overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-200 hover:border-white/[0.11] hover:bg-white/[0.04]"
+                    className="group flex flex-col overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.015] p-5 transition-all duration-200 hover:border-accent/[0.15] hover:bg-white/[0.04]"
                   >
                     <div className="flex items-start justify-between">
-                      <card.icon className="h-[18px] w-[18px] text-accent/50 transition-colors duration-150 group-hover:text-accent/80" />
-                      <ExternalLink className="h-3 w-3 text-white/12 transition-colors duration-150 group-hover:text-white/32" />
+                      <div className="rounded-[8px] bg-white/[0.04] p-2 transition-colors duration-150 group-hover:bg-accent/[0.08]">
+                        <card.icon className="h-[15px] w-[15px] text-accent/55 transition-colors duration-150 group-hover:text-accent/85" />
+                      </div>
+                      <ExternalLink className="h-3 w-3 text-white/10 transition-colors duration-150 group-hover:text-white/28" />
                     </div>
-                    <p className="mt-3.5 text-[13px] font-semibold text-foreground/75 transition-colors duration-150 group-hover:text-foreground">
+                    <p className="mt-4 text-[13px] font-bold text-foreground/80 transition-colors duration-150 group-hover:text-foreground">
                       {card.label}
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-white/26">
+                    <p className="mt-1 text-[11px] leading-[1.55] text-white/24">
                       {card.description}
                     </p>
-                    <p className="mt-auto pt-4 text-[10px] font-bold uppercase tracking-[0.1em] text-accent/42 transition-colors duration-150 group-hover:text-accent/72">
-                      {card.cta}
-                    </p>
+                    <div className="mt-auto flex items-center gap-1.5 pt-4">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-accent/42 transition-colors duration-150 group-hover:text-accent/72">
+                        {card.cta}
+                      </span>
+                      <ArrowDownToLine className="h-2.5 w-2.5 text-accent/32 transition-colors duration-150 group-hover:text-accent/65" />
+                    </div>
                   </a>
                 ))}
               </div>
             </section>
           )}
 
-          {/* ── 5. Press Photos ──────────────────────────────────────── */}
+          {/* ── 4. Press Photos ──────────────────────────────────────── */}
           {showPhotos && (
             <section className="mt-10">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-white/26">
-                  Press Photos
-                </p>
+              <div className="mb-5 flex items-start justify-between gap-6">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-white/28">
+                    Press Photos
+                  </p>
+                  <p className="mt-1 text-[11px] text-white/18">
+                    {mediaHref
+                      ? "Preview images · Download high-res files from the press photos folder."
+                      : "Preview images · Contact for high-resolution files."}
+                  </p>
+                </div>
                 {mediaHref && (
                   <a
                     href={mediaHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-white/[0.02] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white/38 transition-all duration-200 hover:border-accent/28 hover:bg-accent/[0.05] hover:text-accent/70"
+                    className="shrink-0 group inline-flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-white/[0.02] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white/38 transition-all duration-200 hover:border-accent/28 hover:bg-accent/[0.05] hover:text-accent/70"
                   >
                     <ArrowDownToLine className="h-3 w-3" />
                     Download All
@@ -647,16 +655,11 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                 )}
               </div>
 
-              <p className="mt-3 text-[10px] text-white/16">
-                {mediaHref
-                  ? "Previews only · Download high-res from the Press Photos folder above"
-                  : "Preview only · Contact for high-resolution files"}
-              </p>
             </section>
           )}
 
-          {/* ── 6. Booking / Contact Strip ───────────────────────────── */}
-          <section className="mt-14 rounded-[20px] border border-white/[0.06] bg-white/[0.012] px-7 py-8 sm:px-10 sm:py-9">
+          {/* ── 5. Booking / Contact Strip ───────────────────────────── */}
+          <section className="mt-12 rounded-[20px] border border-white/[0.06] bg-white/[0.012] px-7 py-8 sm:px-10 sm:py-9">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
 
               {/* Booking contact */}
@@ -702,7 +705,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
             </div>
           </section>
 
-          {/* ── 7. Footer ────────────────────────────────────────────── */}
+          {/* ── 6. Footer ────────────────────────────────────────────── */}
           <footer className="mt-8 border-t border-white/[0.04] pt-6">
             <PressKitLegalFooter
               artistName={artist.artistName}
