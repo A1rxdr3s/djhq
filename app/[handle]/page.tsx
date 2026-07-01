@@ -908,10 +908,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     artist.releases.length > 0 ? "#music" :
     !!(featuredVideo ?? featuredSet) ? "#performance" :
     "#contact"
-  // ── Experiment: post-hero ambient background ─────────────────────────────────
-  // Set to false to fully disable with no other changes needed.
-  const ENABLE_POST_HERO_AMBIENT_BACKGROUND = true
-
   const featuredReleaseYear = featuredRelease ? new Date(featuredRelease.releaseDate).getUTCFullYear() : null
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -1363,41 +1359,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             </a>
         </div>
       </section>
-
-      {/* ── Post-hero ambient background experiment (ENABLE_POST_HERO_AMBIENT_BACKGROUND) ────────
-          Uses the already-loaded hero image as a barely-visible depth layer behind content.
-          Desktop: ~7% image visible through a dark gradient veil that fades to solid black.
-          Mobile:  fully covered by an opaque overlay — no ambient effect.
-          Rollback: set ENABLE_POST_HERO_AMBIENT_BACKGROUND = false above. ── */}
-      <div
-        className="relative"
-        style={ENABLE_POST_HERO_AMBIENT_BACKGROUND ? {
-          backgroundImage: `url(${artist.heroImageUrl})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        } : undefined}
-      >
-        {ENABLE_POST_HERO_AMBIENT_BACKGROUND && (
-          <>
-            {/* Mobile: pure black — ambient effect fully off on mobile */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-0 lg:hidden"
-              style={{ background: "rgb(0,0,0)" }}
-            />
-            {/* Desktop: pure-black veil at ~97% opacity → ~3% image depth, no color cast.
-                Fades to fully opaque black at the footer. */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-0 hidden lg:block"
-              style={{
-                background: "linear-gradient(to bottom,rgba(0,0,0,0.97) 0%,rgba(0,0,0,0.96) 50%,rgba(0,0,0,0.98) 88%,rgba(0,0,0,1) 100%)"
-              }}
-            />
-          </>
-        )}
-        {/* Content sits above the background and overlay layers */}
-        <div className={ENABLE_POST_HERO_AMBIENT_BACKGROUND ? "relative z-[1]" : undefined}>
 
       {/* ── Sticky mobile scroll nav — outside padded wrapper so it spans the full viewport ── */}
       <MobileScrollNav />
@@ -1963,8 +1924,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         </MobileTabManager>
       </div>
-        </div>{/* /z-wrapper */}
-      </div>{/* /ambient wrapper */}
     </main>
     </>
   )
