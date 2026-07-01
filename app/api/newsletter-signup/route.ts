@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   const supabase = createSupabaseAdminClient()
   const { data: artistRow } = await supabase
     .from("artists")
-    .select("id, artist_name, booking_email, is_published")
+    .select("id, artist_name, booking_email, footer_contact_email, is_published")
     .eq("handle", handle)
     .eq("is_published", true)
     .maybeSingle()
@@ -93,8 +93,13 @@ export async function POST(request: Request) {
   }
 
   // Send notification to artist — non-blocking; a delivery failure never fails the signup.
-  const resendApiKey = process.env.RESEND_API_KEY
-  const recipientEmail = artistRow.booking_email?.trim()
+  // Recipient priority: footer_contact_email → booking_email → skip.
+  // booking_email is reserved for booking requests; contact email is preferred for audience alerts.
+  const resendApiKey    = process.env.RESEND_API_KEY
+  const recipientEmail  =
+    (artistRow.footer_contact_email as string | null)?.trim() ||
+    (artistRow.booking_email as string | null)?.trim() ||
+    null
   if (resendApiKey && recipientEmail) {
     const fromAddress = process.env.BOOKING_FROM_EMAIL ?? "DJHQ <booking@djhq.app>"
     const resend = new Resend(resendApiKey)
