@@ -295,7 +295,7 @@ export async function POST(request: Request) {
 
   // ── Build email payload ───────────────────────────────────────────────────
 
-  const fromAddress = process.env.BOOKING_FROM_EMAIL ?? "DJHQ Booking <booking@djhq.app>"
+  const fromAddress = process.env.BOOKING_EMAIL_FROM ?? "DJHQ Booking <booking@djhq.app>"
   const subject     = `New booking request for ${artistRow.artist_name} — ${referenceId}`
   const emailParams = {
     artistName:      artistRow.artist_name as string,

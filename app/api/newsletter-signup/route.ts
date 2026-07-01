@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     (artistRow.booking_email as string | null)?.trim() ||
     null
   if (resendApiKey && recipientEmail) {
-    const fromAddress = process.env.BOOKING_FROM_EMAIL ?? "DJHQ <booking@djhq.app>"
+    const fromAddress = process.env.AUDIENCE_EMAIL_FROM ?? "DJHQ Audience <audience@djhq.app>"
     const resend = new Resend(resendApiKey)
     resend.emails
       .send({
