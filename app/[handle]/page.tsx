@@ -1379,19 +1379,19 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
       >
         {ENABLE_POST_HERO_AMBIENT_BACKGROUND && (
           <>
-            {/* Mobile: opaque solid cover — keeps ambient effect off on mobile */}
+            {/* Mobile: pure black — ambient effect fully off on mobile */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 z-0 lg:hidden"
-              style={{ background: "rgb(11,15,20)" }}
+              style={{ background: "rgb(0,0,0)" }}
             />
-            {/* Desktop: graduated dark veil leaving ~7% of image visible.
-                Fades to fully opaque black before the footer. */}
+            {/* Desktop: pure-black veil at ~97% opacity → ~3% image depth, no color cast.
+                Fades to fully opaque black at the footer. */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 z-0 hidden lg:block"
               style={{
-                background: "linear-gradient(to bottom,rgba(11,15,20,0.93) 0%,rgba(11,15,20,0.92) 60%,rgba(11,15,20,0.97) 88%,rgba(11,15,20,1) 100%)"
+                background: "linear-gradient(to bottom,rgba(0,0,0,0.97) 0%,rgba(0,0,0,0.96) 50%,rgba(0,0,0,0.98) 88%,rgba(0,0,0,1) 100%)"
               }}
             />
           </>
