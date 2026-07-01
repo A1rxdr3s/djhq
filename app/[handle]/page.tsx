@@ -978,7 +978,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           alt=""
           fill
           aria-hidden="true"
-          priority
+          quality={20}
           sizes="100vw"
           className="scale-110 object-cover opacity-[0.18] blur-3xl"
         />
