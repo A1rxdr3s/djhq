@@ -19,10 +19,10 @@ export const PUBLIC_SECTION_NAV = [
  */
 export const MOBILE_PUBLIC_NAV = [
   { label: "Shows",   href: "#shows",   id: "shows"   },
-  { label: "Moments", href: "#media",   id: "media"   },
-  { label: "Music",   href: "#music",   id: "music"   },
-  { label: "Story",   href: "#story",   id: "story"   },
-  { label: "Contact", href: "#contact", id: "contact" },
+  { label: "Moments", href: "#media",        id: "media-mobile" },
+  { label: "Music",   href: "#music",        id: "music"        },
+  { label: "Story",   href: "#story",        id: "story"        },
+  { label: "Contact", href: "#contact",      id: "contact"      },
 ] as const
 
 export type PublicNavItem       = (typeof PUBLIC_SECTION_NAV)[number]
