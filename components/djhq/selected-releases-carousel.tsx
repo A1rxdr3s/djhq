@@ -205,9 +205,9 @@ export function SelectedReleasesCarousel({ releases }: Props) {
                     {release.title}
                   </h3>
 
-                  <p className="mt-2 text-[12px] text-white/42 line-clamp-1">{release.credits ?? ""}</p>
+                  <p className="mt-2 text-[12px] text-white/58 line-clamp-1">{release.credits ?? ""}</p>
 
-                  <p className="mt-1 line-clamp-1 text-[10px] uppercase tracking-[0.14em] text-white/28">
+                  <p className="mt-1 line-clamp-1 text-[10px] uppercase tracking-[0.14em] text-white/48">
                     {[releaseYear, release.label].filter(Boolean).join(" · ")}
                   </p>
 

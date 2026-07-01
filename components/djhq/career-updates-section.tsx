@@ -1049,7 +1049,7 @@ function MobileStoryCard({
         </h3>
         {item.location && (
           <p
-            className="mt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/50"
+            className="mt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/62"
             style={hasImage ? { textShadow: '0 1px 3px rgba(0,0,0,0.65)' } : undefined}
           >
             {item.location}

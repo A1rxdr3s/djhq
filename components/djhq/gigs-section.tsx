@@ -24,7 +24,7 @@ function parseGigDate(dateStr: string) {
 const STATUS_CONFIG: Partial<Record<GigEventStatus, { label: string; className: string }>> = {
   sold_out:  { label: "Sold Out",  className: "border-amber-500/30 bg-amber-500/10 text-amber-400/80" },
   cancelled: { label: "Cancelled", className: "border-red-500/30 bg-red-500/10 text-red-400/70" },
-  past:      { label: "Past",      className: "border-white/[0.12] bg-white/[0.04] text-white/35" },
+  past:      { label: "Past",      className: "border-white/[0.12] bg-white/[0.04] text-white/52" },
 }
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
@@ -144,7 +144,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "mt-0.5 truncate text-xs font-medium leading-tight",
-              isPast ? "text-white/18" : "text-white/55",
+              isPast ? "text-white/32" : "text-white/55",
               !hasEventName && "invisible",
             )}
           >
@@ -156,7 +156,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "mt-0.5 truncate text-xs leading-tight",
-              isPast ? "text-white/14" : "text-white/40",
+              isPast ? "text-white/32" : "text-white/56",
             )}
           >
             {gig.clubVenue}
@@ -167,7 +167,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.08em]",
-              isPast ? "text-white/14" : "text-white/35",
+              isPast ? "text-white/32" : "text-white/52",
             )}
           >
             {locationStr}
@@ -241,7 +241,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
         <span
           className={cn(
             "mt-[3px] text-[7px] font-bold uppercase tracking-[0.18em]",
-            isPast ? "text-white/15" : "text-accent/52",
+            isPast ? "text-white/32" : "text-accent/52",
           )}
         >
           {month}
@@ -269,7 +269,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
           <p
             className={cn(
               "truncate text-[10px] font-medium leading-tight",
-              isPast ? "text-white/18" : "text-white/38",
+              isPast ? "text-white/32" : "text-white/55",
             )}
           >
             {gig.venue}
@@ -279,7 +279,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
           <p
             className={cn(
               "mt-[2px] truncate text-[10px] font-medium uppercase tracking-[0.08em]",
-              isPast ? "text-white/18" : "text-white/30",
+              isPast ? "text-white/32" : "text-white/48",
             )}
           >
             {locationStr}
@@ -333,7 +333,7 @@ function GigRowPast({ gig }: { gig: Gig }) {
   return (
     <div className="flex items-center gap-2 border-t border-white/[0.035] py-[5px] first:border-0">
       {/* Inline date — "31 MAY" */}
-      <span className="w-[46px] shrink-0 text-[10px] font-bold tabular-nums tracking-[0.02em] text-white/38">
+      <span className="w-[46px] shrink-0 text-[10px] font-bold tabular-nums tracking-[0.02em] text-white/52">
         {day} {month}
       </span>
 
@@ -344,7 +344,7 @@ function GigRowPast({ gig }: { gig: Gig }) {
 
       {/* Location */}
       {locationStr && (
-        <p className="shrink-0 max-w-[38%] truncate text-[9px] font-medium uppercase tracking-[0.08em] text-white/32">
+        <p className="shrink-0 max-w-[38%] truncate text-[9px] font-medium uppercase tracking-[0.08em] text-white/50">
           {locationStr}
         </p>
       )}
@@ -357,7 +357,7 @@ function GigRowPast({ gig }: { gig: Gig }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram"
-            className="-m-2 p-2 text-white/32 transition-colors duration-150 hover:text-white/58"
+            className="-m-2 p-2 text-white/50 transition-colors duration-150 hover:text-white/58"
           >
             <Instagram className="h-[11px] w-[11px]" />
           </a>
@@ -449,7 +449,7 @@ export function GigsSection({ futureGigs, pastGigs, className }: GigsSectionProp
         <button
           type="button"
           onClick={() => setShowAllFuture(true)}
-          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-2 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
+          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-2 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/62 transition-colors duration-200 hover:text-accent lg:mt-auto"
         >
           View All Shows ({futureGigs.length}) →
         </button>
@@ -460,7 +460,7 @@ export function GigsSection({ futureGigs, pastGigs, className }: GigsSectionProp
         <button
           type="button"
           onClick={() => setPastExpanded((v) => !v)}
-          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-2 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/45 transition-colors duration-200 hover:text-accent lg:mt-auto"
+          className="mt-3 inline-flex w-full items-center gap-2 border-t border-white/[0.06] pt-2 text-left text-xs font-semibold uppercase tracking-[0.20em] text-white/62 transition-colors duration-200 hover:text-accent lg:mt-auto"
         >
           {pastExpanded ? "Hide Past Shows ↑" : "View Past Shows →"}
         </button>
@@ -477,7 +477,7 @@ export function GigsSection({ futureGigs, pastGigs, className }: GigsSectionProp
             style={{ overflow: "hidden" }}
           >
             <div className="mt-2 border-t border-white/[0.05] pt-2.5">
-              <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white/28">
+              <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white/48">
                 Past Shows
               </p>
               {pastForToggle.slice(0, 3).map((gig) => (

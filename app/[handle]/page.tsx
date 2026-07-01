@@ -1388,7 +1388,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <p className="mt-0.5 truncate text-sm font-black tracking-[-0.01em] text-white">
                       {featuredRelease.title}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-white/40">
+                    <p className="mt-0.5 text-[11px] text-white/56">
                       {featuredRelease.label} · {featuredReleaseYear}
                     </p>
                   </div>
@@ -1416,7 +1416,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent/60">Next Show</p>
                     <p className="mt-0.5 truncate text-sm font-bold tracking-[-0.01em] text-white">{gig.eventName || gig.venue}</p>
                     {(gig.eventName || gig.clubVenue) && (
-                      <p className="mt-0.5 truncate text-[11px] text-white/40">
+                      <p className="mt-0.5 truncate text-[11px] text-white/56">
                         {[gig.eventName ? gig.venue : null, gig.clubVenue, gig.city].filter(Boolean).join(" · ")}
                       </p>
                     )}
@@ -1725,7 +1725,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   {displayTitle}
                                 </p>
                                 {metaParts.length > 0 ? (
-                                  <p className="mt-[2px] truncate text-[10px] uppercase tracking-[0.12em] text-white/28">
+                                  <p className="mt-[2px] truncate text-[10px] uppercase tracking-[0.12em] text-white/48">
                                     {metaParts.join(" · ")}
                                   </p>
                                 ) : null}
@@ -1838,7 +1838,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                                   {showTitle}
                                 </p>
                                 {showMeta ? (
-                                  <p className="mt-[2px] truncate text-[10px] uppercase tracking-[0.14em] text-white/28">
+                                  <p className="mt-[2px] truncate text-[10px] uppercase tracking-[0.14em] text-white/48">
                                     {showMeta}
                                   </p>
                                 ) : null}

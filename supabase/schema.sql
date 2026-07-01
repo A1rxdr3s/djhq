@@ -11,7 +11,10 @@ create extension if not exists pgcrypto;
 -- ── Functions ────────────────────────────────────────────────────────────────
 
 create or replace function public.set_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
 begin
   new.updated_at = now();
   return new;
@@ -530,7 +533,10 @@ create table if not exists public.artist_tours (
 create index if not exists idx_artist_tours_artist_id on public.artist_tours(artist_id);
 
 create or replace function public.set_artist_tours_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
 begin
   new.updated_at = now();
   return new;
@@ -570,7 +576,10 @@ create index if not exists artist_tour_stays_artist_id_idx
   on public.artist_tour_stays (artist_id);
 
 create or replace function public.set_artist_tour_stays_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
 begin
   new.updated_at = now();
   return new;
@@ -919,13 +928,49 @@ create policy "gallery_images_user_delete"
   );
 
 -- custom_domains
--- "Artists can read their own custom domains" (migration 007) is redundant with
--- custom_domains_owner_all — identical SELECT logic. Drop the duplicate.
+-- "Artists can read their own custom domains" (migration 007) was redundant with
+-- custom_domains_owner_all. Both are now replaced by granular _user_* policies
+-- (migration 073) so that only one permissive policy per command exists.
 drop policy if exists "Artists can read their own custom domains" on public.custom_domains;
 drop policy if exists "custom_domains_owner_all"                  on public.custom_domains;
+drop policy if exists "custom_domains_user_select"                on public.custom_domains;
+drop policy if exists "custom_domains_user_insert"                on public.custom_domains;
+drop policy if exists "custom_domains_user_update"                on public.custom_domains;
+drop policy if exists "custom_domains_user_delete"                on public.custom_domains;
 
-create policy "custom_domains_owner_all"
-  on public.custom_domains for all
+create policy "custom_domains_user_select"
+  on public.custom_domains for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "custom_domains_user_insert"
+  on public.custom_domains for insert
+  to authenticated
+  with check (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "custom_domains_user_update"
+  on public.custom_domains for update
+  to authenticated
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "custom_domains_user_delete"
+  on public.custom_domains for delete
+  to authenticated
   using (
     exists (
       select 1 from public.artists a
@@ -934,10 +979,45 @@ create policy "custom_domains_owner_all"
   );
 
 -- brand_source_files
-drop policy if exists "brand_source_files_owner_all" on public.brand_source_files;
+drop policy if exists "brand_source_files_owner_all"    on public.brand_source_files;
+drop policy if exists "brand_source_files_user_select"  on public.brand_source_files;
+drop policy if exists "brand_source_files_user_insert"  on public.brand_source_files;
+drop policy if exists "brand_source_files_user_update"  on public.brand_source_files;
+drop policy if exists "brand_source_files_user_delete"  on public.brand_source_files;
 
-create policy "brand_source_files_owner_all"
-  on public.brand_source_files for all
+create policy "brand_source_files_user_select"
+  on public.brand_source_files for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "brand_source_files_user_insert"
+  on public.brand_source_files for insert
+  to authenticated
+  with check (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "brand_source_files_user_update"
+  on public.brand_source_files for update
+  to authenticated
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "brand_source_files_user_delete"
+  on public.brand_source_files for delete
+  to authenticated
   using (
     exists (
       select 1 from public.artists a
@@ -946,10 +1026,45 @@ create policy "brand_source_files_owner_all"
   );
 
 -- brand_assets
-drop policy if exists "brand_assets_owner_all" on public.brand_assets;
+drop policy if exists "brand_assets_owner_all"    on public.brand_assets;
+drop policy if exists "brand_assets_user_select"  on public.brand_assets;
+drop policy if exists "brand_assets_user_insert"  on public.brand_assets;
+drop policy if exists "brand_assets_user_update"  on public.brand_assets;
+drop policy if exists "brand_assets_user_delete"  on public.brand_assets;
 
-create policy "brand_assets_owner_all"
-  on public.brand_assets for all
+create policy "brand_assets_user_select"
+  on public.brand_assets for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "brand_assets_user_insert"
+  on public.brand_assets for insert
+  to authenticated
+  with check (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "brand_assets_user_update"
+  on public.brand_assets for update
+  to authenticated
+  using (
+    exists (
+      select 1 from public.artists a
+      where a.id = artist_id and a.owner_user_id = (select auth.uid())
+    )
+  );
+
+create policy "brand_assets_user_delete"
+  on public.brand_assets for delete
+  to authenticated
   using (
     exists (
       select 1 from public.artists a
@@ -958,12 +1073,16 @@ create policy "brand_assets_owner_all"
   );
 
 -- brand_asset_assignments
-drop policy if exists "brand_asset_assignments_public_read" on public.brand_asset_assignments;
-drop policy if exists "brand_asset_assignments_owner_all"   on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_public_read"  on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_owner_all"    on public.brand_asset_assignments;
 drop policy if exists "brand_asset_assignments_select"       on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_user_select"  on public.brand_asset_assignments;
 drop policy if exists "brand_asset_assignments_owner_insert" on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_user_insert"  on public.brand_asset_assignments;
 drop policy if exists "brand_asset_assignments_owner_update" on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_user_update"  on public.brand_asset_assignments;
 drop policy if exists "brand_asset_assignments_owner_delete" on public.brand_asset_assignments;
+drop policy if exists "brand_asset_assignments_user_delete"  on public.brand_asset_assignments;
 
 create policy "brand_asset_assignments_select"
   on public.brand_asset_assignments for select
@@ -975,20 +1094,23 @@ create policy "brand_asset_assignments_select"
     )
   );
 
-create policy "brand_asset_assignments_owner_insert"
+create policy "brand_asset_assignments_user_insert"
   on public.brand_asset_assignments for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "brand_asset_assignments_owner_update"
+create policy "brand_asset_assignments_user_update"
   on public.brand_asset_assignments for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "brand_asset_assignments_owner_delete"
+create policy "brand_asset_assignments_user_delete"
   on public.brand_asset_assignments for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
@@ -997,9 +1119,13 @@ create policy "brand_asset_assignments_owner_delete"
 drop policy if exists "artist_tours_public_read"  on public.artist_tours;
 drop policy if exists "artist_tours_owner_all"    on public.artist_tours;
 drop policy if exists "artist_tours_select"       on public.artist_tours;
+drop policy if exists "artist_tours_user_select"  on public.artist_tours;
 drop policy if exists "artist_tours_owner_insert" on public.artist_tours;
+drop policy if exists "artist_tours_user_insert"  on public.artist_tours;
 drop policy if exists "artist_tours_owner_update" on public.artist_tours;
+drop policy if exists "artist_tours_user_update"  on public.artist_tours;
 drop policy if exists "artist_tours_owner_delete" on public.artist_tours;
+drop policy if exists "artist_tours_user_delete"  on public.artist_tours;
 
 create policy "artist_tours_select"
   on public.artist_tours for select
@@ -1014,20 +1140,23 @@ create policy "artist_tours_select"
     )
   );
 
-create policy "artist_tours_owner_insert"
+create policy "artist_tours_user_insert"
   on public.artist_tours for insert
+  to authenticated
   with check (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "artist_tours_owner_update"
+create policy "artist_tours_user_update"
   on public.artist_tours for update
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
-create policy "artist_tours_owner_delete"
+create policy "artist_tours_user_delete"
   on public.artist_tours for delete
+  to authenticated
   using (
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
@@ -1132,6 +1261,22 @@ create policy "artist_career_timeline_owner_delete"
     exists (select 1 from public.artists a where a.id = artist_id and a.owner_user_id = (select auth.uid()))
   );
 
+create or replace function public.set_artist_career_timeline_updated_at()
+returns trigger language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_artist_career_timeline_updated_at on public.artist_career_timeline;
+create trigger trg_artist_career_timeline_updated_at
+  before update on public.artist_career_timeline
+  for each row execute function public.set_artist_career_timeline_updated_at();
+
 -- ── artist_subscribers ───────────────────────────────────────────────────────
 -- Audience capture from public "Stay Connected" footer form (migration 069).
 create table if not exists public.artist_subscribers (
@@ -1193,7 +1338,16 @@ CREATE POLICY "brand_sources_insert"
 DROP POLICY IF EXISTS "brand_sources_select" ON storage.objects;
 CREATE POLICY "brand_sources_select"
   ON storage.objects FOR SELECT
-  USING (bucket_id = 'brand-sources');
+  TO authenticated
+  USING (
+    bucket_id = 'brand-sources'
+    AND (storage.foldername(name))[1] = 'artists'
+    AND EXISTS (
+      SELECT 1 FROM public.artists a
+      WHERE a.id = ((storage.foldername(name))[2])::uuid
+        AND a.owner_user_id = (select auth.uid())
+    )
+  );
 
 DROP POLICY IF EXISTS "brand_sources_delete" ON storage.objects;
 CREATE POLICY "brand_sources_delete"

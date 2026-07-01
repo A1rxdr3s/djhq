@@ -136,7 +136,7 @@ export function ProfileClosing({
   // Newsletter column is shown only when enabled AND we have a handle to identify the artist.
   const showNewsletter = footerNewsletterEnabled && Boolean(artistHandle)
 
-  const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35"
+  const headingClass = "mb-3.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/52"
 
   return (
     <footer className="mt-12 border-t border-white/[0.05] sm:mt-16 lg:mt-20">
@@ -160,7 +160,7 @@ export function ProfileClosing({
         {/* 2. Booking */}
         {contacts[0] && (
           <div className="mt-4">
-            <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/28">
+            <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/48">
               {contacts[0].label}
             </p>
             <a
@@ -195,7 +195,7 @@ export function ProfileClosing({
         {showNewsletter && (
           <div className="mt-6">
             <div className="mb-5 border-t border-white/[0.05]" />
-            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/35">
+            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-white/52">
               Stay Connected
             </p>
             {status === "success" ? (
@@ -207,7 +207,7 @@ export function ProfileClosing({
                 <p className="mb-1.5 text-[14px] font-semibold leading-snug text-white/78">
                   Get updates directly from {artistName}
                 </p>
-                <p className="mb-3 text-[12px] text-white/35">New music, shows, and guest list access.</p>
+                <p className="mb-3 text-[12px] text-white/52">New music, shows, and guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
                     type="email"
@@ -219,7 +219,7 @@ export function ProfileClosing({
                     placeholder="your@email.com"
                     aria-label="Email address"
                     className={cn(
-                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
+                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/38",
                       status === "error"
                         ? "border-red-500/30 focus:border-red-500/50"
                         : "border-white/[0.18] focus:border-accent/50",
@@ -276,7 +276,7 @@ export function ProfileClosing({
                 {contacts.map(({ label, email: addr }) => (
                   <div key={label}>
                     {contacts.length > 1 && (
-                      <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white/22">{label}</p>
+                      <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white/42">{label}</p>
                     )}
                     <a
                       href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
@@ -325,7 +325,7 @@ export function ProfileClosing({
                 <p className="mb-1.5 text-[15px] font-semibold leading-snug text-white/78">
                   Get updates directly from {artistName}
                 </p>
-                <p className="mb-4 text-[12px] text-white/38">New music, shows, and guest list access.</p>
+                <p className="mb-4 text-[12px] text-white/55">New music, shows, and guest list access.</p>
                 <form onSubmit={handleSubmit} noValidate className="flex gap-2">
                   <input
                     type="email"
@@ -337,7 +337,7 @@ export function ProfileClosing({
                     placeholder="your@email.com"
                     aria-label="Email address"
                     className={cn(
-                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/25",
+                      "h-9 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[12px] text-foreground/80 outline-none transition-colors duration-200 placeholder:text-white/38",
                       status === "error"
                         ? "border-red-500/30 focus:border-red-500/50"
                         : "border-white/[0.18] focus:border-accent/50",
@@ -356,7 +356,7 @@ export function ProfileClosing({
                     Couldn&apos;t join right now. Please try again.
                   </p>
                 ) : (
-                  <p className="mt-2 text-[10px] text-white/18">Occasional updates only.</p>
+                  <p className="mt-2 text-[10px] text-white/38">Occasional updates only.</p>
                 )}
               </>
             )}
@@ -369,7 +369,7 @@ export function ProfileClosing({
       {/* ── Bottom utility bar (all sizes) ──────────────────────────── */}
       <div className="border-t border-white/[0.04] py-4 sm:py-5">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <span className="whitespace-nowrap text-[11px] text-white/48">
+          <span className="whitespace-nowrap text-[11px] text-white/62">
             {copyrightLine}
             {!isPro && (
               <>
@@ -381,9 +381,9 @@ export function ProfileClosing({
             )}
           </span>
           <div className="flex items-center gap-x-4">
-            <button type="button" onClick={() => setLegalModal("privacy")} className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55 cursor-pointer">Privacy</button>
-            <button type="button" onClick={() => setLegalModal("terms")}   className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55 cursor-pointer">Terms</button>
-            <button type="button" onClick={() => setLegalModal("cookies")} className="text-[11px] text-white/28 transition-colors duration-150 hover:text-white/55 cursor-pointer">Cookies</button>
+            <button type="button" onClick={() => setLegalModal("privacy")} className="text-[11px] text-white/48 transition-colors duration-150 hover:text-white/70 cursor-pointer">Privacy</button>
+            <button type="button" onClick={() => setLegalModal("terms")}   className="text-[11px] text-white/48 transition-colors duration-150 hover:text-white/70 cursor-pointer">Terms</button>
+            <button type="button" onClick={() => setLegalModal("cookies")} className="text-[11px] text-white/48 transition-colors duration-150 hover:text-white/70 cursor-pointer">Cookies</button>
           </div>
         </div>
       </div>
