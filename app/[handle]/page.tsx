@@ -1123,7 +1123,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             )}
             {/* Mobile CTA stack — tagline → CTAs → social → scroll (sm:hidden, editorial placement only) */}
             {!isFloatingPlacement && (
-              <div className="absolute inset-x-0 bottom-[28%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
+              <div className="absolute inset-x-0 bottom-[14%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
                 {(displayHeroTagline || credibilityLine) && (
                   <div className="mb-7 flex flex-col items-center gap-3">
                     {displayHeroTagline && (
