@@ -420,10 +420,10 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
                     alt={artist.artistName}
                     fill
                     priority
-                    quality={85}
+                    quality={72}
                     placeholder="empty"
                     className="object-cover object-[50%_22%]"
-                    sizes="(max-width: 1024px) 100vw, 58vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 58vw"
                   />
                   {/* Mobile bottom fade */}
                   <div className="absolute inset-0 bg-gradient-to-t from-background/75 to-transparent lg:hidden" />

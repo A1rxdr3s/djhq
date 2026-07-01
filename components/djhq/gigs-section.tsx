@@ -96,7 +96,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         <span
           className={cn(
             "text-2xl lg:text-[1.75rem] xl:text-[2rem] font-black leading-none tracking-tight",
-            isPast ? "text-foreground/22" : "text-foreground/82",
+            isPast ? "text-foreground/46" : "text-foreground/82",
           )}
         >
           {day}
@@ -104,7 +104,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
         <span
           className={cn(
             "mt-0.5 text-[8px] font-bold uppercase tracking-[0.18em]",
-            isPast ? "text-muted-foreground/18" : "text-accent/60",
+            isPast ? "text-muted-foreground/46" : "text-accent/60",
           )}
         >
           {month}
@@ -117,7 +117,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "min-w-0 truncate text-[15px] xl:text-[17px] font-semibold uppercase leading-tight tracking-[0.04em]",
-              isPast ? "text-foreground/30" : isTba ? "text-foreground/75" : "text-foreground/92",
+              isPast ? "text-foreground/46" : isTba ? "text-foreground/75" : "text-foreground/92",
             )}
           >
             {displayTitle}
@@ -144,7 +144,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "mt-0.5 truncate text-xs font-medium leading-tight",
-              isPast ? "text-white/32" : "text-white/55",
+              isPast ? "text-white/50" : "text-white/55",
               !hasEventName && "invisible",
             )}
           >
@@ -156,7 +156,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "mt-0.5 truncate text-xs leading-tight",
-              isPast ? "text-white/32" : "text-white/56",
+              isPast ? "text-white/50" : "text-white/56",
             )}
           >
             {gig.clubVenue}
@@ -167,7 +167,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
           <p
             className={cn(
               "mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.08em]",
-              isPast ? "text-white/32" : "text-white/52",
+              isPast ? "text-white/50" : "text-white/52",
             )}
           >
             {locationStr}
@@ -183,7 +183,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
               href={resolveSafeHref(gig.ticketUrl)!}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Tickets"
+              aria-label={`Tickets — ${displayTitle}`}
               className="flex h-9 w-9 items-center justify-center rounded-full border border-accent/20 bg-accent/5 text-accent/90 transition-all duration-150 hover:scale-[1.05] hover:border-accent/40 hover:bg-accent/10 hover:text-accent"
             >
               <Ticket className="h-5 w-5" />
@@ -194,7 +194,7 @@ function GigRow({ gig, isNext, isPast }: GigRowProps) {
               href={resolveSafeHref(gig.instagramUrl)!}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Instagram"
+              aria-label={`Instagram — ${displayTitle}`}
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-150",
                 isPast
@@ -233,7 +233,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
         <span
           className={cn(
             "text-[1.05rem] font-black leading-none tracking-tight tabular-nums",
-            isPast ? "text-foreground/25" : "text-foreground/72",
+            isPast ? "text-foreground/46" : "text-foreground/72",
           )}
         >
           {day}
@@ -241,7 +241,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
         <span
           className={cn(
             "mt-[3px] text-[7px] font-bold uppercase tracking-[0.18em]",
-            isPast ? "text-white/32" : "text-accent/52",
+            isPast ? "text-white/50" : "text-accent/52",
           )}
         >
           {month}
@@ -254,7 +254,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
           <p
             className={cn(
               "min-w-0 truncate text-[13px] font-semibold uppercase leading-tight tracking-[0.04em]",
-              isPast ? "text-foreground/32" : isTba ? "text-foreground/68" : "text-foreground/82",
+              isPast ? "text-foreground/46" : isTba ? "text-foreground/68" : "text-foreground/82",
             )}
           >
             {displayTitle}
@@ -269,7 +269,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
           <p
             className={cn(
               "truncate text-[10px] font-medium leading-tight",
-              isPast ? "text-white/32" : "text-white/55",
+              isPast ? "text-white/50" : "text-white/55",
             )}
           >
             {gig.venue}
@@ -279,7 +279,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
           <p
             className={cn(
               "mt-[2px] truncate text-[10px] font-medium uppercase tracking-[0.08em]",
-              isPast ? "text-white/32" : "text-white/48",
+              isPast ? "text-white/50" : "text-white/48",
             )}
           >
             {locationStr}
@@ -295,7 +295,7 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
             href={resolveSafeHref(gig.ticketUrl)!}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Tickets"
+            aria-label={`Tickets — ${displayTitle}`}
             className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.05] text-accent/80 transition-all duration-150 hover:scale-[1.05] hover:border-accent/35 hover:bg-accent/10 hover:text-accent"
           >
             <Ticket className="h-3.5 w-3.5" />
@@ -306,11 +306,11 @@ function GigRowCompact({ gig, isPast }: { gig: Gig; isPast: boolean }) {
             href={resolveSafeHref(gig.instagramUrl)!}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Instagram"
+            aria-label={`Instagram — ${displayTitle}`}
             className={cn(
               "flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-150",
               isPast
-                ? "border-white/[0.06] text-white/18 hover:text-white/30"
+                ? "border-white/[0.06] text-white/38 hover:text-white/55"
                 : "border-accent/[0.18] bg-accent/[0.04] text-accent/75 hover:scale-[1.05] hover:border-accent/[0.32] hover:bg-accent/[0.08] hover:text-accent",
             )}
           >
@@ -356,7 +356,7 @@ function GigRowPast({ gig }: { gig: Gig }) {
             href={resolveSafeHref(gig.instagramUrl)!}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Instagram"
+            aria-label={`Instagram — ${displayTitle}`}
             className="-m-2 p-2 text-white/50 transition-colors duration-150 hover:text-white/58"
           >
             <Instagram className="h-[11px] w-[11px]" />

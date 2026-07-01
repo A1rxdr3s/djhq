@@ -1468,7 +1468,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             {/* Latest 3 Moments */}
             {galleryImages.length > 0 && (
               <div>
-                <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-foreground/25">Moments</p>
+                <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-foreground/46">Moments</p>
                 <div className="grid grid-cols-3 gap-2">
                   {galleryImages.slice(0, 3).map((img, idx) => (
                     <div
@@ -1685,7 +1685,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Recent Performances */}
                   {secondaryVideos.length > 0 ? (
                     <div>
-                      <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-foreground/30">
+                      <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-foreground/46">
                         More Video Performances
                       </p>
                       <div className="space-y-px">
@@ -1801,7 +1801,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   {/* Recent Sets */}
                   {recentSets.length > 0 ? (
                     <div>
-                      <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-foreground/30">
+                      <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-foreground/46">
                         More DJ Sets
                       </p>
                       <div className="space-y-px">
