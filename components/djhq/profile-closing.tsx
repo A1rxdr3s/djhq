@@ -157,22 +157,7 @@ export function ProfileClosing({
           <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
         )}
 
-        {/* 2. Booking */}
-        {contacts[0] && (
-          <div className="mt-4">
-            <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/48">
-              {contacts[0].label}
-            </p>
-            <a
-              href={resolveSafeHref(`mailto:${contacts[0].email}`) ?? "#"}
-              className="text-[13px] text-white/72 transition-colors duration-200 hover:text-white/92"
-            >
-              {contacts[0].email}
-            </a>
-          </div>
-        )}
-
-        {/* 3. Connect */}
+        {/* 2. Connect */}
         {footerSocialsEnabled && iconLinks.length > 0 && (
           <div className="mt-5 flex flex-wrap items-center gap-x-[22px] gap-y-3">
             {iconLinks.map(({ platform, url, label, href, Icon }) => (
@@ -187,6 +172,25 @@ export function ProfileClosing({
               >
                 <Icon className="h-[22px] w-[22px]" />
               </a>
+            ))}
+          </div>
+        )}
+
+        {/* 3. Contact */}
+        {contacts.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {contacts.map(({ label, email: addr }) => (
+              <div key={label}>
+                <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.24em] text-white/48">
+                  {label}
+                </p>
+                <a
+                  href={resolveSafeHref(`mailto:${addr}`) ?? "#"}
+                  className="text-[13px] text-white/72 transition-colors duration-200 hover:text-white/92"
+                >
+                  {addr}
+                </a>
+              </div>
             ))}
           </div>
         )}
@@ -252,7 +256,7 @@ export function ProfileClosing({
         showNewsletter ? "sm:grid-cols-[2fr_1.2fr_2fr]" : "sm:grid-cols-[2fr_1.2fr]",
       )}>
 
-        {/* Col 1: Artist identity */}
+        {/* Col 1: Artist identity + Connect */}
         <div>
           {resolvedLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -265,10 +269,31 @@ export function ProfileClosing({
           ) : (
             <p className="text-[15px] font-bold uppercase tracking-[0.14em] text-white/75">{artistName}</p>
           )}
+
+          {footerSocialsEnabled && iconLinks.length > 0 && (
+            <div className="mt-8">
+              <p className={headingClass}>Connect</p>
+              <div className="flex flex-wrap gap-4">
+                {iconLinks.map(({ platform, url, label, href, Icon }) => (
+                  <a
+                    key={`foot-${platform}-${url}`}
+                    href={href}
+                    aria-label={label}
+                    title={label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/65 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
+                  >
+                    <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Col 2: Booking + Connect */}
-        <div className="space-y-8">
+        {/* Col 2: Contact channels */}
+        <div>
           {contacts.length > 0 && (
             <div>
               <p className={headingClass}>Booking</p>
@@ -285,27 +310,6 @@ export function ProfileClosing({
                       {addr}
                     </a>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {footerSocialsEnabled && iconLinks.length > 0 && (
-            <div>
-              <p className={headingClass}>Connect</p>
-              <div className="flex flex-wrap gap-4">
-                {iconLinks.map(({ platform, url, label, href, Icon }) => (
-                  <a
-                    key={`foot-${platform}-${url}`}
-                    href={href}
-                    aria-label={label}
-                    title={label}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/65 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-accent"
-                  >
-                    <Icon className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
-                  </a>
                 ))}
               </div>
             </div>
