@@ -901,6 +901,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const recentSets = artist.djSets.slice(1, 5)
   const featuredVideo = artist.videos[0] ?? null
   const secondaryVideos = artist.videos.slice(1, 5)
+  // Desktop scroll target: first section that is actually rendered in the DOM at lg+.
+  // #media is lg:hidden so it is skipped; #contact is always present as final fallback.
+  const heroScrollTarget =
+    (futureGigs.length > 0 || pastGigs.length > 0) ? "#shows" :
+    artist.releases.length > 0 ? "#music" :
+    !!(featuredVideo ?? featuredSet) ? "#performance" :
+    "#contact"
   const featuredReleaseYear = featuredRelease ? new Date(featuredRelease.releaseDate).getUTCFullYear() : null
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -970,7 +977,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
       />
-      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}`}</style>
+      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}`}</style>
       <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
@@ -1330,19 +1337,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               className="pointer-events-none absolute inset-x-0 bottom-0 h-[38%] md:hidden"
               style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 55%, transparent 100%)" }}
             />
-            {/* Mobile scroll cue — absolutely anchored to hero bottom, scrolls to first content section */}
+            {/* Desktop scroll cue — pinned to hero bottom center, lg+ only */}
             <a
-              href="#shows"
-              aria-label="Scroll to content"
-              className="absolute left-1/2 z-10 -translate-x-1/2 opacity-[0.36] transition-all duration-150 active:translate-y-0.5 active:opacity-90 hidden"
-              style={{ bottom: "clamp(44px, 7vh, 68px)" }}
+              href={heroScrollTarget}
+              aria-label="Explore more content"
+              className="absolute left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[5px] opacity-[0.22] transition-opacity duration-300 hover:opacity-[0.62] focus-visible:opacity-[0.62] focus-visible:outline-none active:opacity-90 lg:flex"
+              style={{ bottom: "clamp(28px, 4vh, 48px)" }}
             >
-              <div className="hero-scroll-cue flex flex-col items-center gap-[5px]">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
-                  Scroll to explore
-                </span>
-                <ChevronDown className="h-[11px] w-[11px] text-white" />
-              </div>
+              <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white">Explore</span>
+              <ChevronDown className="hero-cue-chevron h-[10px] w-[10px] text-white" />
             </a>
         </div>
       </section>
