@@ -977,7 +977,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
       />
-      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}.hero-content-gap{margin-top:12px}@media(min-width:1024px){.hero-content-gap{margin-top:clamp(16px,3.5vh,56px)}}`}</style>
+      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}.hero-content-gap{margin-top:0}@media(min-width:1024px){.hero-content-gap{margin-top:clamp(16px,3.5vh,56px)}}`}</style>
       <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
@@ -1123,7 +1123,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             )}
             {/* Mobile CTA stack — tagline → CTAs → social → scroll (sm:hidden, editorial placement only) */}
             {!isFloatingPlacement && (
-              <div className="absolute inset-x-0 bottom-[14%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
+              <div className="absolute inset-x-0 bottom-[6%] z-10 flex flex-col items-center px-6 text-center sm:hidden">
                 {(displayHeroTagline || credibilityLine) && (
                   <div className="mb-7 flex flex-col items-center gap-3">
                     {displayHeroTagline && (
