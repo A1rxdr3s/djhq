@@ -46,59 +46,57 @@ async function getPublishedArtistHandles(): Promise<ArtistSlugRow[]> {
   return data ?? []
 }
 
-type CustomDomainLookup = {
+type DomainArtistRow = {
   artists: {
     handle: string
-    updated_at: string
-    press_kit_enabled: boolean
     is_published: boolean
     plan: string
   }
 }
 
-async function getArtistByCustomDomain(domain: string): Promise<CustomDomainLookup["artists"] | null> {
-  const supabase = buildClient()
-  if (!supabase) return null
-  const { data } = await supabase
-    .from("custom_domains")
-    .select("artists!inner(handle, updated_at, press_kit_enabled, is_published, plan)")
-    .eq("domain", domain)
-    .eq("status", "active")
-    .maybeSingle<CustomDomainLookup>()
-  const artist = data?.artists
-  if (!artist?.is_published || artist.plan !== "pro") return null
-  return artist
+type ArtistProfileRow = {
+  updated_at: string
+  press_kit_enabled: boolean
 }
 
 // ─── Custom-domain sitemap ────────────────────────────────────────────────────
 
 async function buildCustomDomainSitemap(hostname: string): Promise<MetadataRoute.Sitemap> {
-  const origin = `https://${hostname}`
-  const artist = await getArtistByCustomDomain(hostname)
+  const origin   = `https://${hostname}`
+  const fallback = [{ url: `${origin}/`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 1.0 }]
 
-  if (!artist) {
-    // Domain exists in the system but artist is unpublished/non-pro — return minimal valid sitemap.
-    return [{ url: `${origin}/`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 }]
-  }
+  const supabase = buildClient()
+  if (!supabase) return fallback
 
-  const lastModified = artist.updated_at ? new Date(artist.updated_at) : new Date()
+  // Step 1: Resolve artist handle from custom domain (same query as proxy.ts — proven to work).
+  const { data: domainData } = await supabase
+    .from("custom_domains")
+    .select("artists!inner(handle, is_published, plan)")
+    .eq("domain", hostname)
+    .eq("status", "active")
+    .maybeSingle<DomainArtistRow>()
+
+  const domainArtist = domainData?.artists
+  if (!domainArtist?.is_published || domainArtist.plan !== "pro") return fallback
+
+  // Step 2: Fetch artist profile data directly from the artists table.
+  // Querying artists directly (not through the join) avoids PostgREST anon-key
+  // column visibility issues that can silently drop press_kit_enabled from join results.
+  const { data: artistData } = await supabase
+    .from("artists")
+    .select("updated_at, press_kit_enabled")
+    .eq("handle", domainArtist.handle)
+    .eq("is_published", true)
+    .maybeSingle<ArtistProfileRow>()
+
+  const lastModified = artistData?.updated_at ? new Date(artistData.updated_at) : new Date()
 
   const entries: MetadataRoute.Sitemap = [
-    {
-      url:             `${origin}/`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority:        1.0,
-    },
+    { url: `${origin}/`, lastModified, changeFrequency: "weekly", priority: 1.0 },
   ]
 
-  if (artist.press_kit_enabled) {
-    entries.push({
-      url:             `${origin}/presskit`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority:        0.7,
-    })
+  if (artistData?.press_kit_enabled) {
+    entries.push({ url: `${origin}/presskit`, lastModified, changeFrequency: "monthly", priority: 0.7 })
   }
 
   return entries
