@@ -977,7 +977,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
       />
-      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}`}</style>
+      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}.hero-content-gap{margin-top:12px}@media(min-width:1024px){.hero-content-gap{margin-top:clamp(16px,3.5vh,56px)}}`}</style>
       <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
@@ -1497,7 +1497,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         </MobileSection>
 
         {/* Atmospheric lamina — unifies Press Photos / Featured Release / Gigs visually */}
-        <div className="relative mt-3 lg:mt-14 xl:mt-18">
+        <div className="relative hero-content-gap">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-[radial-gradient(ellipse_85%_65%_at_14%_10%,rgba(255,255,255,0.016)_0%,transparent_62%)] sm:-inset-8"
