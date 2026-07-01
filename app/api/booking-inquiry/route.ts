@@ -290,31 +290,13 @@ export async function POST(request: Request) {
     console.error("[booking-inquiry] booking_leads insert failed:", leadError)
   }
 
-  const leadId   = (leadRow as { id?: string; reference_id?: string } | null)?.id ?? null
+  const leadId      = (leadRow as { id?: string; reference_id?: string } | null)?.id ?? null
   const referenceId = (leadRow as { id?: string; reference_id?: string } | null)?.reference_id ?? "DJHQ-REF"
 
-  async function markDelivery(status: "sent" | "failed", extra: Record<string, string> = {}) {
-    if (!leadId) return
-    await supabase
-      .from("booking_leads")
-      .update({ email_delivery_status: status, ...extra })
-      .eq("id", leadId)
-  }
-
-  // Require RESEND_API_KEY
-  const resendApiKey = process.env.RESEND_API_KEY
-  if (!resendApiKey) {
-    console.error("[booking-inquiry] RESEND_API_KEY is not configured")
-    await markDelivery("failed", { email_error: "RESEND_API_KEY not configured" })
-    return NextResponse.json(
-      { error: "Booking request could not be sent. Please contact the artist directly." },
-      { status: 503 },
-    )
-  }
+  // ── Build email payload ───────────────────────────────────────────────────
 
   const fromAddress = process.env.BOOKING_FROM_EMAIL ?? "DJHQ Booking <booking@djhq.app>"
-  const subject = `New booking request for ${artistRow.artist_name} — ${referenceId}`
-
+  const subject     = `New booking request for ${artistRow.artist_name} — ${referenceId}`
   const emailParams = {
     artistName:      artistRow.artist_name as string,
     artistHandle:    artistRow.handle as string,
@@ -332,30 +314,107 @@ export async function POST(request: Request) {
     submittedAt,
   }
 
-  const resend = new Resend(resendApiKey)
-  const { data: sendData, error: sendError } = await resend.emails.send({
-    from:    fromAddress,
-    to:      artistRow.booking_email as string,
-    replyTo: email!.trim(),
-    subject,
-    html:    buildEmailHtml(emailParams),
-    text:    buildEmailText(emailParams),
-  })
+  // ── Notification with fallback — DB lead is always the source of truth ───
+  // A failed or suppressed email must not fail the user submission.
 
-  if (sendError || !sendData?.id) {
-    const errMsg = sendError?.message ?? "Unknown Resend error"
-    console.error("[booking-inquiry] Resend error:", errMsg)
-    await markDelivery("failed", { email_error: errMsg })
-    return NextResponse.json(
-      { error: "Could not send inquiry. Please try again." },
-      { status: 500 },
-    )
+  let emailDeliveryStatus: "sent" | "failed" = "failed"
+  let emailProvider:       string | null      = null
+  let emailProviderId:     string | null      = null
+  let emailErrorNote:      string | null      = null
+  let emailNotification:   "sent" | "fallback_sent" | "failed" = "failed"
+
+  const resendApiKey  = process.env.RESEND_API_KEY
+  const fallbackEmail = process.env.BOOKING_ALERT_FALLBACK_EMAIL?.trim() || null
+
+  if (!resendApiKey) {
+    emailErrorNote = "RESEND_API_KEY not configured"
+    console.error("[booking-inquiry] RESEND_API_KEY not configured — lead captured, no notification sent", {
+      referenceId, artistHandle: handle,
+    })
+  } else {
+    const resend = new Resend(resendApiKey)
+
+    // Primary send
+    const { data: primaryData, error: primaryError } = await resend.emails.send({
+      from:    fromAddress,
+      to:      artistRow.booking_email as string,
+      replyTo: email!.trim(),
+      subject,
+      html:    buildEmailHtml(emailParams),
+      text:    buildEmailText(emailParams),
+    })
+
+    if (!primaryError && primaryData?.id) {
+      emailDeliveryStatus = "sent"
+      emailProvider       = "resend"
+      emailProviderId     = primaryData.id
+      emailNotification   = "sent"
+    } else {
+      const primaryErrMsg = primaryError?.message ?? "Unknown Resend error"
+      console.error("[booking-inquiry] Primary email failed — lead captured", {
+        referenceId,
+        artistHandle:      handle,
+        artistName:        artistRow.artist_name as string,
+        intendedRecipient: artistRow.booking_email as string,
+        resendError:       primaryErrMsg,
+      })
+
+      if (fallbackEmail) {
+        // Fallback send
+        const { data: fbData, error: fbError } = await resend.emails.send({
+          from:    fromAddress,
+          to:      fallbackEmail,
+          replyTo: email!.trim(),
+          subject: `[FALLBACK] ${subject}`,
+          html:    buildEmailHtml(emailParams),
+          text:    buildEmailText(emailParams),
+        })
+
+        if (!fbError && fbData?.id) {
+          emailDeliveryStatus = "sent"
+          emailProvider       = "resend"
+          emailProviderId     = fbData.id
+          emailErrorNote      = `Primary suppressed/failed (${primaryErrMsg}); fallback sent to ${fallbackEmail}`
+          emailNotification   = "fallback_sent"
+          console.warn("[booking-inquiry] Fallback email sent successfully", {
+            referenceId,
+            fallbackRecipient: fallbackEmail,
+            primaryError:      primaryErrMsg,
+          })
+        } else {
+          const fbErrMsg = fbError?.message ?? "Unknown fallback error"
+          emailErrorNote  = `Primary failed: ${primaryErrMsg}; fallback also failed: ${fbErrMsg}`
+          console.error("[booking-inquiry] Both primary and fallback email failed — lead captured", {
+            referenceId,
+            artistHandle:      handle,
+            primaryRecipient:  artistRow.booking_email as string,
+            primaryError:      primaryErrMsg,
+            fallbackRecipient: fallbackEmail,
+            fallbackError:     fbErrMsg,
+          })
+        }
+      } else {
+        emailErrorNote = primaryErrMsg
+        console.error("[booking-inquiry] Email failed, no fallback configured — lead captured", {
+          referenceId,
+          artistHandle:      handle,
+          intendedRecipient: artistRow.booking_email as string,
+          resendError:       primaryErrMsg,
+        })
+      }
+    }
   }
 
-  await markDelivery("sent", {
-    email_provider:            "resend",
-    email_provider_message_id: sendData.id,
-  })
+  // ── Persist email delivery outcome ────────────────────────────────────────
+  if (leadId) {
+    await supabase.from("booking_leads").update({
+      email_delivery_status:     emailDeliveryStatus,
+      email_provider:            emailProvider,
+      email_provider_message_id: emailProviderId,
+      email_error:               emailErrorNote,
+    }).eq("id", leadId)
+  }
 
-  return NextResponse.json({ ok: true, referenceId })
+  // DB lead captured — always return success regardless of email outcome
+  return NextResponse.json({ ok: true, referenceId, emailNotification })
 }
