@@ -1337,15 +1337,15 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               className="pointer-events-none absolute inset-x-0 bottom-0 h-[38%] md:hidden"
               style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 55%, transparent 100%)" }}
             />
-            {/* Desktop scroll cue — pinned to hero bottom center, lg+ only */}
+            {/* Desktop scroll cue — floats below the CTA cluster, lg+ only */}
             <a
               href={heroScrollTarget}
               aria-label="Explore more content"
-              className="absolute left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[5px] opacity-[0.22] transition-opacity duration-300 hover:opacity-[0.62] focus-visible:opacity-[0.62] focus-visible:outline-none active:opacity-90 lg:flex"
-              style={{ bottom: "clamp(28px, 4vh, 48px)" }}
+              className="absolute left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[7px] opacity-[0.50] transition-opacity duration-300 hover:opacity-[0.88] focus-visible:opacity-[0.88] focus-visible:outline-none active:opacity-95 lg:flex"
+              style={{ bottom: "clamp(100px, 16vh, 200px)" }}
             >
-              <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white">Explore</span>
-              <ChevronDown className="hero-cue-chevron h-[10px] w-[10px] text-white" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white">Explore</span>
+              <ChevronDown className="hero-cue-chevron h-[12px] w-[12px] text-white" />
             </a>
         </div>
       </section>
