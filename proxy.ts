@@ -75,22 +75,33 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(APP_URL)
   }
 
+  const originalPath = request.nextUrl.pathname
+
   // Platform-level routes that must be served directly, never rewritten to /{handle}/...
-  // favicon.ico is already excluded by the middleware matcher, so it is not needed here.
-  const RESERVED_PLATFORM_PATHS = new Set([
-    "/privacy", "/terms", "/cookies",
-    "/robots.txt", "/sitemap.xml",
-    // Browser icon files — must reach public/ static assets, not the artist handle rewrite.
+  const RESERVED_PLATFORM_PATHS = new Set(["/privacy", "/terms", "/cookies", "/robots.txt", "/sitemap.xml"])
+  if (RESERVED_PLATFORM_PATHS.has(originalPath)) {
+    return NextResponse.next()
+  }
+
+  // Favicon and icon paths: rewrite to the site-icon API route which resolves the
+  // artist's configured favicon and composites it on a solid dark background.
+  // On platform-owned domains this code is never reached (isDjhqOwnedHost returns early),
+  // so public/favicon.ico and public/icon.svg continue to be served there as before.
+  const ICON_PATHS = new Set([
+    "/favicon.ico",
+    "/icon.svg",
     "/apple-touch-icon.png",
     "/apple-touch-icon-precomposed.png",
     "/apple-icon.png",
-    "/icon.svg",
     "/icon-dark-32x32.png",
     "/icon-light-32x32.png",
   ])
-  const originalPath = request.nextUrl.pathname
-  if (RESERVED_PLATFORM_PATHS.has(originalPath)) {
-    return NextResponse.next()
+  if (ICON_PATHS.has(originalPath)) {
+    const iconUrl = request.nextUrl.clone()
+    iconUrl.pathname = "/api/favicon/site-icon"
+    iconUrl.search = ""
+    iconUrl.searchParams.set("handle", artist.handle)
+    return NextResponse.rewrite(iconUrl)
   }
 
   // Internally serve /[handle][/sub-path] while the browser URL stays on the custom domain.
@@ -108,5 +119,8 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Exclude static assets, images, API routes, and internal auth/dashboard paths.
   // These must never be rewritten through custom domain middleware.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|sign-in|auth/).*)"],
+  // favicon.ico is intentionally NOT excluded here — the ICON_PATHS rewrite above
+  // intercepts it on custom domains and serves the artist-specific compositor icon.
+  // On platform-owned domains the isDjhqOwnedHost() early return handles it as a static file.
+  matcher: ["/((?!_next/static|_next/image|api/|sign-in|auth/).*)"],
 }
