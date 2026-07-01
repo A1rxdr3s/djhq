@@ -3,6 +3,10 @@ import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import { getPublicBaseUrl } from "@/lib/djhq/seo"
 
+// Force dynamic so the host header is read fresh on every request — never statically generated.
+export const dynamic    = "force-dynamic"
+export const revalidate = 0
+
 // ─── Platform host detection (mirrors robots.ts) ──────────────────────────────
 
 function isPlatformHost(hostname: string): boolean {
@@ -23,8 +27,12 @@ function isPlatformHost(hostname: string): boolean {
 // ─── Supabase helpers ─────────────────────────────────────────────────────────
 
 function buildClient() {
-  const url  = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  // Prefer service role key (server-only, never exposed to clients) so that the
+  // custom_domains lookup works the same way as proxy.ts — the anon key may be
+  // blocked by RLS on that table.  Falls back to anon key so that the artists
+  // direct query works in environments where the secret is not configured.
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) return null
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
 }
@@ -38,11 +46,12 @@ type ArtistSlugRow = {
 async function getPublishedArtistHandles(): Promise<ArtistSlugRow[]> {
   const supabase = buildClient()
   if (!supabase) return []
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("artists")
     .select("handle, updated_at, seo_canonical_url")
     .eq("is_published", true)
     .returns<ArtistSlugRow[]>()
+  if (error) console.error("[sitemap] getPublishedArtistHandles error:", error.message)
   return data ?? []
 }
 
@@ -66,28 +75,45 @@ async function buildCustomDomainSitemap(hostname: string): Promise<MetadataRoute
   const fallback = [{ url: `${origin}/`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 1.0 }]
 
   const supabase = buildClient()
-  if (!supabase) return fallback
+  if (!supabase) {
+    console.error("[sitemap] buildClient() returned null — env vars missing")
+    return fallback
+  }
 
-  // Step 1: Resolve artist handle from custom domain (same query as proxy.ts — proven to work).
-  const { data: domainData } = await supabase
+  // Step 1: Resolve artist handle from custom domain (mirrors proxy.ts query).
+  const { data: domainData, error: domainError } = await supabase
     .from("custom_domains")
     .select("artists!inner(handle, is_published, plan)")
     .eq("domain", hostname)
     .eq("status", "active")
     .maybeSingle<DomainArtistRow>()
 
-  const domainArtist = domainData?.artists
-  if (!domainArtist?.is_published || domainArtist.plan !== "pro") return fallback
+  if (domainError) console.error("[sitemap] custom_domains query error:", domainError.message)
+  console.error("[sitemap] hostname:", hostname, "| domainData:", JSON.stringify(domainData))
 
-  // Step 2: Fetch artist profile data directly from the artists table.
-  // Querying artists directly (not through the join) avoids PostgREST anon-key
-  // column visibility issues that can silently drop press_kit_enabled from join results.
-  const { data: artistData } = await supabase
+  const domainArtist = domainData?.artists
+  console.error("[sitemap] domainArtist:", JSON.stringify(domainArtist))
+
+  if (!domainArtist?.is_published || domainArtist.plan !== "pro") {
+    console.error("[sitemap] domainArtist failed published/pro gate — returning fallback (homepage only)")
+    return fallback
+  }
+
+  // Step 2: Fetch press_kit_enabled directly from the artists table.
+  // Avoids PostgREST join column-visibility issues with the anon key.
+  const { data: artistData, error: artistError } = await supabase
     .from("artists")
     .select("updated_at, press_kit_enabled")
     .eq("handle", domainArtist.handle)
     .eq("is_published", true)
     .maybeSingle<ArtistProfileRow>()
+
+  if (artistError) console.error("[sitemap] artists query error:", artistError.message)
+  console.error(
+    "[sitemap] artistData:", JSON.stringify(artistData),
+    "| press_kit_enabled:", artistData?.press_kit_enabled,
+    "| typeof:", typeof artistData?.press_kit_enabled,
+  )
 
   const lastModified = artistData?.updated_at ? new Date(artistData.updated_at) : new Date()
 
@@ -99,14 +125,13 @@ async function buildCustomDomainSitemap(hostname: string): Promise<MetadataRoute
     entries.push({ url: `${origin}/presskit`, lastModified, changeFrequency: "monthly", priority: 0.7 })
   }
 
+  console.error("[sitemap] final URLs:", entries.map((e) => e.url))
   return entries
 }
 
 // ─── Sitemap entry point ──────────────────────────────────────────────────────
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Detect the requesting host. Custom-domain requests get a focused per-artist
-  // sitemap; platform-domain requests get the full platform sitemap.
   let hostname = ""
   try {
     const headersList = await headers()
@@ -116,6 +141,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // Static generation context — fall through to platform sitemap.
   }
+
+  console.error("[sitemap] resolved hostname:", JSON.stringify(hostname), "| isPlatform:", isPlatformHost(hostname))
 
   if (hostname && !isPlatformHost(hostname)) {
     return buildCustomDomainSitemap(hostname)
