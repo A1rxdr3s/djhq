@@ -1191,7 +1191,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   className="mt-5 flex flex-col items-center gap-[5px] opacity-[0.42] transition-all duration-150 active:translate-y-0.5 active:opacity-90"
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">Explore</span>
-                  <ChevronDown className="h-[11px] w-[11px] text-white" />
+                  <ChevronDown className="hero-cue-chevron h-[11px] w-[11px] text-white" />
                 </a>
               </div>
             )}
@@ -1280,7 +1280,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
                     Explore
                   </span>
-                  <ChevronDown className="h-[11px] w-[11px] text-white" />
+                  <ChevronDown className="hero-cue-chevron h-[11px] w-[11px] text-white" />
                 </a>
               </div>
             ) : (
