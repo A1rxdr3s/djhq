@@ -863,15 +863,20 @@ function UpdateDetail({
         )}
 
         {/* ── Cover image (real only — never previewImageUrl) ──────── */}
+        {/* object-contain so portrait, landscape, and square images show fully.
+            Black frame fills unused space; height is viewport-aware with clamp. */}
         {coverImage && (
-          <div className="relative mx-6 mt-5 aspect-[16/9] overflow-hidden rounded-[8px]">
+          <div
+            className="relative mx-6 mt-5 overflow-hidden rounded-[8px] bg-black"
+            style={{ height: "clamp(180px, 50vh, 440px)" }}
+          >
             <Image
               src={coverImage}
               alt={activeItem.title}
               fill
               unoptimized={coverIsDrive}
-              className="object-cover"
-              sizes="600px"
+              className="object-contain"
+              sizes="(max-width: 640px) calc(100vw - 48px), 552px"
               onError={() => setImgFailed(true)}
             />
           </div>
