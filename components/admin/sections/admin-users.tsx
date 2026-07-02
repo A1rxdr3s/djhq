@@ -110,7 +110,7 @@ export function AdminUsers({ realData, sessionEmail }: AdminUsersProps) {
       createdAt: u.createdAt,
       lastSignInAt: u.lastSignInAt,
       isLocal: false,
-      isPlatformAdmin: u.email === "andres@tothebit.com",
+      isPlatformAdmin: u.isPlatformAdmin,
     }))
 
   const allRows = authRows

@@ -22,6 +22,7 @@ export interface AdminRealUser {
   email: string
   createdAt: string
   lastSignInAt: string | null
+  isPlatformAdmin: boolean
 }
 
 export type LicenseDuration = "one_month" | "three_months" | "six_months" | "one_year" | "lifetime"

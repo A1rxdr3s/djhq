@@ -60,6 +60,7 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
         email: u.email ?? "",
         createdAt: (u.created_at ?? "").slice(0, 10),
         lastSignInAt: u.last_sign_in_at ? u.last_sign_in_at.slice(0, 10) : null,
+        isPlatformAdmin: isAdminEmail(u.email ?? ""),
       }))
     } catch {
       // auth.admin.listUsers fails without service role key
