@@ -145,6 +145,11 @@
   html {
     scroll-behavior: smooth;
   }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -395,15 +400,21 @@ body:has(.djhq-dashboard) [data-slot="dialog-overlay"] {
 }
 
 /* ── Hero scroll cue float animation ────────────────────────────────────────
-   Extremely subtle 3px vertical drift — draws the eye downward without
-   feeling like a loading spinner or call-to-action. Mobile-only context;
-   the class is applied inside an md:hidden wrapper so it never runs on
-   desktop.
+   Subtle 4px vertical drift on the chevron — draws the eye downward without
+   feeling playful. Applied to all Explore cue chevrons via .hero-cue-chevron.
    ─────────────────────────────────────────────────────────────────────────── */
 @keyframes hero-scroll-float {
   0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(3px); }
+  50%       { transform: translateY(4px); }
+}
+.hero-cue-chevron {
+  animation: hero-scroll-float 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-cue-chevron {
+    animation: none;
+  }
 }
 .hero-scroll-cue {
-  animation: hero-scroll-float 2.8s ease-in-out infinite;
+  animation: hero-scroll-float 2.6s ease-in-out infinite;
 }

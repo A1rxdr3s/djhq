@@ -905,13 +905,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const recentSets = artist.djSets.slice(1, 5)
   const featuredVideo = artist.videos[0] ?? null
   const secondaryVideos = artist.videos.slice(1, 5)
-  // Desktop scroll target: first section that is actually rendered in the DOM at lg+.
-  // #media is lg:hidden so it is skipped; #contact is always present as final fallback.
-  const heroScrollTarget =
-    (futureGigs.length > 0 || pastGigs.length > 0) ? "#shows" :
-    artist.releases.length > 0 ? "#music" :
-    !!(featuredVideo ?? featuredSet) ? "#performance" :
-    "#contact"
   const featuredReleaseYear = featuredRelease ? new Date(featuredRelease.releaseDate).getUTCFullYear() : null
   const releaseTagline =
     artist.tagline && artist.tagline.trim() !== artist.shortBio.trim() ? artist.tagline : null
@@ -1200,9 +1193,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 )}
                 <a
-                  href={heroScrollTarget}
+                  href="#media-mobile"
                   aria-label="Explore more content"
-                  className="mt-5 flex flex-col items-center gap-[5px] opacity-[0.42] transition-all duration-150 active:translate-y-0.5 active:opacity-90"
+                  className="mt-5 flex flex-col items-center gap-[5px] opacity-[0.58] transition-all duration-150 hover:opacity-[0.88] active:translate-y-0.5 active:opacity-90"
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">Explore</span>
                   <ChevronDown className="hero-cue-chevron h-[11px] w-[11px] text-white" />
@@ -1287,9 +1280,9 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <HeroMobileSocialRow links={prioritizedLinks} />
                 {/* Scroll cue — flows inline below social icons, sm/md only (md:hidden) */}
                 <a
-                  href={heroScrollTarget}
+                  href="#media-mobile"
                   aria-label="Explore more content"
-                  className="mt-10 flex flex-col items-center gap-[5px] opacity-[0.42] transition-all duration-150 active:translate-y-0.5 active:opacity-90 md:hidden"
+                  className="mt-10 flex flex-col items-center gap-[5px] opacity-[0.58] transition-all duration-150 hover:opacity-[0.88] active:translate-y-0.5 active:opacity-90 md:hidden"
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
                     Explore
@@ -1353,13 +1346,13 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             />
             {/* Desktop scroll cue — floats below the CTA cluster, lg+ only */}
             <a
-              href={heroScrollTarget}
+              href="#media"
               aria-label="Explore more content"
-              className="absolute left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[7px] opacity-[0.50] transition-opacity duration-300 hover:opacity-[0.88] focus-visible:opacity-[0.88] focus-visible:outline-none active:opacity-95 lg:flex"
-              style={{ bottom: "clamp(100px, 16vh, 200px)" }}
+              className="absolute left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[7px] opacity-[0.64] transition-opacity duration-300 hover:opacity-[0.92] focus-visible:opacity-[0.92] focus-visible:outline-none active:opacity-95 lg:flex"
+              style={{ bottom: "clamp(72px, 13vh, 180px)" }}
             >
               <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white">Explore</span>
-              <ChevronDown className="hero-cue-chevron h-[12px] w-[12px] text-white" />
+              <ChevronDown className="hero-cue-chevron h-[13px] w-[13px] text-white" />
             </a>
         </div>
       </section>
