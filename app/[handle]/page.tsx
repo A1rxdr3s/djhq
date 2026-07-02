@@ -193,6 +193,12 @@ type GalleryImageRow = {
   moments_placement: string | null
 }
 
+const VALID_MOMENTS_PLACEMENTS = new Set<string>(["auto", "large", "top", "bottom", "hidden"])
+function normalizeMomentsPlacement(val: string | null | undefined): MomentsPlacement | null {
+  if (!val) return null
+  return VALID_MOMENTS_PLACEMENTS.has(val) ? (val as MomentsPlacement) : null
+}
+
 type CareerTimelineRow = {
   id: string
   title: string
@@ -580,6 +586,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         sortOrder: image.sort_order,
         focalX: image.focal_x ?? 50,
         focalY: image.focal_y ?? 50,
+        momentsPlacement: normalizeMomentsPlacement(image.moments_placement),
       })),
       bookingInfo: {
         email: artistRow.booking_email,
@@ -873,6 +880,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
   const futureGigs = upcomingGigs.filter((g) => g.date.slice(0, 10) >= today && g.visibilityStatus !== "cancelled")
   const pastGigs = [...upcomingGigs.filter((g) => g.date.slice(0, 10) < today && g.visibilityStatus !== "cancelled")].reverse()
   const galleryImages = artist.galleryImages
+  const momentsImages = galleryImages.filter((i) => i.momentsPlacement !== "hidden")
   const featuredSet = artist.djSets[0] ?? null
   const recentSets = artist.djSets.slice(1, 5)
   const featuredVideo = artist.videos[0] ?? null
@@ -1457,11 +1465,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             )}
 
             {/* Latest 3 Moments */}
-            {galleryImages.length > 0 && (
+            {momentsImages.length > 0 && (
               <div>
                 <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-foreground/46">Moments</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {galleryImages.slice(0, 3).map((img, idx) => (
+                  {momentsImages.slice(0, 3).map((img, idx) => (
                     <div
                       key={idx}
                       className="relative aspect-square overflow-hidden rounded-xl bg-secondary"
