@@ -5,8 +5,6 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import type { Artist, ColorGrade, CustomDomainStatus, GalleryPolish, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 
-const mvpArtistHandle = "andresherrera"
-
 type ArtistRow = {
   id: string
   tenant_id: string | null
@@ -258,37 +256,6 @@ async function getOwnedArtist(supabase: SupabaseAdminClient, userId: string) {
     .eq("owner_user_id", userId)
     .order("created_at", { ascending: true })
     .limit(1)
-    .maybeSingle<ArtistRow>()
-
-  if (error) {
-    throw error
-  }
-
-  return data
-}
-
-async function getClaimableSeededArtist(supabase: SupabaseAdminClient) {
-  const { data, error } = await supabase
-    .from("artists")
-    .select("*")
-    .eq("handle", mvpArtistHandle)
-    .is("owner_user_id", null)
-    .maybeSingle<ArtistRow>()
-
-  if (error) {
-    throw error
-  }
-
-  return data
-}
-
-async function claimSeededArtist(supabase: SupabaseAdminClient, artistId: string, userId: string) {
-  const { data, error } = await supabase
-    .from("artists")
-    .update({ owner_user_id: userId })
-    .eq("id", artistId)
-    .is("owner_user_id", null)
-    .select("*")
     .maybeSingle<ArtistRow>()
 
   if (error) {
@@ -557,22 +524,5 @@ export default async function DashboardPage() {
     return <DashboardClient initialArtist={await mapArtistWithRelatedData(adminClient, ownedArtist)} />
   }
 
-  const claimableArtist = await getClaimableSeededArtist(adminClient)
-
-  if (!claimableArtist) {
-    return <OnboardingForm defaultBookingEmail={user.email ?? "booking@example.com"} />
-  }
-
-  const claimedArtist = await claimSeededArtist(adminClient, claimableArtist.id, user.id)
-
-  if (!claimedArtist?.owner_user_id || claimedArtist.owner_user_id !== user.id) {
-    return <OnboardingForm defaultBookingEmail={user.email ?? "booking@example.com"} />
-  }
-
-  return (
-    <DashboardClient
-      initialArtist={await mapArtistWithRelatedData(adminClient, claimedArtist)}
-      statusMessage="Artist profile assigned to your account."
-    />
-  )
+  return <OnboardingForm defaultBookingEmail={user.email ?? "booking@example.com"} />
 }
