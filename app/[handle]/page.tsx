@@ -974,7 +974,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
       />
-      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}.hero-content-gap{margin-top:0}@media(min-width:1024px){.hero-content-gap{margin-top:clamp(16px,3.5vh,56px)}}`}</style>
+      <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}@media(prefers-reduced-motion:reduce){.hero-cue-chevron{animation:none}}.hero-content-gap{margin-top:0}@media(min-width:1024px){.hero-content-gap{margin-top:clamp(16px,3.5vh,56px)}}`}</style>
       <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <Image
@@ -1195,7 +1195,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <a
                   href="#media-mobile"
                   aria-label="Explore more content"
-                  className="mt-5 flex flex-col items-center gap-[5px] opacity-[0.58] transition-all duration-150 hover:opacity-[0.88] active:translate-y-0.5 active:opacity-90"
+                  className="mt-6 flex flex-col items-center gap-[5px] opacity-[0.65] transition-all duration-150 hover:opacity-[0.92] active:translate-y-0.5 active:opacity-95"
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">Explore</span>
                   <ChevronDown className="hero-cue-chevron h-[11px] w-[11px] text-white" />
@@ -1282,7 +1282,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                 <a
                   href="#media-mobile"
                   aria-label="Explore more content"
-                  className="mt-10 flex flex-col items-center gap-[5px] opacity-[0.58] transition-all duration-150 hover:opacity-[0.88] active:translate-y-0.5 active:opacity-90 md:hidden"
+                  className="mt-12 flex flex-col items-center gap-[5px] opacity-[0.65] transition-all duration-150 hover:opacity-[0.92] active:translate-y-0.5 active:opacity-95 md:hidden"
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-[0.20em] text-white">
                     Explore
@@ -1348,11 +1348,11 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
             <a
               href="#media"
               aria-label="Explore more content"
-              className="absolute left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[7px] opacity-[0.64] transition-opacity duration-300 hover:opacity-[0.92] focus-visible:opacity-[0.92] focus-visible:outline-none active:opacity-95 lg:flex"
-              style={{ bottom: "clamp(72px, 13vh, 180px)" }}
+              className="absolute left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-[7px] opacity-[0.70] transition-opacity duration-300 hover:opacity-[0.95] focus-visible:opacity-[0.95] focus-visible:outline-none active:opacity-[1] lg:flex"
+              style={{ bottom: "clamp(58px, 11vh, 164px)" }}
             >
-              <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white">Explore</span>
-              <ChevronDown className="hero-cue-chevron h-[13px] w-[13px] text-white" />
+              <span className="text-[12px] font-semibold uppercase tracking-[0.22em] text-white">Explore</span>
+              <ChevronDown className="hero-cue-chevron h-[14px] w-[14px] text-white" />
             </a>
         </div>
       </section>
