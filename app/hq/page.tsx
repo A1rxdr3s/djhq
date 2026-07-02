@@ -3,7 +3,7 @@ import DashboardClient from "../dashboard/dashboard-client"
 import OnboardingForm from "../dashboard/onboarding-form"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import type { Artist, CustomDomainStatus, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, CustomDomainStatus, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 
 const mvpArtistHandle = "andresherrera"
 
@@ -211,6 +211,13 @@ const socialPlatforms: SocialPlatform[] = [
   "other",
 ]
 
+const validMomentsPlacementValues = new Set<string>(["auto", "large", "top", "bottom", "hidden"])
+
+function normalizeMomentsPlacement(val: string | null | undefined): MomentsPlacement | null {
+  if (!val) return null
+  return validMomentsPlacementValues.has(val) ? (val as MomentsPlacement) : null
+}
+
 function normalizePlan(plan: string): SubscriptionPlan {
   return plan === "pro" ? "pro" : "free"
 }
@@ -299,7 +306,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<GigRow[]>(),
     supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>(),
@@ -426,6 +433,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       sortOrder: image.sort_order,
       focalX: image.focal_x ?? 50,
       focalY: image.focal_y ?? 50,
+      momentsPlacement: normalizeMomentsPlacement(image.moments_placement),
     })),
     bookingInfo: {
       email: artistRow.booking_email,

@@ -18,7 +18,15 @@ type GalleryImageRow = {
   sort_order: number
   focal_x: number
   focal_y: number
+  moments_placement: string | null
   artist_id?: string
+}
+
+const VALID_MOMENTS_PLACEMENTS = new Set(["auto", "large", "top", "bottom", "hidden"])
+
+function normalizeMomentsPlacement(val: unknown): string | null {
+  if (typeof val !== "string" || !val) return null
+  return VALID_MOMENTS_PLACEMENTS.has(val) ? val : null
 }
 
 function badRequest(message: string) {
@@ -214,7 +222,7 @@ export async function POST(request: Request) {
         focal_x: 50,
         focal_y: 50,
       })
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
       .single<GalleryImageRow>()
 
     if (createImageError) throw createImageError
@@ -228,6 +236,7 @@ export async function POST(request: Request) {
           sortOrder: createdImage.sort_order,
           focalX: createdImage.focal_x,
           focalY: createdImage.focal_y,
+          momentsPlacement: normalizeMomentsPlacement(createdImage.moments_placement),
         },
       },
       { status: 201 },
@@ -333,11 +342,12 @@ export async function DELETE(request: Request) {
   }
 }
 
-type UpdateFocalPointPayload = {
+type UpdateGalleryImagePayload = {
   artistId?: string
   galleryImageId?: string
   focalX?: number
   focalY?: number
+  momentsPlacement?: string | null
 }
 
 export async function PATCH(request: Request) {
@@ -350,7 +360,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 })
   }
 
-  let rawPayload: (ReorderGalleryImagesPayload & UpdateFocalPointPayload)
+  let rawPayload: (ReorderGalleryImagesPayload & UpdateGalleryImagePayload)
 
   try {
     rawPayload = (await request.json()) as ReorderGalleryImagesPayload & UpdateFocalPointPayload
@@ -358,16 +368,30 @@ export async function PATCH(request: Request) {
     return badRequest("Invalid JSON payload.")
   }
 
-  // Focal point update path: presence of galleryImageId distinguishes from reorder
+  // Single-image update path: presence of galleryImageId distinguishes from reorder.
+  // Supports focal point updates (focalX + focalY) and/or placement updates (momentsPlacement).
   if (rawPayload.galleryImageId !== undefined) {
     const artistId = rawPayload.artistId?.trim()
     const galleryImageId = rawPayload.galleryImageId?.trim()
     const focalX = typeof rawPayload.focalX === "number" ? Math.min(100, Math.max(0, Math.round(rawPayload.focalX))) : null
     const focalY = typeof rawPayload.focalY === "number" ? Math.min(100, Math.max(0, Math.round(rawPayload.focalY))) : null
+    const hasFocal = focalX !== null && focalY !== null
+    const hasPlacement = "momentsPlacement" in rawPayload
+    const placementValue = hasPlacement ? normalizeMomentsPlacement(rawPayload.momentsPlacement) : undefined
 
     if (!artistId) return badRequest("Artist id is required.")
     if (!galleryImageId) return badRequest("Gallery image id is required.")
-    if (focalX === null || focalY === null) return badRequest("focalX and focalY are required numbers.")
+    if (!hasFocal && !hasPlacement) return badRequest("focalX/focalY or momentsPlacement is required.")
+
+    const updateFields: Record<string, unknown> = {}
+    if (hasFocal) {
+      updateFields.focal_x = focalX
+      updateFields.focal_y = focalY
+    }
+    if (hasPlacement) {
+      // "auto" is stored as null — both mean the same (DJHQ automatic)
+      updateFields.moments_placement = placementValue === "auto" ? null : (placementValue ?? null)
+    }
 
     try {
       const supabase = createSupabaseAdminClient()
@@ -383,16 +407,19 @@ export async function PATCH(request: Request) {
 
       const { error: updateError } = await supabase
         .from("gallery_images")
-        .update({ focal_x: focalX, focal_y: focalY })
+        .update(updateFields)
         .eq("id", galleryImageId)
         .eq("artist_id", artist.id)
 
       if (updateError) throw updateError
 
-      return NextResponse.json({ success: true, galleryImageId, focalX, focalY }, { status: 200 })
+      return NextResponse.json(
+        { success: true, galleryImageId, ...(hasFocal ? { focalX, focalY } : {}), ...(hasPlacement ? { momentsPlacement: updateFields.moments_placement ?? null } : {}) },
+        { status: 200 },
+      )
     } catch (error) {
-      console.error("[gallery-image PATCH focal]", error)
-      return NextResponse.json({ error: "Unable to update focal point." }, { status: 500 })
+      console.error("[gallery-image PATCH image]", error)
+      return NextResponse.json({ error: "Unable to update gallery image." }, { status: 500 })
     }
   }
 
