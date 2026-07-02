@@ -17,7 +17,7 @@ import {
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { buildArtistDescription, buildArtistJsonLd, getPublicBaseUrl, toAbsoluteUrl } from "@/lib/djhq/seo"
-import type { Artist, CareerTimelineCategory, CareerTimelineItem, DjSet, GigEventStatus, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, CareerTimelineCategory, CareerTimelineItem, DjSet, GigEventStatus, MomentsPlacement, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { isSafeInternalPath, resolveSafeHref } from "@/lib/safe-url"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
@@ -190,6 +190,7 @@ type GalleryImageRow = {
   sort_order: number
   focal_x: number
   focal_y: number
+  moments_placement: string | null
 }
 
 type CareerTimelineRow = {
@@ -453,7 +454,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<GigRow[]>(),
       supabase
         .from("gallery_images")
-        .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
+        .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
         .eq("artist_id", artistRow.id)
         .order("sort_order", { ascending: true })
         .returns<GalleryImageRow[]>(),
