@@ -578,164 +578,108 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const { error: deleteReleasesError } = await supabase
-      .from("releases")
-      .delete()
-      .eq("artist_id", artistId)
+    // ── Build pre-processed content arrays ─────────────────────────────────
+    // Title computation for dj_sets and videos is done here in TypeScript
+    // (where computeDjSetTitle / computeVideoTitle live) so the SQL function
+    // can insert pre-computed titles directly without reimplementing the logic.
+    // All other field normalisation (trimming, null-coercion, type validation)
+    // is also applied here so the SQL function only needs typed JSONB reads.
 
-    if (deleteReleasesError) {
-      throw deleteReleasesError
-    }
+    const releasesForRpc = payload.releases.map((release) => ({
+      title:             release.title.trim(),
+      label:             release.label.trim(),
+      credits:           release.credits?.trim() || null,
+      release_date:      release.releaseDate,
+      artwork_url:       release.artworkUrl.trim(),
+      platform_url:      release.platformUrl.trim(),
+      type:              normalizeReleaseType(release.type),
+      is_featured:       release.isFeatured,
+      spotify_url:       release.spotifyUrl?.trim() || null,
+      beatport_url:      release.beatportUrl?.trim() || null,
+      apple_music_url:   release.appleMusicUrl?.trim() || null,
+      soundcloud_url:    release.soundcloudUrl?.trim() || null,
+      youtube_music_url: release.youtubeMusicUrl?.trim() || null,
+      bandcamp_url:      release.bandcampUrl?.trim() || null,
+      traxsource_url:    release.traxsourceUrl?.trim() || null,
+      other_url:         release.otherUrl?.trim() || null,
+      release_type:      release.releaseType?.trim() || null,
+      version_type:      release.versionType?.trim() || null,
+      remixer:           release.remixer?.trim() || null,
+    }))
 
-    if (payload.releases.length > 0) {
-      const { error: insertReleasesError } = await supabase.from("releases").insert(
-        payload.releases.map((release, index) => ({
-          artist_id: artistId,
-          title: release.title.trim(),
-          label: release.label.trim(),
-          credits: release.credits?.trim() || null,
-          release_date: release.releaseDate,
-          artwork_url: release.artworkUrl.trim(),
-          platform_url: release.platformUrl.trim(),
-          type: normalizeReleaseType(release.type),
-          is_featured: release.isFeatured,
-          sort_order: index + 1,
-          spotify_url: release.spotifyUrl?.trim() || null,
-          beatport_url: release.beatportUrl?.trim() || null,
-          apple_music_url: release.appleMusicUrl?.trim() || null,
-          soundcloud_url: release.soundcloudUrl?.trim() || null,
-          youtube_music_url: release.youtubeMusicUrl?.trim() || null,
-          bandcamp_url: release.bandcampUrl?.trim() || null,
-          traxsource_url: release.traxsourceUrl?.trim() || null,
-          other_url: release.otherUrl?.trim() || null,
-          release_type: release.releaseType?.trim() || null,
-          version_type: release.versionType?.trim() || null,
-          remixer: release.remixer?.trim() || null,
-        })),
+    const gigsForRpc = payload.gigs.map((gig) => ({
+      date:              gig.date,
+      event_name:        gig.eventName?.trim() || null,
+      venue:             gig.venue.trim(),
+      city:              gig.city.trim(),
+      country:           gig.country.trim(),
+      club_venue:        gig.clubVenue?.trim() || null,
+      event_status:      gig.eventStatus ?? null,
+      ticket_url:        gig.ticketUrl?.trim() || null,
+      flyer_url:         gig.flyerUrl?.trim() || null,
+      instagram_url:     gig.instagramUrl?.trim() || null,
+      fee_amount:        gig.feeAmount ?? null,
+      fee_currency:      gig.feeCurrency?.trim() || null,
+      payment_status:    gig.paymentStatus ?? null,
+      visibility_status: gig.visibilityStatus ?? "announced",
+    }))
+
+    const djSetsForRpc = payload.djSets.map((set) => {
+      const generatedTitle = computeDjSetTitle(
+        set.performanceType,
+        set.performanceArtists,
+        set.customPerformanceType,
+        set.event,
+        set.venue,
+        artistName,
       )
-
-      if (insertReleasesError) {
-        throw insertReleasesError
+      return {
+        title:                   set.titleOverride?.trim() || generatedTitle,
+        performance_type:        set.performanceType,
+        performance_artists:     set.performanceArtists,
+        custom_performance_type: set.customPerformanceType?.trim() || null,
+        title_override:          set.titleOverride?.trim() || null,
+        venue:                   set.venue?.trim() || null,
+        event:                   set.event?.trim() || null,
+        set_date:                set.setDate || null,
+        city:                    set.city?.trim() || null,
+        image_url:               set.imageUrl?.trim() || null,
+        platform_url:            set.platformUrl.trim(),
+        is_published:            set.isPublished,
       }
-    }
+    })
 
-    // Only delete active (non-soft-deleted) gigs so soft-deleted records are preserved in history.
-    const { error: deleteGigsError } = await supabase
-      .from("gigs")
-      .delete()
-      .eq("artist_id", artistId)
-      .is("deleted_at", null)
-
-    if (deleteGigsError) {
-      throw deleteGigsError
-    }
-
-    if (payload.gigs.length > 0) {
-      const { error: insertGigsError } = await supabase.from("gigs").insert(
-        payload.gigs.map((gig) => ({
-          artist_id: artistId,
-          date: gig.date,
-          event_name: gig.eventName?.trim() || null,
-          venue: gig.venue.trim(),
-          city: gig.city.trim(),
-          country: gig.country.trim(),
-          club_venue: gig.clubVenue?.trim() || null,
-          event_status: gig.eventStatus ?? null,
-          ticket_url: gig.ticketUrl?.trim() || null,
-          flyer_url: gig.flyerUrl?.trim() || null,
-          instagram_url: gig.instagramUrl?.trim() || null,
-          fee_amount: gig.feeAmount ?? null,
-          fee_currency: gig.feeCurrency?.trim() || null,
-          payment_status: gig.paymentStatus ?? null,
-          visibility_status: gig.visibilityStatus ?? "announced",
-        })),
-      )
-
-      if (insertGigsError) {
-        throw insertGigsError
+    const videosForRpc = payload.videos.map((video) => {
+      const filledArtists = (video.videoArtists ?? []).filter(Boolean)
+      const generatedTitle = computeVideoTitle(filledArtists, video.videoEvent, video.venue, artistName)
+      return {
+        title:                generatedTitle || video.title.trim() || video.platformUrl.trim(),
+        video_artists:        filledArtists,
+        video_event:          video.videoEvent?.trim() || null,
+        video_city:           video.videoCity?.trim() || null,
+        video_country:        video.videoCountry?.trim() || null,
+        venue:                video.venue?.trim() || null,
+        video_date:           video.videoDate || null,
+        thumbnail_url:        video.thumbnailUrl?.trim() || null,
+        custom_thumbnail_url: video.customThumbnailUrl ?? null,
+        platform_url:         video.platformUrl.trim(),
+        is_published:         video.isPublished,
       }
-    }
+    })
 
-    const { error: deleteDjSetsError } = await supabase.from("dj_sets").delete().eq("artist_id", artistId)
+    // ── Single atomic RPC: replace releases, gigs, dj_sets, and videos ─────
+    // The SQL function wraps all four replacements in one PL/pgSQL block.
+    // Any INSERT failure causes a full rollback — no partial data loss.
+    const { error: contentError } = await supabase.rpc("save_artist_content", {
+      p_artist_id: artistId,
+      p_releases:  releasesForRpc,
+      p_gigs:      gigsForRpc,
+      p_dj_sets:   djSetsForRpc,
+      p_videos:    videosForRpc,
+    })
 
-    if (deleteDjSetsError) {
-      throw deleteDjSetsError
-    }
-
-    if (payload.djSets.length > 0) {
-      const { error: insertDjSetsError } = await supabase.from("dj_sets").insert(
-        payload.djSets.map((set, index) => {
-          const generatedTitle = computeDjSetTitle(
-            set.performanceType,
-            set.performanceArtists,
-            set.customPerformanceType,
-            set.event,
-            set.venue,
-            artistName,
-          )
-          const displayTitle = set.titleOverride?.trim() || generatedTitle
-          return {
-            artist_id: artistId,
-            title: displayTitle,
-            performance_type: set.performanceType,
-            performance_artists: set.performanceArtists,
-            custom_performance_type: set.customPerformanceType?.trim() || null,
-            title_override: set.titleOverride?.trim() || null,
-            venue: set.venue?.trim() || null,
-            event: set.event?.trim() || null,
-            set_date: set.setDate || null,
-            city: set.city?.trim() || null,
-            image_url: set.imageUrl?.trim() || null,
-            platform_url: set.platformUrl.trim(),
-            sort_order: index + 1,
-            is_published: set.isPublished,
-          }
-        }),
-      )
-
-      if (insertDjSetsError) {
-        throw insertDjSetsError
-      }
-    }
-
-    const { error: deleteVideosError } = await supabase.from("videos").delete().eq("artist_id", artistId)
-
-    if (deleteVideosError) {
-      throw deleteVideosError
-    }
-
-    if (payload.videos.length > 0) {
-      const { error: insertVideosError } = await supabase.from("videos").insert(
-        payload.videos.map((video, index) => {
-          const filledArtists = (video.videoArtists ?? []).filter(Boolean)
-          const generatedTitle = computeVideoTitle(
-            filledArtists,
-            video.videoEvent,
-            video.venue,
-            artistName,
-          )
-          const storedTitle = generatedTitle || video.title.trim() || video.platformUrl.trim()
-          return {
-            artist_id: artistId,
-            title: storedTitle,
-            video_artists: filledArtists,
-            video_event: video.videoEvent?.trim() || null,
-            video_city: video.videoCity?.trim() || null,
-            video_country: video.videoCountry?.trim() || null,
-            venue: video.venue?.trim() || null,
-            video_date: video.videoDate || null,
-            thumbnail_url: video.thumbnailUrl?.trim() || null,
-            custom_thumbnail_url: video.customThumbnailUrl ?? null,
-            platform_url: video.platformUrl.trim(),
-            sort_order: index + 1,
-            is_published: video.isPublished,
-          }
-        }),
-      )
-
-      if (insertVideosError) {
-        throw insertVideosError
-      }
+    if (contentError) {
+      throw contentError
     }
 
     return NextResponse.json({ ok: true })

@@ -1381,3 +1381,149 @@ CREATE POLICY "brand_sources_delete"
         AND a.owner_user_id = (select auth.uid())
     )
   );
+
+-- ── Atomic content-replacement RPC (migration 080) ───────────────────────────
+-- Wraps releases/gigs/dj_sets/videos replacement in a single PL/pgSQL function
+-- so the full replacement is atomic.  Any INSERT failure rolls back all deletes.
+-- Called by app/api/artists/route.ts via the service-role admin client.
+-- Titles for dj_sets and videos are pre-computed in TypeScript and passed in.
+
+create or replace function public.save_artist_content(
+  p_artist_id uuid,
+  p_releases  jsonb,
+  p_gigs      jsonb,
+  p_dj_sets   jsonb,
+  p_videos    jsonb
+)
+returns void
+language plpgsql
+set search_path = public
+as $$
+begin
+  -- ── Releases (hard replace) ───────────────────────────────────────────────
+  delete from public.releases
+  where artist_id = p_artist_id;
+
+  insert into public.releases (
+    artist_id, title, label, credits,
+    release_date, artwork_url, platform_url, type, is_featured, sort_order,
+    spotify_url, beatport_url, apple_music_url, soundcloud_url, youtube_music_url,
+    bandcamp_url, traxsource_url, other_url,
+    release_type, version_type, remixer
+  )
+  select
+    p_artist_id,
+    r->>'title',
+    r->>'label',
+    nullif(r->>'credits',           ''),
+    (r->>'release_date')::date,
+    r->>'artwork_url',
+    r->>'platform_url',
+    r->>'type',
+    (r->>'is_featured')::boolean,
+    ord::integer,
+    nullif(r->>'spotify_url',       ''),
+    nullif(r->>'beatport_url',      ''),
+    nullif(r->>'apple_music_url',   ''),
+    nullif(r->>'soundcloud_url',    ''),
+    nullif(r->>'youtube_music_url', ''),
+    nullif(r->>'bandcamp_url',      ''),
+    nullif(r->>'traxsource_url',    ''),
+    nullif(r->>'other_url',         ''),
+    nullif(r->>'release_type',      ''),
+    nullif(r->>'version_type',      ''),
+    nullif(r->>'remixer',           '')
+  from jsonb_array_elements(coalesce(p_releases, '[]'::jsonb))
+    with ordinality as t(r, ord);
+
+  -- ── Gigs (soft-delete-aware replace) ─────────────────────────────────────
+  -- Active gigs are replaced; soft-deleted gigs (deleted_at IS NOT NULL) are preserved.
+  -- sort_order is written from array ordinality (fixes pre-existing omission).
+  delete from public.gigs
+  where  artist_id  = p_artist_id
+    and  deleted_at is null;
+
+  insert into public.gigs (
+    artist_id, date, event_name, venue, city, country, club_venue,
+    event_status, ticket_url, flyer_url, instagram_url,
+    fee_amount, fee_currency, payment_status, visibility_status, sort_order
+  )
+  select
+    p_artist_id,
+    (r->>'date')::date,
+    nullif(r->>'event_name',      ''),
+    r->>'venue',
+    r->>'city',
+    r->>'country',
+    nullif(r->>'club_venue',      ''),
+    nullif(r->>'event_status',    ''),
+    nullif(r->>'ticket_url',      ''),
+    nullif(r->>'flyer_url',       ''),
+    nullif(r->>'instagram_url',   ''),
+    (r->>'fee_amount')::numeric,
+    nullif(r->>'fee_currency',    ''),
+    nullif(r->>'payment_status',  ''),
+    coalesce(nullif(r->>'visibility_status', ''), 'announced'),
+    ord::integer
+  from jsonb_array_elements(coalesce(p_gigs, '[]'::jsonb))
+    with ordinality as t(r, ord);
+
+  -- ── DJ Sets (hard replace) ────────────────────────────────────────────────
+  delete from public.dj_sets
+  where artist_id = p_artist_id;
+
+  insert into public.dj_sets (
+    artist_id, title, performance_type, performance_artists, custom_performance_type,
+    title_override, venue, event, set_date, city, image_url, platform_url,
+    sort_order, is_published
+  )
+  select
+    p_artist_id,
+    r->>'title',
+    r->>'performance_type',
+    array(select jsonb_array_elements_text(coalesce(r->'performance_artists', '[]'::jsonb))),
+    nullif(r->>'custom_performance_type', ''),
+    nullif(r->>'title_override',          ''),
+    nullif(r->>'venue',                   ''),
+    nullif(r->>'event',                   ''),
+    (r->>'set_date')::date,
+    nullif(r->>'city',                    ''),
+    nullif(r->>'image_url',               ''),
+    r->>'platform_url',
+    ord::integer,
+    (r->>'is_published')::boolean
+  from jsonb_array_elements(coalesce(p_dj_sets, '[]'::jsonb))
+    with ordinality as t(r, ord);
+
+  -- ── Videos (hard replace) ─────────────────────────────────────────────────
+  delete from public.videos
+  where artist_id = p_artist_id;
+
+  insert into public.videos (
+    artist_id, title, video_artists, video_event, video_city, video_country, venue,
+    video_date, thumbnail_url, custom_thumbnail_url, platform_url, sort_order, is_published
+  )
+  select
+    p_artist_id,
+    r->>'title',
+    array(select jsonb_array_elements_text(coalesce(r->'video_artists', '[]'::jsonb))),
+    nullif(r->>'video_event',   ''),
+    nullif(r->>'video_city',    ''),
+    nullif(r->>'video_country', ''),
+    nullif(r->>'venue',         ''),
+    (r->>'video_date')::date,
+    nullif(r->>'thumbnail_url', ''),
+    r->>'custom_thumbnail_url',
+    r->>'platform_url',
+    ord::integer,
+    (r->>'is_published')::boolean
+  from jsonb_array_elements(coalesce(p_videos, '[]'::jsonb))
+    with ordinality as t(r, ord);
+
+end;
+$$;
+
+revoke execute on function public.save_artist_content(uuid, jsonb, jsonb, jsonb, jsonb) from public;
+revoke execute on function public.save_artist_content(uuid, jsonb, jsonb, jsonb, jsonb) from anon;
+revoke execute on function public.save_artist_content(uuid, jsonb, jsonb, jsonb, jsonb) from authenticated;
+grant  execute on function public.save_artist_content(uuid, jsonb, jsonb, jsonb, jsonb) to service_role;
