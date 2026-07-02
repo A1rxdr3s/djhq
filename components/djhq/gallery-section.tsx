@@ -106,22 +106,21 @@ export function GallerySection({ images }: GallerySectionProps) {
     return () => { document.body.style.overflow = "" }
   }, [activeIndex])
 
-  // ── Sequential per-slot rotation (> 3 images only) ───────────────────────
+  // ── Sequential per-slot rotation ─────────────────────────────────────────
   //
-  // Every SLOT_INTERVAL_MS, the next slot in sequence rotates independently.
-  // The back layer preloads its target for the full idle period so it is
-  // already painted when it comes to front — no grey placeholder can appear.
+  // Every SLOT_INTERVAL_MS the next slot rotates, advancing by 1 within its
+  // own pool.  A slot is skipped silently if its pool has ≤ 1 image.
   useEffect(() => {
     if (n <= 3) return
-
-    const numSlotsLocal = Math.min(n, NUM_SLOTS)
 
     const interval = setInterval(() => {
       if (pausedRef.current || activeIndexRef.current !== null) return
 
       const slot = currentSlotRef.current
-      currentSlotRef.current = (slot + 1) % numSlotsLocal
+      currentSlotRef.current = (slot + 1) % NUM_SLOTS
 
+      // Skip slots whose pool can't rotate
+      if (slotPoolsRef.current[slot].length <= 1) return
       if (settleTimerRefs.current[slot] !== null) return
 
       // Step 1 — enable CSS transition for this slot
@@ -138,14 +137,15 @@ export function GallerySection({ images }: GallerySectionProps) {
           settleTimerRefs.current[slot] = null
           setIsTransitionings((prev) => { const a = [...prev]; a[slot] = false; return a })
 
+          const poolSize = slotPoolsRef.current[slot].length
           if (nextFrontIsA) {
-            // A is now front → B is back → update B to A's offset + NUM_SLOTS
-            const newB = (layerAOffsetsRef.current[slot] + numSlotsLocal) % n
+            // A is now front → B is back → update B to next after A
+            const newB = (layerAOffsetsRef.current[slot] + 1) % poolSize
             setLayerBOffsets((prev) => { const a = [...prev]; a[slot] = newB; return a })
             layerBOffsetsRef.current[slot] = newB
           } else {
-            // B is now front → A is back → update A to B's offset + NUM_SLOTS
-            const newA = (layerBOffsetsRef.current[slot] + numSlotsLocal) % n
+            // B is now front → A is back → update A to next after B
+            const newA = (layerBOffsetsRef.current[slot] + 1) % poolSize
             setLayerAOffsets((prev) => { const a = [...prev]; a[slot] = newA; return a })
             layerAOffsetsRef.current[slot] = newA
           }
@@ -187,8 +187,9 @@ export function GallerySection({ images }: GallerySectionProps) {
         }}
       >
         {Array.from({ length: numSlots }, (_, slot) => {
-          const photoA = images[layerAOffsets[slot]]
-          const photoB = images[layerBOffsets[slot]]
+          const pool   = slotPools[slot]
+          const photoA = pool[layerAOffsets[slot]] ?? images[0]
+          const photoB = pool[layerBOffsets[slot]] ?? images[0]
           const frontIsA      = frontIsAs[slot]
           const isTransitioning = isTransitionings[slot]
 
@@ -213,8 +214,9 @@ export function GallerySection({ images }: GallerySectionProps) {
             zIndex:     frontIsA ? 0 : 1,
           }
 
-          // Open the image the user actually sees (front layer)
-          const lightboxIndex = frontIsA ? layerAOffsets[slot] : layerBOffsets[slot]
+          // Open the image the user actually sees (front layer) in the global lightbox
+          const frontPhoto = frontIsA ? photoA : photoB
+          const lightboxIndex = images.indexOf(frontPhoto)
 
           const sizesAttr = slot === 0
             ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
