@@ -14,7 +14,6 @@ import {
   Play,
   type LucideIcon,
 } from "lucide-react"
-import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { buildArtistDescription, buildArtistJsonLd, getPublicBaseUrl, toAbsoluteUrl } from "@/lib/djhq/seo"
 import type { Artist, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GalleryPolish, GigEventStatus, MomentsPlacement, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
@@ -426,8 +425,13 @@ function mapReleaseRow(row: ReleaseRow): Release {
 }
 
 
-function getMockArtistFallback(handle: string) {
-  return handle === mockArtist.handle ? mockArtist : null
+function safeJsonLd(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(new RegExp("\u2028", "g"), "\\u2028")
+    .replace(new RegExp("\u2029", "g"), "\\u2029")
 }
 
 async function getArtistProfile(handle: string): Promise<Artist | null> {
@@ -435,7 +439,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
   const supabase = createSupabaseReadClient()
 
   if (!supabase) {
-    return getMockArtistFallback(normalizedHandle)
+    return null
   }
 
   try {
@@ -684,8 +688,9 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       createdAt: artistRow.created_at,
       updatedAt: artistRow.updated_at,
     }
-  } catch {
-    return getMockArtistFallback(normalizedHandle)
+  } catch (err) {
+    console.error("[profile] getArtistProfile error:", err)
+    return null
   }
 }
 
@@ -708,7 +713,7 @@ function resolveHeroImageUrl(url: string | null | undefined): string | undefined
 }
 
 export function generateStaticParams() {
-  return [{ handle: mockArtist.handle }]
+  return []
 }
 
 export async function generateMetadata({ params }: PublicProfilePageProps): Promise<Metadata> {
@@ -972,7 +977,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(pageJsonLd) }}
       />
       <style>{`:root{--accent:${accentThemeConfig.accent};--accent-foreground:${accentThemeConfig.accentForeground}}.genre-chip{box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent);transition:box-shadow 150ms ease}.genre-chip:hover{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 24%,transparent)}.hero-cue-chevron{animation:hero-cue-float 2.4s ease-in-out infinite}@keyframes hero-cue-float{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}@media(prefers-reduced-motion:reduce){.hero-cue-chevron{animation:none}}.hero-content-gap{margin-top:0}@media(min-width:1024px){.hero-content-gap{margin-top:clamp(16px,3.5vh,56px)}}`}</style>
       <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">

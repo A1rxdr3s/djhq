@@ -6,6 +6,15 @@ import { checkRateLimit, getClientIp } from "@/lib/request-security"
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DATE_RE  = /^\d{4}-\d{2}-\d{2}$/
 
+function escapeHtml(value: string | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
 // ---------------------------------------------------------------------------
 // Email template v2
 // ---------------------------------------------------------------------------
@@ -47,6 +56,7 @@ function buildEmailHtml({
       <td style="padding:5px 0;color:#111827;font-size:13px;vertical-align:top">${value}</td>
     </tr>`
 
+  const h = escapeHtml
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -57,9 +67,9 @@ function buildEmailHtml({
   <div style="background:#09090b;border-radius:10px 10px 0 0;padding:24px 28px 20px">
     <p style="margin:0 0 12px;font-size:10px;font-weight:700;letter-spacing:0.24em;text-transform:uppercase;color:rgba(255,255,255,0.35)">DJHQ</p>
     <p style="margin:0 0 4px;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.01em">New booking request</p>
-    <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.5);font-weight:500;letter-spacing:0.04em;text-transform:uppercase">${artistName}</p>
+    <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.5);font-weight:500;letter-spacing:0.04em;text-transform:uppercase">${h(artistName)}</p>
     <div style="margin-top:14px;display:inline-block;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:5px 10px">
-      <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:monospace">Ref: ${referenceId}</span>
+      <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:monospace">Ref: ${h(referenceId)}</span>
     </div>
   </div>
 
@@ -69,10 +79,10 @@ function buildEmailHtml({
     <!-- Event summary -->
     <p style="margin:0 0 10px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9ca3af">Event Summary</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
-      ${row("Date", eventDate)}
-      ${eventType !== "—" ? row("Type", eventType) : ""}
-      ${row("City", city)}
-      ${row("Venue / Promoter", venueOrPromoter)}
+      ${row("Date", h(eventDate))}
+      ${eventType !== "—" ? row("Type", h(eventType)) : ""}
+      ${row("City", h(city))}
+      ${row("Venue / Promoter", h(venueOrPromoter))}
     </table>
 
     <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 20px">
@@ -80,9 +90,9 @@ function buildEmailHtml({
     <!-- Requester -->
     <p style="margin:0 0 10px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9ca3af">Requester</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
-      ${row("Name", fullName)}
-      ${row("Email", `<a href="mailto:${email}" style="color:#6366f1;text-decoration:none">${email}</a>`)}
-      ${row("Phone", phone)}
+      ${row("Name", h(fullName))}
+      ${row("Email", `<a href="mailto:${email}" style="color:#6366f1;text-decoration:none">${h(email)}</a>`)}
+      ${row("Phone", h(phone))}
     </table>
 
     <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 20px">
@@ -90,7 +100,7 @@ function buildEmailHtml({
     <!-- Details -->
     <p style="margin:0 0 10px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9ca3af">Event Details</p>
     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:14px;margin-bottom:24px">
-      <p style="margin:0;color:#374151;font-size:13px;line-height:1.6;white-space:pre-wrap">${eventDetails}</p>
+      <p style="margin:0;color:#374151;font-size:13px;line-height:1.6;white-space:pre-wrap">${h(eventDetails)}</p>
     </div>
 
     <!-- CTA -->

@@ -120,7 +120,13 @@ export async function POST(request: Request) {
   const user = await getAuthedUser()
   if (!user) return unauthorized("Authentication required.")
 
-  const body = await request.json()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: any
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 })
+  }
   const { artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured = false, previewImageUrl, isPublished = true, sortOrder, storySlot, showInCollapsed = true, imageFocalX = 50, imageFocalY = 50, imageObjectFit = 'cover', imageZoom = 1, imageTreatment = 'cover', descriptionMode = 'auto', metadataOverlayMode = 'auto' } = body
 
   if (!artistId || !title?.trim() || !category || !eventDate) {
@@ -173,7 +179,13 @@ export async function PATCH(request: Request) {
   const user = await getAuthedUser()
   if (!user) return unauthorized("Authentication required.")
 
-  const body = await request.json()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: any
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 })
+  }
   const { id, artistId, title, category, eventDate, location, description, link, imageUrl, isFeatured, previewImageUrl, isPublished, sortOrder, storySlot, showInCollapsed, imageFocalX, imageFocalY, imageObjectFit, imageZoom, imageTreatment, descriptionMode, metadataOverlayMode } = body
 
   if (!id || !artistId) {

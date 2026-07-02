@@ -6,6 +6,15 @@ import { checkRateLimit, getClientIp } from "@/lib/request-security"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+function escapeHtml(value: string | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
 export async function POST(request: Request) {
   let body: unknown
   try {
@@ -125,10 +134,10 @@ export async function POST(request: Request) {
       html: `
         <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:24px">
           <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6b7280">DJHQ · New Subscriber</p>
-          <p style="margin:0 0 20px;font-size:18px;font-weight:700;color:#111827">${eventLabel} — ${artistRow.artist_name}</p>
+          <p style="margin:0 0 20px;font-size:18px;font-weight:700;color:#111827">${escapeHtml(eventLabel)} — ${escapeHtml(artistRow.artist_name as string | null)}</p>
           <p style="margin:0;font-size:14px;color:#374151">
             <strong>Email:</strong>
-            <a href="mailto:${emailStr}" style="color:#6366f1;text-decoration:none">${emailStr}</a>
+            <a href="mailto:${emailStr}" style="color:#6366f1;text-decoration:none">${escapeHtml(emailStr)}</a>
           </p>
           <p style="margin:16px 0 0;font-size:12px;color:#9ca3af">Signed up via the public artist profile footer.</p>
         </div>

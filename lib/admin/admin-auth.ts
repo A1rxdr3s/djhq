@@ -2,22 +2,17 @@
 // TODO: replace email allowlist with a database role table or Supabase custom claims
 // when multi-admin support is needed.
 
-const FALLBACK_ADMIN_EMAILS = ["andres@tothebit.com"]
-
 /**
- * Returns the list of platform admin emails.
- * Reads from DJHQ_PLATFORM_ADMIN_EMAILS env var (comma-separated) if set,
- * otherwise falls back to the hardcoded list (dev/bootstrap only).
+ * Returns the list of platform admin emails from DJHQ_PLATFORM_ADMIN_EMAILS (comma-separated).
+ * Returns an empty list if the env var is not set — admin access is then denied to everyone.
  */
 export function getAdminEmails(): string[] {
   const envValue = process.env.DJHQ_PLATFORM_ADMIN_EMAILS
-  if (envValue) {
-    return envValue
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean)
-  }
-  return FALLBACK_ADMIN_EMAILS.map((e) => e.toLowerCase())
+  if (!envValue) return []
+  return envValue
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
 }
 
 /**

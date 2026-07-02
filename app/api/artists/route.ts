@@ -257,6 +257,10 @@ function validatePayload(payload: SaveArtistPayload) {
     return "Each release must include title, label, date, type, platform URL, and artwork URL."
   }
 
+  if (payload.booking.pressKitEnabled && !payload.booking.pressKitUrl?.trim()) {
+    return "A press kit download URL is required when press kit is enabled."
+  }
+
   return null
 }
 

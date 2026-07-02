@@ -51,6 +51,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Drop common bot probe paths before touching the database.
+  // Only reached for custom domains — platform hosts already returned above.
+  const PROBE_PATH_RE = /^\/(?:\.git|\.env|wp-admin|wp-login\.php|phpmyadmin|config\.php|admin\.php)/i
+  if (PROBE_PATH_RE.test(request.nextUrl.pathname)) {
+    return new NextResponse("Not found.", { status: 404 })
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 

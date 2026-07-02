@@ -3,7 +3,7 @@
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import { isAdminEmail, getAdminEmails } from "@/lib/admin/admin-auth"
+import { isAdminEmail } from "@/lib/admin/admin-auth"
 import { listInvitations } from "@/app/actions/admin-invitations"
 import { AdminClient } from "@/components/admin/admin-client"
 import type { AdminRealData, AdminRealArtist, AdminRealUser, DbBookingLead, AdminBookingLeadStatus, EmailDeliveryStatus } from "@/types/admin"
@@ -132,9 +132,6 @@ async function fetchRealAdminData(): Promise<AdminRealData> {
 // ─── Access denied page ───────────────────────────────────────────────────────
 
 function AccessDenied({ email }: { email: string | null }) {
-  const isDevMode = process.env.NODE_ENV !== "production"
-  const adminEmails = getAdminEmails()
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center">
@@ -147,11 +144,6 @@ function AccessDenied({ email }: { email: string | null }) {
             ? <>You are signed in as <strong>{email}</strong> but do not have platform admin access.</>
             : "You must be signed in as a platform admin to access this page."}
         </p>
-        {isDevMode && (
-          <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">
-            Dev: admin emails are <code className="font-mono">{adminEmails.join(", ")}</code>
-          </p>
-        )}
         <a
           href="/hq"
           className="mt-5 inline-block rounded-md bg-slate-900 px-4 py-2 text-[12px] font-semibold text-white hover:bg-slate-800"
@@ -167,12 +159,8 @@ function AccessDenied({ email }: { email: string | null }) {
 
 export default async function AdminPage() {
   const { email } = await getSessionUser()
-  const isDevMode = process.env.NODE_ENV !== "production"
 
-  // In production, enforce admin gate. In dev, allow through with a warning banner
-  // so the admin UI can be built without requiring a live Supabase session.
-  // TODO: remove the dev bypass once auth is fully wired and tested.
-  if (!isDevMode && !isAdminEmail(email)) {
+  if (!isAdminEmail(email)) {
     return <AccessDenied email={email} />
   }
 

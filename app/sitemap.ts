@@ -89,13 +89,10 @@ async function buildCustomDomainSitemap(hostname: string): Promise<MetadataRoute
     .maybeSingle<DomainArtistRow>()
 
   if (domainError) console.error("[sitemap] custom_domains query error:", domainError.message)
-  console.error("[sitemap] hostname:", hostname, "| domainData:", JSON.stringify(domainData))
 
   const domainArtist = domainData?.artists
-  console.error("[sitemap] domainArtist:", JSON.stringify(domainArtist))
 
   if (!domainArtist?.is_published || domainArtist.plan !== "pro") {
-    console.error("[sitemap] domainArtist failed published/pro gate — returning fallback (homepage only)")
     return fallback
   }
 
@@ -109,11 +106,6 @@ async function buildCustomDomainSitemap(hostname: string): Promise<MetadataRoute
     .maybeSingle<ArtistProfileRow>()
 
   if (artistError) console.error("[sitemap] artists query error:", artistError.message)
-  console.error(
-    "[sitemap] artistData:", JSON.stringify(artistData),
-    "| press_kit_enabled:", artistData?.press_kit_enabled,
-    "| typeof:", typeof artistData?.press_kit_enabled,
-  )
 
   const lastModified = artistData?.updated_at ? new Date(artistData.updated_at) : new Date()
 
@@ -125,7 +117,6 @@ async function buildCustomDomainSitemap(hostname: string): Promise<MetadataRoute
     entries.push({ url: `${origin}/presskit`, lastModified, changeFrequency: "monthly", priority: 0.7 })
   }
 
-  console.error("[sitemap] final URLs:", entries.map((e) => e.url))
   return entries
 }
 
@@ -142,7 +133,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Static generation context — fall through to platform sitemap.
   }
 
-  console.error("[sitemap] resolved hostname:", JSON.stringify(hostname), "| isPlatform:", isPlatformHost(hostname))
 
   if (hostname && !isPlatformHost(hostname)) {
     return buildCustomDomainSitemap(hostname)
@@ -153,7 +143,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const artists = await getPublishedArtistHandles()
 
   const artistEntries: MetadataRoute.Sitemap = artists.map((a) => ({
-    url:             a.seo_canonical_url?.trim() || `${baseUrl}/${a.handle}`,
+    url:             `${baseUrl}/${a.handle}`,
     lastModified:    a.updated_at ? new Date(a.updated_at) : new Date(),
     changeFrequency: "weekly",
     priority:        0.9,
