@@ -363,7 +363,7 @@ export async function PATCH(request: Request) {
   let rawPayload: (ReorderGalleryImagesPayload & UpdateGalleryImagePayload)
 
   try {
-    rawPayload = (await request.json()) as ReorderGalleryImagesPayload & UpdateFocalPointPayload
+    rawPayload = (await request.json()) as ReorderGalleryImagesPayload & UpdateGalleryImagePayload
   } catch {
     return badRequest("Invalid JSON payload.")
   }

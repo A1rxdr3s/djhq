@@ -1507,7 +1507,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           <MobileSection tab="media" className="max-lg:hidden">
             <section className="flex h-full flex-col">
               <SectionHeader variant="primary">Moments</SectionHeader>
-              <GallerySection images={galleryImages} />
+              <GallerySection images={momentsImages} />
             </section>
           </MobileSection>
 
@@ -1583,10 +1583,10 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
 
         {/* Releases → Music tab */}
         {/* Moments → mobile only, appears before Releases (desktop uses grid column) */}
-        {galleryImages.length > 0 && (
+        {momentsImages.length > 0 && (
           <section id="media-mobile" className="mt-10 scroll-mt-16 lg:hidden">
             <SectionHeader variant="primary">Moments</SectionHeader>
-            <GallerySection images={galleryImages} />
+            <GallerySection images={momentsImages} />
           </section>
         )}
 
