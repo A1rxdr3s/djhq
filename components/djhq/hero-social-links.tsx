@@ -1,4 +1,5 @@
 import {
+  BarChart2,
   Calendar,
   Globe,
   Instagram,
@@ -22,6 +23,7 @@ const SOCIAL_ICONS: Record<SocialPlatform, LucideIcon> = {
   tiktok:             Music,
   "resident-advisor": Globe,
   bandsintown:        Calendar,
+  songstats:          BarChart2,
   website:            Globe,
   other:              Link2,
 }

@@ -72,6 +72,7 @@ export type SocialPlatform =
   | "tiktok"
   | "resident-advisor"
   | "bandsintown"
+  | "songstats"
   | "website"
   | "other"
 

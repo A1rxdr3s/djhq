@@ -5,7 +5,7 @@ import { notFound } from "next/navigation"
 import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import {
-  ArrowLeft, ArrowDownToLine, Camera, ExternalLink,
+  ArrowLeft, ArrowDownToLine, BarChart2, Camera, ExternalLink,
   FileText, FolderOpen, Layers, Radio, Music2, Play,
   Youtube, Instagram, Music, Globe, Link2, Calendar, Wrench,
   type LucideIcon,
@@ -106,6 +106,7 @@ const socialIcons: Record<SocialPlatform, LucideIcon> = {
   tiktok:             Music,
   "resident-advisor": Globe,
   bandsintown:        Calendar,
+  songstats:          BarChart2,
   website:            Globe,
   other:              Link2,
 }

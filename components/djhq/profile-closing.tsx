@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar } from "lucide-react"
+import { BarChart2, Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { resolveSafeHref } from "@/lib/safe-url"
@@ -19,6 +19,7 @@ const SOCIAL_ICONS: Partial<Record<SocialPlatform, LucideIcon>> = {
   tiktok:             Music,
   "resident-advisor": Globe,
   bandsintown:        Calendar,
+  songstats:          BarChart2,
   website:            Globe,
   other:              Link2,
 }

@@ -173,7 +173,7 @@ create table if not exists public.social_links (
   updated_at  timestamptz not null default now(),
   constraint social_links_platform_check check (
     platform in ('beatport','spotify','soundcloud','youtube','instagram','tiktok',
-                 'resident-advisor','bandsintown','website','other')
+                 'resident-advisor','bandsintown','songstats','website','other')
   )
 );
 

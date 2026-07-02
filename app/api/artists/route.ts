@@ -516,25 +516,61 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const { error: deleteSocialLinksError } = await supabase.from("social_links").delete().eq("artist_id", artistId)
+    // Non-destructive social links save: read → targeted update/insert → delete removed platforms.
+    // A blanket DELETE followed by INSERT is unsafe: if the INSERT fails, the artist loses all
+    // links. Instead, we operate per-platform so an individual failure can never wipe existing data.
+    {
+      const { data: existingLinkRows, error: fetchLinksError } = await supabase
+        .from("social_links")
+        .select("id, platform")
+        .eq("artist_id", artistId)
 
-    if (deleteSocialLinksError) {
-      throw deleteSocialLinksError
-    }
+      if (fetchLinksError) throw fetchLinksError
 
-    if (payload.socialLinks.length > 0) {
-      const { error: insertSocialLinksError } = await supabase.from("social_links").insert(
-        payload.socialLinks.map((link, index) => ({
-          artist_id: artistId,
-          platform: link.platform.trim().toLowerCase(),
-          label: link.label.trim(),
-          url: link.url.trim(),
-          sort_order: index + 1,
-        })),
-      )
+      // Build a platform → row-id map for quick lookup
+      const existingByPlatform = new Map<string, string>()
+      for (const row of existingLinkRows ?? []) {
+        existingByPlatform.set(row.platform as string, row.id as string)
+      }
 
-      if (insertSocialLinksError) {
-        throw insertSocialLinksError
+      // Step 1: Insert or update each link in the payload
+      for (let i = 0; i < payload.socialLinks.length; i++) {
+        const link = payload.socialLinks[i]
+        const platform = link.platform.trim().toLowerCase()
+        const existingId = existingByPlatform.get(platform)
+
+        if (existingId) {
+          // Platform already exists — update label, url, sort_order only
+          const { error: updateErr } = await supabase
+            .from("social_links")
+            .update({ label: link.label.trim(), url: link.url.trim(), sort_order: i + 1 })
+            .eq("id", existingId)
+          if (updateErr) throw updateErr
+          existingByPlatform.delete(platform) // mark handled
+        } else {
+          // New platform — insert
+          const { error: insertErr } = await supabase
+            .from("social_links")
+            .insert({
+              artist_id: artistId,
+              platform,
+              label: link.label.trim(),
+              url:   link.url.trim(),
+              sort_order: i + 1,
+            })
+          if (insertErr) throw insertErr
+        }
+      }
+
+      // Step 2: Delete only platforms that were NOT in the new payload (explicitly removed)
+      // Platforms still in existingByPlatform were not included in the save → delete them.
+      const idsToDelete = [...existingByPlatform.values()]
+      if (idsToDelete.length > 0) {
+        const { error: deleteErr } = await supabase
+          .from("social_links")
+          .delete()
+          .in("id", idsToDelete)
+        if (deleteErr) throw deleteErr
       }
     }
 
@@ -700,10 +736,16 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    // Supabase errors are plain objects { code, message, details } — not Error instances.
+    // Calling String() on them produces "[object Object]". Extract .message first.
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && typeof (error as { message?: unknown }).message === "string"
+          ? (error as { message: string }).message
+          : String(error)
     const code    = (error as { code?: string }).code ?? null
     console.error("[artists PATCH]", { message, code, error })
-    // Return the real error message so clients can distinguish DB issues from logic bugs.
     return NextResponse.json({ error: message || "Unable to save artist changes.", code }, { status: 500 })
   }
 }

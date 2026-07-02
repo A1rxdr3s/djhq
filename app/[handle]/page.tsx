@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import {
+  BarChart2,
   Calendar,
   ChevronDown,
   Download,
@@ -53,16 +54,17 @@ type PublicProfilePageProps = {
 export const dynamic = "force-dynamic"
 
 const socialIcons: Record<SocialPlatform, LucideIcon> = {
-  instagram:        Instagram,
-  beatport:         Music2,
-  spotify:          Radio,
-  soundcloud:       Play,
-  youtube:          Youtube,
-  tiktok:           Music,
+  instagram:          Instagram,
+  beatport:           Music2,
+  spotify:            Radio,
+  soundcloud:         Play,
+  youtube:            Youtube,
+  tiktok:             Music,
   "resident-advisor": Globe,
-  bandsintown:      Calendar,
-  website:          Globe,
-  other:            Link2,
+  bandsintown:        Calendar,
+  songstats:          BarChart2,
+  website:            Globe,
+  other:              Link2,
 }
 
 type ArtistRow = {
@@ -249,6 +251,7 @@ const socialPlatforms: SocialPlatform[] = [
   "tiktok",
   "resident-advisor",
   "bandsintown",
+  "songstats",
   "website",
   "other",
 ]
