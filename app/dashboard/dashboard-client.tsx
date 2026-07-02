@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, ArrowRight, BarChart2, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Ticket, Trash2, TrendingUp, Upload, User, Users, Wrench, X, Youtube } from "lucide-react"
-import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { normalizeExternalImageUrl } from "@/lib/media"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -2677,6 +2677,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setSaveMessage(e instanceof Error ? e.message : "Unable to reorder gallery.")
     } finally {
       setIsReorderingGallery(false)
+    }
+  }
+
+  async function handleUpdatePlacement(galleryImageId: string, placement: MomentsPlacement | null) {
+    try {
+      const response = await fetch("/api/artists/gallery-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artistId: artist.id, galleryImageId, momentsPlacement: placement }),
+      })
+      const result = (await response.json()) as { error?: string; momentsPlacement?: MomentsPlacement | null }
+      if (!response.ok) throw new Error(result.error ?? "Failed to update placement")
+      setGalleryImages((current) =>
+        current.map((img) => img.id === galleryImageId ? { ...img, momentsPlacement: result.momentsPlacement ?? null } : img),
+      )
+      setArtist((cur) => ({
+        ...cur,
+        galleryImages: cur.galleryImages.map((img) =>
+          img.id === galleryImageId ? { ...img, momentsPlacement: result.momentsPlacement ?? null } : img,
+        ),
+      }))
+    } catch (e) {
+      setSaveMessage(e instanceof Error ? e.message : "Unable to update placement.")
     }
   }
 

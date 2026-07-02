@@ -459,7 +459,7 @@ export async function PATCH(request: Request) {
 
     const { data: existingImages, error: existingImagesError } = await supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
       .eq("artist_id", artist.id)
       .returns<GalleryImageRow[]>()
 
@@ -488,7 +488,7 @@ export async function PATCH(request: Request) {
 
     const { data: reorderedImages, error: reorderedImagesError } = await supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
       .eq("artist_id", artist.id)
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>()
@@ -504,6 +504,7 @@ export async function PATCH(request: Request) {
           sortOrder: image.sort_order,
           focalX: image.focal_x,
           focalY: image.focal_y,
+          momentsPlacement: normalizeMomentsPlacement(image.moments_placement),
         })),
       },
       { status: 200 },
