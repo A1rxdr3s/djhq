@@ -246,7 +246,7 @@ export function GallerySection({ images }: GallerySectionProps) {
                   fill
                   loading="eager"
                   sizes={sizesAttr}
-                  className="object-cover saturate-[0.88] brightness-[0.93] contrast-[1.05] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[0.97] group-hover:brightness-[1.0]"
+                  className="object-cover saturate-[0.95] brightness-[0.96] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[1.0] group-hover:brightness-[1.0]"
                   style={{ objectPosition: `${photoA.focalX ?? 50}% ${photoA.focalY ?? 50}%` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
@@ -260,22 +260,17 @@ export function GallerySection({ images }: GallerySectionProps) {
                   fill
                   loading="eager"
                   sizes={sizesAttr}
-                  className="object-cover saturate-[0.88] brightness-[0.93] contrast-[1.05] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[0.97] group-hover:brightness-[1.0]"
+                  className="object-cover saturate-[0.95] brightness-[0.96] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[1.0] group-hover:brightness-[1.0]"
                   style={{ objectPosition: `${photoB.focalX ?? 50}% ${photoB.focalY ?? 50}%` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
               </div>
 
-              {/* ── Warm cinematic grade — Moments cards only ──────────────────
-                  Coheres the gallery with the warm red/amber hero palette.
-                  Rollback: restore image className to "saturate-[0.97] transition-transform
-                  duration-200 ease-out group-hover:scale-[1.01]" and revert this div's
-                  background to "linear-gradient(180deg,rgba(0,0,0,0.04),rgba(0,0,0,0.10))".
-                  ─────────────────────────────────────────────────────────────── */}
+              {/* ── Neutral dark vignette ────────────────────────────────────── */}
               <div
-                className="pointer-events-none absolute inset-0 transition-opacity duration-300 group-hover:opacity-50"
+                className="pointer-events-none absolute inset-0"
                 style={{
-                  background: "linear-gradient(165deg, rgba(200,80,20,0.09) 0%, rgba(0,0,0,0.02) 52%, rgba(0,0,0,0.12) 100%)",
+                  background: "linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.10) 100%)",
                   zIndex: 2,
                 }}
               />
