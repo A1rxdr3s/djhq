@@ -5,20 +5,13 @@ import { notFound } from "next/navigation"
 import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import {
-  BarChart2,
-  Calendar,
   ChevronDown,
   Download,
   ExternalLink,
   Globe,
-  Instagram,
   MapPin,
   Music2,
   Play,
-  Radio,
-  Link2,
-  Music,
-  Youtube,
   type LucideIcon,
 } from "lucide-react"
 import { mockArtist } from "@/data/mock-artist"
@@ -46,6 +39,7 @@ import { HeroLogoElement } from "@/components/djhq/hero-logo-element"
 import { HeroSocialLinks, HeroMobileSocialRow } from "@/components/djhq/hero-social-links"
 import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 import { PUBLIC_SECTION_NAV } from "@/lib/public-nav"
+import { SOCIAL_ICONS } from "@/lib/social-icons"
 
 type PublicProfilePageProps = {
   params: Promise<{ handle: string }>
@@ -53,19 +47,8 @@ type PublicProfilePageProps = {
 
 export const dynamic = "force-dynamic"
 
-const socialIcons: Record<SocialPlatform, LucideIcon> = {
-  instagram:          Instagram,
-  beatport:           Music2,
-  spotify:            Radio,
-  soundcloud:         Play,
-  youtube:            Youtube,
-  tiktok:             Music,
-  "resident-advisor": Globe,
-  bandsintown:        Calendar,
-  songstats:          BarChart2,
-  website:            Globe,
-  other:              Link2,
-}
+// socialIcons — re-export from shared registry for use in this file
+const socialIcons = SOCIAL_ICONS
 
 type ArtistRow = {
   id: string
@@ -242,19 +225,8 @@ function normalizeTimelineCategory(c: string): CareerTimelineCategory {
   return VALID_TIMELINE_CATEGORIES.has(c) ? (c as CareerTimelineCategory) : "other"
 }
 
-const socialPlatforms: SocialPlatform[] = [
-  "beatport",
-  "spotify",
-  "soundcloud",
-  "youtube",
-  "instagram",
-  "tiktok",
-  "resident-advisor",
-  "bandsintown",
-  "songstats",
-  "website",
-  "other",
-]
+// Valid platforms are whatever the shared icon registry supports.
+const _validPlatforms = new Set(Object.keys(SOCIAL_ICONS))
 
 function createSupabaseReadClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -277,7 +249,7 @@ function normalizePlan(plan: string): SubscriptionPlan {
 }
 
 function normalizeSocialPlatform(platform: string): SocialPlatform {
-  return socialPlatforms.includes(platform as SocialPlatform) ? (platform as SocialPlatform) : "other"
+  return _validPlatforms.has(platform) ? (platform as SocialPlatform) : "other"
 }
 
 function normalizeReleaseType(type: string): ReleaseType {
@@ -1177,11 +1149,12 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
                   </div>
                 )}
                 {prioritizedLinks.length > 0 && (
-                  <div className="mt-4 flex items-center justify-center gap-7">
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
                     {prioritizedLinks.map((link) => {
                       const href = resolveSafeHref(link.url)
                       if (!href) return null
                       const Icon = socialIcons[link.platform]
+                      if (!Icon) return null
                       return (
                         <a
                           key={link.platform}

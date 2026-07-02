@@ -1,28 +1,14 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { BarChart2, Radio, Music2, Play, Youtube, Instagram, Music, Globe, Link2, Calendar } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { resolveSafeHref } from "@/lib/safe-url"
 import { brand } from "@/lib/brand"
-import type { SocialLink, SocialPlatform } from "@/types/djhq"
+import type { SocialLink } from "@/types/djhq"
 import type { LucideIcon } from "lucide-react"
 import { LegalModal } from "@/components/legal/legal-modal"
-
-const SOCIAL_ICONS: Partial<Record<SocialPlatform, LucideIcon>> = {
-  spotify:            Radio,
-  beatport:           Music2,
-  soundcloud:         Play,
-  youtube:            Youtube,
-  instagram:          Instagram,
-  tiktok:             Music,
-  "resident-advisor": Globe,
-  bandsintown:        Calendar,
-  songstats:          BarChart2,
-  website:            Globe,
-  other:              Link2,
-}
+import { SOCIAL_ICONS } from "@/lib/social-icons"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -122,7 +108,6 @@ export function ProfileClosing({
 
   const iconLinks = socialLinks
     .filter((l) => l.url.trim().length > 0)
-    .slice(0, 6)
     .map((l) => ({
       platform: l.platform,
       url:      l.url,

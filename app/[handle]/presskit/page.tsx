@@ -5,9 +5,8 @@ import { notFound } from "next/navigation"
 import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import {
-  ArrowLeft, ArrowDownToLine, BarChart2, Camera, ExternalLink,
-  FileText, FolderOpen, Layers, Radio, Music2, Play,
-  Youtube, Instagram, Music, Globe, Link2, Calendar, Wrench,
+  ArrowLeft, ArrowDownToLine, Camera, ExternalLink,
+  FileText, FolderOpen, Layers, Wrench,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -17,6 +16,7 @@ import { BookingInquiryModal } from "@/components/djhq/booking-inquiry-modal"
 import { PressKitLegalFooter } from "@/components/djhq/presskit-legal-footer"
 import type { GalleryImage, SocialPlatform, SubscriptionPlan } from "@/types/djhq"
 import { getAccentTheme } from "@/lib/accent-themes"
+import { SOCIAL_ICONS } from "@/lib/social-icons"
 
 type PressKitPageProps = {
   params: Promise<{ handle: string }>
@@ -86,30 +86,13 @@ type AssetCard = {
 
 // ─── Social platform config ───────────────────────────────────────────────────
 
-const socialPlatforms: SocialPlatform[] = [
-  "spotify", "beatport", "soundcloud", "youtube", "instagram",
-  "tiktok", "resident-advisor", "bandsintown", "website", "other",
-]
+const _validPlatforms = new Set(Object.keys(SOCIAL_ICONS))
 
 function normalizeSocialPlatform(platform: string): SocialPlatform {
-  return socialPlatforms.includes(platform as SocialPlatform)
-    ? (platform as SocialPlatform)
-    : "other"
+  return _validPlatforms.has(platform) ? (platform as SocialPlatform) : "other"
 }
 
-const socialIcons: Record<SocialPlatform, LucideIcon> = {
-  spotify:            Radio,
-  beatport:           Music2,
-  soundcloud:         Play,
-  youtube:            Youtube,
-  instagram:          Instagram,
-  tiktok:             Music,
-  "resident-advisor": Globe,
-  bandsintown:        Calendar,
-  songstats:          BarChart2,
-  website:            Globe,
-  other:              Link2,
-}
+const socialIcons = SOCIAL_ICONS
 
 function normalizePlan(plan: string): SubscriptionPlan {
   return plan === "pro" ? "pro" : "free"
@@ -359,9 +342,8 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
   // Social icon links
   const iconLinks = artist.socialLinks
     .filter((l) => l.url.trim().length > 0)
-    .slice(0, 7)
     .map((l) => ({ ...l, href: resolveSafeHref(l.url), Icon: socialIcons[l.platform] }))
-    .filter((l): l is typeof l & { href: string } => l.href !== null)
+    .filter((l): l is typeof l & { href: string; Icon: LucideIcon } => l.href !== null && l.Icon !== undefined)
 
   // Show gallery section only if configured and photos exist
   const showPhotos = pk.useGalleryPhotos && artist.galleryImages.length > 0
