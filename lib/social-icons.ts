@@ -12,10 +12,10 @@
  */
 import {
   BarChart2,
-  Calendar,
   Globe,
   Instagram,
   Link2,
+  MapPin,
   Music,
   Music2,
   Play,
@@ -33,8 +33,8 @@ export const SOCIAL_ICONS: Record<SocialPlatform, LucideIcon> = {
   instagram:          Instagram,
   youtube:            Youtube,
   tiktok:             Music,
-  "resident-advisor": Ticket,    // RA is an event/ticketing platform — visually distinct from Website
-  bandsintown:        Calendar,
+  "resident-advisor": Ticket,    // RA is an event/ticketing platform — distinct from Website's Globe
+  bandsintown:        MapPin,    // location-based gig discovery — distinct from RA's Ticket
   songstats:          BarChart2,
   website:            Globe,
   other:              Link2,
