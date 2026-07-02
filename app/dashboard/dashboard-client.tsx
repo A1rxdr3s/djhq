@@ -6599,52 +6599,78 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {galleryImages.map((image, index) => {
               const isDraggingThis = galleryDragIndex === index
               const isDragTarget   = galleryDragOverIndex === index && galleryDragIndex !== index
+              const placement = image.momentsPlacement ?? null
 
               return (
-                <div
-                  key={image.id}
-                  draggable={!busy}
-                  onDragStart={() => { setGalleryDragIndex(index); setGalleryDragOverIndex(null) }}
-                  onDragOver={(e) => { e.preventDefault(); setGalleryDragOverIndex(index) }}
-                  onDragLeave={() => setGalleryDragOverIndex(null)}
-                  onDrop={(e) => { e.preventDefault(); if (galleryDragIndex !== null) handleGalleryDrop(galleryDragIndex, index) }}
-                  onDragEnd={() => { setGalleryDragIndex(null); setGalleryDragOverIndex(null) }}
-                  className={`group relative aspect-square cursor-grab overflow-hidden rounded-lg border select-none transition-all duration-150 active:cursor-grabbing ${
-                    isDraggingThis ? "scale-95 opacity-40 border-border" :
-                    isDragTarget   ? "scale-[1.04] border-accent/40 ring-1 ring-accent/25" :
-                                     "border-border"
-                  }`}
-                >
-                  <Image
-                    src={image.imageUrl}
-                    alt={image.altText}
-                    fill
-                    sizes="(min-width: 1024px) 112px, (min-width: 768px) 140px, (min-width: 640px) 170px, 33vw"
-                    className="pointer-events-none object-cover"
-                  />
+                <div key={image.id} className="flex flex-col gap-1">
+                  {/* Draggable image cell */}
+                  <div
+                    draggable={!busy}
+                    onDragStart={() => { setGalleryDragIndex(index); setGalleryDragOverIndex(null) }}
+                    onDragOver={(e) => { e.preventDefault(); setGalleryDragOverIndex(index) }}
+                    onDragLeave={() => setGalleryDragOverIndex(null)}
+                    onDrop={(e) => { e.preventDefault(); if (galleryDragIndex !== null) handleGalleryDrop(galleryDragIndex, index) }}
+                    onDragEnd={() => { setGalleryDragIndex(null); setGalleryDragOverIndex(null) }}
+                    className={`group relative aspect-square cursor-grab overflow-hidden rounded-lg border select-none transition-all duration-150 active:cursor-grabbing ${
+                      isDraggingThis ? "scale-95 opacity-40 border-border" :
+                      isDragTarget   ? "scale-[1.04] border-accent/40 ring-1 ring-accent/25" :
+                                       "border-border"
+                    }`}
+                  >
+                    <Image
+                      src={image.imageUrl}
+                      alt={image.altText}
+                      fill
+                      sizes="(min-width: 1024px) 112px, (min-width: 768px) 140px, (min-width: 640px) 170px, 33vw"
+                      className="pointer-events-none object-cover"
+                    />
 
-                  {/* Hover overlay: Preview + Delete */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/55 opacity-0 backdrop-blur-[2px] transition-opacity duration-150 group-hover:opacity-100">
-                    <a
-                      href={image.imageUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex h-6 items-center gap-1 rounded-md bg-white/12 px-2.5 text-[10px] font-medium text-white/85 hover:bg-white/22 hover:text-foreground"
-                    >
-                      <ExternalLink className="h-2.5 w-2.5" />
-                      View
-                    </a>
-                    <button
-                      type="button"
-                      disabled={deletingGalleryImageId === image.id || busy}
-                      onClick={(e) => { e.stopPropagation(); handleDeleteGalleryImage(image.id) }}
-                      className="inline-flex h-6 items-center gap-1 rounded-md bg-white/10 px-2.5 text-[10px] font-medium text-white/70 hover:bg-destructive/35 hover:text-destructive disabled:opacity-40"
-                    >
-                      <Trash2 className="h-2.5 w-2.5" />
-                      Delete
-                    </button>
+                    {/* Hover overlay: Preview + Delete */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/55 opacity-0 backdrop-blur-[2px] transition-opacity duration-150 group-hover:opacity-100">
+                      <a
+                        href={image.imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex h-6 items-center gap-1 rounded-md bg-white/12 px-2.5 text-[10px] font-medium text-white/85 hover:bg-white/22 hover:text-foreground"
+                      >
+                        <ExternalLink className="h-2.5 w-2.5" />
+                        View
+                      </a>
+                      <button
+                        type="button"
+                        disabled={deletingGalleryImageId === image.id || busy}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteGalleryImage(image.id) }}
+                        className="inline-flex h-6 items-center gap-1 rounded-md bg-white/10 px-2.5 text-[10px] font-medium text-white/70 hover:bg-destructive/35 hover:text-destructive disabled:opacity-40"
+                      >
+                        <Trash2 className="h-2.5 w-2.5" />
+                        Delete
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Placement selector */}
+                  <select
+                    value={placement ?? ""}
+                    disabled={busy}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      handleUpdatePlacement(image.id, val === "" ? null : (val as MomentsPlacement))
+                    }}
+                    className={`w-full rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none transition-colors focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 ${
+                      placement === "hidden"
+                        ? "border-border bg-card/40 text-white/35"
+                        : placement === "large" || placement === "top" || placement === "bottom"
+                          ? "border-accent/30 bg-accent/8 text-accent/80"
+                          : "border-border bg-card/40 text-white/50"
+                    }`}
+                  >
+                    <option value="">Auto</option>
+                    <option value="large">Large</option>
+                    <option value="top">Top</option>
+                    <option value="bottom">Bottom</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
                 </div>
               )
             })}
