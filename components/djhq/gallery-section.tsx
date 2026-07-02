@@ -10,6 +10,45 @@ const SLOT_INTERVAL_MS = 3_000
 const FADE_MS          = 900
 const NUM_SLOTS        = 3
 
+// ── Per-image color grade helpers ─────────────────────────────────────────────
+// Overlay approach for tinted grades (warm, red_club, blue_night, green_laser):
+//   an absolutely positioned div with a color background at low opacity.
+// Filter approach for desaturation grades (mono, muted):
+//   inline CSS filter on the <img> element, overriding the base Tailwind classes.
+
+const GRADE_OVERLAY_COLOR: Record<string, string> = {
+  warm:        "255,160,50",
+  red_club:    "255,40,20",
+  blue_night:  "20,60,210",
+  green_laser: "30,220,80",
+}
+const GRADE_MAX_OPACITY: Record<string, number> = {
+  warm: 0.18, red_club: 0.16, blue_night: 0.16, green_laser: 0.14,
+}
+
+function gradeOverlayStyle(photo: GalleryImage): React.CSSProperties | null {
+  const g = photo.colorGrade
+  const s = photo.colorGradeStrength ?? 0
+  if (!g || g === "none" || s === 0) return null
+  const rgb = GRADE_OVERLAY_COLOR[g]
+  const maxOp = GRADE_MAX_OPACITY[g]
+  if (!rgb || maxOp === undefined) return null
+  const opacity = (Math.min(100, Math.max(0, s)) / 100) * maxOp
+  if (opacity < 0.001) return null
+  return { background: `rgba(${rgb},${opacity.toFixed(3)})` }
+}
+
+function gradeImageFilter(photo: GalleryImage): string | undefined {
+  const g = photo.colorGrade
+  const s = photo.colorGradeStrength ?? 0
+  if (!g || g === "none" || s === 0) return undefined
+  const t = Math.min(100, Math.max(0, s)) / 100
+  // Both presets retain brightness(0.96) from the base treatment
+  if (g === "mono")  return `saturate(${(1 - t * 0.9).toFixed(3)}) brightness(0.96)`
+  if (g === "muted") return `saturate(${(1 - t * 0.5).toFixed(3)}) contrast(${(1 - t * 0.08).toFixed(3)}) brightness(0.96)`
+  return undefined
+}
+
 interface GallerySectionProps {
   images: GalleryImage[]
 }
@@ -218,6 +257,12 @@ export function GallerySection({ images }: GallerySectionProps) {
           const frontPhoto = frontIsA ? photoA : photoB
           const lightboxIndex = images.indexOf(frontPhoto)
 
+          // Per-photo color grade derived values (computed once, used twice — A and B layers)
+          const overlayA = gradeOverlayStyle(photoA)
+          const overlayB = gradeOverlayStyle(photoB)
+          const filterA  = gradeImageFilter(photoA)
+          const filterB  = gradeImageFilter(photoB)
+
           const sizesAttr = slot === 0
             ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"
             : "(min-width: 1024px) 450px, (min-width: 768px) 37vw, 40vw"
@@ -247,8 +292,12 @@ export function GallerySection({ images }: GallerySectionProps) {
                   loading="eager"
                   sizes={sizesAttr}
                   className="object-cover saturate-[0.95] brightness-[0.96] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[1.0] group-hover:brightness-[1.0]"
-                  style={{ objectPosition: `${photoA.focalX ?? 50}% ${photoA.focalY ?? 50}%` }}
+                  style={{
+                    objectPosition: `${photoA.focalX ?? 50}% ${photoA.focalY ?? 50}%`,
+                    filter: filterA,
+                  }}
                 />
+                {overlayA && <div className="pointer-events-none absolute inset-0" style={overlayA} />}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
               </div>
 
@@ -261,8 +310,12 @@ export function GallerySection({ images }: GallerySectionProps) {
                   loading="eager"
                   sizes={sizesAttr}
                   className="object-cover saturate-[0.95] brightness-[0.96] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[1.0] group-hover:brightness-[1.0]"
-                  style={{ objectPosition: `${photoB.focalX ?? 50}% ${photoB.focalY ?? 50}%` }}
+                  style={{
+                    objectPosition: `${photoB.focalX ?? 50}% ${photoB.focalY ?? 50}%`,
+                    filter: filterB,
+                  }}
                 />
+                {overlayB && <div className="pointer-events-none absolute inset-0" style={overlayB} />}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent" />
               </div>
 

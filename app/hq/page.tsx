@@ -3,7 +3,7 @@ import DashboardClient from "../dashboard/dashboard-client"
 import OnboardingForm from "../dashboard/onboarding-form"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import type { Artist, CustomDomainStatus, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, ColorGrade, CustomDomainStatus, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 
 const mvpArtistHandle = "andresherrera"
 
@@ -131,6 +131,8 @@ type GalleryImageRow = {
   focal_x: number
   focal_y: number
   moments_placement: string | null
+  color_grade: string | null
+  color_grade_strength: number | null
 }
 
 type DjSetRow = {
@@ -212,10 +214,16 @@ const socialPlatforms: SocialPlatform[] = [
 ]
 
 const validMomentsPlacementValues = new Set<string>(["auto", "large", "top", "bottom", "hidden"])
+const validColorGradeValues = new Set<string>(["none", "warm", "red_club", "blue_night", "green_laser", "mono", "muted"])
 
 function normalizeMomentsPlacement(val: string | null | undefined): MomentsPlacement | null {
   if (!val) return null
   return validMomentsPlacementValues.has(val) ? (val as MomentsPlacement) : null
+}
+
+function normalizeColorGrade(val: string | null | undefined): ColorGrade | null {
+  if (!val) return null
+  return validColorGradeValues.has(val) ? (val as ColorGrade) : null
 }
 
 function normalizePlan(plan: string): SubscriptionPlan {
@@ -306,7 +314,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       .returns<GigRow[]>(),
     supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement, color_grade, color_grade_strength")
       .eq("artist_id", artistRow.id)
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>(),
@@ -434,6 +442,8 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
       focalX: image.focal_x ?? 50,
       focalY: image.focal_y ?? 50,
       momentsPlacement: normalizeMomentsPlacement(image.moments_placement),
+      colorGrade: normalizeColorGrade(image.color_grade),
+      colorGradeStrength: typeof image.color_grade_strength === "number" ? image.color_grade_strength : null,
     })),
     bookingInfo: {
       email: artistRow.booking_email,

@@ -290,6 +290,14 @@ create table if not exists public.gallery_images (
   moments_placement   text        null
     constraint gallery_images_moments_placement_check
       check (moments_placement is null or moments_placement in ('auto','large','top','bottom','hidden')),
+  -- Color grade (077): per-image editorial color treatment for public Moments; null/'none' = no treatment
+  color_grade         text        null
+    constraint gallery_images_color_grade_check
+      check (color_grade is null or color_grade in ('none','warm','red_club','blue_night','green_laser','mono','muted')),
+  -- Color grade strength (077): 0–100 intensity; null/0 = no effect
+  color_grade_strength integer     null
+    constraint gallery_images_color_grade_strength_check
+      check (color_grade_strength is null or (color_grade_strength >= 0 and color_grade_strength <= 100)),
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );

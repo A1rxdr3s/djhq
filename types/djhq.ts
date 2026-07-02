@@ -309,6 +309,12 @@ export interface Video {
  */
 export type MomentsPlacement = "auto" | "large" | "top" | "bottom" | "hidden"
 
+/**
+ * Per-image editorial color treatment applied in the public Moments section.
+ * null and "none" are equivalent — no treatment is applied.
+ */
+export type ColorGrade = "none" | "warm" | "red_club" | "blue_night" | "green_laser" | "mono" | "muted"
+
 export interface GalleryImage {
   /** Stable unique image identifier. */
   id: string
@@ -328,6 +334,16 @@ export interface GalleryImage {
    * "hidden" → excluded from Moments entirely.
    */
   momentsPlacement?: MomentsPlacement | null
+  /**
+   * Optional color grade preset applied to this image in public Moments tiles.
+   * null / "none" → no treatment.
+   */
+  colorGrade?: ColorGrade | null
+  /**
+   * Intensity of the color grade, 0–100.
+   * null / 0 → no visible effect even when colorGrade is set.
+   */
+  colorGradeStrength?: number | null
 }
 
 /**

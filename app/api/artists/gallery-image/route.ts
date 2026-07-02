@@ -19,14 +19,27 @@ type GalleryImageRow = {
   focal_x: number
   focal_y: number
   moments_placement: string | null
+  color_grade: string | null
+  color_grade_strength: number | null
   artist_id?: string
 }
 
 const VALID_MOMENTS_PLACEMENTS = new Set(["auto", "large", "top", "bottom", "hidden"])
+const VALID_COLOR_GRADES = new Set(["none", "warm", "red_club", "blue_night", "green_laser", "mono", "muted"])
 
 function normalizeMomentsPlacement(val: unknown): string | null {
   if (typeof val !== "string" || !val) return null
   return VALID_MOMENTS_PLACEMENTS.has(val) ? val : null
+}
+
+function normalizeColorGrade(val: unknown): string | null {
+  if (typeof val !== "string" || !val) return null
+  return VALID_COLOR_GRADES.has(val) ? val : null
+}
+
+function normalizeColorGradeStrength(val: unknown): number | null {
+  if (typeof val !== "number" || !Number.isFinite(val)) return null
+  return Math.min(100, Math.max(0, Math.round(val)))
 }
 
 function badRequest(message: string) {
@@ -222,7 +235,7 @@ export async function POST(request: Request) {
         focal_x: 50,
         focal_y: 50,
       })
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement, color_grade, color_grade_strength")
       .single<GalleryImageRow>()
 
     if (createImageError) throw createImageError
@@ -237,6 +250,8 @@ export async function POST(request: Request) {
           focalX: createdImage.focal_x,
           focalY: createdImage.focal_y,
           momentsPlacement: normalizeMomentsPlacement(createdImage.moments_placement),
+          colorGrade: normalizeColorGrade(createdImage.color_grade),
+          colorGradeStrength: normalizeColorGradeStrength(createdImage.color_grade_strength),
         },
       },
       { status: 201 },
@@ -348,6 +363,8 @@ type UpdateGalleryImagePayload = {
   focalX?: number
   focalY?: number
   momentsPlacement?: string | null
+  colorGrade?: string | null
+  colorGradeStrength?: number | null
 }
 
 export async function PATCH(request: Request) {
@@ -369,7 +386,7 @@ export async function PATCH(request: Request) {
   }
 
   // Single-image update path: presence of galleryImageId distinguishes from reorder.
-  // Supports focal point updates (focalX + focalY) and/or placement updates (momentsPlacement).
+  // Supports focal point, moments placement, and color grade updates independently.
   if (rawPayload.galleryImageId !== undefined) {
     const artistId = rawPayload.artistId?.trim()
     const galleryImageId = rawPayload.galleryImageId?.trim()
@@ -377,11 +394,17 @@ export async function PATCH(request: Request) {
     const focalY = typeof rawPayload.focalY === "number" ? Math.min(100, Math.max(0, Math.round(rawPayload.focalY))) : null
     const hasFocal = focalX !== null && focalY !== null
     const hasPlacement = "momentsPlacement" in rawPayload
+    const hasColorGrade = "colorGrade" in rawPayload
+    const hasColorGradeStrength = "colorGradeStrength" in rawPayload
     const placementValue = hasPlacement ? normalizeMomentsPlacement(rawPayload.momentsPlacement) : undefined
+    const colorGradeValue = hasColorGrade ? normalizeColorGrade(rawPayload.colorGrade) : undefined
+    const colorGradeStrengthValue = hasColorGradeStrength ? normalizeColorGradeStrength(rawPayload.colorGradeStrength) : undefined
 
     if (!artistId) return badRequest("Artist id is required.")
     if (!galleryImageId) return badRequest("Gallery image id is required.")
-    if (!hasFocal && !hasPlacement) return badRequest("focalX/focalY or momentsPlacement is required.")
+    if (!hasFocal && !hasPlacement && !hasColorGrade && !hasColorGradeStrength) {
+      return badRequest("Provide at least one field to update.")
+    }
 
     const updateFields: Record<string, unknown> = {}
     if (hasFocal) {
@@ -389,8 +412,15 @@ export async function PATCH(request: Request) {
       updateFields.focal_y = focalY
     }
     if (hasPlacement) {
-      // "auto" is stored as null — both mean the same (DJHQ automatic)
+      // "auto" and null are equivalent — both mean DJHQ automatic selection
       updateFields.moments_placement = placementValue === "auto" ? null : (placementValue ?? null)
+    }
+    if (hasColorGrade) {
+      // "none" and null are equivalent — both mean no color treatment
+      updateFields.color_grade = colorGradeValue === "none" ? null : (colorGradeValue ?? null)
+    }
+    if (hasColorGradeStrength) {
+      updateFields.color_grade_strength = colorGradeStrengthValue
     }
 
     try {
@@ -414,7 +444,14 @@ export async function PATCH(request: Request) {
       if (updateError) throw updateError
 
       return NextResponse.json(
-        { success: true, galleryImageId, ...(hasFocal ? { focalX, focalY } : {}), ...(hasPlacement ? { momentsPlacement: updateFields.moments_placement ?? null } : {}) },
+        {
+          success: true,
+          galleryImageId,
+          ...(hasFocal ? { focalX, focalY } : {}),
+          ...(hasPlacement ? { momentsPlacement: updateFields.moments_placement ?? null } : {}),
+          ...(hasColorGrade ? { colorGrade: updateFields.color_grade ?? null } : {}),
+          ...(hasColorGradeStrength ? { colorGradeStrength: updateFields.color_grade_strength ?? null } : {}),
+        },
         { status: 200 },
       )
     } catch (error) {
@@ -459,7 +496,7 @@ export async function PATCH(request: Request) {
 
     const { data: existingImages, error: existingImagesError } = await supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement, color_grade, color_grade_strength")
       .eq("artist_id", artist.id)
       .returns<GalleryImageRow[]>()
 
@@ -488,7 +525,7 @@ export async function PATCH(request: Request) {
 
     const { data: reorderedImages, error: reorderedImagesError } = await supabase
       .from("gallery_images")
-      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
+      .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement, color_grade, color_grade_strength")
       .eq("artist_id", artist.id)
       .order("sort_order", { ascending: true })
       .returns<GalleryImageRow[]>()
@@ -505,6 +542,8 @@ export async function PATCH(request: Request) {
           focalX: image.focal_x,
           focalY: image.focal_y,
           momentsPlacement: normalizeMomentsPlacement(image.moments_placement),
+          colorGrade: normalizeColorGrade(image.color_grade),
+          colorGradeStrength: normalizeColorGradeStrength(image.color_grade_strength),
         })),
       },
       { status: 200 },

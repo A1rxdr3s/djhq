@@ -17,7 +17,7 @@ import {
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { buildArtistDescription, buildArtistJsonLd, getPublicBaseUrl, toAbsoluteUrl } from "@/lib/djhq/seo"
-import type { Artist, CareerTimelineCategory, CareerTimelineItem, DjSet, GigEventStatus, MomentsPlacement, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GigEventStatus, MomentsPlacement, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { isSafeInternalPath, resolveSafeHref } from "@/lib/safe-url"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
@@ -191,12 +191,21 @@ type GalleryImageRow = {
   focal_x: number
   focal_y: number
   moments_placement: string | null
+  color_grade: string | null
+  color_grade_strength: number | null
 }
 
 const VALID_MOMENTS_PLACEMENTS = new Set<string>(["auto", "large", "top", "bottom", "hidden"])
+const VALID_COLOR_GRADES = new Set<string>(["none", "warm", "red_club", "blue_night", "green_laser", "mono", "muted"])
+
 function normalizeMomentsPlacement(val: string | null | undefined): MomentsPlacement | null {
   if (!val) return null
   return VALID_MOMENTS_PLACEMENTS.has(val) ? (val as MomentsPlacement) : null
+}
+
+function normalizeColorGrade(val: string | null | undefined): ColorGrade | null {
+  if (!val) return null
+  return VALID_COLOR_GRADES.has(val) ? (val as ColorGrade) : null
 }
 
 type CareerTimelineRow = {
@@ -460,7 +469,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         .returns<GigRow[]>(),
       supabase
         .from("gallery_images")
-        .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement")
+        .select("id, image_url, alt_text, sort_order, focal_x, focal_y, moments_placement, color_grade, color_grade_strength")
         .eq("artist_id", artistRow.id)
         .order("sort_order", { ascending: true })
         .returns<GalleryImageRow[]>(),
@@ -587,6 +596,8 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
         focalX: image.focal_x ?? 50,
         focalY: image.focal_y ?? 50,
         momentsPlacement: normalizeMomentsPlacement(image.moments_placement),
+        colorGrade: normalizeColorGrade(image.color_grade),
+        colorGradeStrength: typeof image.color_grade_strength === "number" ? image.color_grade_strength : null,
       })),
       bookingInfo: {
         email: artistRow.booking_email,

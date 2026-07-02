@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, ArrowRight, BarChart2, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Ticket, Trash2, TrendingUp, Upload, User, Users, Wrench, X, Youtube } from "lucide-react"
-import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { normalizeExternalImageUrl } from "@/lib/media"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -2680,26 +2680,32 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
   }
 
-  async function handleUpdatePlacement(galleryImageId: string, placement: MomentsPlacement | null) {
+  async function handleUpdateGalleryMeta(
+    galleryImageId: string,
+    updates: { momentsPlacement?: MomentsPlacement | null; colorGrade?: ColorGrade | null; colorGradeStrength?: number | null },
+  ) {
     try {
       const response = await fetch("/api/artists/gallery-image", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ artistId: artist.id, galleryImageId, momentsPlacement: placement }),
+        body: JSON.stringify({ artistId: artist.id, galleryImageId, ...updates }),
       })
-      const result = (await response.json()) as { error?: string; momentsPlacement?: MomentsPlacement | null }
-      if (!response.ok) throw new Error(result.error ?? "Failed to update placement")
-      setGalleryImages((current) =>
-        current.map((img) => img.id === galleryImageId ? { ...img, momentsPlacement: result.momentsPlacement ?? null } : img),
-      )
-      setArtist((cur) => ({
-        ...cur,
-        galleryImages: cur.galleryImages.map((img) =>
-          img.id === galleryImageId ? { ...img, momentsPlacement: result.momentsPlacement ?? null } : img,
-        ),
-      }))
+      const result = (await response.json()) as {
+        error?: string
+        momentsPlacement?: MomentsPlacement | null
+        colorGrade?: ColorGrade | null
+        colorGradeStrength?: number | null
+      }
+      if (!response.ok) throw new Error(result.error ?? "Failed to update")
+      const patch: Partial<GalleryImage> = {}
+      if ("momentsPlacement" in result) patch.momentsPlacement = result.momentsPlacement ?? null
+      if ("colorGrade" in result) patch.colorGrade = result.colorGrade ?? null
+      if ("colorGradeStrength" in result) patch.colorGradeStrength = result.colorGradeStrength ?? null
+      const updater = (img: GalleryImage): GalleryImage => img.id === galleryImageId ? { ...img, ...patch } : img
+      setGalleryImages((current) => current.map(updater))
+      setArtist((cur) => ({ ...cur, galleryImages: cur.galleryImages.map(updater) }))
     } catch (e) {
-      setSaveMessage(e instanceof Error ? e.message : "Unable to update placement.")
+      setSaveMessage(e instanceof Error ? e.message : "Unable to update image.")
     }
   }
 
@@ -6600,6 +6606,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               const isDraggingThis = galleryDragIndex === index
               const isDragTarget   = galleryDragOverIndex === index && galleryDragIndex !== index
               const placement = image.momentsPlacement ?? null
+              const grade = image.colorGrade ?? null
+              const hasGrade = !!grade && grade !== "none"
+              const strength = image.colorGradeStrength ?? 0
 
               return (
                 <div key={image.id} className="flex flex-col gap-1">
@@ -6649,13 +6658,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </div>
                   </div>
 
-                  {/* Placement selector */}
+                  {/* Moments position */}
                   <select
                     value={placement ?? ""}
                     disabled={busy}
                     onChange={(e) => {
                       const val = e.target.value
-                      handleUpdatePlacement(image.id, val === "" ? null : (val as MomentsPlacement))
+                      handleUpdateGalleryMeta(image.id, { momentsPlacement: val === "" ? null : (val as MomentsPlacement) })
                     }}
                     className={`w-full rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none transition-colors focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 ${
                       placement === "hidden"
@@ -6671,6 +6680,50 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <option value="bottom">Bottom</option>
                     <option value="hidden">Hidden</option>
                   </select>
+
+                  {/* Color grade */}
+                  <select
+                    value={grade ?? ""}
+                    disabled={busy}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      handleUpdateGalleryMeta(image.id, { colorGrade: val === "" ? null : (val as ColorGrade) })
+                    }}
+                    className={`w-full rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none transition-colors focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 ${
+                      hasGrade
+                        ? "border-accent/30 bg-accent/8 text-accent/80"
+                        : "border-border bg-card/40 text-white/50"
+                    }`}
+                  >
+                    <option value="">No grade</option>
+                    <option value="warm">Warm</option>
+                    <option value="red_club">Red Club</option>
+                    <option value="blue_night">Blue Night</option>
+                    <option value="green_laser">Green Laser</option>
+                    <option value="mono">Mono</option>
+                    <option value="muted">Muted</option>
+                  </select>
+
+                  {/* Strength — only shown when a grade is active */}
+                  {hasGrade && (
+                    <div className="flex items-center gap-1">
+                      <span className="shrink-0 text-[9px] text-white/38">Str</span>
+                      <input
+                        key={`${image.id}-str-${grade}`}
+                        type="number"
+                        min="0"
+                        max="100"
+                        defaultValue={strength}
+                        disabled={busy}
+                        onBlur={(e) => {
+                          const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0))
+                          if (val !== strength) handleUpdateGalleryMeta(image.id, { colorGradeStrength: val })
+                        }}
+                        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur() }}
+                        className="w-full rounded-md border border-border bg-card/40 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/60 focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40"
+                      />
+                    </div>
+                  )}
                 </div>
               )
             })}
