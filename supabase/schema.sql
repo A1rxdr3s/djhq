@@ -278,16 +278,20 @@ create table if not exists public.videos (
 );
 
 create table if not exists public.gallery_images (
-  id          uuid        primary key default gen_random_uuid(),
-  artist_id   uuid        not null references public.artists(id) on delete cascade,
-  image_url   text        not null,
-  alt_text    text        not null default '',
-  sort_order  integer     not null default 0,
+  id                  uuid        primary key default gen_random_uuid(),
+  artist_id           uuid        not null references public.artists(id) on delete cascade,
+  image_url           text        not null,
+  alt_text            text        not null default '',
+  sort_order          integer     not null default 0,
   -- Focal point (014)
-  focal_x     numeric     not null default 50,
-  focal_y     numeric     not null default 50,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  focal_x             numeric     not null default 50,
+  focal_y             numeric     not null default 50,
+  -- Moments placement (076): null/'auto' = DJHQ chooses; 'large'/'top'/'bottom' = slot preference; 'hidden' = exclude
+  moments_placement   text        null
+    constraint gallery_images_moments_placement_check
+      check (moments_placement is null or moments_placement in ('auto','large','top','bottom','hidden')),
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
 );
 
 create table if not exists public.custom_domains (

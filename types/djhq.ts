@@ -303,6 +303,12 @@ export interface Video {
 /**
  * Press/gallery image metadata for profile previews.
  */
+/**
+ * Controls which slot a gallery photo is eligible to fill in the public Moments layout.
+ * null and "auto" are equivalent — DJHQ's automatic rotation decides placement.
+ */
+export type MomentsPlacement = "auto" | "large" | "top" | "bottom" | "hidden"
+
 export interface GalleryImage {
   /** Stable unique image identifier. */
   id: string
@@ -316,6 +322,12 @@ export interface GalleryImage {
   focalX: number
   /** Vertical focal point (0–100, default 50). Used as object-position y in public renders. */
   focalY: number
+  /**
+   * Optional editorial placement in the public Moments layout.
+   * null / undefined / "auto" → automatic rotation (existing behavior).
+   * "hidden" → excluded from Moments entirely.
+   */
+  momentsPlacement?: MomentsPlacement | null
 }
 
 /**

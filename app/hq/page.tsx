@@ -130,6 +130,7 @@ type GalleryImageRow = {
   sort_order: number
   focal_x: number
   focal_y: number
+  moments_placement: string | null
 }
 
 type DjSetRow = {
