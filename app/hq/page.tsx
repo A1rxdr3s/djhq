@@ -203,6 +203,9 @@ const socialPlatforms: SocialPlatform[] = [
   "youtube",
   "instagram",
   "tiktok",
+  "resident-advisor",
+  "bandsintown",
+  "songstats",
   "website",
   "other",
 ]

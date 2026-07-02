@@ -4,7 +4,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertTriangle, ArrowRight, BarChart2, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Trash2, TrendingUp, Upload, User, Users, Wrench, X, Youtube } from "lucide-react"
+import { AlertTriangle, ArrowRight, BarChart2, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Ticket, Trash2, TrendingUp, Upload, User, Users, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { normalizeExternalImageUrl } from "@/lib/media"
@@ -582,7 +582,7 @@ const PLATFORM_CONFIG: {
   { id: "instagram",         label: "Instagram",        Icon: Instagram,  placeholder: "https://instagram.com/..." },
   { id: "youtube",           label: "YouTube",          Icon: Youtube,    placeholder: "https://youtube.com/@..." },
   { id: "tiktok",            label: "TikTok",           Icon: Music,      placeholder: "https://tiktok.com/@..." },
-  { id: "resident-advisor",  label: "Resident Advisor", Icon: Globe,      placeholder: "https://ra.co/dj/..." },
+  { id: "resident-advisor",  label: "Resident Advisor", Icon: Ticket,     placeholder: "https://ra.co/dj/..." },
   { id: "bandsintown",       label: "Bandsintown",      Icon: MapPin,     placeholder: "https://www.bandsintown.com/a/..." },
   { id: "songstats",         label: "Songstats",        Icon: BarChart2,  placeholder: "https://songstats.com/artist/..." },
   { id: "website",           label: "Website",          Icon: Globe,      placeholder: "https://..." },
