@@ -17,7 +17,7 @@ import {
 import { mockArtist } from "@/data/mock-artist"
 import { resolveArtistFavicon } from "@/lib/artist-favicon"
 import { buildArtistDescription, buildArtistJsonLd, getPublicBaseUrl, toAbsoluteUrl } from "@/lib/djhq/seo"
-import type { Artist, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GigEventStatus, MomentsPlacement, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GalleryPolish, GigEventStatus, MomentsPlacement, PerformanceType, Release, ReleaseType, SocialLink, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { isSafeInternalPath, resolveSafeHref } from "@/lib/safe-url"
 import { SelectedReleasesCarousel } from "@/components/djhq/selected-releases-carousel"
@@ -98,6 +98,7 @@ type ArtistRow = {
   footer_newsletter_enabled: boolean | null
   footer_socials_enabled: boolean | null
   footer_copyright: string | null
+  gallery_polish: string | null
   seo_title: string | null
   seo_description: string | null
   seo_canonical_url: string | null
@@ -206,6 +207,13 @@ function normalizeMomentsPlacement(val: string | null | undefined): MomentsPlace
 function normalizeColorGrade(val: string | null | undefined): ColorGrade | null {
   if (!val) return null
   return VALID_COLOR_GRADES.has(val) ? (val as ColorGrade) : null
+}
+
+const VALID_GALLERY_POLISH = new Set<string>(["off", "soft"])
+
+function normalizeGalleryPolish(val: string | null | undefined): GalleryPolish | null {
+  if (!val) return null
+  return VALID_GALLERY_POLISH.has(val) ? (val as GalleryPolish) : null
 }
 
 type CareerTimelineRow = {
@@ -639,6 +647,7 @@ async function getArtistProfile(handle: string): Promise<Artist | null> {
       footerNewsletterEnabled: artistRow.footer_newsletter_enabled ?? true,
       footerSocialsEnabled: artistRow.footer_socials_enabled ?? true,
       footerCopyright: artistRow.footer_copyright ?? null,
+      galleryPolish: normalizeGalleryPolish(artistRow.gallery_polish),
       seo: {
         title:           artistRow.seo_title ?? undefined,
         description:     artistRow.seo_description ?? undefined,
@@ -1518,7 +1527,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
           <MobileSection tab="media" className="max-lg:hidden">
             <section className="flex h-full flex-col">
               <SectionHeader variant="primary">Moments</SectionHeader>
-              <GallerySection images={momentsImages} />
+              <GallerySection images={momentsImages} galleryPolish={artist.galleryPolish} />
             </section>
           </MobileSection>
 
@@ -1597,7 +1606,7 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
         {momentsImages.length > 0 && (
           <section id="media-mobile" className="mt-10 scroll-mt-16 lg:hidden">
             <SectionHeader variant="primary">Moments</SectionHeader>
-            <GallerySection images={momentsImages} />
+            <GallerySection images={momentsImages} galleryPolish={artist.galleryPolish} />
           </section>
         )}
 

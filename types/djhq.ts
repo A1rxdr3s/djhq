@@ -315,6 +315,13 @@ export type MomentsPlacement = "auto" | "large" | "top" | "bottom" | "hidden"
  */
 export type ColorGrade = "none" | "warm" | "red_club" | "blue_night" | "green_laser" | "mono" | "muted"
 
+/**
+ * Gallery-wide polish applied uniformly to all Moments images.
+ * null and "off" are equivalent — no global filter.
+ * "soft" = subtle saturate(0.97) brightness(0.97).
+ */
+export type GalleryPolish = "off" | "soft"
+
 export interface GalleryImage {
   /** Stable unique image identifier. */
   id: string
@@ -702,6 +709,8 @@ export interface Artist {
   footerContactEmail?: string | null
   footerDemosEmail?: string | null
   footerCopyright?: string | null
+  /** Gallery-wide polish setting for the public Moments section. null/"off" = no filter. */
+  galleryPolish?: GalleryPolish | null
   /** SEO and social-share metadata. All fields optional; fallbacks applied at render time. */
   seo?: ArtistSeo
   /** Career milestones shown in the editorial career story section. */

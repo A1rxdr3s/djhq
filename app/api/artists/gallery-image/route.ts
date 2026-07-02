@@ -367,6 +367,11 @@ type UpdateGalleryImagePayload = {
   colorGradeStrength?: number | null
 }
 
+type UpdateGallerySettingsPayload = {
+  artistId?: string
+  galleryPolish?: string | null
+}
+
 export async function PATCH(request: Request) {
   const authClient = await createSupabaseServerClient()
   const {
@@ -377,10 +382,10 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 })
   }
 
-  let rawPayload: (ReorderGalleryImagesPayload & UpdateGalleryImagePayload)
+  let rawPayload: (ReorderGalleryImagesPayload & UpdateGalleryImagePayload & UpdateGallerySettingsPayload)
 
   try {
-    rawPayload = (await request.json()) as ReorderGalleryImagesPayload & UpdateGalleryImagePayload
+    rawPayload = (await request.json()) as ReorderGalleryImagesPayload & UpdateGalleryImagePayload & UpdateGallerySettingsPayload
   } catch {
     return badRequest("Invalid JSON payload.")
   }
@@ -457,6 +462,42 @@ export async function PATCH(request: Request) {
     } catch (error) {
       console.error("[gallery-image PATCH image]", error)
       return NextResponse.json({ error: "Unable to update gallery image." }, { status: 500 })
+    }
+  }
+
+  // Gallery-wide settings path: galleryPolish present, no galleryImageId, no orderedImageIds.
+  if ("galleryPolish" in rawPayload && rawPayload.galleryImageId === undefined && !Array.isArray(rawPayload.orderedImageIds)) {
+    const artistId = rawPayload.artistId?.trim()
+    if (!artistId) return badRequest("Artist id is required.")
+
+    const VALID_GALLERY_POLISH = new Set(["off", "soft"])
+    const raw = rawPayload.galleryPolish
+    const polishValue =
+      typeof raw === "string" && VALID_GALLERY_POLISH.has(raw) && raw !== "off" ? raw : null
+
+    try {
+      const supabase = createSupabaseAdminClient()
+      const { data: artist, error: artistError } = await supabase
+        .from("artists")
+        .select("id, owner_user_id")
+        .eq("id", artistId)
+        .maybeSingle<ArtistOwnershipRow>()
+
+      if (artistError) throw artistError
+      if (!artist) return NextResponse.json({ error: "Artist not found." }, { status: 404 })
+      if (artist.owner_user_id !== user.id) return NextResponse.json({ error: "You do not have access to this artist profile." }, { status: 403 })
+
+      const { error: updateError } = await supabase
+        .from("artists")
+        .update({ gallery_polish: polishValue })
+        .eq("id", artistId)
+
+      if (updateError) throw updateError
+
+      return NextResponse.json({ success: true, galleryPolish: polishValue }, { status: 200 })
+    } catch (error) {
+      console.error("[gallery-image PATCH settings]", error)
+      return NextResponse.json({ error: "Unable to update gallery settings." }, { status: 500 })
     }
   }
 

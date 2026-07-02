@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { GalleryImage } from "@/types/djhq"
+import type { GalleryImage, GalleryPolish } from "@/types/djhq"
 
 const SLOT_INTERVAL_MS = 3_000
 const FADE_MS          = 900
@@ -50,9 +50,10 @@ function gradeImageFilter(photo: GalleryImage): string | undefined {
 
 interface GallerySectionProps {
   images: GalleryImage[]
+  galleryPolish?: GalleryPolish | null
 }
 
-export function GallerySection({ images }: GallerySectionProps) {
+export function GallerySection({ images, galleryPolish }: GallerySectionProps) {
   const n = images.length
 
   // ── Placement-aware per-slot pools ────────────────────────────────────────
@@ -259,8 +260,11 @@ export function GallerySection({ images }: GallerySectionProps) {
           // Per-photo color grade derived values (computed once, used twice — A and B layers)
           const overlayA = gradeOverlayStyle(photoA)
           const overlayB = gradeOverlayStyle(photoB)
-          const filterA  = gradeImageFilter(photoA)
-          const filterB  = gradeImageFilter(photoB)
+          const polishFilter = galleryPolish === "soft" ? "saturate(0.97) brightness(0.97)" : undefined
+          const perA = gradeImageFilter(photoA)
+          const perB = gradeImageFilter(photoB)
+          const filterA = polishFilter && perA ? `${polishFilter} ${perA}` : polishFilter ?? perA
+          const filterB = polishFilter && perB ? `${polishFilter} ${perB}` : polishFilter ?? perB
 
           const sizesAttr = slot === 0
             ? "(min-width: 1024px) 600px, (min-width: 768px) 45vw, 60vw"

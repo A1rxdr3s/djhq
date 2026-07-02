@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, ArrowRight, BarChart2, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Ticket, Trash2, TrendingUp, Upload, User, Users, Wrench, X, Youtube } from "lucide-react"
-import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GalleryImage, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
+import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GalleryImage, GalleryPolish, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
 import { cn } from "@/lib/utils"
 import { normalizeExternalImageUrl } from "@/lib/media"
 import { computeDjSetTitle, PERFORMANCE_TYPE_LABELS } from "@/lib/dj-set-title"
@@ -1221,6 +1221,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   const [heroUploadStatus, setHeroUploadStatus] = useState<"idle" | "compressing" | "uploading">("idle")
   const isUploadingHeroImage = heroUploadStatus !== "idle"
   const [galleryImages, setGalleryImages] = useState(initialArtist.galleryImages)
+  const [galleryPolish, setGalleryPolish] = useState<GalleryPolish | null>(initialArtist.galleryPolish ?? null)
   const [galleryImageFile, setGalleryImageFile] = useState<File | null>(null)
   const [galleryImageAltText, setGalleryImageAltText] = useState("")
   const [galleryFileError, setGalleryFileError] = useState("")
@@ -2706,6 +2707,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       setArtist((cur) => ({ ...cur, galleryImages: cur.galleryImages.map(updater) }))
     } catch (e) {
       setSaveMessage(e instanceof Error ? e.message : "Unable to update image.")
+    }
+  }
+
+  async function handleUpdateGalleryPolish(value: GalleryPolish | null) {
+    try {
+      const response = await fetch("/api/artists/gallery-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artistId: artist.id, galleryPolish: value ?? "off" }),
+      })
+      const result = (await response.json()) as { error?: string; galleryPolish?: string | null }
+      if (!response.ok) throw new Error(result.error ?? "Failed to update gallery settings")
+      const saved = (result.galleryPolish === "soft" ? "soft" : null) as GalleryPolish | null
+      setGalleryPolish(saved)
+      setArtist((cur) => ({ ...cur, galleryPolish: saved ?? undefined }))
+    } catch (e) {
+      setSaveMessage(e instanceof Error ? e.message : "Unable to update gallery settings.")
     }
   }
 
@@ -6597,6 +6615,32 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <Plus className="h-3.5 w-3.5" />
             Upload Photos
           </button>
+        </div>
+
+        {/* Gallery Polish — gallery-wide setting */}
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card/20 px-4 py-3">
+          <div>
+            <p className="text-[11px] font-medium text-foreground/70">Gallery Polish</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground/38">
+              Subtle global image treatment for all Moments photos. Separate from per-photo color grades.
+            </p>
+          </div>
+          <select
+            value={galleryPolish ?? "off"}
+            disabled={busy}
+            onChange={(e) => {
+              const val = e.target.value
+              handleUpdateGalleryPolish(val === "soft" ? "soft" : null)
+            }}
+            className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-medium leading-none transition-colors focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 ${
+              galleryPolish === "soft"
+                ? "border-accent/30 bg-accent/8 text-accent/80"
+                : "border-border bg-card/40 text-white/50"
+            }`}
+          >
+            <option value="off">Off</option>
+            <option value="soft">Soft</option>
+          </select>
         </div>
 
         {/* Photo grid */}

@@ -3,7 +3,7 @@ import DashboardClient from "../dashboard/dashboard-client"
 import OnboardingForm from "../dashboard/onboarding-form"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
-import type { Artist, ColorGrade, CustomDomainStatus, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
+import type { Artist, ColorGrade, CustomDomainStatus, GalleryPolish, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, SubscriptionPlan, Video } from "@/types/djhq"
 
 const mvpArtistHandle = "andresherrera"
 
@@ -64,6 +64,7 @@ type ArtistRow = {
   footer_contact_email: string | null
   footer_demos_email: string | null
   footer_copyright: string | null
+  gallery_polish: string | null
   seo_title: string | null
   seo_description: string | null
   seo_canonical_url: string | null
@@ -224,6 +225,13 @@ function normalizeMomentsPlacement(val: string | null | undefined): MomentsPlace
 function normalizeColorGrade(val: string | null | undefined): ColorGrade | null {
   if (!val) return null
   return validColorGradeValues.has(val) ? (val as ColorGrade) : null
+}
+
+const validGalleryPolishValues = new Set<string>(["off", "soft"])
+
+function normalizeGalleryPolish(val: string | null | undefined): GalleryPolish | null {
+  if (!val) return null
+  return validGalleryPolishValues.has(val) ? (val as GalleryPolish) : null
 }
 
 function normalizePlan(plan: string): SubscriptionPlan {
@@ -516,6 +524,7 @@ async function mapArtistWithRelatedData(supabase: SupabaseAdminClient, artistRow
     footerContactEmail: artistRow.footer_contact_email ?? null,
     footerDemosEmail: artistRow.footer_demos_email ?? null,
     footerCopyright: artistRow.footer_copyright ?? null,
+    galleryPolish: normalizeGalleryPolish(artistRow.gallery_polish),
     seo: {
       title:           artistRow.seo_title ?? undefined,
       description:     artistRow.seo_description ?? undefined,

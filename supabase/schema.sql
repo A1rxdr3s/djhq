@@ -90,6 +90,11 @@ create table if not exists public.artists (
   hero_logo_placement     text        not null default 'editorial',
   hero_content_width      text        not null default 'standard',
 
+  -- Gallery polish (migration 078)
+  gallery_polish          text        null
+    constraint artists_gallery_polish_check
+      check (gallery_polish is null or gallery_polish in ('off', 'soft')),
+
   -- Accent theme
   artist_accent_theme     text        not null default 'matrix',
 
@@ -160,7 +165,9 @@ alter table public.artists
   add column if not exists footer_demos_email      text,
   add column if not exists footer_newsletter_enabled boolean not null default true,
   add column if not exists footer_socials_enabled  boolean not null default true,
-  add column if not exists footer_copyright        text;
+  add column if not exists footer_copyright        text,
+  -- Gallery polish (migration 078)
+  add column if not exists gallery_polish          text;
 
 create table if not exists public.social_links (
   id          uuid        primary key default gen_random_uuid(),
