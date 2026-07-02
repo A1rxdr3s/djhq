@@ -3,11 +3,11 @@
  * Used by the desktop hero nav where there is enough horizontal room.
  */
 export const PUBLIC_SECTION_NAV = [
-  { label: "Shows",       href: "#shows",       id: "shows"       },
   { label: "Moments",     href: "#media",       id: "media"       },
+  { label: "Shows",       href: "#shows",       id: "shows"       },
   { label: "Music",       href: "#music",       id: "music"       },
-  { label: "Story",       href: "#story",       id: "story"       },
   { label: "Performance", href: "#performance", id: "performance" },
+  { label: "Story",       href: "#story",       id: "story"       },
   { label: "Contact",     href: "#contact",     id: "contact"     },
 ] as const
 
@@ -18,8 +18,8 @@ export const PUBLIC_SECTION_NAV = [
  * are visible on narrow screens (Performance is hidden via CSS on mobile).
  */
 export const MOBILE_PUBLIC_NAV = [
-  { label: "Shows",   href: "#shows",   id: "shows"   },
-  { label: "Moments", href: "#media",        id: "media-mobile" },
+  { label: "Moments", href: "#media-mobile", id: "media-mobile" },
+  { label: "Shows",   href: "#shows",        id: "shows"        },
   { label: "Music",   href: "#music",        id: "music"        },
   { label: "Story",   href: "#story",        id: "story"        },
   { label: "Contact", href: "#contact",      id: "contact"      },
