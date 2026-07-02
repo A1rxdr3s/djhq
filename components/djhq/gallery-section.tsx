@@ -43,7 +43,6 @@ function gradeImageFilter(photo: GalleryImage): string | undefined {
   const s = photo.colorGradeStrength ?? 0
   if (!g || g === "none" || s === 0) return undefined
   const t = Math.min(100, Math.max(0, s)) / 100
-  // Both presets retain brightness(0.96) from the base treatment
   if (g === "mono")  return `saturate(${(1 - t * 0.9).toFixed(3)}) brightness(0.96)`
   if (g === "muted") return `saturate(${(1 - t * 0.5).toFixed(3)}) contrast(${(1 - t * 0.08).toFixed(3)}) brightness(0.96)`
   return undefined
@@ -291,7 +290,7 @@ export function GallerySection({ images }: GallerySectionProps) {
                   fill
                   loading="eager"
                   sizes={sizesAttr}
-                  className="object-cover saturate-[0.95] brightness-[0.96] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[1.0] group-hover:brightness-[1.0]"
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.01]"
                   style={{
                     objectPosition: `${photoA.focalX ?? 50}% ${photoA.focalY ?? 50}%`,
                     filter: filterA,
@@ -309,7 +308,7 @@ export function GallerySection({ images }: GallerySectionProps) {
                   fill
                   loading="eager"
                   sizes={sizesAttr}
-                  className="object-cover saturate-[0.95] brightness-[0.96] transition-[transform,filter] duration-300 ease-out group-hover:scale-[1.01] group-hover:saturate-[1.0] group-hover:brightness-[1.0]"
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.01]"
                   style={{
                     objectPosition: `${photoB.focalX ?? 50}% ${photoB.focalY ?? 50}%`,
                     filter: filterB,
