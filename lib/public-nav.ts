@@ -1,21 +1,20 @@
 /**
- * Full public artist nav — all six sections.
- * Used by the desktop hero nav where there is enough horizontal room.
+ * Full public artist nav — five sections.
+ * Performance & Sets remain in the page body but are reachable via MUSIC,
+ * so PERFORMANCE is intentionally omitted as a top-level nav item.
  */
 export const PUBLIC_SECTION_NAV = [
-  { label: "Moments",     href: "#media",       id: "media"       },
-  { label: "Shows",       href: "#shows",       id: "shows"       },
-  { label: "Music",       href: "#music",       id: "music"       },
-  { label: "Performance", href: "#performance", id: "performance" },
-  { label: "Story",       href: "#story",       id: "story"       },
-  { label: "Contact",     href: "#contact",     id: "contact"     },
+  { label: "Moments", href: "#media",   id: "media"   },
+  { label: "Shows",   href: "#shows",   id: "shows"   },
+  { label: "Music",   href: "#music",   id: "music"   },
+  { label: "Story",   href: "#story",   id: "story"   },
+  { label: "Contact", href: "#contact", id: "contact" },
 ] as const
 
 /**
- * Mobile public nav — five items, no Performance.
+ * Mobile public nav — five items (matches desktop, no omissions).
  * Fits within 390px without horizontal scroll or clipping.
- * Used by the mobile sticky nav and to determine which hero nav items
- * are visible on narrow screens (Performance is hidden via CSS on mobile).
+ * Used by the mobile sticky nav and the mobile hero nav.
  */
 export const MOBILE_PUBLIC_NAV = [
   { label: "Moments", href: "#media-mobile", id: "media-mobile" },

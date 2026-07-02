@@ -1016,7 +1016,6 @@ export default async function PublicArtistProfilePage({ params }: PublicProfileP
               .map(({ label, href: navHref }) => {
                 const navItemClass = cn(
                   "text-[12px] font-semibold uppercase tracking-[0.10em] text-white/88 transition-colors duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:text-white sm:text-[14px] sm:tracking-[0.18em]",
-                  label === "Performance" && "hidden sm:block",
                 )
                 // Moments requires a different anchor on mobile vs desktop:
                 // desktop targets the lamina grid (id="media"), mobile targets
