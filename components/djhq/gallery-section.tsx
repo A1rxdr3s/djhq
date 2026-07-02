@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -8,9 +8,6 @@ import type { GalleryImage } from "@/types/djhq"
 
 const SLOT_INTERVAL_MS = 3_000
 const FADE_MS          = 900
-// Each slot advances by NUM_SLOTS positions per rotation, guaranteeing that
-// slots 0, 1, 2 always display images at offsets N, N+1, N+2 (mod n) — all
-// distinct whenever n > 3, both during and between transitions.
 const NUM_SLOTS        = 3
 
 interface GallerySectionProps {
@@ -20,23 +17,41 @@ interface GallerySectionProps {
 export function GallerySection({ images }: GallerySectionProps) {
   const n = images.length
 
+  // ── Placement-aware per-slot pools ────────────────────────────────────────
+  //
+  // Slot 0 (large, tall) rotates within largePool.
+  // Slot 1 (top right)   rotates within topPool.
+  // Slot 2 (bottom right) rotates within bottomPool.
+  // Each falls back to autoPool (null/"auto") then to all images if its
+  // dedicated pool is empty.  This lets artists pin specific photos to slots
+  // while the remaining images fill gaps automatically.
+  const slotPools = useMemo(() => {
+    const largePool  = images.filter((i) => i.momentsPlacement === "large")
+    const topPool    = images.filter((i) => i.momentsPlacement === "top")
+    const bottomPool = images.filter((i) => i.momentsPlacement === "bottom")
+    const autoPool   = images.filter((i) => !i.momentsPlacement || i.momentsPlacement === "auto")
+    const fallback   = autoPool.length > 0 ? autoPool : images
+    return [
+      largePool.length  > 0 ? largePool  : fallback,
+      topPool.length    > 0 ? topPool    : fallback,
+      bottomPool.length > 0 ? bottomPool : fallback,
+    ] as [GalleryImage[], GalleryImage[], GalleryImage[]]
+  }, [images])
+
+  // Keep a ref so the rotation effect can read current pools without re-subscribing
+  const slotPoolsRef = useRef(slotPools)
+  useEffect(() => { slotPoolsRef.current = slotPools }, [slotPools])
+
   // ── Lightbox ──────────────────────────────────────────────────────────────
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   // ── Per-slot double-buffer state ──────────────────────────────────────────
   //
   // Each slot owns Layer A and Layer B, both permanently in the DOM.
-  // Slots rotate sequentially: 0 → 1 → 2 → 0 → … every SLOT_INTERVAL_MS.
-  //
-  // Advance per rotation = NUM_SLOTS (not 1).  Proof that slots are always
-  // distinct:  slot s fires k_s times → offset = s + 3·k_s.  For any two
-  // slots a ≠ b with |k_a − k_b| ≤ 1 (guaranteed by sequential firing),
-  // (O_a − O_b) mod n ≠ 0 for all n > 3.  Verified exhaustively for n = 4.
-  //
-  // initLayerA: slot s starts showing image s   (the initial window [0,1,2])
-  // initLayerB: slot s preloads image s+NUM_SLOTS (its first rotation target)
-  const initLayerA = n > 0 ? [0, 1 % n, 2 % n] : [0, 0, 0]
-  const initLayerB = n > 0 ? [3 % n, 4 % n, 5 % n] : [0, 0, 0]
+  // Offsets are indices into the slot's own pool (not the global images array).
+  // Layer A starts at 0; Layer B preloads offset 1 if the pool has > 1 image.
+  const initLayerA = [0, 0, 0]
+  const initLayerB = slotPools.map((pool) => (pool.length > 1 ? 1 : 0))
 
   const [layerAOffsets,    setLayerAOffsets]    = useState<number[]>(initLayerA)
   const [layerBOffsets,    setLayerBOffsets]    = useState<number[]>(initLayerB)
