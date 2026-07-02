@@ -93,7 +93,7 @@ create table if not exists public.artists (
   -- Gallery polish (migration 078)
   gallery_polish          text        null
     constraint artists_gallery_polish_check
-      check (gallery_polish is null or gallery_polish in ('off', 'soft')),
+      check (gallery_polish is null or gallery_polish in ('off', 'soft', 'medium', 'strong')),
 
   -- Accent theme
   artist_accent_theme     text        not null default 'matrix',

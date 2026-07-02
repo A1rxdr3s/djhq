@@ -320,7 +320,7 @@ export type ColorGrade = "none" | "warm" | "red_club" | "blue_night" | "green_la
  * null and "off" are equivalent — no global filter.
  * "soft" = subtle saturate(0.97) brightness(0.97).
  */
-export type GalleryPolish = "off" | "soft"
+export type GalleryPolish = "off" | "soft" | "medium" | "strong"
 
 export interface GalleryImage {
   /** Stable unique image identifier. */

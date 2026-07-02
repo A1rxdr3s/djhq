@@ -227,7 +227,7 @@ function normalizeColorGrade(val: string | null | undefined): ColorGrade | null 
   return validColorGradeValues.has(val) ? (val as ColorGrade) : null
 }
 
-const validGalleryPolishValues = new Set<string>(["off", "soft"])
+const validGalleryPolishValues = new Set<string>(["off", "soft", "medium", "strong"])
 
 function normalizeGalleryPolish(val: string | null | undefined): GalleryPolish | null {
   if (!val) return null

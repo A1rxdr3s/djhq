@@ -260,7 +260,12 @@ export function GallerySection({ images, galleryPolish }: GallerySectionProps) {
           // Per-photo color grade derived values (computed once, used twice — A and B layers)
           const overlayA = gradeOverlayStyle(photoA)
           const overlayB = gradeOverlayStyle(photoB)
-          const polishFilter = galleryPolish === "soft" ? "saturate(0.97) brightness(0.97)" : undefined
+          const POLISH_FILTER: Record<string, string> = {
+            soft:   "saturate(0.97) brightness(0.97)",
+            medium: "saturate(0.94) brightness(0.94) contrast(1.03)",
+            strong: "saturate(0.9) brightness(0.9) contrast(1.06)",
+          }
+          const polishFilter = galleryPolish ? (POLISH_FILTER[galleryPolish] ?? undefined) : undefined
           const perA = gradeImageFilter(photoA)
           const perB = gradeImageFilter(photoB)
           const filterA = polishFilter && perA ? `${polishFilter} ${perA}` : polishFilter ?? perA

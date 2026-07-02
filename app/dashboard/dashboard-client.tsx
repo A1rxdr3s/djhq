@@ -2719,7 +2719,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       })
       const result = (await response.json()) as { error?: string; galleryPolish?: string | null }
       if (!response.ok) throw new Error(result.error ?? "Failed to update gallery settings")
-      const saved = (result.galleryPolish === "soft" ? "soft" : null) as GalleryPolish | null
+      const VALID = new Set<string>(["soft", "medium", "strong"])
+      const saved = (typeof result.galleryPolish === "string" && VALID.has(result.galleryPolish) ? result.galleryPolish : null) as GalleryPolish | null
       setGalleryPolish(saved)
       setArtist((cur) => ({ ...cur, galleryPolish: saved ?? undefined }))
     } catch (e) {
@@ -6622,24 +6623,26 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div>
             <p className="text-[11px] font-medium text-foreground/70">Gallery Polish</p>
             <p className="mt-0.5 text-[10px] text-muted-foreground/38">
-              Subtle global image treatment for all Moments photos. Separate from per-photo color grades.
+              Neutral global polish for Moments photos. Separate from per-photo color grades.
             </p>
           </div>
           <select
             value={galleryPolish ?? "off"}
             disabled={busy}
             onChange={(e) => {
-              const val = e.target.value
-              handleUpdateGalleryPolish(val === "soft" ? "soft" : null)
+              const val = e.target.value as GalleryPolish
+              handleUpdateGalleryPolish(val === "off" ? null : val)
             }}
             className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-medium leading-none transition-colors focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 ${
-              galleryPolish === "soft"
+              galleryPolish && galleryPolish !== "off"
                 ? "border-accent/30 bg-accent/8 text-accent/80"
                 : "border-border bg-card/40 text-white/50"
             }`}
           >
             <option value="off">Off</option>
             <option value="soft">Soft</option>
+            <option value="medium">Medium</option>
+            <option value="strong">Strong</option>
           </select>
         </div>
 

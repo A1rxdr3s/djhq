@@ -470,7 +470,7 @@ export async function PATCH(request: Request) {
     const artistId = rawPayload.artistId?.trim()
     if (!artistId) return badRequest("Artist id is required.")
 
-    const VALID_GALLERY_POLISH = new Set(["off", "soft"])
+    const VALID_GALLERY_POLISH = new Set(["off", "soft", "medium", "strong"])
     const raw = rawPayload.galleryPolish
     const polishValue =
       typeof raw === "string" && VALID_GALLERY_POLISH.has(raw) && raw !== "off" ? raw : null
