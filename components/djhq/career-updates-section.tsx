@@ -271,7 +271,7 @@ function MetaChip({
       <span
         className={cn(
           "tabular-nums font-bold leading-none",
-          onImage ? "text-foreground/82" : "text-foreground/70",
+          onImage ? "text-foreground/90" : "text-foreground/70",
           yearSize === 'lg' ? "text-[15px]" : "text-[13px]",
         )}
         style={shadow}
@@ -281,7 +281,7 @@ function MetaChip({
       <span
         className={cn(
           "text-[7px] font-bold uppercase leading-none tracking-[0.22em]",
-          onImage ? "text-accent/84" : "text-accent/74",
+          onImage ? "text-accent/94" : "text-accent/86",
         )}
         style={shadow}
       >
@@ -406,7 +406,7 @@ function StoryCardBackground({
       </div>
       <div className={isPrimary
         ? "absolute inset-0 bg-gradient-to-t from-black/96 via-black/54 to-black/0"
-        : "absolute inset-0 bg-gradient-to-t from-black/94 via-black/52 to-black/10"
+        : "absolute inset-0 bg-gradient-to-t from-black/96 via-black/62 to-black/14"
       } />
     </>
   )
@@ -512,17 +512,17 @@ function PrimaryCard({
           {item.location && (
             <p
               className={cn(
-                "text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/36",
+                "text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/52",
                 !isHidden ? "mt-[4px]" : "sr-only",
               )}
-              style={!isHidden ? { textShadow: '0 1px 3px rgba(0,0,0,0.65)' } : undefined}
+              style={!isHidden ? { textShadow: '0 1px 3px rgba(0,0,0,0.75)' } : undefined}
             >
               {item.location}
             </p>
           )}
           {showDesc && (
             <p
-              className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/62", descClamp)}
+              className={cn("mt-[8px] text-[11.5px] leading-[1.52] text-foreground/68", descClamp)}
               style={{ textShadow: '0 1px 4px rgba(0,0,0,0.65)' }}
             >
               {item.description}
@@ -545,14 +545,14 @@ function PrimaryCard({
           </h3>
           {item.location && (
             <p className={cn(
-              "text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/30",
+              "text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/46",
               !isHidden ? "mt-[4px]" : "sr-only",
             )}>
               {item.location}
             </p>
           )}
           {showDesc && (
-            <p className={cn("mt-[8px] text-[11.5px] leading-[1.55] text-foreground/52", descClamp)}>
+            <p className={cn("mt-[8px] text-[11.5px] leading-[1.55] text-foreground/58", descClamp)}>
               {item.description}
             </p>
           )}
@@ -658,28 +658,28 @@ function SecondaryCard({
           }
           <p
             className={cn(
-              "text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 transition-colors duration-200 group-hover:text-foreground/100 line-clamp-2",
+              "text-[13px] font-bold leading-snug tracking-[-0.009em] text-foreground/94 transition-colors duration-200 group-hover:text-foreground/100 line-clamp-2",
               !isHidden ? "mt-[5px]" : "sr-only",
             )}
-            style={!isHidden ? { textShadow: '0 1px 4px rgba(0,0,0,0.72)' } : undefined}
+            style={!isHidden ? { textShadow: '0 1px 4px rgba(0,0,0,0.82)' } : undefined}
           >
             {item.title}
           </p>
           {item.location && (
             <p
               className={cn(
-                "text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/30 truncate",
+                "text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/48 truncate",
                 !isHidden ? "mt-[3px]" : "sr-only",
               )}
-              style={!isHidden ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
+              style={!isHidden ? { textShadow: '0 1px 2px rgba(0,0,0,0.72)' } : undefined}
             >
               {item.location}
             </p>
           )}
           {showDesc && (
             <p
-              className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/50", descClamp)}
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+              className={cn("mt-[7px] text-[11px] leading-[1.46] text-foreground/58", descClamp)}
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
             >
               {item.description}
             </p>
@@ -698,21 +698,21 @@ function SecondaryCard({
               : <span className="sr-only">{itemYear(item)} {itemCatLabel(item)}</span>
             }
             <p className={cn(
-              "text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/88 transition-colors duration-200 group-hover:text-foreground/98 line-clamp-2",
+              "text-[12.5px] font-bold leading-snug tracking-[-0.009em] text-foreground/92 transition-colors duration-200 group-hover:text-foreground/100 line-clamp-2",
               !isHidden ? "mt-[5px]" : "sr-only",
             )}>
               {item.title}
             </p>
             {item.location && (
               <p className={cn(
-                "text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/28 truncate",
+                "text-[8px] font-semibold uppercase tracking-[0.11em] text-foreground/44 truncate",
                 !isHidden ? "mt-[3px]" : "sr-only",
               )}>
                 {item.location}
               </p>
             )}
             {showDesc && (
-              <p className={cn("mt-[7px] text-[11px] leading-[1.48] text-foreground/46", descClamp)}>
+              <p className={cn("mt-[7px] text-[11px] leading-[1.48] text-foreground/54", descClamp)}>
                 {item.description}
               </p>
             )}
@@ -1054,8 +1054,8 @@ function MobileStoryCard({
         </h3>
         {item.location && (
           <p
-            className="mt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/62"
-            style={hasImage ? { textShadow: '0 1px 3px rgba(0,0,0,0.65)' } : undefined}
+            className="mt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/72"
+            style={hasImage ? { textShadow: '0 1px 3px rgba(0,0,0,0.75)' } : undefined}
           >
             {item.location}
           </p>
@@ -1248,10 +1248,10 @@ function ArchiveCarouselCard({
           {item.location && (
             <p
               className={cn(
-                "text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/32 truncate",
+                "text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/46 truncate",
                 !isHidden ? "mt-[3px]" : "sr-only",
               )}
-              style={!isHidden ? { textShadow: '0 1px 2px rgba(0,0,0,0.5)' } : undefined}
+              style={!isHidden ? { textShadow: '0 1px 2px rgba(0,0,0,0.65)' } : undefined}
             >
               {item.location}
             </p>
@@ -1290,7 +1290,7 @@ function ArchiveCarouselCard({
           <div>
             {item.location && (
               <p className={cn(
-                "text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/30 truncate",
+                "text-[7px] font-semibold uppercase tracking-[0.10em] text-foreground/44 truncate",
                 !isHidden ? "mb-[6px]" : "sr-only",
               )}>
                 {item.location}
