@@ -298,7 +298,7 @@ function CountrySelect({ value, onChange, disabled }: CountrySelectProps) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="flex h-11 shrink-0 items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 transition-colors duration-150 hover:border-white/[0.14] focus:border-accent/40 focus:outline-none disabled:opacity-50"
+        className="flex h-10 sm:h-11 shrink-0 items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 transition-colors duration-150 hover:border-white/[0.14] focus:border-accent/40 focus:outline-none disabled:opacity-50"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
@@ -392,7 +392,7 @@ const INITIAL_FORM: FormState = {
 }
 
 const inputClass =
-  "h-11 border-white/[0.08] bg-white/[0.03] text-foreground placeholder:text-muted-foreground/30 focus-visible:border-accent/40 focus-visible:ring-0 transition-colors duration-150"
+  "h-10 sm:h-11 border-white/[0.08] bg-white/[0.03] text-foreground placeholder:text-muted-foreground/30 focus-visible:border-accent/40 focus-visible:ring-0 transition-colors duration-150"
 const fieldLabelClass =
   "text-[10px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/62"
 
@@ -498,7 +498,7 @@ export function BookingInquiryModal({
             "[&>button]:!bg-transparent [&>button]:text-white/30 [&>button:hover]:text-white/55",
           )}
         >
-          <div className="max-h-[92dvh] overflow-y-auto p-6 sm:p-8">
+          <div className="max-h-[92dvh] overflow-y-auto p-4 sm:p-8">
 
             {modalState === "success" ? (
               <SuccessScreen
@@ -509,19 +509,19 @@ export function BookingInquiryModal({
               />
             ) : (
               <>
-                <DialogHeader className="mb-7 text-left">
-                  <DialogTitle className="text-base font-semibold uppercase tracking-[0.10em] text-foreground/90">
+                <DialogHeader className="mb-4 sm:mb-7 text-left">
+                  <DialogTitle className="text-sm sm:text-base font-semibold uppercase tracking-[0.10em] text-foreground/90">
                     Booking Request
                   </DialogTitle>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/68">
+                  <p className="mt-1 sm:mt-1.5 text-[12px] sm:text-[13px] leading-relaxed text-muted-foreground/68">
                     Booking inquiries for clubs, festivals and special events.
                   </p>
-                  <p className="mt-2 text-[11px] text-muted-foreground/42">
+                  <p className="mt-2 hidden sm:block text-[11px] text-muted-foreground/42">
                     Available for clubs, festivals, private events and international bookings.
                   </p>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-5">
                   {/* Honeypot — hidden from real users */}
                   <div aria-hidden className="hidden">
                     <input
@@ -535,7 +535,7 @@ export function BookingInquiryModal({
                   </div>
 
                   {/* Row 1: Full Name | Email */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
                     <Field label="Full Name" required>
                       <Input
                         ref={nameInputRef}
@@ -563,7 +563,7 @@ export function BookingInquiryModal({
                   </div>
 
                   {/* Row 2: Phone | Event Date */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
                     <Field label="Phone">
                       <div className="flex gap-2">
                         <CountrySelect
@@ -594,7 +594,7 @@ export function BookingInquiryModal({
                   </div>
 
                   {/* Row 3: City | Event Type */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
                     <Field label="City" required>
                       <Input
                         value={form.city}
@@ -614,7 +614,7 @@ export function BookingInquiryModal({
                           required
                           disabled={isSubmitting}
                           className={cn(
-                            "h-11 w-full appearance-none rounded-md border border-white/[0.08] bg-white/[0.03] px-3 pr-8 text-[14px] transition-colors duration-150 focus:border-accent/40 focus:outline-none disabled:opacity-50",
+                            "h-10 sm:h-11 w-full appearance-none rounded-md border border-white/[0.08] bg-white/[0.03] px-3 pr-8 text-[14px] transition-colors duration-150 focus:border-accent/40 focus:outline-none disabled:opacity-50",
                             form.eventType ? "text-foreground" : "text-muted-foreground/30",
                           )}
                         >
