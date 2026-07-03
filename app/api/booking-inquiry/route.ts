@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
-import { checkRateLimit, getClientIp } from "@/lib/request-security"
+import { getClientIp } from "@/lib/request-security"
+import { rateLimit, buildRateLimitKey } from "@/lib/rate-limit"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DATE_RE  = /^\d{4}-\d{2}-\d{2}$/
@@ -237,10 +238,10 @@ export async function POST(request: Request) {
   const ip = getClientIp(request)
   const handle = artistHandle!.toLowerCase().trim()
 
-  if (!checkRateLimit(`booking:ip:${ip}`, 5, 10 * 60_000)) {
+  if (!await rateLimit(buildRateLimitKey("djhq:rl:booking:ip", ip), 5, 10 * 60)) {
     return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
   }
-  if (!checkRateLimit(`booking:email:${email!.toLowerCase()}:${handle}`, 3, 60 * 60_000)) {
+  if (!await rateLimit(buildRateLimitKey("djhq:rl:booking:email", `${email!.toLowerCase()}:${handle}`), 3, 60 * 60)) {
     return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
   }
 

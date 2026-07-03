@@ -2,7 +2,8 @@ import { createHash } from "crypto"
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
-import { checkRateLimit, getClientIp } from "@/lib/request-security"
+import { getClientIp } from "@/lib/request-security"
+import { rateLimit, buildRateLimitKey } from "@/lib/rate-limit"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   // Rate limit per IP — 5 signups per 10 min to prevent abuse.
   // No per-email/artist limit: DB unique constraint handles idempotency.
   const ip = getClientIp(request)
-  if (!checkRateLimit(`newsletter:ip:${ip}`, 5, 10 * 60_000)) {
+  if (!await rateLimit(buildRateLimitKey("djhq:rl:newsletter:ip", ip), 5, 10 * 60)) {
     return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
   }
 
