@@ -498,7 +498,7 @@ export function BookingInquiryModal({
             "[&>button]:!bg-transparent [&>button]:text-white/30 [&>button:hover]:text-white/55",
           )}
         >
-          <div className="max-h-[92dvh] overflow-y-auto p-4 sm:p-8">
+          <div className="max-h-[92dvh] overflow-y-auto p-3 sm:p-8">
 
             {modalState === "success" ? (
               <SuccessScreen
@@ -509,7 +509,7 @@ export function BookingInquiryModal({
               />
             ) : (
               <>
-                <DialogHeader className="mb-4 sm:mb-7 text-left">
+                <DialogHeader className="mb-3 sm:mb-7 text-left">
                   <DialogTitle className="text-sm sm:text-base font-semibold uppercase tracking-[0.10em] text-foreground/90">
                     Booking Request
                   </DialogTitle>
@@ -521,7 +521,7 @@ export function BookingInquiryModal({
                   </p>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-5">
                   {/* Honeypot — hidden from real users */}
                   <div aria-hidden className="hidden">
                     <input
@@ -535,7 +535,7 @@ export function BookingInquiryModal({
                   </div>
 
                   {/* Row 1: Full Name | Email */}
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 sm:gap-4 sm:grid-cols-2">
                     <Field label="Full Name" required>
                       <Input
                         ref={nameInputRef}
@@ -563,7 +563,7 @@ export function BookingInquiryModal({
                   </div>
 
                   {/* Row 2: Phone | Event Date */}
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 sm:gap-4 sm:grid-cols-2">
                     <Field label="Phone">
                       <div className="flex gap-2">
                         <CountrySelect
@@ -594,7 +594,7 @@ export function BookingInquiryModal({
                   </div>
 
                   {/* Row 3: City | Event Type */}
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 sm:gap-4 sm:grid-cols-2">
                     <Field label="City" required>
                       <Input
                         value={form.city}
@@ -651,7 +651,7 @@ export function BookingInquiryModal({
                       value={form.message}
                       onChange={(e) => update("message", e.target.value)}
                       placeholder="Event concept, expected attendance, lineup, venue details and any relevant information."
-                      rows={4}
+                      rows={3}
                       required
                       maxLength={2000}
                       disabled={isSubmitting}
@@ -664,7 +664,7 @@ export function BookingInquiryModal({
                   )}
 
                   {/* Trust line */}
-                  <p className="text-[10px] leading-relaxed text-muted-foreground/36">
+                  <p className="hidden sm:block text-[10px] leading-relaxed text-muted-foreground/36">
                     This information helps us evaluate availability and event requirements.
                   </p>
 
@@ -684,7 +684,7 @@ export function BookingInquiryModal({
                       )}
                     </button>
                   </div>
-                  <p className="text-center text-[10px] text-muted-foreground/38">
+                  <p className="hidden sm:block text-center text-[10px] text-muted-foreground/38">
                     Response time: usually within 24–48 hours.
                   </p>
                 </form>
@@ -767,7 +767,7 @@ function Field({
   children: ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1 sm:space-y-1.5">
       <p className={fieldLabelClass}>
         {label}
         {required && <span className="ml-0.5 text-accent/60">*</span>}
