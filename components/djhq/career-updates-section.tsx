@@ -1011,7 +1011,7 @@ function MobileStoryCard({
         <StoryCardBackground
           src={normalized!.renderUrl}
           alt={item.title}
-          treatment={item.imageTreatment}
+          treatment={item.imageTreatment === 'cover' ? 'blurred-fill' : item.imageTreatment}
           positionX={item.imageFocalX}
           positionY={item.imageFocalY}
           zoom={item.imageZoom}
