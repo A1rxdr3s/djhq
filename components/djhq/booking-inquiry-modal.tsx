@@ -562,8 +562,17 @@ export function BookingInquiryModal({
                     </Field>
                   </div>
 
-                  {/* Row 2: Phone | Event Date */}
+                  {/* Row 2: Event Date | Phone */}
                   <div className="grid grid-cols-1 gap-2 sm:gap-4 sm:grid-cols-2">
+                    <Field label="Event Date" required>
+                      <DatePicker
+                        value={form.eventDate}
+                        onChange={(v) => update("eventDate", v)}
+                        disabled={isSubmitting}
+                        triggerClassName={cn(inputClass, "rounded-md px-3")}
+                        align="start"
+                      />
+                    </Field>
                     <Field label="Phone">
                       <div className="flex gap-2">
                         <CountrySelect
@@ -581,15 +590,6 @@ export function BookingInquiryModal({
                           className={cn(inputClass, "flex-1 min-w-0")}
                         />
                       </div>
-                    </Field>
-                    <Field label="Event Date" required>
-                      <DatePicker
-                        value={form.eventDate}
-                        onChange={(v) => update("eventDate", v)}
-                        disabled={isSubmitting}
-                        triggerClassName={cn(inputClass, "rounded-md px-3")}
-                        align="start"
-                      />
                     </Field>
                   </div>
 
