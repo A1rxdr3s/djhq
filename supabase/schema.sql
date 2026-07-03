@@ -1,6 +1,6 @@
 -- ============================================================
 -- DJHQ — Consolidated Idempotent Schema
--- Generated from migrations 001-040
+-- Generated from migrations 001-081
 -- Update this file whenever a new migration is created.
 -- Safe to run multiple times (idempotent throughout).
 -- ============================================================
@@ -337,6 +337,53 @@ create table if not exists public.venues (
   country     text        null,
   created_at  timestamptz not null default now()
 );
+
+-- Global venue database (migrations 036 + 074)
+-- Shared, deduplicated venue reference. Linked to gigs via gigs.global_venue_id.
+-- Authenticated insert/update policies were dropped by migration 074;
+-- venue writes must go through the service role until per-user ownership exists.
+create table if not exists public.global_venues (
+  id              uuid        primary key default gen_random_uuid(),
+  name            text        not null,
+  city            text        not null default '',
+  country         text        not null default '',
+  instagram_url   text,
+  website_url     text,
+  google_maps_url text,
+  source          text        not null default 'user_created',
+  source_rank     integer     not null default 0,
+  is_active       boolean     not null default true,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create unique index if not exists global_venues_dedup_idx
+  on public.global_venues (lower(trim(name)), lower(trim(city)));
+
+create index if not exists global_venues_name_fts_idx
+  on public.global_venues
+  using gin (to_tsvector('simple', name));
+
+create index if not exists global_venues_rank_idx
+  on public.global_venues (source_rank desc, name asc);
+
+-- gigs → global_venues nullable FK (migration 036; index added in migration 052)
+alter table public.gigs
+  add column if not exists global_venue_id uuid
+    references public.global_venues(id)
+    on delete set null;
+
+alter table public.global_venues enable row level security;
+
+-- Anyone (including anonymous) can read active venues — needed for public autocomplete.
+-- Insert/update policies were intentionally removed by migration 074.
+create policy "global_venues: public read"
+  on public.global_venues for select
+  using (is_active = true);
+
+create or replace trigger global_venues_updated_at
+  before update on public.global_venues
+  for each row execute function public.set_updated_at();
 
 -- Brand asset tables (migration 041)
 create table if not exists public.brand_source_files (
