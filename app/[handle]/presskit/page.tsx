@@ -214,7 +214,7 @@ function buildArtistResult(
 export async function generateMetadata({ params }: PressKitPageProps): Promise<Metadata> {
   const { handle } = await params
   const artist = await getArtistPressKit(handle)
-  if (!artist) return {}
+  if (!artist || artist.plan !== "pro") return {}
 
   const isPro = artist.plan === "pro"
   const faviconHref = resolveArtistFavicon({
@@ -278,7 +278,7 @@ export default async function PressKitPage({ params }: PressKitPageProps) {
   const { handle } = await params
   const artist = await getArtistPressKit(handle)
 
-  if (!artist || !artist.pressKit.enabled) notFound()
+  if (!artist || !artist.pressKit.enabled || artist.plan !== "pro") notFound()
 
   const pk              = artist.pressKit
   const accentTheme     = getAccentTheme(artist.accentTheme ?? "matrix")
