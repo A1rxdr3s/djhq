@@ -1,0 +1,22 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & test outputs
+.pytest_cache/
+tests/output/
+output/
+*.log
+
+# Environments
+.venv*
+
+# Build & packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# OS artifacts
+.DS_Store

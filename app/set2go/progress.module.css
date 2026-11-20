@@ -1,0 +1,4 @@
+.determinate { appearance: none; border: 0; background: #262b2d; color: #f26a36; }
+.determinate::-webkit-progress-bar { background: #262b2d; }
+.determinate::-webkit-progress-value { background: #f26a36; }
+.determinate::-moz-progress-bar { background: #f26a36; }

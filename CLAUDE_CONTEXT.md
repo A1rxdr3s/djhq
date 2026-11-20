@@ -1,5 +1,12 @@
 # DJHQ Context
 
+> **Context Notice (2026-10-30):**  
+> DJHQ is an umbrella platform containing the Next.js web application and the Set2Go Python export engine (`services/set2go`).  
+> Only **Set2Go** is planned for initial public service launch at `/set2go`. The general artist profile builder is deferred for public launch, but preserved for existing users (such as `ANDRES:HERRERA`). Set2Go users do not require an artist profile.  
+> Authoritative handoff reference: [`docs/handoff/PROJECT_HANDOFF.md`](./docs/handoff/PROJECT_HANDOFF.md).
+
+---
+
 DJHQ is a cinematic electronic music EPK / artist profile platform.
 
 The product is designed for:

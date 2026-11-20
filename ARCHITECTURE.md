@@ -1,5 +1,15 @@
 # DJHQ Architecture
 
+> **Architecture Status Notice (2026-10-30):**  
+> This document describes the historical single-service architecture for the DJHQ Artist Website builder.  
+> Under the current umbrella platform strategy:  
+> 1. DJHQ is a monorepo containing the Next.js web application and the Set2Go Python export engine (`services/set2go/`).  
+> 2. Only **Set2Go** is planned for initial public service launch at `/set2go`.  
+> 3. General public launch of the Artist Website builder described below is **deferred**, while existing functionality for the live `ANDRES:HERRERA` website is strictly preserved.  
+> 4. For authoritative current platform state, see [`docs/handoff/PROJECT_HANDOFF.md`](./docs/handoff/PROJECT_HANDOFF.md).
+
+---
+
 # Stack
 
 Frontend:

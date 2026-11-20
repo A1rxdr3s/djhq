@@ -1,0 +1,47 @@
+.hero { position: relative; isolation: isolate; min-height: 510px; display: flex; align-items: center; overflow: hidden; border-bottom: 1px solid #565656; }
+.heroImage { position: absolute; inset: 0 0 0 30%; z-index: -1; }
+.heroImage::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #080909 0%, rgba(8,9,9,.86) 25%, rgba(8,9,9,.25) 100%); }
+.photo { object-fit: cover; object-position: 60% 65%; }
+.heroCopy { padding: 72px 4.7%; max-width: 850px; }
+.label { margin: 0 0 24px; display: flex; align-items: center; gap: 20px; color: #f2f1ed; text-transform: uppercase; font-size: 11px; line-height: 1.5; letter-spacing: .12em; font-weight: 700; }
+.label::before { content: ""; width: 52px; height: 3px; flex: none; background: #f26a36; }
+.hero h1, .editorial h2, .founder h2, .productSection h2 { margin: 0; font-weight: 900; letter-spacing: -.05em; line-height: 1.03; }
+.hero h1 { max-width: 760px; font-size: clamp(48px, 5.5vw, 86px); }
+.heroCopy > p:last-child { margin: 25px 0 0; font-size: clamp(16px, 1.4vw, 20px); line-height: 1.6; }
+.editorial, .founder, .productSection { padding: clamp(64px, 8vw, 120px) 4.7%; border-bottom: 1px solid #565656; }
+.editorial { display: grid; grid-template-columns: minmax(190px, .7fr) minmax(0, 1.3fr); gap: 36px; }
+.editorial h2, .founder h2, .productSection h2 { font-size: clamp(36px, 4vw, 60px); max-width: 850px; }
+.body { max-width: 650px; color: #d4d6d4; font-size: 16px; line-height: 1.75; margin: 24px 0 0; }
+.founder { position: relative; isolation: isolate; overflow: hidden; min-height: 560px; display: flex; align-items: center; }
+.founderCopy { position: relative; z-index: 1; width: 49%; }
+.founderName { margin: 32px 0 4px; font-size: 17px; font-weight: 800; letter-spacing: .02em; }
+.role { margin: 0; color: #9ca3a6; font-size: 13px; line-height: 1.5; }
+.textLink { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; margin-top: 20px; color: #f26a36; font-weight: 700; font-size: 14px; }
+.textLink:hover { color: #ff956d; }
+.founderPhoto { position: absolute; z-index: 0; right: 0; top: 50%; transform: translateY(-50%); width: min(68%, 840px); aspect-ratio: 3 / 2; pointer-events: none; -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 38%, transparent 70%); mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 38%, transparent 70%); }
+.founderPhoto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #080909 0%, transparent 45%); }
+.founderImage { object-fit: cover; object-position: center center; }
+.productGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 48px; border-top: 1px solid #565656; }
+.productGrid article { padding: 36px 8% 8px 0; min-width: 0; }
+.productGrid article + article { border-left: 1px solid #565656; padding-left: 8%; }
+.productGrid h3 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.04em; }
+.productLogo { display: block; width: min(260px, 100%); height: auto; }
+.productHeading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 18px; }
+.productHeading span { border: 1px solid #f2f1ed; border-radius: 999px; padding: 4px 10px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+@media (max-width: 700px) {
+  .hero { min-height: 440px; align-items: flex-end; }
+  .heroImage { inset: 0; }
+  .heroImage::after { background: linear-gradient(90deg, rgba(8,9,9,.95), rgba(8,9,9,.55) 70%, rgba(8,9,9,.35)); }
+  .heroCopy { padding: 70px 5% 48px; }
+  .hero h1 { font-size: clamp(42px, 10vw, 58px); }
+  .label::before { width: 32px; }
+  .editorial, .founder, .productSection { padding: 64px 5%; }
+  .editorial { grid-template-columns: 1fr; gap: 24px; }
+  .founder { display: block; min-height: 0; }
+  .founderCopy { width: 100%; }
+  .founderPhoto { position: relative; top: auto; right: auto; transform: none; width: 100%; margin-top: 24px; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 15%, #000 80%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0%, #000 15%, #000 80%, transparent 100%); }
+  .founderPhoto::after { background: linear-gradient(90deg, #080909 0%, transparent 8%, transparent 92%, #080909 100%); }
+  .productGrid { grid-template-columns: 1fr; margin-top: 32px; }
+  .productGrid article { padding: 30px 0; }
+  .productGrid article + article { border-left: 0; border-top: 1px solid #565656; padding: 30px 0; }
+}

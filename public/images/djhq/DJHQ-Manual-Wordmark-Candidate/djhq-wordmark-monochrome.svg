@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 139 2048 430" role="img" aria-label="DJHQ"><title>DJHQ</title>
+<!-- D: broad italic left and rounded bowl -->
+<path fill="#F2F1ED" fill-rule="evenodd" d="
+M170 150 H443
+C538 150 592 209 589 289
+C585 351 563 406 536 445
+C528 457 540 459 551 461
+L507 524
+C458 545 410 555 333 555 H20 Z
+M252 248 L176 449 H322
+C407 449 450 402 466 331
+C481 274 457 248 408 248 Z"/>
+<!-- J: custom continuous hook, anchored into D at the bottom, without a second J-shaped cutout -->
+<path fill="#F2F1ED" d="
+M814 151 H933 L835 427
+C804 520 755 555 639 555 H477
+L500 488 C510 476 521 460 535 448
+H617
+C678 448 712 430 729 381 Z"/>
+<!-- H: forward lean and long horizontal connective bar -->
+<path fill="#F2F1ED" d="
+M967 151 H1085 L1034 288
+Q1033 292 1038 292 H1240 Q1246 292 1249 286
+L1295 151 H1414 L1273 555 H1155 L1213 381 H1010 Q999 381 996 390
+L937 555 H818 Z"/>
+<!-- Q: rounded geometric outer ring smoothly connected to H -->
+<path fill="#F2F1ED" fill-rule="evenodd" d="
+M1553 151 H1734
+C1833 151 1896 204 1896 289
+C1896 348 1876 398 1839 440
+L1812 463 L1747 390
+C1768 365 1781 333 1780 299
+C1779 264 1756 248 1715 248 H1572
+C1504 248 1460 290 1445 352
+C1431 409 1453 450 1511 450 H1582
+L1665 551 Q1648 555 1605 555 H1514
+C1405 555 1335 481 1335 393
+C1335 279 1419 151 1553 151 Z"/>
+<path d="M1538 359 H1691 L1861 554 H1698 Z" fill="#F2F1ED"/>
+<circle cx="1947" cy="481" r="67" fill="#F2F1ED"/></svg>

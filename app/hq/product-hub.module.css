@@ -1,0 +1,22 @@
+.page{--line:rgba(255,255,255,.09);--line-strong:rgba(255,255,255,.16);--text:#f2f1ed;--muted:#9ba1a2;--accent:#f26a36;min-height:100vh;background:#0b0d0e;color:var(--text);position:relative;font-family:var(--font-inter),Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.ambient{position:absolute;inset:0 0 auto;height:360px;pointer-events:none;background:radial-gradient(ellipse 50% 100% at 50% 0,rgba(242,106,54,.06),transparent 75%)}
+.shell{position:relative;max-width:960px;margin:auto;padding:0 clamp(16px,4vw,32px)}
+.intro{padding:40px 0 28px}.intro h1{font-family:var(--font-heading),var(--font-inter),sans-serif;font-size:clamp(24px,3vw,30px);font-weight:600;line-height:1.15;letter-spacing:-.035em}.intro h1 em{font-style:normal;color:var(--accent)}.intro p{margin-top:8px;color:var(--muted);font-size:15px;line-height:1.5}
+.products{padding-bottom:56px}.sectionHeader{display:flex;align-items:center;gap:10px;margin-bottom:12px}.sectionHeader h2{font-size:12px;letter-spacing:.06em;font-weight:600;color:var(--muted)}.sectionHeader span{font-size:11px;font-variant-numeric:tabular-nums;color:#c9c8c3;background:rgba(255,255,255,.07);border-radius:999px;padding:1px 8px}
+.grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:12px}
+.card{position:relative;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon body" "icon action";column-gap:16px;row-gap:12px;height:100%;padding:18px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,#15181a,#111415);box-shadow:inset 0 1px 0 rgba(255,255,255,.04);color:inherit;text-decoration:none;transition:border-color .18s,background .18s,transform .18s;-webkit-tap-highlight-color:transparent}
+.card:hover{border-color:var(--line-strong);background:linear-gradient(180deg,#191d1f,#131617);transform:translateY(-1px)}.card:active{transform:none;background:#171a1c}
+.card[data-featured]{grid-column:1/-1;border-color:rgba(242,106,54,.32);background:linear-gradient(180deg,#191c1e,#121516);padding:22px 20px}.card[data-featured]:hover{border-color:rgba(242,106,54,.55)}.card[data-featured] .name{font-size:20px}.card[data-featured] .desc{max-width:60ch}
+.iconWrap{grid-area:icon;width:44px;height:44px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line-strong);background:#0d0f10;color:#d8d6d0;transition:color .18s,border-color .18s,background .18s}
+.card[data-product=website] .iconWrap{color:var(--accent);border-color:rgba(242,106,54,.35);background:rgba(242,106,54,.08)}
+.card[data-product=set2go] .iconWrap{color:#e8d9c4;border-color:rgba(232,217,196,.25);background:rgba(232,217,196,.05)}
+.card:hover .iconWrap{color:var(--accent);border-color:rgba(242,106,54,.5)}
+.cardBody{grid-area:body;display:flex;flex-direction:column;min-width:0}
+.meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-bottom:6px}.tag{letter-spacing:.02em}.status{display:inline-flex;align-items:center;gap:6px;color:#b9a99c}.status:before{content:"";width:1px;height:10px;background:var(--line-strong);margin-right:4px}.statusDot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.name{font-family:var(--font-heading),sans-serif;font-size:18px;font-weight:600;line-height:1.25;letter-spacing:-.02em}
+.desc{margin-top:4px;color:var(--muted);font-size:14px;line-height:1.5;max-width:46ch}
+.action{grid-area:action;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px;font-size:13px;font-weight:500;color:#d8d6d0}.action svg{color:var(--muted);transition:color .18s,transform .18s}.card:hover .action svg{color:var(--accent);transform:translate(2px,-2px)}
+.empty{padding:32px 20px;border:1px dashed var(--line-strong);border-radius:10px;color:var(--muted);font-size:14px;text-align:center}
+.footer{min-height:48px;display:flex;align-items:center;border-top:1px solid var(--line);color:#656b6d;font-size:12px;letter-spacing:.08em}
+@media(max-width:560px){.intro{padding:28px 0 20px}.card{grid-template-columns:1fr;grid-template-areas:"icon" "body" "action";padding:16px}.action{min-height:44px;align-items:center}}
+@media(prefers-reduced-motion:reduce){.card,.iconWrap,.action svg,.signOut{transition:none}.card:hover{transform:none}}

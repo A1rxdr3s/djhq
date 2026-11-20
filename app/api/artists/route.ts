@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { accessForUser, ownsWebsite } from "@/lib/products/server"
 import { computeDjSetTitle, type PerformanceType } from "@/lib/dj-set-title"
 import { computeVideoTitle } from "@/lib/performance-title"
 import { assertAllowedOrigin } from "@/lib/request-security"
@@ -321,6 +322,10 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 })
+  }
+
+  if (!accessForUser(user, await ownsWebsite(user.id)).website) {
+    return NextResponse.json({ error: "Website access required." }, { status: 403 })
   }
 
   let payload: CreateArtistPayload

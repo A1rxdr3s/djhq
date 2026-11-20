@@ -1,5 +1,15 @@
 # Product
 
+> **Product Scope Notice (2026-10-30):**  
+> This document defines the product vision for the DJHQ Artist Website builder.  
+> Under current strategy:  
+> 1. DJHQ serves as the umbrella brand. The initial public launch service is **Set2Go** (`/set2go`).  
+> 2. Set2Go users are normal platform users and do **not** require an artist profile.  
+> 3. The Artist Website service described below is preserved for existing users (including `ANDRES:HERRERA`) but general public onboarding is deferred.  
+> 4. Authoritative handoff details: [`docs/handoff/PROJECT_HANDOFF.md`](./docs/handoff/PROJECT_HANDOFF.md).
+
+---
+
 ## Register
 
 product

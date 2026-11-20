@@ -3,6 +3,9 @@
 import { useState, useRef, useLayoutEffect, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import LocaleToggle from "@/app/hq/locale-toggle"
+import { wm } from "@/lib/i18n/website"
+import type { Locale } from "@/lib/i18n/messages"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, ArrowRight, BarChart2, Briefcase, Calendar, Camera, Check, ChevronDown, ChevronRight, Copy, Disc3, Download, ExternalLink, FileText, FolderOpen, Globe, GripVertical, Headphones, Image as ImageIcon, Inbox, Instagram, Layers, Link2, Loader2, LogOut, Mail, MapPin, Monitor, MoreVertical, Music, Music2, PanelBottom, Play, Plus, Radio, Route, Save, Send, Sparkles, Star, Ticket, Trash2, TrendingUp, Upload, User, Users, Wrench, X, Youtube } from "lucide-react"
 import type { Artist, ArtistAccentTheme, CareerTimelineCategory, CareerTimelineItem, ColorGrade, DjSet, GalleryImage, GalleryPolish, HeroContentSurface, HeroContentWidth, HeroLogoLayout, HeroLogoPlacement, HeroLogoReadability, HeroLogoStyle, MomentsPlacement, PerformanceType, ReleaseType, SocialPlatform, Video } from "@/types/djhq"
@@ -1027,6 +1030,7 @@ function mergeVideoMetadata(current: VideoFormState, result: ImportedVideoMetada
 
 type DashboardClientProps = {
   initialArtist: Artist
+  locale: Locale
   statusMessage?: string
 }
 
@@ -1037,7 +1041,11 @@ function GigActionsDropdown({
   onDelete,
   onClose,
   align = "right",
+  editLabel = "Edit",
+  deleteLabel = "Delete",
 }: {
+  editLabel?: string
+  deleteLabel?: string
   onEdit: () => void
   onDelete: () => void
   onClose: () => void
@@ -1065,7 +1073,7 @@ function GigActionsDropdown({
         onClick={(e) => { e.stopPropagation(); onEdit() }}
         className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-gray-700 transition-colors duration-100 hover:bg-gray-50"
       >
-        Edit
+        {editLabel}
       </button>
       <div className="mx-3 h-px bg-gray-100" />
       <button
@@ -1074,13 +1082,14 @@ function GigActionsDropdown({
         className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[12px] font-medium text-red-500/80 transition-colors duration-100 hover:bg-red-50 hover:text-red-600"
       >
         <Trash2 className="h-3 w-3" />
-        Delete
+        {deleteLabel}
       </button>
     </div>
   )
 }
 
-export default function DashboardClient({ initialArtist, statusMessage }: DashboardClientProps) {
+export default function DashboardClient({ initialArtist, statusMessage, locale }: DashboardClientProps) {
+  const tr = (text: string) => wm(locale, text)
   const [artist, setArtist] = useState<Artist>(initialArtist)
   const initialLinkUrls = getLinkUrlsFromArtist(artist)
   const initialReleases = getReleaseFormState(artist)
@@ -1288,28 +1297,28 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
   // ── Career Timeline ───────────────────────────────────────────────────────
   const TIMELINE_CATEGORIES: { value: CareerTimelineCategory; label: string }[] = [
-    { value: "residency",    label: "Residency" },
-    { value: "festival",     label: "Festival" },
-    { value: "club_show",    label: "Club Show" },
-    { value: "international",label: "International" },
-    { value: "release",      label: "Release" },
-    { value: "press",        label: "Press" },
-    { value: "chart",        label: "Chart" },
-    { value: "tour",         label: "Tour" },
-    { value: "other",        label: "Other" },
+    { value: "residency",    label: tr("Residency") },
+    { value: "festival",     label: tr("Festival") },
+    { value: "club_show",    label: tr("Club Show") },
+    { value: "international",label: tr("International") },
+    { value: "release",      label: tr("Release") },
+    { value: "press",        label: tr("Press") },
+    { value: "chart",        label: tr("Chart") },
+    { value: "tour",         label: tr("Tour") },
+    { value: "other",        label: tr("Other") },
   ]
 
   // Named slots in the public Artist Story mosaic, in fill order.
   const STORY_SLOTS: { id: string; label: string; desc: string; needsImage?: boolean }[] = [
-    { id: "left-tall-story",     label: "Left Tall",             desc: "3-col × 6-row full left column — dominant vertical anchor", needsImage: true },
-    { id: "top-feature-primary", label: "Top Feature Primary",   desc: "4-col × 2-row top-centre dominant — ~60% editorial weight", needsImage: true },
-    { id: "top-feature-secondary", label: "Top Feature Secondary", desc: "2-col × 2-row top-centre supporting — ~40% editorial weight", needsImage: true },
-    { id: "right-top",           label: "Right Top",             desc: "3-col × 2-row top-right compact tile" },
-    { id: "compact-a",           label: "Compact A",             desc: "3-col × 2-row centre compact tile (row 3)" },
-    { id: "compact-b",           label: "Compact B",             desc: "3-col × 2-row centre compact tile (row 3)" },
-    { id: "right-bottom",        label: "Right Bottom",          desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
-    { id: "bottom-left",         label: "Bottom Left",           desc: "3-col × 2-row lower-left tile (row 5)", needsImage: true },
-    { id: "bottom-right",        label: "Bottom Right",          desc: "3-col × 2-row lower-right tile (row 5)", needsImage: true },
+    { id: "left-tall-story",     label: tr("Left Tall"),             desc: "3-col × 6-row full left column — dominant vertical anchor", needsImage: true },
+    { id: "top-feature-primary", label: tr("Top Feature Primary"),   desc: "4-col × 2-row top-centre dominant — ~60% editorial weight", needsImage: true },
+    { id: "top-feature-secondary", label: tr("Top Feature Secondary"), desc: "2-col × 2-row top-centre supporting — ~40% editorial weight", needsImage: true },
+    { id: "right-top",           label: tr("Right Top"),             desc: "3-col × 2-row top-right compact tile" },
+    { id: "compact-a",           label: tr("Compact A"),             desc: "3-col × 2-row centre compact tile (row 3)" },
+    { id: "compact-b",           label: tr("Compact B"),             desc: "3-col × 2-row centre compact tile (row 3)" },
+    { id: "right-bottom",        label: tr("Right Bottom"),          desc: "3-col × 4-row tall bottom-right anchor", needsImage: true },
+    { id: "bottom-left",         label: tr("Bottom Left"),           desc: "3-col × 2-row lower-left tile (row 5)", needsImage: true },
+    { id: "bottom-right",        label: tr("Bottom Right"),          desc: "3-col × 2-row lower-right tile (row 5)", needsImage: true },
   ]
 
   // Grid positions for the Artist Story preview panel (12-col, 6-row grid).
@@ -2798,19 +2807,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     }
 
     const publishChecks = [
-      { label: "Profile published",   ok: artist.isPublished,            sub: artist.isPublished ? "Public profile is live" : "Profile is in draft" },
-      { label: "Booking configured",  ok: !!artist.bookingInfo.email,    sub: artist.bookingInfo.email || "No booking email configured" },
-      { label: "Press kit ready",     ok: artist.pressKit.enabled,       sub: artist.pressKit.enabled ? "Downloadable on site" : "Press kit not enabled" },
-      { label: "Domain connected",    ok: hasActiveDomain,               sub: (hasActiveDomain && activeDomain) ? activeDomain.domain : "Using DJHQ default domain" },
+      { label: tr("Profile published"),   ok: artist.isPublished,            sub: artist.isPublished ? "Public profile is live" : "Profile is in draft" },
+      { label: tr("Booking configured"),  ok: !!artist.bookingInfo.email,    sub: artist.bookingInfo.email || "No booking email configured" },
+      { label: tr("Press kit ready"),     ok: artist.pressKit.enabled,       sub: artist.pressKit.enabled ? "Downloadable on site" : "Press kit not enabled" },
+      { label: tr("Domain connected"),    ok: hasActiveDomain,               sub: (hasActiveDomain && activeDomain) ? activeDomain.domain : "Using DJHQ default domain" },
     ]
 
     const quickActions = [
-      { label: "Add Show",     Icon: Calendar,    sec: "shows"    },
-      { label: "Create Tour",  Icon: Route,       sec: "tours"    },
-      { label: "Add Set",      Icon: Headphones,  sec: "sets"     },
-      { label: "Edit Profile", Icon: User,        sec: "profile"  },
-      { label: "Add Video",    Icon: Play,        sec: "media"    },
-      { label: "Add Release",  Icon: Disc3,       sec: "releases" },
+      { label: tr("Add Show"),     Icon: Calendar,    sec: "shows"    },
+      { label: tr("Create Tour"),  Icon: Route,       sec: "tours"    },
+      { label: tr("Add Set"),      Icon: Headphones,  sec: "sets"     },
+      { label: tr("Edit Profile"), Icon: User,        sec: "profile"  },
+      { label: tr("Add Video"),    Icon: Play,        sec: "media"    },
+      { label: tr("Add Release"),  Icon: Disc3,       sec: "releases" },
     ]
 
     const panelCls = "overflow-hidden rounded-xl"
@@ -2898,7 +2907,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   className="mb-2 text-[7px] font-black uppercase tracking-[0.34em]"
                   style={{ color: "oklch(0.75 0.18 160)" }}
                 >
-                  Artist Command Center
+                  {tr("Artist Command Center")}
                 </p>
                 <h1 className="text-[38px] font-black uppercase leading-[0.88] tracking-[-0.02em] text-white sm:text-[48px]">
                   {artist.artistName}
@@ -2931,7 +2940,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     Icon: Inbox,
                     value: openBookings,
                     label: "Booking\nRequests",
-                    sub: bookingCounts.new > 0 ? `${bookingCounts.new} new` : "None open",
+                    sub: bookingCounts.new > 0 ? (locale === "es" ? `${bookingCounts.new} nuevas` : `${bookingCounts.new} new`) : tr("None open"),
                     active: openBookings > 0,
                     sec: "bookings" as const,
                   },
@@ -2991,7 +3000,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className={artist.isPublished ? "animate-pulse" : ""}
                     style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: artist.isPublished ? "oklch(0.75 0.18 160)" : "rgba(255,255,255,0.16)" }}
                   />
-                  {artist.isPublished ? "Published" : "Draft"}
+                  {artist.isPublished ? tr("Published") : tr("Draft")}
                 </span>
                 {hasActiveDomain && activeDomain && (
                   <>
@@ -3001,7 +3010,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       style={{ color: "oklch(0.75 0.18 160)", opacity: 0.70 }}
                     >
                       <span className="animate-pulse" style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
-                      Site Live
+                      {tr("Site Live")}
                     </span>
                     <span style={{ color: "rgba(255,255,255,0.10)" }}>·</span>
                     <span className="font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>
@@ -3039,7 +3048,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.50)", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   <ExternalLink className="h-3 w-3" />
-                  View Site
+                  {tr("View Site")}
                 </a>
                 {isSaveDirty && (
                   <button
@@ -3048,7 +3057,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10.5px] font-bold transition hover:opacity-90"
                     style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#050505" }}
                   >
-                    Save Changes
+                    {tr("Save Changes")}
                   </button>
                 )}
               </div>
@@ -3093,7 +3102,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="relative z-10 flex flex-1 flex-col justify-between p-5">
               <div className="flex items-start justify-between">
                 <span className="text-[7px] font-black uppercase tracking-[0.30em]" style={{ color: "rgba(255,255,255,0.45)" }}>
-                  Next Show
+                  {tr("Next Show")}
                 </span>
                 {nextShow && daysUntilShow !== null && (
                   <span
@@ -3143,9 +3152,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {daysUntilShow !== null && daysUntilShow >= 0 && (
                     <div className="mb-4 flex gap-4">
                       {([
-                        { value: showCountdown.days,  label: "DAYS" },
-                        { value: showCountdown.hours, label: "HRS"  },
-                        { value: showCountdown.mins,  label: "MINS" },
+                        { value: showCountdown.days,  label: tr("DAYS") },
+                        { value: showCountdown.hours, label: tr("HRS")  },
+                        { value: showCountdown.mins,  label: tr("MINS") },
                       ] as const).map(({ value, label }) => (
                         <div key={label} className="flex flex-col">
                           <span className="text-[30px] font-black tabular-nums leading-none text-white">
@@ -3176,10 +3185,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               ) : (
                 <div className="flex flex-col justify-center">
                   <p className="text-[16px] font-semibold" style={{ color: "rgba(255,255,255,0.18)" }}>
-                    No shows scheduled
+                    {tr("No shows scheduled")}
                   </p>
                   <p className="mt-1 text-[11px]" style={{ color: "rgba(255,255,255,0.10)" }}>
-                    Add your first show to get started
+                    {tr("Add your first show to get started")}
                   </p>
                   <span className="mt-4 text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.22)" }}>
                     + Add Show
@@ -3205,7 +3214,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="text-[7px] font-black uppercase tracking-[0.28em]"
                     style={{ color: "rgba(255,255,255,0.35)" }}
                   >
-                    Tour Control
+                    {tr("Tour Control")}
                   </span>
                   {activeTour && (
                     <span
@@ -3216,7 +3225,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         className="animate-pulse"
                         style={{ display: "inline-block", width: 3, height: 3, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }}
                       />
-                      Live
+                      {tr("Live")}
                     </span>
                   )}
                 </div>
@@ -3231,8 +3240,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {[
                       `${tourShows.length} Show${tourShows.length !== 1 ? "s" : ""}`,
                       tourDuration != null ? `${tourDuration} Days` : null,
-                      tourConfirmed > 0 ? `${tourConfirmed} Confirmed` : null,
-                      tourPending > 0 ? `${tourPending} Pending` : null,
+                      tourConfirmed > 0 ? `${tourConfirmed} ${locale === "es" ? (tourConfirmed === 1 ? "confirmado" : "confirmados") : "Confirmed"}` : null,
+                      tourPending > 0 ? `${tourPending} ${locale === "es" ? (tourPending === 1 ? "pendiente" : "pendientes") : "Pending"}` : null,
                     ].filter(Boolean).map((item, idx) => (
                       <span key={idx} className="inline-flex items-center gap-1.5">
                         <span style={{ color: "rgba(255,255,255,0.16)" }}>·</span>
@@ -3248,7 +3257,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 className="mt-0.5 shrink-0 rounded px-2.5 py-1 text-[8px] font-semibold transition hover:opacity-75"
                 style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}
               >
-                Tour Planner
+                {tr("Tour Planner")}
               </button>
             </div>
 
@@ -3348,7 +3357,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             >
               {!toursLoaded ? (
                 <div className="flex items-center justify-center py-8">
-                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>Loading…</span>
+                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>{tr("Loading…")}</span>
                 </div>
               ) : tourShows.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2.5 py-8">
@@ -3356,10 +3365,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="text-[9px] font-black uppercase tracking-[0.18em]"
                     style={{ color: "rgba(255,255,255,0.18)" }}
                   >
-                    No active tour
+                    {tr("No active tour")}
                   </p>
                   <p className="text-center text-[9px]" style={{ color: "rgba(255,255,255,0.12)" }}>
-                    Create a tour to plan your routing and shows.
+                    {tr("Create a tour to plan your routing and shows.")}
                   </p>
                   <button
                     type="button"
@@ -3367,7 +3376,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="mt-1 rounded px-4 py-1.5 text-[8.5px] font-bold uppercase tracking-[0.10em] transition hover:opacity-90"
                     style={{ backgroundColor: "oklch(0.75 0.18 160)", color: "#060908" }}
                   >
-                    Create Tour
+                    {tr("Create Tour")}
                   </button>
                 </div>
               ) : (
@@ -3433,7 +3442,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             : { color: "rgba(255,255,255,0.18)" }
                         }
                       >
-                        {show.visibilityStatus === "announced" ? "Conf" : "TBA"}
+                        {show.visibilityStatus === "announced" ? tr("Conf") : tr("TBA")}
                       </span>
                     </div>
                   )
@@ -3448,7 +3457,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
               >
                 <span className="text-[8px]" style={{ color: "rgba(255,255,255,0.20)" }}>
-                  {tourShows.length} stop{tourShows.length !== 1 ? "s" : ""} · {activeTour ? "Active" : "Upcoming"}
+                  {tourShows.length} {locale === "es" ? (tourShows.length === 1 ? "parada" : "paradas") : (tourShows.length === 1 ? "stop" : "stops")} · {activeTour ? tr("Active") : tr("Upcoming")}
                 </span>
                 <button
                   type="button"
@@ -3476,7 +3485,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
             >
               <span className="text-[7px] font-black uppercase tracking-[0.30em]" style={{ color: "rgba(255,255,255,0.40)" }}>
-                Booking Desk
+                {tr("Booking Desk")}
               </span>
               {homeLeads.length > 0 && (
                 <button
@@ -3510,10 +3519,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <Mail className="h-7 w-7" style={{ color: "oklch(0.75 0.18 160)", opacity: 0.78 }} />
                 </div>
                 <p className="text-[13px] font-bold" style={{ color: "rgba(255,255,255,0.65)" }}>
-                  No open inquiries yet
+                  {tr("No open inquiries yet")}
                 </p>
                 <p className="mt-1.5 max-w-[180px] text-[10px] leading-relaxed" style={{ color: "rgba(255,255,255,0.28)" }}>
-                  Your booking channel is live. Inquiries from your site will appear here.
+                  {tr("Your booking channel is live. Inquiries from your site will appear here.")}
                 </p>
                 <div className="mt-5 flex w-full flex-col gap-2">
                   <a
@@ -3553,10 +3562,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   style={{ border: "1px solid rgba(255,255,255,0.07)" }}
                 >
                   {([
-                    { key: "new",       label: "New",  count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
-                    { key: "contacted", label: "Cntd", count: bookingCounts.contacted, color: "#60a5fa" },
-                    { key: "qualified", label: "Qual", count: bookingCounts.qualified, color: "#fbbf24" },
-                    { key: "confirmed", label: "Conf", count: bookingCounts.confirmed, color: "#34d399" },
+                    { key: "new",       label: tr("New"),  count: bookingCounts.new,       color: "oklch(0.75 0.18 160)" },
+                    { key: "contacted", label: tr("Cntd"), count: bookingCounts.contacted, color: "#60a5fa" },
+                    { key: "qualified", label: tr("Qual"), count: bookingCounts.qualified, color: "#fbbf24" },
+                    { key: "confirmed", label: tr("Conf"), count: bookingCounts.confirmed, color: "#34d399" },
                   ] as const).map((s, i) => (
                     <div
                       key={s.key}
@@ -3627,15 +3636,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
               <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.40)" }}>
-                Content Studio
+                {tr("Content Studio")}
               </span>
               <div className="flex items-center gap-1">
                 {([
-                  { label: "Releases", count: releases.length,      key: "releases", dot: "oklch(0.75 0.18 160)" },
-                  { label: "Shows",    count: upcomingGigs.length,  key: "shows",    dot: "rgba(96,165,250,0.8)" },
-                  { label: "Sets",     count: djSets.length,        key: "sets",     dot: "rgba(192,132,252,0.8)" },
-                  { label: "Videos",   count: videos.length,        key: "media",    dot: "rgba(251,146,60,0.8)"  },
-                  { label: "Photos",   count: galleryImages.length, key: "gallery",  dot: "rgba(248,113,113,0.7)" },
+                  { label: tr("Releases"), count: releases.length,      key: "releases", dot: "oklch(0.75 0.18 160)" },
+                  { label: tr("Shows"),    count: upcomingGigs.length,  key: "shows",    dot: "rgba(96,165,250,0.8)" },
+                  { label: tr("Sets"),     count: djSets.length,        key: "sets",     dot: "rgba(192,132,252,0.8)" },
+                  { label: tr("Videos"),   count: videos.length,        key: "media",    dot: "rgba(251,146,60,0.8)"  },
+                  { label: tr("Photos"),   count: galleryImages.length, key: "gallery",  dot: "rgba(248,113,113,0.7)" },
                 ] as const).map((tab) => (
                   <button
                     key={tab.key}
@@ -3690,7 +3699,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         {r.isFeatured && (
                           <div className="mt-0.5 flex items-center gap-1">
                             <span className="h-1 w-1 rounded-full" style={{ backgroundColor: "oklch(0.75 0.18 160)" }} />
-                            <span className="text-[7.5px]" style={{ color: "oklch(0.75 0.18 160)" }}>Featured</span>
+                            <span className="text-[7.5px]" style={{ color: "oklch(0.75 0.18 160)" }}>{tr("Featured")}</span>
                           </div>
                         )}
                       </button>
@@ -3698,7 +3707,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No releases yet</p>
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>{tr("No releases yet")}</p>
                   </div>
                 )
               )}
@@ -3729,7 +3738,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No shows yet</p>
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>{tr("No shows yet")}</p>
                   </div>
                 )
               )}
@@ -3763,7 +3772,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No sets yet</p>
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>{tr("No sets yet")}</p>
                   </div>
                 )
               )}
@@ -3809,7 +3818,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No videos yet</p>
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>{tr("No videos yet")}</p>
                   </div>
                 )
               )}
@@ -3836,7 +3845,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>No photos yet</p>
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>{tr("No photos yet")}</p>
                   </div>
                 )
               )}
@@ -3853,12 +3862,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
               <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.40)" }}>
-                Publish Status
+                {tr("Publish Status")}
               </span>
               {publishChecks.every((c) => c.ok) && (
                 <span className="inline-flex items-center gap-1 text-[7.5px] font-black uppercase tracking-[0.12em]" style={{ color: "oklch(0.75 0.18 160)" }}>
                   <span className="animate-pulse" style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", backgroundColor: "oklch(0.75 0.18 160)" }} />
-                  All good
+                  {tr("All good")}
                 </span>
               )}
             </div>
@@ -3884,7 +3893,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[10.5px] font-semibold leading-tight" style={{ color: item.ok ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.28)" }}>
-                      {item.label}
+                      {tr(item.label)}
                     </p>
                     <p className="mt-0.5 truncate text-[8.5px]" style={{ color: "rgba(255,255,255,0.22)" }}>
                       {item.sub}
@@ -3905,18 +3914,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
               <span className="text-[7px] font-black uppercase tracking-[0.28em]" style={{ color: "rgba(255,255,255,0.40)" }}>
-                Quick Actions
+                {tr("Quick Actions")}
               </span>
             </div>
             <div className="flex flex-1 flex-col gap-3 p-3">
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  { label: "Add Show",     Icon: Calendar,    sec: "shows"    },
-                  { label: "Add Set",      Icon: Headphones,  sec: "sets"     },
-                  { label: "Add Video",    Icon: Play,        sec: "media"    },
-                  { label: "Add Release",  Icon: Disc3,       sec: "releases" },
-                  { label: "Create Tour",  Icon: Route,       sec: "tours"    },
-                  { label: "Edit Profile", Icon: User,        sec: "profile"  },
+                  { label: tr("Add Show"),     Icon: Calendar,    sec: "shows"    },
+                  { label: tr("Add Set"),      Icon: Headphones,  sec: "sets"     },
+                  { label: tr("Add Video"),    Icon: Play,        sec: "media"    },
+                  { label: tr("Add Release"),  Icon: Disc3,       sec: "releases" },
+                  { label: tr("Create Tour"),  Icon: Route,       sec: "tours"    },
+                  { label: tr("Edit Profile"), Icon: User,        sec: "profile"  },
                 ] as const).map(({ label, Icon, sec }) => (
                   <button
                     key={sec}
@@ -3953,18 +3962,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-6">
-        <HqPageHeader title="Profile" description="Your public artist identity." />
+        <HqPageHeader title={tr("Profile")} description={tr("Your public artist identity.")} />
 
         {/* Artist */}
         <div className="rounded-xl border border-border bg-card/40 p-5 sm:p-6">
-          <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Artist</p>
+          <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Artist")}</p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <label htmlFor="artistName" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Artist Name</label>
+              <label htmlFor="artistName" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Artist Name")}</label>
               <Input id="artistName" value={artistName} onChange={(e) => setArtistName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="handle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Handle</label>
+              <label htmlFor="handle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Handle")}</label>
               <Input id="handle" value={handle} onChange={(e) => setHandle(e.target.value)} />
             </div>
           </div>
@@ -3972,19 +3981,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Public Identity */}
         <div className="rounded-xl border border-border bg-card/40 p-5 sm:p-6">
-          <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Public Identity</p>
+          <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Public Identity")}</p>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="genres" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Genre Tags</label>
-              <Input id="genres" value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="House, Tech House, Melodic" />
-              <p className="text-[10px] text-muted-foreground/38">Comma-separated. Displayed as chips in the hero and used throughout your profile.</p>
+              <label htmlFor="genres" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Genre Tags")}</label>
+              <Input id="genres" value={genres} onChange={(e) => setGenres(e.target.value)} placeholder={tr("House, Tech House, Melodic")} />
+              <p className="text-[10px] text-muted-foreground/38">{tr("Comma-separated. Displayed as chips in the hero and used throughout your profile.")}</p>
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="location" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Location</label>
+              <label htmlFor="location" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Location")}</label>
               <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="shortBio" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Short Bio</label>
+              <label htmlFor="shortBio" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Short Bio")}</label>
               <Textarea id="shortBio" value={shortBio} onChange={(e) => setShortBio(e.target.value)} />
             </div>
           </div>
@@ -3994,7 +4003,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="rounded-xl border border-border bg-card/40 p-5 sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">DJHQ Branding</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("DJHQ Branding")}</p>
               <p className="text-xs text-muted-foreground/45">
                 {artist.plan === "pro"
                   ? "Show or hide the DJHQ wordmark in your public profile header."
@@ -4015,7 +4024,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 })}
               </div>
             ) : (
-              <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
+              <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">{tr("Pro only")}</span>
             )}
           </div>
         </div>
@@ -4024,17 +4033,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="rounded-xl border border-border bg-card/40 p-5 sm:p-6">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Browser Identity</p>
-              <p className="mt-0.5 text-xs text-muted-foreground/45">Control how your profile appears in browser tabs, bookmarks, and shared links.</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Browser Identity")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground/45">{tr("Control how your profile appears in browser tabs, bookmarks, and shared links.")}</p>
             </div>
             {artist.plan !== "pro" && (
-              <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">Pro only</span>
+              <span className="shrink-0 rounded-md border border-border bg-secondary px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/28">{tr("Pro only")}</span>
             )}
           </div>
           <div className="space-y-5">
             <div className="space-y-2">
               <div className="flex items-baseline justify-between">
-                <label htmlFor="browserTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Browser Title</label>
+                <label htmlFor="browserTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Browser Title")}</label>
                 <span className={cn("text-[10px] tabular-nums transition-colors duration-150", browserTitle.length > 70 ? "text-amber-400/60" : "text-muted-foreground/30")}>{browserTitle.length}/80</span>
               </div>
               <Input id="browserTitle" value={browserTitle} maxLength={80} placeholder={artist.plan === "pro" ? artist.artistName : `${artist.artistName} — DJHQ`} disabled={artist.plan !== "pro"} onChange={(e) => setBrowserTitle(e.target.value)} className={artist.plan !== "pro" ? "opacity-40 cursor-not-allowed" : ""} />
@@ -4068,16 +4077,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
             {artist.plan === "pro" && (
               <div className="space-y-2 border-t border-border pt-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Custom Favicon</p>
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Custom Favicon")}</p>
                 {faviconUrl ? (
                   <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-[#0a0a0a]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={faviconUrl} alt="Current favicon" className="h-8 w-8 object-contain" />
+                      <img src={faviconUrl} alt={tr("Current favicon")} className="h-8 w-8 object-contain" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[11px] text-foreground/55">{faviconUrl.split("/").pop()}</p>
-                      <button type="button" onClick={() => setFaviconUrl("")} className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80">Remove</button>
+                      <button type="button" onClick={() => setFaviconUrl("")} className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80">{tr("Remove")}</button>
                     </div>
                   </div>
                 ) : null}
@@ -4085,7 +4094,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <Button type="button" onClick={handleUploadFavicon} disabled={!faviconFile || isUploadingFavicon || isSaving || isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">
                   {isUploadingFavicon ? "Uploading..." : "Upload favicon"}
                 </Button>
-                <p className="text-[10px] text-muted-foreground/38">PNG, SVG, or WEBP. 512×512 recommended. Leave blank to use artist initials.</p>
+                <p className="text-[10px] text-muted-foreground/38">{tr("PNG, SVG, or WEBP. 512×512 recommended. Leave blank to use artist initials.")}</p>
               </div>
             )}
           </div>
@@ -4094,15 +4103,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Search & Share */}
         <div className="rounded-xl border border-border bg-card/40 p-5 sm:p-6">
           <div className="mb-5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Search &amp; Share</p>
-            <p className="mt-0.5 text-xs text-muted-foreground/45">Control how this artist profile appears in search engines and shared links.</p>
+            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Search & Share")}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground/45">{tr("Control how this artist profile appears in search engines and shared links.")}</p>
           </div>
           <div className="space-y-5">
 
             {/* SEO Title */}
             <div className="space-y-2">
               <div className="flex items-baseline justify-between">
-                <label htmlFor="seoTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">SEO Title</label>
+                <label htmlFor="seoTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("SEO Title")}</label>
                 <span className={cn("text-[10px] tabular-nums transition-colors duration-150", seoTitle.length > 55 ? "text-amber-400/60" : "text-muted-foreground/30")}>{seoTitle.length}/70</span>
               </div>
               <Input
@@ -4112,13 +4121,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 placeholder={`${artist.artistName} — DJ & Producer`}
                 onChange={(e) => setSeoTitle(e.target.value)}
               />
-              <p className="text-[10px] text-muted-foreground/38">Shown in search results and browser previews.</p>
+              <p className="text-[10px] text-muted-foreground/38">{tr("Shown in search results and browser previews.")}</p>
             </div>
 
             {/* Meta Description */}
             <div className="space-y-2">
               <div className="flex items-baseline justify-between">
-                <label htmlFor="seoDescription" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Meta Description</label>
+                <label htmlFor="seoDescription" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Meta Description")}</label>
                 <span className={cn("text-[10px] tabular-nums transition-colors duration-150", seoDescription.length > 150 ? "text-amber-400/60" : "text-muted-foreground/30")}>{seoDescription.length}/160</span>
               </div>
               <textarea
@@ -4130,28 +4139,28 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onChange={(e) => setSeoDescription(e.target.value)}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/38 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
               />
-              <p className="text-[10px] text-muted-foreground/38">Short summary for search engines and shared links.</p>
+              <p className="text-[10px] text-muted-foreground/38">{tr("Short summary for search engines and shared links.")}</p>
             </div>
 
             {/* Canonical URL */}
             <div className="space-y-2">
-              <label htmlFor="seoCanonicalUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Canonical URL</label>
+              <label htmlFor="seoCanonicalUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Canonical URL")}</label>
               <Input
                 id="seoCanonicalUrl"
                 type="url"
                 value={seoCanonicalUrl}
-                placeholder="https://yourdomain.com"
+                placeholder={tr("https://yourdomain.com")}
                 onChange={(e) => setSeoCanonicalUrl(e.target.value)}
               />
-              <p className="text-[10px] text-muted-foreground/38">The official public URL for this artist profile. Leave blank to use the default DJHQ URL.</p>
+              <p className="text-[10px] text-muted-foreground/38">{tr("The official public URL for this artist profile. Leave blank to use the default DJHQ URL.")}</p>
             </div>
 
             {/* Open Graph */}
             <div className="space-y-4 border-t border-border pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Open Graph</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Open Graph")}</p>
 
               <div className="space-y-2">
-                <label htmlFor="seoOgTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Open Graph Title</label>
+                <label htmlFor="seoOgTitle" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Open Graph Title")}</label>
                 <Input
                   id="seoOgTitle"
                   value={seoOgTitle}
@@ -4159,11 +4168,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   placeholder={seoTitle || `${artist.artistName} — Official Artist Website`}
                   onChange={(e) => setSeoOgTitle(e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground/38">Title shown when this profile is shared. Defaults to SEO Title.</p>
+                <p className="text-[10px] text-muted-foreground/38">{tr("Title shown when this profile is shared. Defaults to SEO Title.")}</p>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="seoOgDescription" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Open Graph Description</label>
+                <label htmlFor="seoOgDescription" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Open Graph Description")}</label>
                 <textarea
                   id="seoOgDescription"
                   value={seoOgDescription}
@@ -4173,43 +4182,43 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   onChange={(e) => setSeoOgDescription(e.target.value)}
                   className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/38 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                 />
-                <p className="text-[10px] text-muted-foreground/38">Description shown in social link previews. Defaults to Meta Description.</p>
+                <p className="text-[10px] text-muted-foreground/38">{tr("Description shown in social link previews. Defaults to Meta Description.")}</p>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="seoOgImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Open Graph Image</label>
+                <label htmlFor="seoOgImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Open Graph Image")}</label>
                 <Input
                   id="seoOgImageUrl"
                   type="url"
                   value={seoOgImageUrl}
-                  placeholder="https://… (1200×630 recommended)"
+                  placeholder={tr("https://… (1200×630 recommended)")}
                   onChange={(e) => setSeoOgImageUrl(e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground/38">Optional advanced override. If empty, DJHQ uses this artist&apos;s Hero image as the share preview. If no Hero image exists, DJHQ generates a fallback image.</p>
+                <p className="text-[10px] text-muted-foreground/38">{tr("Optional advanced override. If empty, DJHQ uses this artist's Hero image as the share preview. If no Hero image exists, DJHQ generates a fallback image.")}</p>
               </div>
             </div>
 
             {/* Twitter/X */}
             <div className="space-y-4 border-t border-border pt-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Twitter / X</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Twitter / X")}</p>
               <div className="space-y-2">
-                <label htmlFor="seoTwitterImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Twitter/X Image</label>
+                <label htmlFor="seoTwitterImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Twitter/X Image")}</label>
                 <Input
                   id="seoTwitterImageUrl"
                   type="url"
                   value={seoTwitterImageUrl}
-                  placeholder="https://… (optional — uses Open Graph image if empty)"
+                  placeholder={tr("https://… (optional — uses Open Graph image if empty)")}
                   onChange={(e) => setSeoTwitterImageUrl(e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground/38">Optional advanced override. Uses the Open Graph image, then Hero image, if empty.</p>
+                <p className="text-[10px] text-muted-foreground/38">{tr("Optional advanced override. Uses the Open Graph image, then Hero image, if empty.")}</p>
               </div>
             </div>
 
             {/* Search indexing toggle */}
             <div className="flex items-start justify-between gap-4 border-t border-border pt-4">
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Allow Search Indexing</p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground/38">Let search engines index this public profile.</p>
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Allow Search Indexing")}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/38">{tr("Let search engines index this public profile.")}</p>
               </div>
               <button
                 type="button"
@@ -4265,7 +4274,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {isConnected ? (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-accent/70">
                 <Check className="h-3 w-3" />
-                Connected
+                {tr("Connected")}
               </span>
             ) : (
               <span className="text-[11px] font-medium text-muted-foreground/35 transition-colors group-hover:text-accent/60">
@@ -4279,7 +4288,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           {isExpanded && (
             <div className="border-t border-border bg-secondary px-4 pb-4 pt-3">
               <label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-                URL
+                {tr("URL")}
               </label>
               <Input
                 autoFocus
@@ -4295,7 +4304,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   onClick={() => setExpandedLinkId(null)}
                   className="h-7 bg-accent/90 px-3 text-[11px] text-accent-foreground hover:bg-accent"
                 >
-                  Done
+                  {tr("Done")}
                 </Button>
                 {isConnected && (
                   <button
@@ -4306,7 +4315,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     }}
                     className="text-[11px] text-muted-foreground/40 transition-colors hover:text-destructive/70"
                   >
-                    Disconnect
+                    {tr("Disconnect")}
                   </button>
                 )}
               </div>
@@ -4318,12 +4327,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-5">
-        <HqPageHeader title="Links" description="Only connected platforms appear on your public profile." />
+        <HqPageHeader title={tr("Links")} description={tr("Only connected platforms appear on your public profile.")} />
 
         {/* Summary card */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-foreground/75">Connected Platforms</p>
+            <p className="text-sm font-medium text-foreground/75">{tr("Connected Platforms")}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground/40">
               {connectedN} of {totalN} platforms active on your profile
             </p>
@@ -4338,7 +4347,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {connected.length > 0 && (
           <div>
             <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
-              Connected
+              {tr("Connected")}
             </p>
             <div className="overflow-hidden rounded-xl border border-border bg-card/40">
               {connected.map((p) => (
@@ -4352,7 +4361,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {available.length > 0 && (
           <div>
             <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
-              Available
+              {tr("Available")}
             </p>
             <div className="overflow-hidden rounded-xl border border-border bg-card/30">
               {available.map((p) => (
@@ -4391,12 +4400,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-foreground">Links</h2>
+            <h2 className="text-base font-semibold text-foreground">{tr("Links")}</h2>
             <p className="mt-0.5 text-sm text-muted-foreground/55">
               {connectedN} of {totalN} platforms connected
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground/35">
-              Only connected platforms appear on your public profile.
+              {tr("Only connected platforms appear on your public profile.")}
             </p>
           </div>
           <button
@@ -4404,7 +4413,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             onClick={() => { setLinksVersion("v1"); setExpandedLinkId(null) }}
             className="shrink-0 text-[10px] text-muted-foreground/28 transition-colors hover:text-muted-foreground/55"
           >
-            List view
+            {tr("List view")}
           </button>
         </div>
 
@@ -4412,7 +4421,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {connected.length > 0 && (
           <div>
             <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
-              Connected
+              {tr("Connected")}
             </p>
             <div className="flex flex-wrap gap-2">
               {connected.map(({ id, label, Icon }) => {
@@ -4443,7 +4452,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {available.length > 0 && (
           <div>
             <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/35">
-              Available
+              {tr("Available")}
             </p>
             <div className="flex flex-wrap gap-2">
               {available.map(({ id, label, Icon }) => {
@@ -4479,7 +4488,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {expandedActive && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-accent/65">
                   <Check className="h-2.5 w-2.5" />
-                  Connected
+                  {tr("Connected")}
                 </span>
               )}
             </div>
@@ -4499,7 +4508,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onClick={() => setExpandedLinkId(null)}
                 className="h-7 bg-accent/90 px-3 text-[11px] text-accent-foreground hover:bg-accent"
               >
-                Done
+                {tr("Done")}
               </Button>
               {expandedActive && (
                 <button
@@ -4510,7 +4519,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   }}
                   className="text-[11px] text-muted-foreground/38 transition-colors hover:text-destructive/65"
                 >
-                  Disconnect
+                  {tr("Disconnect")}
                 </button>
               )}
             </div>
@@ -4549,7 +4558,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       { key: "beatportUrl",     label: "Beatport" },
       { key: "traxsourceUrl",   label: "Traxsource" },
       { key: "bandcampUrl",     label: "Bandcamp" },
-      { key: "otherUrl",        label: "Other" },
+      { key: "otherUrl",        label: tr("Other") },
     ] as const
 
     return (
@@ -4558,14 +4567,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-foreground">Releases</h2>
+            <h2 className="text-base font-semibold text-foreground">{tr("Releases")}</h2>
             <p className="mt-0.5 text-sm text-muted-foreground/55">
-              Manage your singles, EPs, remixes and artist catalog.
+              {tr("Manage your singles, EPs, remixes and artist catalog.")}
             </p>
             {releases.length > 0 && (
               <p className="mt-0.5 text-[11px] text-muted-foreground/32">
                 {releases.length} release{releases.length !== 1 ? "s" : ""}
-                {featuredCount > 0 ? ` · ${featuredCount} featured` : ""}
+                {featuredCount > 0 ? ` · ${featuredCount} ${locale === "es" ? (featuredCount === 1 ? "destacado" : "destacados") : "featured"}` : ""}
               </p>
             )}
           </div>
@@ -4576,7 +4585,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Release
+            {tr("Add Release")}
           </button>
         </div>
 
@@ -4584,9 +4593,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {releases.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <Music className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
-            <p className="text-sm font-medium text-foreground/55">No releases yet.</p>
+            <p className="text-sm font-medium text-foreground/55">{tr("No releases yet.")}</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
-              Add your singles, EPs, remixes and collaborations to build your artist catalog.
+              {tr("Add your singles, EPs, remixes and collaborations to build your artist catalog.")}
             </p>
             <button
               type="button"
@@ -4595,7 +4604,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Release
+              {tr("Add Release")}
             </button>
           </div>
         )}
@@ -4631,7 +4640,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               if (release.bandcampUrl?.trim())      activePlatforms.push("Bandcamp")
               if (release.otherUrl?.trim())         activePlatforms.push("Other")
 
-              const typeLabel = RELEASE_TYPE_OPTIONS.find((o) => o.value === release.releaseType)?.label ?? null
+              const typeLabel = (() => { const l = RELEASE_TYPE_OPTIONS.find((o) => o.value === release.releaseType)?.label; return l ? tr(l) : null })()
 
               return (
                 <div
@@ -4677,7 +4686,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {/* Metadata — tighter, DJ-prioritized */}
                   <div className="px-3 pb-2 pt-2">
                     <p className="truncate text-sm font-semibold leading-tight text-foreground/88">
-                      {release.title || <span className="text-muted-foreground/28">Untitled</span>}
+                      {release.title || <span className="text-muted-foreground/28">{tr("Untitled")}</span>}
                     </p>
                     {hasCollaborators && (
                       <p className="mt-px truncate text-[11px] text-muted-foreground/45">
@@ -4737,7 +4746,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/42 hover:text-foreground",
                       )}
                     >
-                      {isEditing ? "Close" : "Edit"}
+                      {isEditing ? tr("Close") : tr("Edit")}
                     </button>
                     {/* Listen — only when a platform URL is set */}
                     {release.platformUrl?.trim() && (
@@ -4748,7 +4757,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         className="ml-0.5 flex h-7 items-center rounded-md px-2 text-[11px] font-medium text-muted-foreground/42 transition-colors duration-150 hover:text-foreground"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        Listen
+                        {tr("Listen")}
                       </a>
                     )}
                     {/* ⋯ overflow menu */}
@@ -4757,7 +4766,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         type="button"
                         onClick={() => setReleaseMenuOpenId(isMenuOpen ? null : release.id)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/28 transition-colors duration-150 hover:text-foreground/60"
-                        title="More options"
+                        title={tr("More options")}
                       >
                         <span className="text-[15px] leading-none tracking-[-0.15em]">···</span>
                       </button>
@@ -4767,14 +4776,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {/* Inline destructive actions — shown when ⋯ is open */}
                   {isMenuOpen && (
                     <div className="flex items-center justify-between border-t border-border bg-destructive/[0.03] px-3 py-2">
-                      <span className="text-[11px] text-muted-foreground/45">Delete this release?</span>
+                      <span className="text-[11px] text-muted-foreground/45">{tr("Delete this release?")}</span>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => setReleaseMenuOpenId(null)}
                           className="rounded px-2 py-0.5 text-[11px] text-muted-foreground/40 hover:text-foreground/60"
                         >
-                          Cancel
+                          {tr("Cancel")}
                         </button>
                         <button
                           type="button"
@@ -4786,7 +4795,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           }}
                           className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/65 hover:text-destructive disabled:opacity-40"
                         >
-                          Delete
+                          {tr("Delete")}
                         </button>
                       </div>
                     </div>
@@ -4818,7 +4827,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <p className="text-sm font-semibold text-foreground/85">
                     {expandedRelease.title || "Untitled Release"}
                   </p>
-                  <p className="text-[10px] text-muted-foreground/40">Editing release</p>
+                  <p className="text-[10px] text-muted-foreground/40">{tr("Editing release")}</p>
                 </div>
               </div>
               <button
@@ -4832,19 +4841,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Title</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Title")}</label>
                 <Input value={expandedRelease.title} onChange={(e) => updateRelease(expandedIdx, { title: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Label</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Label")}</label>
                 <Input value={expandedRelease.label} onChange={(e) => updateRelease(expandedIdx, { label: e.target.value })} />
               </div>
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</label>
-                <Input value={expandedRelease.credits} placeholder="e.g. Artist 1, Artist 2" onChange={(e) => updateRelease(expandedIdx, { credits: e.target.value })} />
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Artists")}</label>
+                <Input value={expandedRelease.credits} placeholder={tr("e.g. Artist 1, Artist 2")} onChange={(e) => updateRelease(expandedIdx, { credits: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Release Date</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Release Date")}</label>
                 <DatePicker
                   value={expandedRelease.releaseDate}
                   onChange={(v) => updateRelease(expandedIdx, { releaseDate: v })}
@@ -4853,46 +4862,46 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Release Type</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Release Type")}</label>
                 <select
                   value={expandedRelease.releaseType}
                   onChange={(e) => updateRelease(expandedIdx, { releaseType: e.target.value })}
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <option value="">— None —</option>
-                  {RELEASE_TYPE_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
+                  <option value="">{tr("— None —")}</option>
+                  {RELEASE_TYPE_OPTIONS.map(({ value, label: typeName }) => (
+                    <option key={value} value={value}>{tr(typeName)}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Version / Mix Type</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Version / Mix Type")}</label>
                 <select
                   value={expandedRelease.versionType}
                   onChange={(e) => updateRelease(expandedIdx, { versionType: e.target.value, customVersionType: "" })}
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <option value="">— None —</option>
+                  <option value="">{tr("— None —")}</option>
                   {VERSION_TYPE_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
+                    <option key={value} value={value}>{tr(label)}</option>
                   ))}
                 </select>
                 {expandedRelease.versionType === "other" && (
-                  <Input placeholder="Custom version / mix type" value={expandedRelease.customVersionType} onChange={(e) => updateRelease(expandedIdx, { customVersionType: e.target.value })} />
+                  <Input placeholder={tr("Custom version / mix type")} value={expandedRelease.customVersionType} onChange={(e) => updateRelease(expandedIdx, { customVersionType: e.target.value })} />
                 )}
               </div>
               {expandedRelease.versionType === "remix" && (
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Remixer</label>
-                  <Input placeholder="Artist name" value={expandedRelease.remixer} onChange={(e) => updateRelease(expandedIdx, { remixer: e.target.value })} />
+                  <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Remixer")}</label>
+                  <Input placeholder={tr("Artist name")} value={expandedRelease.remixer} onChange={(e) => updateRelease(expandedIdx, { remixer: e.target.value })} />
                 </div>
               )}
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artwork URL</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Artwork URL")}</label>
                 <Input value={expandedRelease.artworkUrl} placeholder="https://..." onChange={(e) => updateRelease(expandedIdx, { artworkUrl: e.target.value })} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Primary URL</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Primary URL")}</label>
                 <div className="flex gap-2">
                   <Input
                     value={expandedRelease.platformUrl}
@@ -4910,7 +4919,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {importingSelectedReleaseIndex === expandedIdx ? "Fetching…" : "Import metadata"}
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground/30">Fallback link when no platform-specific URLs are set.</p>
+                <p className="text-[10px] text-muted-foreground/30">{tr("Fallback link when no platform-specific URLs are set.")}</p>
               </div>
               <div className="border-t border-border pt-3 md:col-span-2">
                 <button
@@ -4918,14 +4927,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   onClick={() => setReleasePlatformLinksOpen((v) => !v)}
                   className="flex w-full items-center justify-between text-left"
                 >
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">Platform Links</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">{tr("Platform Links")}</span>
                   <span className="flex items-center gap-1 text-[10px] text-muted-foreground/30">
-                    {releasePlatformLinksOpen ? "Hide" : "Show"}
+                    {releasePlatformLinksOpen ? tr("Hide") : tr("Show")}
                     <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", releasePlatformLinksOpen && "rotate-180")} />
                   </span>
                 </button>
                 {!releasePlatformLinksOpen && (
-                  <p className="mt-0.5 text-[10px] text-muted-foreground/28">Only configured platforms appear in the Listen panel.</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground/28">{tr("Only configured platforms appear in the Listen panel.")}</p>
                 )}
                 {releasePlatformLinksOpen && (
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -5033,10 +5042,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           >
             <div className="px-6 pt-6 pb-5">
               <p className="text-[15px] font-semibold tracking-[-0.01em] text-gray-900">
-                Delete Show?
+                {tr("Delete Show?")}
               </p>
               <p className="mt-2 text-[13px] leading-[1.55] text-gray-500">
-                This removes the show from your public profile and HQ list, but keeps the record in your account history.
+                {tr("This removes the show from your public profile and HQ list, but keeps the record in your account history.")}
               </p>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-6 py-4">
@@ -5045,7 +5054,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onClick={() => setDeletingGig(null)}
                 className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[13px] font-medium text-gray-600 transition-colors duration-150 hover:border-gray-300 hover:text-gray-900"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 type="button"
@@ -5055,7 +5064,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 }}
                 className="h-9 whitespace-nowrap rounded-lg bg-red-500 px-4 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-red-600"
               >
-                Delete Show
+                {tr("Delete Show")}
               </button>
             </div>
           </div>
@@ -5065,8 +5074,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Header */}
         <HqPageHeader
-          title="Shows"
-          description="Manage your artist schedule and career history."
+          title={tr("Shows")}
+          description={tr("Manage your artist schedule and career history.")}
           action={
             <button
               type="button"
@@ -5074,7 +5083,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Show
+              {tr("Add Show")}
             </button>
           }
         />
@@ -5084,24 +5093,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="flex flex-wrap items-center gap-5 border-b border-border pb-5">
             <div className="text-center">
               <p className="text-xl font-bold tabular-nums text-foreground/80">{totalShows}</p>
-              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Shows</p>
+              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">{tr("Shows")}</p>
             </div>
             {thisYearShows > 0 && (
               <div className="text-center">
                 <p className="text-xl font-bold tabular-nums text-foreground/80">{thisYearShows}</p>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">This Year</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">{tr("This Year")}</p>
               </div>
             )}
             {uniqueCities > 0 && (
               <div className="text-center">
                 <p className="text-xl font-bold tabular-nums text-foreground/80">{uniqueCities}</p>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Cities</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">{tr("Cities")}</p>
               </div>
             )}
             {uniqueCountries > 0 && (
               <div className="text-center">
                 <p className="text-xl font-bold tabular-nums text-foreground/80">{uniqueCountries}</p>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">Countries</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/35">{tr("Countries")}</p>
               </div>
             )}
           </div>
@@ -5110,9 +5119,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* ── Empty state ──────────────────────────────────────────────────── */}
         {upcomingGigs.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
-            <p className="text-sm font-medium text-foreground/55">No shows yet.</p>
+            <p className="text-sm font-medium text-foreground/55">{tr("No shows yet.")}</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
-              Start building your artist history by adding your first show.
+              {tr("Start building your artist history by adding your first show.")}
             </p>
             <button
               type="button"
@@ -5120,7 +5129,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Show
+              {tr("Add Show")}
             </button>
           </div>
         )}
@@ -5130,7 +5139,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                Upcoming
+                {tr("Upcoming")}
               </span>
               <span className="h-px flex-1 bg-secondary" />
               <span className="text-[10px] tabular-nums text-muted-foreground/28">{upcoming.length}</span>
@@ -5182,7 +5191,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       {/* Event content */}
                       <div className="min-w-0 flex-1 px-4 py-3">
                         <p className="truncate text-sm font-semibold text-foreground/88">
-                          {hasEventName ? gig.eventName : (gig.venue || <span className="text-muted-foreground/30">Untitled</span>)}
+                          {hasEventName ? gig.eventName : (gig.venue || <span className="text-muted-foreground/30">{tr("Untitled")}</span>)}
                         </p>
                         {hasEventName && (
                           <p className="mt-0.5 truncate text-xs font-medium text-foreground/50">{gig.venue}</p>
@@ -5209,7 +5218,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
                           className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/35 transition-colors duration-150 hover:bg-secondary hover:text-foreground/60"
-                          aria-label="Show actions"
+                          aria-label={tr("Show actions")}
                         >
                           <MoreVertical className="h-3.5 w-3.5" />
                         </button>
@@ -5218,6 +5227,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             onEdit={() => { setEditingGig(gig); setOpenGigActionsId(null) }}
                             onDelete={() => { setDeletingGig(gig); setOpenGigActionsId(null) }}
                             onClose={() => setOpenGigActionsId(null)}
+                            editLabel={tr("Edit")}
+                            deleteLabel={tr("Delete")}
                           />
                         )}
                       </div>
@@ -5238,7 +5249,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="flex w-full items-center gap-3 text-left"
             >
               <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/32">
-                Past Shows
+                {tr("Past Shows")}
               </span>
               <span className="tabular-nums text-[10px] text-muted-foreground/22">{past.length}</span>
               <span className="h-px flex-1 bg-secondary" />
@@ -5343,7 +5354,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); setOpenGigActionsId(openGigActionsId === gig.id ? null : gig.id) }}
                                         className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/20 transition-colors duration-150 hover:bg-secondary hover:text-foreground/45"
-                                        aria-label="Show actions"
+                                        aria-label={tr("Show actions")}
                                       >
                                         <MoreVertical className="h-3 w-3" />
                                       </button>
@@ -5353,6 +5364,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                           onDelete={() => { setDeletingGig(gig); setOpenGigActionsId(null) }}
                                           onClose={() => setOpenGigActionsId(null)}
                                           align="right"
+                                          editLabel={tr("Edit")}
+                                          deleteLabel={tr("Delete")}
                                         />
                                       )}
                                     </div>
@@ -5445,8 +5458,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       <div className="space-y-6">
 
         <HqPageHeader
-          title="Sets"
-          description={`DJ sets, live recordings and performances.${djSets.length > 0 ? `  ${djSets.length} set${djSets.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 featured" : ""}.` : ""}`}
+          title={tr("Sets")}
+          description={locale === "es" ? `Sets de DJ, grabaciones en vivo y presentaciones.${djSets.length > 0 ? `  ${djSets.length} set${djSets.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 destacado" : ""}.` : ""}` : `DJ sets, live recordings and performances.${djSets.length > 0 ? `  ${djSets.length} set${djSets.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 featured" : ""}.` : ""}`}
           action={
             <button
               type="button"
@@ -5455,7 +5468,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Set
+              {tr("Add Set")}
             </button>
           }
         />
@@ -5464,9 +5477,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {djSets.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <Headphones className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
-            <p className="text-sm font-medium text-foreground/55">No sets yet.</p>
+            <p className="text-sm font-medium text-foreground/55">{tr("No sets yet.")}</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
-              Add your first DJ set, live recording or performance.
+              {tr("Add your first DJ set, live recording or performance.")}
             </p>
             <button
               type="button"
@@ -5475,7 +5488,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Set
+              {tr("Add Set")}
             </button>
           </div>
         )}
@@ -5530,7 +5543,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {isFeatured && (
                       <div className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 backdrop-blur-sm">
                         <Star className="h-2.5 w-2.5 fill-accent text-accent" />
-                        <span className="text-[8px] font-bold uppercase tracking-wider text-accent">Featured</span>
+                        <span className="text-[8px] font-bold uppercase tracking-wider text-accent">{tr("Featured")}</span>
                       </div>
                     )}
                     {/* Type badge */}
@@ -5543,7 +5556,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <div className="px-3 pb-2 pt-2">
                     {/* Primary: event name */}
                     <p className="truncate text-sm font-semibold leading-tight text-foreground/88">
-                      {primaryLabel || <span className="text-muted-foreground/28">Untitled</span>}
+                      {primaryLabel || <span className="text-muted-foreground/28">{tr("Untitled")}</span>}
                     </p>
                     {/* Secondary: venue · city */}
                     {(set.venue || set.city) && (
@@ -5592,14 +5605,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/42 hover:text-foreground",
                       )}
                     >
-                      {isEditing ? "Close" : "Edit"}
+                      {isEditing ? tr("Close") : tr("Edit")}
                     </button>
                     <div className="relative ml-auto">
                       <button
                         type="button"
                         onClick={() => setSetMenuOpenId(isMenuOpen ? null : set.id)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/28 transition-colors duration-150 hover:text-foreground/60"
-                        title="More options"
+                        title={tr("More options")}
                       >
                         <span className="text-[15px] leading-none tracking-[-0.15em]">···</span>
                       </button>
@@ -5609,14 +5622,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {/* Inline delete confirmation */}
                   {isMenuOpen && (
                     <div className="flex items-center justify-between border-t border-border bg-destructive/[0.03] px-3 py-2">
-                      <span className="text-[11px] text-muted-foreground/45">Delete this set?</span>
+                      <span className="text-[11px] text-muted-foreground/45">{tr("Delete this set?")}</span>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => setSetMenuOpenId(null)}
                           className="rounded px-2 py-0.5 text-[11px] text-muted-foreground/40 hover:text-foreground/60"
                         >
-                          Cancel
+                          {tr("Cancel")}
                         </button>
                         <button
                           type="button"
@@ -5628,7 +5641,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           }}
                           className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/65 hover:text-destructive disabled:opacity-40"
                         >
-                          Delete
+                          {tr("Delete")}
                         </button>
                       </div>
                     </div>
@@ -5675,7 +5688,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         artist.artistName,
                       )) || "Untitled Set"}
                     </p>
-                    <p className="text-[11px] text-muted-foreground/40">Editing set</p>
+                    <p className="text-[11px] text-muted-foreground/40">{tr("Editing set")}</p>
                   </div>
                 </div>
                 <button
@@ -5693,7 +5706,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* ── Cover & Source ─────────────────────────────────── */}
                   <div className="space-y-4">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Cover & Source</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">{tr("Cover & Source")}</p>
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
                       {/* Cover preview */}
@@ -5703,13 +5716,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={expandedSet.imageUrl}
-                              alt="Set cover"
+                              alt={tr("Set cover")}
                               className="h-full w-full object-cover object-top"
                             />
                           ) : (
                             <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
                               <Headphones className="h-7 w-7 text-muted-foreground/15" />
-                              <p className="text-center text-[10px] leading-tight text-muted-foreground/30">No cover selected</p>
+                              <p className="text-center text-[10px] leading-tight text-muted-foreground/30">{tr("No cover selected")}</p>
                             </div>
                           )}
                           {uploadingDjSetCoverIndex === expandedSetIdx && (
@@ -5739,15 +5752,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                               disabled={uploadingDjSetCoverIndex !== null || busy}
                             />
                             {uploadingDjSetCoverIndex === expandedSetIdx ? (
-                              <><Loader2 className="h-3.5 w-3.5 animate-spin" />Uploading…</>
+                              <><Loader2 className="h-3.5 w-3.5 animate-spin" />{tr("Uploading…")}</>
                             ) : (
                               <><Upload className="h-3.5 w-3.5" />{expandedSet.imageUrl?.trim() ? "Replace Cover" : "Upload Cover"}</>
                             )}
                           </label>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground/35">Upload cover</span>
-                            <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-accent/50">PRO</span>
+                            <span className="text-[11px] text-muted-foreground/35">{tr("Upload cover")}</span>
+                            <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-accent/50">{tr("PRO")}</span>
                           </div>
                         )}
 
@@ -5758,12 +5771,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             className="flex w-fit items-center gap-1.5 text-[11px] text-muted-foreground/30 transition-colors hover:text-destructive/60"
                           >
                             <X className="h-3 w-3" />
-                            Remove cover
+                            {tr("Remove cover")}
                           </button>
                         )}
 
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Cover Image URL</label>
+                          <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Cover Image URL")}</label>
                           <Input
                             value={expandedSet.imageUrl ?? ""}
                             placeholder="https://…"
@@ -5775,7 +5788,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                     {/* Platform URL + Import */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Platform URL</label>
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Platform URL")}</label>
                       <div className="flex gap-2">
                         <Input
                           value={expandedSet.platformUrl}
@@ -5793,17 +5806,17 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           {importingDjSetIndex === expandedSetIdx ? "Fetching…" : "Import"}
                         </Button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground/30">Import fetches cover image, title and metadata from the URL.</p>
+                      <p className="text-[10px] text-muted-foreground/30">{tr("Import fetches cover image, title and metadata from the URL.")}</p>
                     </div>
                   </div>
 
                   {/* ── Set Details ─────────────────────────────────────── */}
                   <div className="space-y-4 border-t border-border pt-7">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Set Details</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">{tr("Set Details")}</p>
 
                     {/* Type */}
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Type</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Type")}</p>
                       <div className="flex w-fit flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
                         {performanceTypes.map((type) => (
                           <button
@@ -5827,10 +5840,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {/* Custom type */}
                     {expandedSet.performanceType === "other" && (
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Custom Type</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Custom Type")}</label>
                         <Input
                           value={expandedSet.customPerformanceType}
-                          placeholder="Radio show, podcast, guest mix…"
+                          placeholder={tr("Radio show, podcast, guest mix…")}
                           onChange={(e) => updateSet(expandedSetIdx, { customPerformanceType: e.target.value })}
                         />
                       </div>
@@ -5838,13 +5851,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                     {/* Artists */}
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Artists")}</p>
                       <div className="space-y-2">
                         {expandedSet.performanceArtists.map((name, ai) => (
                           <div key={ai} className="flex gap-2">
                             <Input
                               value={name}
-                              placeholder="Artist name"
+                              placeholder={tr("Artist name")}
                               onChange={(e) => {
                                 const next = [...expandedSet.performanceArtists]
                                 next[ai] = e.target.value
@@ -5874,7 +5887,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
                         >
                           <Plus className="h-3 w-3" />
-                          Add artist
+                          {tr("Add artist")}
                         </button>
                       </div>
                     </div>
@@ -5882,7 +5895,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {/* Date · Venue · City · Event */}
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Date</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Date")}</label>
                         <DatePicker
                           value={expandedSet.setDate ?? ""}
                           onChange={(v) => updateSet(expandedSetIdx, { setDate: v })}
@@ -5891,7 +5904,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Venue</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Venue")}</label>
                         <VenueAutocomplete
                           value={expandedSet.venue}
                           onChange={(v) => updateSet(expandedSetIdx, { venue: v })}
@@ -5899,7 +5912,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">City</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("City")}</label>
                         <Input
                           value={expandedSet.city}
                           placeholder="Santiago, Berlin…"
@@ -5907,7 +5920,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Event</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Event")}</label>
                         <Input
                           value={expandedSet.event}
                           placeholder="MISA, Boiler Room…"
@@ -5919,7 +5932,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* ── Visibility ──────────────────────────────────────── */}
                   <div className="border-t border-border pt-7">
-                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Visibility</p>
+                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">{tr("Visibility")}</p>
                     <div className="rounded-lg border border-border bg-secondary/30 px-4 py-3">
                       <label className="relative inline-flex cursor-pointer items-center gap-3">
                         <input
@@ -5938,8 +5951,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           )} />
                         </span>
                         <div>
-                          <p className="text-[12px] font-medium text-foreground/80">Show on public profile</p>
-                          <p className="text-[10px] text-muted-foreground/40">Controls whether this set appears on your public artist page.</p>
+                          <p className="text-[12px] font-medium text-foreground/80">{tr("Show on public profile")}</p>
+                          <p className="text-[10px] text-muted-foreground/40">{tr("Controls whether this set appears on your public artist page.")}</p>
                         </div>
                       </label>
                     </div>
@@ -5953,19 +5966,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30 transition-colors hover:text-muted-foreground/55"
                     >
                       <ChevronDown className={cn("h-3 w-3 transition-transform", advancedOpenIds.has(expandedSet.id) && "rotate-180")} />
-                      Advanced
+                      {tr("Advanced")}
                     </button>
                     {advancedOpenIds.has(expandedSet.id) && (
                       <div className="mt-4 space-y-1.5">
                         <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                          Title Override
+                          {tr("Title Override")}
                         </label>
                         <Input
                           value={expandedSet.titleOverride}
-                          placeholder="Leave blank to use generated title"
+                          placeholder={tr("Leave blank to use generated title")}
                           onChange={(e) => updateSet(expandedSetIdx, { titleOverride: e.target.value })}
                         />
-                        <p className="text-[10px] text-muted-foreground/28">Replaces the generated title on your public profile.</p>
+                        <p className="text-[10px] text-muted-foreground/28">{tr("Replaces the generated title on your public profile.")}</p>
                       </div>
                     )}
                   </div>
@@ -5984,7 +5997,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     onClick={() => setExpandedSetId(null)}
                     className="rounded-lg border border-border bg-secondary px-4 py-2 text-[12px] font-medium text-foreground/70 transition-colors hover:bg-secondary/80 hover:text-foreground"
                   >
-                    Close
+                    {tr("Close")}
                   </button>
                   <button
                     type="button"
@@ -5992,7 +6005,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     disabled={busy || !isSaveDirty}
                     className="rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-40"
                   >
-                    {isSaving ? "Saving…" : "Save Changes"}
+                    {isSaving ? tr("Saving…") : tr("Save Changes")}
                   </button>
                 </div>
               </div>
@@ -6042,8 +6055,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       <div className="space-y-6">
 
         <HqPageHeader
-          title="Videos"
-          description={`Performance videos, live clips and recorded DJ moments.${videos.length > 0 ? `  ${videos.length} video${videos.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 featured" : ""}.` : ""}`}
+          title={tr("Videos")}
+          description={locale === "es" ? `Videos de presentaciones, clips en vivo y momentos grabados de DJ.${videos.length > 0 ? `  ${videos.length} video${videos.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 destacado" : ""}.` : ""}` : `Performance videos, live clips and recorded DJ moments.${videos.length > 0 ? `  ${videos.length} video${videos.length !== 1 ? "s" : ""}${featuredCount > 0 ? " · 1 featured" : ""}.` : ""}`}
           action={
             <button
               type="button"
@@ -6052,7 +6065,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Video
+              {tr("Add Video")}
             </button>
           }
         />
@@ -6061,9 +6074,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {videos.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <Play className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
-            <p className="text-sm font-medium text-foreground/55">No videos yet.</p>
+            <p className="text-sm font-medium text-foreground/55">{tr("No videos yet.")}</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
-              Add YouTube performances, aftermovies and live clips to showcase your artist profile.
+              {tr("Add YouTube performances, aftermovies and live clips to showcase your artist profile.")}
             </p>
             <button
               type="button"
@@ -6072,7 +6085,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Video
+              {tr("Add Video")}
             </button>
           </div>
         )}
@@ -6131,7 +6144,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         href={video.platformUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        aria-label={`Watch ${primaryLabel}`}
+                        aria-label={`${tr("Watch")} ${primaryLabel}`}
                         onClick={(e) => e.stopPropagation()}
                         className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/28 group-hover:opacity-100"
                       >
@@ -6144,13 +6157,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {isFeatured && (
                       <div className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 ring-1 ring-accent/25 backdrop-blur-sm">
                         <Star className="h-2.5 w-2.5 fill-accent text-accent" />
-                        <span className="text-[8px] font-bold uppercase tracking-wider text-accent/90">Featured</span>
+                        <span className="text-[8px] font-bold uppercase tracking-wider text-accent/90">{tr("Featured")}</span>
                       </div>
                     )}
                     {/* Hidden badge */}
                     {!video.isPublished && (
                       <div className="absolute right-1.5 top-1.5 rounded bg-black/55 px-1.5 py-px text-[8px] font-bold uppercase tracking-wider text-white/45 backdrop-blur-sm">
-                        Hidden
+                        {tr("Hidden")}
                       </div>
                     )}
                   </div>
@@ -6204,7 +6217,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Play className="h-3 w-3 fill-current" />
-                        Watch
+                        {tr("Watch")}
                       </a>
                     )}
                     {/* Edit */}
@@ -6219,7 +6232,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         isEditing ? "bg-accent/10 text-accent" : "text-muted-foreground/38 hover:text-foreground",
                       )}
                     >
-                      {isEditing ? "Close" : "Edit"}
+                      {isEditing ? tr("Close") : tr("Edit")}
                     </button>
                     {/* ⋯ overflow */}
                     <div className="relative ml-auto">
@@ -6227,7 +6240,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         type="button"
                         onClick={() => setVideoMenuOpenId(isMenuOpen ? null : video.id)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/28 transition-colors duration-150 hover:text-foreground/60"
-                        title="More options"
+                        title={tr("More options")}
                       >
                         <span className="text-[15px] leading-none tracking-[-0.15em]">···</span>
                       </button>
@@ -6237,10 +6250,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   {/* Inline delete confirmation */}
                   {isMenuOpen && (
                     <div className="flex items-center justify-between border-t border-border bg-destructive/[0.03] px-3 py-2">
-                      <span className="text-[11px] text-muted-foreground/45">Delete this video?</span>
+                      <span className="text-[11px] text-muted-foreground/45">{tr("Delete this video?")}</span>
                       <div className="flex items-center gap-1.5">
                         <button type="button" onClick={() => setVideoMenuOpenId(null)} className="rounded px-2 py-0.5 text-[11px] text-muted-foreground/40 hover:text-foreground/60">
-                          Cancel
+                          {tr("Cancel")}
                         </button>
                         <button
                           type="button"
@@ -6252,7 +6265,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           }}
                           className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/65 hover:text-destructive disabled:opacity-40"
                         >
-                          Delete
+                          {tr("Delete")}
                         </button>
                       </div>
                     </div>
@@ -6296,7 +6309,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <p className="truncate text-[15px] font-semibold leading-snug text-foreground/90">
                       {expandedVideo.videoEvent?.trim() || expandedVideo.title?.trim() || "Untitled Video"}
                     </p>
-                    <p className="text-[11px] text-muted-foreground/40">Editing video</p>
+                    <p className="text-[11px] text-muted-foreground/40">{tr("Editing video")}</p>
                   </div>
                 </div>
                 <button
@@ -6314,7 +6327,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* ── Cover & Source ─────────────────────────────────── */}
                   <div className="space-y-4">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Cover & Source</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">{tr("Cover & Source")}</p>
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
                       {/* Cover preview — 16:9 to match video format */}
@@ -6324,13 +6337,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={(expandedVideo.customThumbnailUrl || expandedVideo.thumbnailUrl)!}
-                              alt="Video cover"
+                              alt={tr("Video cover")}
                               className="h-full w-full object-cover"
                             />
                           ) : (
                             <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
                               <Play className="h-7 w-7 text-muted-foreground/15" />
-                              <p className="text-center text-[10px] leading-tight text-muted-foreground/30">No cover selected</p>
+                              <p className="text-center text-[10px] leading-tight text-muted-foreground/30">{tr("No cover selected")}</p>
                             </div>
                           )}
                           {uploadingVideoThumbnailIndex === expandedVideoIdx && (
@@ -6360,15 +6373,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                               disabled={uploadingVideoThumbnailIndex !== null || busy}
                             />
                             {uploadingVideoThumbnailIndex === expandedVideoIdx ? (
-                              <><Loader2 className="h-3.5 w-3.5 animate-spin" />Uploading…</>
+                              <><Loader2 className="h-3.5 w-3.5 animate-spin" />{tr("Uploading…")}</>
                             ) : (
                               <><Upload className="h-3.5 w-3.5" />{expandedVideo.customThumbnailUrl ? "Replace Cover" : "Upload Cover"}</>
                             )}
                           </label>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground/35">Upload cover</span>
-                            <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-accent/50">PRO</span>
+                            <span className="text-[11px] text-muted-foreground/35">{tr("Upload cover")}</span>
+                            <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-accent/50">{tr("PRO")}</span>
                           </div>
                         )}
 
@@ -6379,12 +6392,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             className="flex w-fit items-center gap-1.5 text-[11px] text-muted-foreground/30 transition-colors hover:text-destructive/60"
                           >
                             <X className="h-3 w-3" />
-                            Remove cover
+                            {tr("Remove cover")}
                           </button>
                         )}
 
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Thumbnail URL</label>
+                          <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Thumbnail URL")}</label>
                           <Input
                             value={expandedVideo.thumbnailUrl}
                             placeholder="https://i.ytimg.com/vi/…"
@@ -6396,7 +6409,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                     {/* Video URL + Import */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Video URL</label>
+                      <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Video URL")}</label>
                       <div className="flex gap-2">
                         <Input
                           value={expandedVideo.platformUrl}
@@ -6414,23 +6427,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           {importingVideoIndex === expandedVideoIdx ? "Fetching…" : "Import"}
                         </Button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground/30">Paste a YouTube link — thumbnail and metadata are filled automatically.</p>
+                      <p className="text-[10px] text-muted-foreground/30">{tr("Paste a YouTube link — thumbnail and metadata are filled automatically.")}</p>
                     </div>
                   </div>
 
                   {/* ── Video Details ───────────────────────────────────── */}
                   <div className="space-y-4 border-t border-border pt-7">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Video Details</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">{tr("Video Details")}</p>
 
                     {/* Artists */}
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Artists</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Artists")}</p>
                       <div className="space-y-2">
                         {expandedVideo.videoArtists.map((name, ai) => (
                           <div key={ai} className="flex gap-2">
                             <Input
                               value={name}
-                              placeholder="Artist name"
+                              placeholder={tr("Artist name")}
                               onChange={(e) => {
                                 const next = [...expandedVideo.videoArtists]
                                 next[ai] = e.target.value
@@ -6460,7 +6473,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           className="flex items-center gap-1 text-xs text-accent/60 transition-colors hover:text-accent disabled:pointer-events-none disabled:opacity-40"
                         >
                           <Plus className="h-3 w-3" />
-                          Add artist
+                          {tr("Add artist")}
                         </button>
                       </div>
                     </div>
@@ -6468,19 +6481,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {/* Event · Venue · Date · City */}
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Event</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Event")}</label>
                         <Input value={expandedVideo.videoEvent} placeholder="Boiler Room, ICE…" onChange={(e) => updateVideo(expandedVideoIdx, { videoEvent: e.target.value })} />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Venue</label>
-                        <Input value={expandedVideo.venue} placeholder="Club, stage…" onChange={(e) => updateVideo(expandedVideoIdx, { venue: e.target.value })} />
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Venue")}</label>
+                        <Input value={expandedVideo.venue} placeholder={tr("Club, stage…")} onChange={(e) => updateVideo(expandedVideoIdx, { venue: e.target.value })} />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Date</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Date")}</label>
                         <DatePicker value={expandedVideo.videoDate ?? ""} onChange={(v) => updateVideo(expandedVideoIdx, { videoDate: v })} allowClear triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">City</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("City")}</label>
                         <Input value={expandedVideo.videoCity} placeholder="Santiago, Berlin…" onChange={(e) => updateVideo(expandedVideoIdx, { videoCity: e.target.value })} />
                       </div>
                     </div>
@@ -6488,7 +6501,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {/* Country */}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Country</label>
+                        <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Country")}</label>
                         <Input value={expandedVideo.videoCountry} placeholder="CL, DE…" onChange={(e) => updateVideo(expandedVideoIdx, { videoCountry: e.target.value })} />
                       </div>
                     </div>
@@ -6496,7 +6509,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                   {/* ── Visibility ──────────────────────────────────────── */}
                   <div className="border-t border-border pt-7">
-                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">Visibility</p>
+                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">{tr("Visibility")}</p>
                     <div className="rounded-lg border border-border bg-secondary/30 px-4 py-3">
                       <label className="relative inline-flex cursor-pointer items-center gap-3">
                         <input
@@ -6515,8 +6528,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           )} />
                         </span>
                         <div>
-                          <p className="text-[12px] font-medium text-foreground/80">Show on public profile</p>
-                          <p className="text-[10px] text-muted-foreground/40">Controls whether this video appears on your public artist page.</p>
+                          <p className="text-[12px] font-medium text-foreground/80">{tr("Show on public profile")}</p>
+                          <p className="text-[10px] text-muted-foreground/40">{tr("Controls whether this video appears on your public artist page.")}</p>
                         </div>
                       </label>
                     </div>
@@ -6536,7 +6549,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     onClick={() => setExpandedVideoId(null)}
                     className="rounded-lg border border-border bg-secondary px-4 py-2 text-[12px] font-medium text-foreground/70 transition-colors hover:bg-secondary/80 hover:text-foreground"
                   >
-                    Close
+                    {tr("Close")}
                   </button>
                   <button
                     type="button"
@@ -6544,7 +6557,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     disabled={busy || !isSaveDirty}
                     className="rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-40"
                   >
-                    {isSaving ? "Saving…" : "Save Changes"}
+                    {isSaving ? tr("Saving…") : tr("Save Changes")}
                   </button>
                 </div>
               </div>
@@ -6591,7 +6604,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-foreground">
-              Gallery
+              {tr("Gallery")}
               {photoCount > 0 && (
                 <span className="ml-2 text-sm font-normal text-muted-foreground/40">
                   · {photoCount} {photoCount === 1 ? "photo" : "photos"}
@@ -6599,11 +6612,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               )}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground/52">
-              Manage photos used across your DJHQ profile, press kit and artist pages.
+              {tr("Manage photos used across your DJHQ profile, press kit and artist pages.")}
             </p>
             {photoCount > 0 && (
               <p className="mt-1 text-[11px] text-muted-foreground/30">
-                Drag photos to reorder. The first photos appear first on your public profile.
+                {tr("Drag photos to reorder. The first photos appear first on your public profile.")}
               </p>
             )}
           </div>
@@ -6614,16 +6627,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
-            Upload Photos
+            {tr("Upload Photos")}
           </button>
         </div>
 
         {/* Gallery Polish — gallery-wide setting */}
         <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card/20 px-4 py-3">
           <div>
-            <p className="text-[11px] font-medium text-foreground/70">Gallery Polish</p>
+            <p className="text-[11px] font-medium text-foreground/70">{tr("Gallery Polish")}</p>
             <p className="mt-0.5 text-[10px] text-muted-foreground/38">
-              Neutral global polish for Moments photos. Separate from per-photo color grades.
+              {tr("Neutral global polish for Moments photos. Separate from per-photo color grades.")}
             </p>
           </div>
           <select
@@ -6639,10 +6652,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 : "border-border bg-card/40 text-white/50"
             }`}
           >
-            <option value="off">Off</option>
-            <option value="soft">Soft</option>
-            <option value="medium">Medium</option>
-            <option value="strong">Strong</option>
+            <option value="off">{tr("Off")}</option>
+            <option value="soft">{tr("Soft")}</option>
+            <option value="medium">{tr("Medium")}</option>
+            <option value="strong">{tr("Strong")}</option>
           </select>
         </div>
 
@@ -6691,7 +6704,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         className="inline-flex h-6 items-center gap-1 rounded-md bg-white/12 px-2.5 text-[10px] font-medium text-white/85 hover:bg-white/22 hover:text-foreground"
                       >
                         <ExternalLink className="h-2.5 w-2.5" />
-                        View
+                        {tr("View")}
                       </a>
                       <button
                         type="button"
@@ -6700,7 +6713,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         className="inline-flex h-6 items-center gap-1 rounded-md bg-white/10 px-2.5 text-[10px] font-medium text-white/70 hover:bg-destructive/35 hover:text-destructive disabled:opacity-40"
                       >
                         <Trash2 className="h-2.5 w-2.5" />
-                        Delete
+                        {tr("Delete")}
                       </button>
                     </div>
                   </div>
@@ -6721,11 +6734,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           : "border-border bg-card/40 text-white/50"
                     }`}
                   >
-                    <option value="">Auto</option>
-                    <option value="large">Large</option>
-                    <option value="top">Top</option>
-                    <option value="bottom">Bottom</option>
-                    <option value="hidden">Hidden</option>
+                    <option value="">{tr("Auto")}</option>
+                    <option value="large">{tr("Large")}</option>
+                    <option value="top">{tr("Top")}</option>
+                    <option value="bottom">{tr("Bottom")}</option>
+                    <option value="hidden">{tr("Hidden")}</option>
                   </select>
 
                   {/* Color grade */}
@@ -6742,19 +6755,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         : "border-border bg-card/40 text-white/50"
                     }`}
                   >
-                    <option value="">No grade</option>
-                    <option value="warm">Warm</option>
-                    <option value="red_club">Red Club</option>
-                    <option value="blue_night">Blue Night</option>
-                    <option value="green_laser">Green Laser</option>
-                    <option value="mono">Mono</option>
-                    <option value="muted">Muted</option>
+                    <option value="">{tr("No grade")}</option>
+                    <option value="warm">{tr("Warm")}</option>
+                    <option value="red_club">{tr("Red Club")}</option>
+                    <option value="blue_night">{tr("Blue Night")}</option>
+                    <option value="green_laser">{tr("Green Laser")}</option>
+                    <option value="mono">{tr("Mono")}</option>
+                    <option value="muted">{tr("Muted")}</option>
                   </select>
 
                   {/* Strength — only shown when a grade is active */}
                   {hasGrade && (
                     <div className="flex items-center gap-1">
-                      <span className="shrink-0 text-[9px] text-white/38">Str</span>
+                      <span className="shrink-0 text-[9px] text-white/38">{tr("Str")}</span>
                       <input
                         key={`${image.id}-str-${grade}`}
                         type="number"
@@ -6780,9 +6793,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Empty state */}
         {photoCount === 0 && !galleryImageFile && (
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
-            <p className="text-sm font-medium text-foreground/55">No photos uploaded yet.</p>
+            <p className="text-sm font-medium text-foreground/55">{tr("No photos uploaded yet.")}</p>
             <p className="mt-1.5 max-w-xs mx-auto text-[12px] leading-[1.6] text-muted-foreground/35">
-              Add artist photos, live shots and press images for your profile and press kit.
+              {tr("Add artist photos, live shots and press images for your profile and press kit.")}
             </p>
             <button
               type="button"
@@ -6791,10 +6804,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
             >
               <Plus className="h-3.5 w-3.5" />
-              Upload Photos
+              {tr("Upload Photos")}
             </button>
             <p className="mt-4 text-[10px] text-muted-foreground/25">
-              Recommended: 6–12 high-quality photos.
+              {tr("Recommended: 6–12 high-quality photos.")}
             </p>
           </div>
         )}
@@ -6809,7 +6822,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onClick={() => { setGalleryImageFile(null); setGalleryImageAltText(""); setGalleryImageSmallWarning(""); setGalleryFileError("") }}
                 className="ml-3 shrink-0 text-[11px] text-muted-foreground/40 hover:text-foreground/60"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
             </div>
             {galleryImageSmallWarning && (
@@ -6817,13 +6830,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             )}
             <div className="mb-3 space-y-1.5">
               <label htmlFor="galleryImageAltText" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                Alt Text <span className="normal-case text-muted-foreground/30">(optional)</span>
+                Alt Text <span className="normal-case text-muted-foreground/30">{tr("(optional)")}</span>
               </label>
               <Input
                 id="galleryImageAltText"
                 value={galleryImageAltText}
                 onChange={(e) => setGalleryImageAltText(e.target.value)}
-                placeholder="e.g. Live set at Club Room, press portrait"
+                placeholder={tr("e.g. Live set at Club Room, press portrait")}
                 className="h-8 text-sm"
               />
             </div>
@@ -6833,13 +6846,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               disabled={busy}
               className="h-8 bg-accent/90 px-4 text-[11px] text-accent-foreground hover:bg-accent"
             >
-              {isUploadingGalleryImage ? "Uploading…" : "Upload"}
+              {isUploadingGalleryImage ? tr("Uploading…") : tr("Upload")}
             </Button>
           </div>
         )}
 
         {galleryFileError && (
-          <p className="text-xs text-destructive/80">{galleryFileError}</p>
+          <p className="text-xs text-destructive/80">{tr(galleryFileError)}</p>
         )}
 
         {/* Hidden file input */}
@@ -6853,7 +6866,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {photoCount > 0 && (
           <p className="text-[10px] text-muted-foreground/22">
-            JPG, PNG, WEBP · up to 20 MB · Recommended: 6–12 high-quality photos.
+            {tr("JPG, PNG, WEBP · up to 20 MB · Recommended: 6–12 high-quality photos.")}
           </p>
         )}
 
@@ -7098,7 +7111,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </button>
           </div>
           <div>
-            <h2 className="text-base font-semibold text-foreground">{isEdit ? "Edit Tour" : "Create Tour"}</h2>
+            <h2 className="text-base font-semibold text-foreground">{isEdit ? tr("Edit Tour") : tr("Create Tour")}</h2>
             <p className="mt-0.5 text-sm text-muted-foreground/55">
               {isEdit ? "Update tour name, dates or slug." : "Give your tour a name and set the date range."}
             </p>
@@ -7107,7 +7120,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="max-w-[560px] space-y-5 rounded-xl border border-border bg-card/40 p-5">
             {/* Name */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Tour Name</label>
+              <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Tour Name")}</label>
               <input
                 type="text"
                 value={tourName}
@@ -7122,7 +7135,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
             {/* Slug */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">URL Slug</label>
+              <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("URL Slug")}</label>
               <input
                 type="text"
                 value={tourSlug}
@@ -7140,11 +7153,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Date range */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Start Date</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Start Date")}</label>
                 <DatePicker value={tourStartDate} onChange={setTourStartDate} allowClear triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">End Date</label>
+                <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("End Date")}</label>
                 <DatePicker value={tourEndDate} onChange={setTourEndDate} allowClear triggerClassName="h-9 w-full rounded-lg border border-border bg-secondary px-3" />
               </div>
             </div>
@@ -7156,11 +7169,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <span className={cn("flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors", tourIsPublished ? "bg-accent/70" : "bg-border")}>
                   <span className={cn("h-3 w-3 rounded-full bg-white/90 shadow-sm transition-transform", tourIsPublished ? "translate-x-3" : "translate-x-0")} />
                 </span>
-                <span className="text-[12px] text-foreground/70">Published (public page active)</span>
+                <span className="text-[12px] text-foreground/70">{tr("Published (public page active)")}</span>
               </label>
             </div>
 
-            {tourError && <p className="text-[11px] text-destructive/70">{tourError}</p>}
+            {tourError && <p className="text-[11px] text-destructive/70">{tr(tourError)}</p>}
 
             {/* Actions */}
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
@@ -7168,14 +7181,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <div>
                   {!tourDeleteConfirm ? (
                     <button type="button" onClick={() => setTourDeleteConfirm(true)} className="text-[11px] text-muted-foreground/35 transition-colors hover:text-destructive/60">
-                      Delete tour
+                      {tr("Delete tour")}
                     </button>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-muted-foreground/50">Delete permanently?</span>
-                      <button type="button" onClick={() => setTourDeleteConfirm(false)} className="text-[11px] text-muted-foreground/40 hover:text-foreground/60">Cancel</button>
+                      <span className="text-[11px] text-muted-foreground/50">{tr("Delete permanently?")}</span>
+                      <button type="button" onClick={() => setTourDeleteConfirm(false)} className="text-[11px] text-muted-foreground/40 hover:text-foreground/60">{tr("Cancel")}</button>
                       <button type="button" disabled={tourDeleting} onClick={() => void handleDeleteTour()} className="text-[11px] font-medium text-destructive/70 hover:text-destructive disabled:opacity-40">
-                        {tourDeleting ? "Deleting…" : "Delete"}
+                        {tourDeleting ? tr("Deleting…") : tr("Delete")}
                       </button>
                     </div>
                   )}
@@ -7183,7 +7196,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               )}
               <div className={cn("flex items-center gap-2", !isEdit && "ml-auto")}>
                 <button type="button" onClick={() => { setTourFormOpen(false); setTourDeleteConfirm(false) }} className="rounded-lg border border-border bg-secondary px-4 py-2 text-[12px] font-medium text-foreground/70 transition-colors hover:bg-secondary/80">
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="button"
@@ -7210,7 +7223,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               ← All tours
             </button>
             <button type="button" onClick={() => openEditForm(selectedTour)} className="rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-[11px] font-medium text-foreground/65 transition-colors hover:bg-secondary/60 hover:text-foreground">
-              Edit settings
+              {tr("Edit settings")}
             </button>
           </div>
 
@@ -7220,7 +7233,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <h2 className="text-lg font-bold text-foreground">{selectedTour.name}</h2>
               {!selectedTour.isPublished && (
                 <span className="rounded-full border border-border bg-secondary px-2 py-px text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
-                  Draft
+                  {tr("Draft")}
                 </span>
               )}
             </div>
@@ -7229,7 +7242,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           {/* Public URL card */}
           <div className="rounded-xl border border-border bg-card/40 p-4">
-            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Public URL</p>
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Public URL")}</p>
             <div className="flex items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded-md bg-secondary px-3 py-2 text-[12px] font-mono text-foreground/70">
                 {isPublicTourUrlPath}
@@ -7239,7 +7252,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0 rounded-lg border border-border bg-secondary/30 p-2 text-muted-foreground/40 transition-colors hover:text-foreground"
-                title="Open public page"
+                title={tr("Open public page")}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
@@ -7251,7 +7264,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   setTimeout(() => setTourUrlCopied(false), 2000)
                 }}
                 className="shrink-0 rounded-lg border border-border bg-secondary/30 p-2 transition-colors hover:text-foreground"
-                title="Copy URL"
+                title={tr("Copy URL")}
               >
                 {tourUrlCopied ? <Check className="h-3.5 w-3.5 text-accent" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground/40" />}
               </button>
@@ -7259,7 +7272,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {!selectedTour.isPublished && (
               <p className="mt-2 flex items-center gap-1.5 text-[10px] text-amber-400/60">
                 <AlertTriangle className="h-3 w-3" />
-                This tour is unpublished — the public page returns 404 until published.
+                {tr("This tour is unpublished — the public page returns 404 until published.")}
               </p>
             )}
           </div>
@@ -7275,7 +7288,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           {/* Calendar preview */}
           <div>
             <p className="mb-4 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/30">
-              Tour Schedule
+              {tr("Tour Schedule")}
             </p>
             <TourCalendar
               startDate={selectedTour.startDate}
@@ -7291,7 +7304,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Section header */}
             <div className="flex items-center justify-between gap-3">
               <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-muted-foreground/30">
-                City Stays / Route
+                {tr("City Stays / Route")}
               </p>
               {tourStays.length > 0 && (
                 <button
@@ -7301,23 +7314,23 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-2.5 py-1 text-[10px] font-medium text-muted-foreground/55 transition-colors hover:text-foreground disabled:opacity-40"
                 >
                   {stayGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Route className="h-3 w-3" />}
-                  Regenerate from shows
+                  {tr("Regenerate from shows")}
                 </button>
               )}
             </div>
 
             {/* Error */}
             {stayError && (
-              <p className="text-[11px] text-red-400/80">{stayError}</p>
+              <p className="text-[11px] text-red-400/80">{tr(stayError)}</p>
             )}
 
             {/* Empty state */}
             {staysLoaded && tourStays.length === 0 && !stayFormOpen && (
               <div className="rounded-xl border border-dashed border-border bg-secondary/20 px-5 py-6 text-center">
                 <Route className="mx-auto mb-2 h-5 w-5 text-muted-foreground/20" />
-                <p className="text-[12px] font-medium text-foreground/50">No city stays yet.</p>
+                <p className="text-[12px] font-medium text-foreground/50">{tr("No city stays yet.")}</p>
                 <p className="mx-auto mt-1 max-w-xs text-[11px] leading-[1.6] text-muted-foreground/32">
-                  Define the cities you'll be in during this tour, or generate from your shows.
+                  {tr("Define the cities you'll be in during this tour, or generate from your shows.")}
                 </p>
                 <div className="mt-3 flex items-center justify-center gap-2">
                   <button
@@ -7327,7 +7340,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-3 text-[11px] font-medium text-foreground/55 transition-all hover:text-foreground disabled:opacity-40"
                   >
                     {stayGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Route className="h-3 w-3" />}
-                    Generate from Shows
+                    {tr("Generate from Shows")}
                   </button>
                   <button
                     type="button"
@@ -7335,7 +7348,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-3 text-[11px] font-medium text-foreground/55 transition-all hover:text-foreground"
                   >
                     <Plus className="h-3 w-3" />
-                    Add Manually
+                    {tr("Add Manually")}
                   </button>
                 </div>
               </div>
@@ -7372,7 +7385,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           onClick={() => isEditing ? closeStayForm() : openEditStay(stay)}
                           className="shrink-0 rounded-lg border border-border bg-secondary/30 px-2.5 py-1 text-[10px] font-medium text-muted-foreground/55 transition-colors hover:text-foreground"
                         >
-                          {isEditing ? "Cancel" : "Edit"}
+                          {isEditing ? tr("Cancel") : tr("Edit")}
                         </button>
                         {!isEditing && (
                           <button
@@ -7390,30 +7403,30 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <div className="border-t border-border bg-secondary/20 p-4 space-y-3">
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">City *</label>
-                              <Input value={stayCity} onChange={(e) => setStayCity(e.target.value)} placeholder="e.g. Ibiza" className="h-8 text-[12px]" />
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("City *")}</label>
+                              <Input value={stayCity} onChange={(e) => setStayCity(e.target.value)} placeholder={tr("e.g. Ibiza")} className="h-8 text-[12px]" />
                             </div>
                             <div>
-                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Country</label>
-                              <Input value={stayCountry} onChange={(e) => setStayCountry(e.target.value)} placeholder="e.g. Spain" className="h-8 text-[12px]" />
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Country")}</label>
+                              <Input value={stayCountry} onChange={(e) => setStayCountry(e.target.value)} placeholder={tr("e.g. Spain")} className="h-8 text-[12px]" />
                             </div>
                           </div>
                           <div>
-                            <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Venue / Area</label>
-                            <Input value={stayVenueOrArea} onChange={(e) => setStayVenueOrArea(e.target.value)} placeholder="e.g. Playa d'en Bossa" className="h-8 text-[12px]" />
+                            <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Venue / Area")}</label>
+                            <Input value={stayVenueOrArea} onChange={(e) => setStayVenueOrArea(e.target.value)} placeholder={tr("e.g. Playa d'en Bossa")} className="h-8 text-[12px]" />
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Start date *</label>
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Start date *")}</label>
                               <DatePicker value={stayStartsOn} onChange={(v) => setStayStartsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
                             </div>
                             <div>
-                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">End date *</label>
+                              <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("End date *")}</label>
                               <DatePicker value={stayEndsOn} onChange={(v) => setStayEndsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
                             </div>
                           </div>
                           <div>
-                            <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/55">Color *</label>
+                            <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/55">{tr("Color *")}</label>
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {STAY_COLORS.map((c) => (
                                 <button
@@ -7431,13 +7444,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             </div>
                           </div>
                           <div>
-                            <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Notes</label>
-                            <Textarea value={stayNotes} onChange={(e) => setStayNotes(e.target.value)} placeholder="Optional notes..." rows={2} className="resize-none text-[12px]" />
+                            <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Notes")}</label>
+                            <Textarea value={stayNotes} onChange={(e) => setStayNotes(e.target.value)} placeholder={tr("Optional notes...")} rows={2} className="resize-none text-[12px]" />
                           </div>
-                          {stayError && <p className="text-[11px] text-red-400/80">{stayError}</p>}
+                          {stayError && <p className="text-[11px] text-red-400/80">{tr(stayError)}</p>}
                           <div className="flex items-center gap-2 justify-end">
                             <button type="button" onClick={closeStayForm} className="rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-[11px] font-medium text-muted-foreground/55 hover:text-foreground">
-                              Cancel
+                              {tr("Cancel")}
                             </button>
                             <button
                               type="button"
@@ -7446,7 +7459,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                               className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[11px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
                             >
                               {staySaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                              Save
+                              {tr("Save")}
                             </button>
                           </div>
                         </div>
@@ -7461,35 +7474,35 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {stayFormOpen && !editingStayId && (
               <div className="rounded-xl border border-border bg-card/30 overflow-hidden">
                 <div className="border-b border-border bg-secondary/30 px-4 py-2.5">
-                  <p className="text-[11px] font-semibold text-foreground/70">Add City Stay</p>
+                  <p className="text-[11px] font-semibold text-foreground/70">{tr("Add City Stay")}</p>
                 </div>
                 <div className="p-4 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">City *</label>
-                      <Input value={stayCity} onChange={(e) => setStayCity(e.target.value)} placeholder="e.g. Ibiza" className="h-8 text-[12px]" />
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("City *")}</label>
+                      <Input value={stayCity} onChange={(e) => setStayCity(e.target.value)} placeholder={tr("e.g. Ibiza")} className="h-8 text-[12px]" />
                     </div>
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Country</label>
-                      <Input value={stayCountry} onChange={(e) => setStayCountry(e.target.value)} placeholder="e.g. Spain" className="h-8 text-[12px]" />
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Country")}</label>
+                      <Input value={stayCountry} onChange={(e) => setStayCountry(e.target.value)} placeholder={tr("e.g. Spain")} className="h-8 text-[12px]" />
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Venue / Area</label>
-                    <Input value={stayVenueOrArea} onChange={(e) => setStayVenueOrArea(e.target.value)} placeholder="e.g. Playa d'en Bossa" className="h-8 text-[12px]" />
+                    <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Venue / Area")}</label>
+                    <Input value={stayVenueOrArea} onChange={(e) => setStayVenueOrArea(e.target.value)} placeholder={tr("e.g. Playa d'en Bossa")} className="h-8 text-[12px]" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Start date *</label>
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Start date *")}</label>
                       <DatePicker value={stayStartsOn} onChange={(v) => setStayStartsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
                     </div>
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">End date *</label>
+                      <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("End date *")}</label>
                       <DatePicker value={stayEndsOn} onChange={(v) => setStayEndsOn(v ?? "")} triggerClassName="h-8 text-[12px] w-full" />
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/55">Color *</label>
+                    <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/55">{tr("Color *")}</label>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {STAY_COLORS.map((c) => (
                         <button
@@ -7507,13 +7520,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">Notes</label>
-                    <Textarea value={stayNotes} onChange={(e) => setStayNotes(e.target.value)} placeholder="Optional notes..." rows={2} className="resize-none text-[12px]" />
+                    <label className="mb-1 block text-[10px] font-medium text-muted-foreground/55">{tr("Notes")}</label>
+                    <Textarea value={stayNotes} onChange={(e) => setStayNotes(e.target.value)} placeholder={tr("Optional notes...")} rows={2} className="resize-none text-[12px]" />
                   </div>
-                  {stayError && <p className="text-[11px] text-red-400/80">{stayError}</p>}
+                  {stayError && <p className="text-[11px] text-red-400/80">{tr(stayError)}</p>}
                   <div className="flex items-center gap-2 justify-end">
                     <button type="button" onClick={closeStayForm} className="rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-[11px] font-medium text-muted-foreground/55 hover:text-foreground">
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="button"
@@ -7522,7 +7535,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[11px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
                       {staySaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                      Save Stay
+                      {tr("Save Stay")}
                     </button>
                   </div>
                 </div>
@@ -7537,7 +7550,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-dashed border-border px-3 text-[11px] font-medium text-muted-foreground/40 transition-colors hover:border-border hover:text-muted-foreground/70"
               >
                 <Plus className="h-3 w-3" />
-                Add City Stay
+                {tr("Add City Stay")}
               </button>
             )}
           </div>
@@ -7550,8 +7563,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       <div className="space-y-6">
         {/* Header */}
         <HqPageHeader
-          title="Tour Planner"
-          description="Plan and publish date-range pages around your tours."
+          title={tr("Tour Planner")}
+          description={tr("Plan and publish date-range pages around your tours.")}
           action={
             <button
               type="button"
@@ -7559,7 +7572,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all hover:border-border hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
-              Create Tour
+              {tr("Create Tour")}
             </button>
           }
         />
@@ -7574,9 +7587,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {toursLoaded && tours.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
             <Route className="mx-auto mb-3 h-6 w-6 text-muted-foreground/20" />
-            <p className="text-sm font-medium text-foreground/55">No tours yet.</p>
+            <p className="text-sm font-medium text-foreground/55">{tr("No tours yet.")}</p>
             <p className="mx-auto mt-1.5 max-w-xs text-[12px] leading-[1.6] text-muted-foreground/32">
-              Create a tour plan to organize shows across a date range and generate a public tour page.
+              {tr("Create a tour plan to organize shows across a date range and generate a public tour page.")}
             </p>
             <button
               type="button"
@@ -7584,7 +7597,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
-              Create Tour
+              {tr("Create Tour")}
             </button>
           </div>
         )}
@@ -7628,11 +7641,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <p className="truncate text-[14px] font-bold text-foreground/85">{tour.name}</p>
                       {tour.isPublished ? (
                         <span className="shrink-0 rounded-full bg-accent/[0.08] px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.12em] text-accent/60">
-                          Live
+                          {tr("Live")}
                         </span>
                       ) : (
                         <span className="shrink-0 rounded-full bg-secondary px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/38">
-                          Draft
+                          {tr("Draft")}
                         </span>
                       )}
                     </div>
@@ -7660,15 +7673,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
         {/* Section header */}
-        <HqPageHeader title="Bookings" description="Incoming booking requests from your public profile." />
+        <HqPageHeader title={tr("Bookings")} description={tr("Incoming booking requests from your public profile.")} />
 
         {/* Booking email config */}
         <div className="rounded-xl border border-border bg-card/40 p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8">
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-foreground/80">Delivery Email</p>
+              <p className="text-[12px] font-semibold text-foreground/80">{tr("Delivery Email")}</p>
               <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground/40">
-                Booking requests will be sent to this address.
+                {tr("Booking requests will be sent to this address.")}
                 Sent from{" "}
                 <span className="font-mono text-muted-foreground/50">DJHQ Booking &lt;booking@djhq.app&gt;</span>{" "}
                 with the requester as reply-to. Saved with the global Save button.
@@ -7684,11 +7697,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {emailEmpty && (
                 <p className="flex items-center gap-1.5 text-[10px] text-amber-400/70">
                   <AlertTriangle className="h-3 w-3 shrink-0" />
-                  Not configured — requests cannot be delivered.
+                  {tr("Not configured — requests cannot be delivered.")}
                 </p>
               )}
               {emailInvalid && (
-                <p className="text-[10px] text-amber-400/70">Enter a valid email address.</p>
+                <p className="text-[10px] text-amber-400/70">{tr("Enter a valid email address.")}</p>
               )}
             </div>
           </div>
@@ -7704,8 +7717,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
         <HqPageHeader
-          title="Audience"
-          description="Everyone who signed up via your public Stay Connected form."
+          title={tr("Audience")}
+          description={tr("Everyone who signed up via your public Stay Connected form.")}
         />
         <AudienceSection artistId={artist.id} />
       </div>
@@ -7734,13 +7747,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     // Readiness summary
     const readinessItems = [
-      { label: "Press Kit enabled",   ok: pressKitEnabled },
-      { label: "English PDF",         ok: Boolean(pressKitPdfEnUrl.trim()) },
-      { label: "Spanish PDF",         ok: Boolean(pressKitPdfEsUrl.trim()) },
-      { label: "Full Drive Package",  ok: Boolean(pressKitRootUrl.trim()) },
-      { label: "Press Photos Folder", ok: Boolean(pressKitMediaFolderUrl.trim()) },
-      { label: "Logos & Artwork",     ok: Boolean(pressKitLogosFolderUrl.trim()) },
-      { label: "Technical Rider",     ok: Boolean(pressKitRiderFolderUrl.trim()) },
+      { label: tr("Press Kit enabled"),   ok: pressKitEnabled },
+      { label: tr("English PDF"),         ok: Boolean(pressKitPdfEnUrl.trim()) },
+      { label: tr("Spanish PDF"),         ok: Boolean(pressKitPdfEsUrl.trim()) },
+      { label: tr("Full Drive Package"),  ok: Boolean(pressKitRootUrl.trim()) },
+      { label: tr("Press Photos Folder"), ok: Boolean(pressKitMediaFolderUrl.trim()) },
+      { label: tr("Logos & Artwork"),     ok: Boolean(pressKitLogosFolderUrl.trim()) },
+      { label: tr("Technical Rider"),     ok: Boolean(pressKitRiderFolderUrl.trim()) },
     ]
     const configuredCount = readinessItems.filter((i) => i.ok).length
 
@@ -7748,7 +7761,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
       <div className="space-y-5">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <HqPageHeader title="Press Kit" description="Manage your public EPK, downloads and press assets." />
+        <HqPageHeader title={tr("Press Kit")} description={tr("Manage your public EPK, downloads and press assets.")} />
 
         {/* ── 1. Public EPK ──────────────────────────────────────────────── */}
         <div className="rounded-xl border border-border bg-card/40 p-4">
@@ -7762,7 +7775,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     : "bg-secondary text-muted-foreground/40",
                 )}>
                   <span className={cn("h-1.5 w-1.5 rounded-full", pressKitEnabled ? "bg-accent" : "bg-muted-foreground/30")} />
-                  {pressKitEnabled ? "Live" : "Hidden"}
+                  {pressKitEnabled ? tr("Live") : tr("Hidden")}
                 </span>
                 <a
                   href={pressKitResolvedUrl}
@@ -7780,7 +7793,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onClick={() => void navigator.clipboard.writeText(pressKitResolvedUrl)}
                 className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground/35 transition-colors hover:text-foreground/60"
               >
-                Copy
+                {tr("Copy")}
               </button>
               <a href={pressKitResolvedUrl} target="_blank" rel="noopener noreferrer"
                 className="rounded px-2 py-1 text-[10px] font-medium text-accent/55 transition-colors hover:text-accent/85">
@@ -7798,27 +7811,27 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="mt-4 space-y-4 border-t border-border pt-4">
               {/* Status toggle */}
               <div className="flex items-center justify-between gap-4">
-                <p className="text-[11px] text-muted-foreground/50">Visibility</p>
+                <p className="text-[11px] text-muted-foreground/50">{tr("Visibility")}</p>
                 <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
                   <button type="button" onClick={() => setPressKitEnabled(true)} aria-pressed={pressKitEnabled}
                     className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                       pressKitEnabled ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
-                    Live
+                    {tr("Live")}
                   </button>
                   <button type="button" onClick={() => setPressKitEnabled(false)} aria-pressed={!pressKitEnabled}
                     className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                       !pressKitEnabled ? "bg-secondary text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
-                    Hidden
+                    {tr("Hidden")}
                   </button>
                 </div>
               </div>
               {/* Button URL override */}
               <div className="space-y-1.5">
                 <label htmlFor="pressKitPublicUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-                  Press Kit Button URL
+                  {tr("Press Kit Button URL")}
                 </label>
                 <Input id="pressKitPublicUrl" value={pressKitPublicUrl} onChange={(e) => setPressKitPublicUrl(e.target.value)} placeholder={pressKitDefaultUrl} />
-                <p className="text-[10px] text-muted-foreground/28">Leave blank to use the default EPK URL.</p>
+                <p className="text-[10px] text-muted-foreground/28">{tr("Leave blank to use the default EPK URL.")}</p>
               </div>
             </div>
           )}
@@ -7827,7 +7840,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Readiness */}
         <div className="rounded-xl border border-border bg-secondary px-4 py-3">
           <div className="flex items-center justify-between gap-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/38">Press Kit Readiness</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/38">{tr("Press Kit Readiness")}</p>
             <span className="text-[11px] tabular-nums text-muted-foreground/38">{configuredCount} / {readinessItems.length}</span>
           </div>
           <div className="mt-2 h-1 overflow-hidden rounded-full bg-secondary">
@@ -7849,7 +7862,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           {/* ── 2. Downloads ───────────────────────────────────────────── */}
           <div>
-            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Downloads</p>
+            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">{tr("Downloads")}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {/* ENG card */}
               <div className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
@@ -7865,7 +7878,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </svg>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-foreground/88">Press Kit ENG</p>
+                    <p className="text-sm font-bold text-foreground/88">{tr("Press Kit ENG")}</p>
                     <p className={cn("text-[10px]", pressKitPdfEnUrl.trim() ? "text-accent/65" : "text-muted-foreground/30")}>
                       {pressKitPdfEnUrl.trim() ? `PDF${pressKitPdfEnSize.trim() ? ` · ${pressKitPdfEnSize}` : ""}` : "Not configured"}
                     </p>
@@ -7874,7 +7887,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {pressKitPdfEnUrl.trim() && (
                       <a href={pressKitPdfEnUrl} target="_blank" rel="noopener noreferrer"
                         className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.06] text-accent/70 hover:bg-accent/[0.12]"
-                        title="Open">
+                        title={tr("Open")}>
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
@@ -7887,7 +7900,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 {isOpen("en") && (
                   <div className="space-y-2 border-t border-border px-4 pb-4 pt-3">
                     <Input value={pressKitPdfEnUrl} onChange={(e) => setPressKitPdfEnUrl(e.target.value)} placeholder="https://…/epk-en.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
-                    <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder="File size, e.g. 4.2 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                    <Input value={pressKitPdfEnSize} onChange={(e) => setPressKitPdfEnSize(e.target.value)} placeholder={tr("File size, e.g. 4.2 MB")} className="h-8 text-xs" disabled={!pressKitEnabled} />
                   </div>
                 )}
               </div>
@@ -7903,7 +7916,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     </svg>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-foreground/88">Press Kit ESP</p>
+                    <p className="text-sm font-bold text-foreground/88">{tr("Press Kit ESP")}</p>
                     <p className={cn("text-[10px]", pressKitPdfEsUrl.trim() ? "text-accent/65" : "text-muted-foreground/30")}>
                       {pressKitPdfEsUrl.trim() ? `PDF${pressKitPdfEsSize.trim() ? ` · ${pressKitPdfEsSize}` : ""}` : "Not configured"}
                     </p>
@@ -7912,7 +7925,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     {pressKitPdfEsUrl.trim() && (
                       <a href={pressKitPdfEsUrl} target="_blank" rel="noopener noreferrer"
                         className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/20 bg-accent/[0.06] text-accent/70 hover:bg-accent/[0.12]"
-                        title="Open">
+                        title={tr("Open")}>
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
@@ -7925,7 +7938,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 {isOpen("es") && (
                   <div className="space-y-2 border-t border-border px-4 pb-4 pt-3">
                     <Input value={pressKitPdfEsUrl} onChange={(e) => setPressKitPdfEsUrl(e.target.value)} placeholder="https://…/epk-es.pdf" className="h-8 text-xs" disabled={!pressKitEnabled} />
-                    <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder="File size, e.g. 3.8 MB" className="h-8 text-xs" disabled={!pressKitEnabled} />
+                    <Input value={pressKitPdfEsSize} onChange={(e) => setPressKitPdfEsSize(e.target.value)} placeholder={tr("File size, e.g. 3.8 MB")} className="h-8 text-xs" disabled={!pressKitEnabled} />
                   </div>
                 )}
               </div>
@@ -7934,14 +7947,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           {/* ── 3. Asset Folders ───────────────────────────────────────── */}
           <div>
-            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">Asset Folders</p>
+            <p className="mb-3 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/38">{tr("Asset Folders")}</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[
-                { id: "drive",  label: "Full Drive Package", desc: "Complete press kit",      value: pressKitRootUrl,        setter: setPressKitRootUrl,        badge: "Complete" },
-                { id: "bio",    label: "Bio & Text",          desc: "Artist biography",       value: pressKitBioFolderUrl,   setter: setPressKitBioFolderUrl,   badge: null },
-                { id: "logos",  label: "Logos & Artwork",     desc: "Brand assets",           value: pressKitLogosFolderUrl, setter: setPressKitLogosFolderUrl, badge: null },
-                { id: "photos", label: "Press Photos",        desc: "High-res press images",  value: pressKitMediaFolderUrl, setter: setPressKitMediaFolderUrl, badge: null },
-                { id: "rider",  label: "Technical Rider",     desc: "Stage requirements",     value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl, badge: null },
+                { id: "drive",  label: tr("Full Drive Package"), desc: tr("Complete press kit"),      value: pressKitRootUrl,        setter: setPressKitRootUrl,        badge: "Complete" },
+                { id: "bio",    label: tr("Bio & Text"),          desc: tr("Artist biography"),       value: pressKitBioFolderUrl,   setter: setPressKitBioFolderUrl,   badge: null },
+                { id: "logos",  label: tr("Logos & Artwork"),     desc: tr("Brand assets"),           value: pressKitLogosFolderUrl, setter: setPressKitLogosFolderUrl, badge: null },
+                { id: "photos", label: tr("Press Photos"),        desc: tr("High-res press images"),  value: pressKitMediaFolderUrl, setter: setPressKitMediaFolderUrl, badge: null },
+                { id: "rider",  label: tr("Technical Rider"),     desc: tr("Stage requirements"),     value: pressKitRiderFolderUrl, setter: setPressKitRiderFolderUrl, badge: null },
               ].map(({ id, label, desc, value, setter, badge }) => (
                 <div key={id} className={cn("overflow-hidden rounded-[20px] border transition-all duration-150",
                   value.trim() ? "border-border bg-secondary" : "border-dashed border-border bg-secondary")}>
@@ -7992,21 +8005,21 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="rounded-xl border border-border bg-card/40 p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-foreground">Press Photos Preview</p>
+                <p className="text-sm font-semibold text-foreground">{tr("Press Photos Preview")}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground/40">
-                  Controls the preview grid on your public EPK. High-resolution photos remain available from the Press Photos folder.
+                  {tr("Controls the preview grid on your public EPK. High-resolution photos remain available from the Press Photos folder.")}
                 </p>
               </div>
               <div role="group" className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5">
                 <button type="button" onClick={() => setPressKitUseGalleryPhotos(true)} aria-pressed={pressKitUseGalleryPhotos} disabled={!pressKitEnabled}
                   className={cn("rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                     pressKitUseGalleryPhotos ? "bg-accent/[0.15] text-accent/80" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
-                  Show
+                  {tr("Show")}
                 </button>
                 <button type="button" onClick={() => setPressKitUseGalleryPhotos(false)} aria-pressed={!pressKitUseGalleryPhotos} disabled={!pressKitEnabled}
                   className={cn("rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100",
                     !pressKitUseGalleryPhotos ? "bg-secondary text-foreground/60" : "text-muted-foreground/25 hover:text-muted-foreground/45")}>
-                  Hide
+                  {tr("Hide")}
                 </button>
               </div>
             </div>
@@ -8017,8 +8030,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <button type="button" onClick={() => setPressKitAdvancedOpen((v) => !v)}
               className="flex w-full items-center justify-between px-5 py-4">
               <div>
-                <span className="text-sm font-semibold text-foreground/65">Advanced Settings</span>
-                <span className="ml-2 text-[10px] text-muted-foreground/28">Legacy URL · Assets list</span>
+                <span className="text-sm font-semibold text-foreground/65">{tr("Advanced Settings")}</span>
+                <span className="ml-2 text-[10px] text-muted-foreground/28">{tr("Legacy URL · Assets list")}</span>
               </div>
               <ChevronDown className={cn("h-4 w-4 text-muted-foreground/35 transition-transform duration-200", pressKitAdvancedOpen && "rotate-180")} />
             </button>
@@ -8026,20 +8039,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <div className="space-y-5 border-t border-border px-5 pb-5 pt-4">
                 {/* Legacy URL */}
                 <div className="space-y-1.5">
-                  <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Legacy Download URL</label>
+                  <label htmlFor="pressKitUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">{tr("Legacy Download URL")}</label>
                   <Input id="pressKitUrl" value={pressKitUrl} onChange={(e) => setPressKitUrl(e.target.value)} placeholder="https://artist.com/epk" disabled={!pressKitEnabled} />
-                  {pressKitUrlInvalid && <p className="text-[10px] text-amber-400/60">Should start with https://</p>}
-                  <p className="text-[10px] text-muted-foreground/28">Older direct-download link. Not required when PDF URLs above are configured.</p>
+                  {pressKitUrlInvalid && <p className="text-[10px] text-amber-400/60">{tr("Should start with https://")}</p>}
+                  <p className="text-[10px] text-muted-foreground/28">{tr("Older direct-download link. Not required when PDF URLs above are configured.")}</p>
                 </div>
                 {/* Assets tags */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/45">Assets Included</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/45">{tr("Assets Included")}</p>
                   {pressKitAssets.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {pressKitAssets.map((asset, i) => (
                         <span key={i} className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/60">
                           {asset}
-                          <button type="button" onClick={() => handleRemoveAsset(i)} aria-label={`Remove ${asset}`}
+                          <button type="button" onClick={() => handleRemoveAsset(i)} aria-label={`${tr("Remove")} ${asset}`}
                             className="leading-none text-muted-foreground/30 hover:text-foreground/60">×</button>
                         </span>
                       ))}
@@ -8048,10 +8061,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <div className="flex items-center gap-2">
                     <input type="text" value={newAssetInput} onChange={(e) => setNewAssetInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddAsset() } }}
-                      placeholder="Add asset… e.g. Press photos" disabled={!pressKitEnabled} aria-label="New asset name"
+                      placeholder={tr("Add asset… e.g. Press photos")} disabled={!pressKitEnabled} aria-label={tr("New asset name")}
                       className={cn("h-9 min-w-0 flex-1 rounded-lg border border-border bg-secondary px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground/30 outline-none transition-colors duration-150 focus:border-border focus:bg-secondary disabled:cursor-not-allowed")}
                     />
-                    <button type="button" onClick={handleAddAsset} disabled={!pressKitEnabled || !newAssetInput.trim()} aria-label="Add asset"
+                    <button type="button" onClick={handleAddAsset} disabled={!pressKitEnabled || !newAssetInput.trim()} aria-label={tr("Add asset")}
                       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground/40 hover:border-border hover:text-foreground/60 disabled:cursor-not-allowed disabled:opacity-25">
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -8068,7 +8081,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
   function renderPublish() {
     return (
       <div className="space-y-6">
-        <HqPageHeader title="Publish" description="Control whether your profile is visible to the public." />
+        <HqPageHeader title={tr("Publish")} description={tr("Control whether your profile is visible to the public.")} />
         <div className="space-y-5 rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border sm:p-6">
           <div className="flex items-center gap-3">
             <span
@@ -8081,7 +8094,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <span
                 className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "bg-accent" : "bg-muted-foreground/40"}`}
               />
-              {artist.isPublished ? "Published" : "Draft"}
+              {artist.isPublished ? tr("Published") : tr("Draft")}
             </span>
             <span className="font-mono text-sm text-muted-foreground/60">{publicProfileUrl}</span>
           </div>
@@ -8103,11 +8116,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Globe className="h-3.5 w-3.5" />
-              Profile visibility updates immediately after publishing changes.
+              {tr("Profile visibility updates immediately after publishing changes.")}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Mail className="h-3.5 w-3.5" />
-              Only the profile owner can publish or unpublish this artist.
+              {tr("Only the profile owner can publish or unpublish this artist.")}
             </div>
           </div>
         </div>
@@ -8311,15 +8324,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-5">
-        <HqPageHeader title="Footer" description="Configure the visual identity shown at the bottom of your artist profile." />
+        <HqPageHeader title={tr("Footer")} description={tr("Configure the visual identity shown at the bottom of your artist profile.")} />
 
         {/* Live preview — dark + light backgrounds */}
         <div className="overflow-hidden rounded-xl border border-border bg-card/30">
-          <p className="border-b border-border px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/28">Preview</p>
+          <p className="border-b border-border px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/28">{tr("Preview")}</p>
           <div className="grid grid-cols-2 divide-x divide-border">
             {/* Dark background preview (actual footer background) */}
             <div className="flex flex-col items-center gap-3 bg-[#0d0d0d] px-5 py-6 text-center">
-              <p className="text-[9px] uppercase tracking-[0.20em] text-white/20">Dark</p>
+              <p className="text-[9px] uppercase tracking-[0.20em] text-white/20">{tr("Dark")}</p>
               {previewLogoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -8347,7 +8360,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               )}
               {footerNewsletterEnabled && (
                 <div className="mt-1 w-full space-y-1.5 border-t border-border pt-3">
-                  <p className="text-[8px] uppercase tracking-[0.20em] text-white/20">Stay Connected</p>
+                  <p className="text-[8px] uppercase tracking-[0.20em] text-white/20">{tr("Stay Connected")}</p>
                   <div className="mx-auto flex max-w-[140px] gap-1">
                     <div className="h-5 flex-1 rounded-full border border-border" />
                     <div className="h-5 w-10 rounded-full border border-border" />
@@ -8357,7 +8370,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
             {/* Light background preview */}
             <div className="flex flex-col items-center gap-3 bg-white px-5 py-6 text-center">
-              <p className="text-[9px] uppercase tracking-[0.20em] text-black/25">Light</p>
+              <p className="text-[9px] uppercase tracking-[0.20em] text-black/25">{tr("Light")}</p>
               {previewLogoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -8379,7 +8392,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Footer Logo Upload */}
         <div className="rounded-xl border border-border bg-card/30 p-5">
           <label className="mb-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-            Footer Logo
+            {tr("Footer Logo")}
           </label>
 
           {/* Existing logo preview */}
@@ -8388,7 +8401,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={footerLogoUrl}
-                alt="Footer logo"
+                alt={tr("Footer logo")}
                 style={{ filter: logoFilter }}
                 className="max-h-[48px] max-w-[140px] rounded-lg object-contain"
                 onLoad={() => detectLogoBg(footerLogoUrl)}
@@ -8398,7 +8411,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 onClick={() => { setFooterLogoUrl(""); setFooterLogoHasBg(false) }}
                 className="text-[11px] text-muted-foreground/40 transition-colors hover:text-destructive/70"
               >
-                Remove
+                {tr("Remove")}
               </button>
             </div>
           )}
@@ -8406,7 +8419,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
           {/* Warnings */}
           {footerLogoHasBg && (
             <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2 text-[11px] text-amber-400/80">
-              This logo appears to contain a solid background. Transparent PNG or SVG is recommended.
+              {tr("This logo appears to contain a solid background. Transparent PNG or SVG is recommended.")}
             </div>
           )}
 
@@ -8423,18 +8436,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               disabled={!footerLogoFile || isUploadingFooterLogo || isSaving}
               className="shrink-0 bg-secondary text-foreground hover:bg-secondary/80"
             >
-              {isUploadingFooterLogo ? "Uploading…" : "Upload"}
+              {isUploadingFooterLogo ? tr("Uploading…") : tr("Upload")}
             </Button>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground/38">
-            Transparent PNG or SVG recommended for best results. JPG with solid backgrounds will blend into the dark footer.
+            {tr("Transparent PNG or SVG recommended for best results. JPG with solid backgrounds will blend into the dark footer.")}
           </p>
         </div>
 
         {/* Logo rendering mode */}
         <div className="rounded-xl border border-border bg-card/30 p-5">
           <label className="mb-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-            Logo Rendering Mode
+            {tr("Logo Rendering Mode")}
           </label>
           <div className="flex overflow-hidden rounded-lg border border-border">
             {(["auto", "dark", "light"] as const).map((mode) => (
@@ -8453,16 +8466,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             ))}
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground/38">
-            <strong className="font-semibold text-muted-foreground/55">Auto</strong> — no filter applied.{" "}
-            <strong className="font-semibold text-muted-foreground/55">Dark</strong> — original colors (logo designed for dark backgrounds).{" "}
-            <strong className="font-semibold text-muted-foreground/55">Light</strong> — inverts the logo to white, useful for black logos without transparency.
+            <strong className="font-semibold text-muted-foreground/55">{tr("Auto")}</strong> — no filter applied.{" "}
+            <strong className="font-semibold text-muted-foreground/55">{tr("Dark")}</strong> — original colors (logo designed for dark backgrounds).{" "}
+            <strong className="font-semibold text-muted-foreground/55">{tr("Light")}</strong> — inverts the logo to white, useful for black logos without transparency.
           </p>
         </div>
 
         {/* Footer Logo Width */}
         <div className="rounded-xl border border-border bg-card/30 p-5">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">Logo Width</label>
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">{tr("Logo Width")}</label>
             <span className="font-mono text-[12px] text-foreground/55">{footerLogoWidth}px</span>
           </div>
           <input type="range" min={80} max={420} step={10} value={footerLogoWidth} onChange={(e) => setFooterLogoWidth(Number(e.target.value))} className="mt-3 w-full accent-accent" />
@@ -8472,13 +8485,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Contact Emails */}
         <div className="rounded-xl border border-border bg-card/30 p-5">
           <label className="mb-3.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-            Contact Emails
+            {tr("Contact Emails")}
           </label>
           <div className="space-y-4">
             {[
-              { label: "Booking",  value: footerBookingEmail,  set: setFooterBookingEmail,  placeholder: "booking@" + artist.handle + ".music" },
-              { label: "Contact",  value: footerContactEmail,  set: setFooterContactEmail,  placeholder: "hello@" + artist.handle + ".music"   },
-              { label: "Demos",    value: footerDemosEmail,    set: setFooterDemosEmail,    placeholder: "demos@" + artist.handle + ".music"    },
+              { label: tr("Booking"),  value: footerBookingEmail,  set: setFooterBookingEmail,  placeholder: "booking@" + artist.handle + ".music" },
+              { label: tr("Contact"),  value: footerContactEmail,  set: setFooterContactEmail,  placeholder: "hello@" + artist.handle + ".music"   },
+              { label: tr("Demos"),    value: footerDemosEmail,    set: setFooterDemosEmail,    placeholder: "demos@" + artist.handle + ".music"    },
             ].map(({ label, value, set, placeholder }) => (
               <div key={label}>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">{label}</label>
@@ -8490,7 +8503,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Footer Copyright */}
         <div className="rounded-xl border border-border bg-card/30 p-5">
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">Copyright</label>
+          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">{tr("Copyright")}</label>
           <Input value={footerCopyright} onChange={(e) => setFooterCopyright(e.target.value)} placeholder={`© ${year} ${artist.artistName}`} className="text-[13px]" />
           <p className="mt-2 text-[11px] text-muted-foreground/40">Optional. Defaults to &ldquo;© {year} {artist.artistName}&rdquo;.</p>
         </div>
@@ -8498,8 +8511,8 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Toggles */}
         <div className="space-y-3">
           {[
-            { label: "Show social icons",    value: footerSocialsEnabled,    set: setFooterSocialsEnabled    },
-            { label: "Show newsletter form", value: footerNewsletterEnabled, set: setFooterNewsletterEnabled },
+            { label: tr("Show social icons"),    value: footerSocialsEnabled,    set: setFooterSocialsEnabled    },
+            { label: tr("Show newsletter form"), value: footerNewsletterEnabled, set: setFooterNewsletterEnabled },
           ].map(({ label, value, set }) => (
             <div key={label} className="flex items-center justify-between rounded-xl border border-border bg-card/30 px-5 py-3.5">
               <span className="text-[13px] text-foreground/75">{label}</span>
@@ -8522,9 +8535,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     const MAX_BYTES   = 50 * 1024 * 1024
     const MAX_PAGES   = 5
     const VARIANT_MODES: Array<{ mode: "original"|"black"|"white"; label: string }> = [
-      { mode: "original", label: "Original" },
-      { mode: "black",    label: "Black"    },
-      { mode: "white",    label: "White"    },
+      { mode: "original", label: tr("Original") },
+      { mode: "black",    label: tr("Black")    },
+      { mode: "white",    label: tr("White")    },
     ]
 
     function getExt(name: string) { return name.split(".").pop()?.toLowerCase() ?? "" }
@@ -8565,11 +8578,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     // ─── Assignment helpers ──────────────────────────────────────────────────
     const ASSIGN_TYPES = [
-      { type: "hero_logo",      label: "Hero Logo" },
-      { type: "footer_logo",    label: "Footer Logo" },
-      { type: "favicon",        label: "Favicon" },
-      { type: "press_kit_logo", label: "Press Kit Logo" },
-      { type: "social_avatar",  label: "Social Avatar" },
+      { type: "hero_logo",      label: tr("Hero Logo") },
+      { type: "footer_logo",    label: tr("Footer Logo") },
+      { type: "favicon",        label: tr("Favicon") },
+      { type: "press_kit_logo", label: tr("Press Kit Logo") },
+      { type: "social_avatar",  label: tr("Social Avatar") },
     ] as const
 
     function getAssignment(assignmentType: string) {
@@ -9178,13 +9191,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">Brand Kit</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">{tr("Brand Kit")}</h2>
           {hasAssets ? (
             <p className="mt-1.5 text-[12px] text-muted-foreground/40">
               {logoCount} logo{logoCount !== 1 ? "s" : ""} · {variantCount} variant{variantCount !== 1 ? "s" : ""} · {brandSourceFiles.length} source{brandSourceFiles.length !== 1 ? "s" : ""}
             </p>
           ) : (
-            <p className="mt-1.5 text-[13px] text-muted-foreground/40">Upload brand files to generate production-ready logo variants.</p>
+            <p className="mt-1.5 text-[13px] text-muted-foreground/40">{tr("Upload brand files to generate production-ready logo variants.")}</p>
           )}
         </div>
 
@@ -9220,7 +9233,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {isProcessing && (
           <div className="flex items-center gap-3 rounded-xl bg-accent/[0.04] px-5 py-3.5">
             <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-accent" />
-            <span className="text-[13px] text-accent/65">Extracting logos and generating variants…</span>
+            <span className="text-[13px] text-accent/65">{tr("Extracting logos and generating variants…")}</span>
           </div>
         )}
 
@@ -9245,7 +9258,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-[15px] font-semibold text-foreground/80">{displayName}</p>
                           <button type="button" onClick={() => setBrandDrawerAsset(cardKey)}
-                            className="shrink-0 text-[10px] text-muted-foreground/25 hover:text-foreground/50">Details</button>
+                            className="shrink-0 text-[10px] text-muted-foreground/25 hover:text-foreground/50">{tr("Details")}</button>
                         </div>
                         {roles.length > 0 && (
                           <div className="mt-1.5 flex flex-wrap gap-1">
@@ -9304,9 +9317,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* ── No logos ────────────────────────────────────────────────── */}
         {pageRenders.length > 0 && logoCandidates.length === 0 && !isProcessing && (
           <div className="rounded-2xl bg-card/50 px-8 py-8 text-center">
-            <p className="text-[14px] font-semibold text-foreground/40">No individual logos detected</p>
+            <p className="text-[14px] font-semibold text-foreground/40">{tr("No individual logos detected")}</p>
             <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground/30">
-              Upload individual SVG or PNG logo files directly.
+              {tr("Upload individual SVG or PNG logo files directly.")}
             </p>
           </div>
         )}
@@ -9331,7 +9344,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
               <div>
                 <p className="text-[14px] font-semibold text-foreground/55">{brandDragActive ? "Drop to upload" : "Drop brand files here"}</p>
-                <p className="mt-1 text-[12px] text-muted-foreground/30">Logos are detected, classified, and output as transparent PNGs</p>
+                <p className="mt-1 text-[12px] text-muted-foreground/30">{tr("Logos are detected, classified, and output as transparent PNGs")}</p>
               </div>
               <div className="flex flex-wrap justify-center gap-1.5">
                 {["PDF","AI","EPS","SVG","PNG","JPG"].map((f) => (
@@ -9352,9 +9365,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <span className={`shrink-0 rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-wider ${extColor(getExt(item.file.name))}`}>{extLabel(getExt(item.file.name))}</span>
                     <span className="min-w-0 flex-1 truncate text-[11px] text-foreground/50">{item.file.name}</span>
                     <span className="shrink-0 text-[10px]">
-                      {item.status==="uploading"&&<span className="text-accent/50">Uploading…</span>}
+                      {item.status==="uploading"&&<span className="text-accent/50">{tr("Uploading…")}</span>}
                       {item.status==="done"     &&<span className="text-accent/60">✓</span>}
-                      {item.status==="error"    &&<span className="text-red-500/50" title={item.error}>Failed</span>}
+                      {item.status==="error"    &&<span className="text-red-500/50" title={item.error}>{tr("Failed")}</span>}
                       {item.status==="pending"  &&<span className="text-muted-foreground/18">—</span>}
                     </span>
                   </div>
@@ -9362,9 +9375,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               </div>
             </div>
           )}
-          {brandLoadStatus === "loading" && <p className="text-[12px] text-muted-foreground/22">Loading…</p>}
+          {brandLoadStatus === "loading" && <p className="text-[12px] text-muted-foreground/22">{tr("Loading…")}</p>}
           {!hasAssets && brandLoadStatus === "loaded" && brandSourceFiles.length === 0 && (
-            <p className="py-2 text-center text-[12px] text-muted-foreground/22">No brand sources uploaded yet.</p>
+            <p className="py-2 text-center text-[12px] text-muted-foreground/22">{tr("No brand sources uploaded yet.")}</p>
           )}
         </section>
 
@@ -9384,11 +9397,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <div key={f.id} className="flex items-center gap-3 rounded-lg px-3 py-1.5 hover:bg-secondary/25">
                       <span className={`shrink-0 rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-wider ${extColor(f.fileExt)}`}>{extLabel(f.fileExt)}</span>
                       <span className="min-w-0 flex-1 truncate text-[11px] text-foreground/45">{f.filename}</span>
-                      {isPrx && <span className="shrink-0 animate-pulse text-[10px] text-accent/45">Processing…</span>}
+                      {isPrx && <span className="shrink-0 animate-pulse text-[10px] text-accent/45">{tr("Processing…")}</span>}
                       {!isPrx && PDF_EXTS.has(f.fileExt) && (
-                        <button type="button" onClick={() => processPdfSourceFile(f)} className="shrink-0 text-[10px] text-accent/40 hover:text-accent/70">Regenerate variants</button>
+                        <button type="button" onClick={() => processPdfSourceFile(f)} className="shrink-0 text-[10px] text-accent/40 hover:text-accent/70">{tr("Regenerate variants")}</button>
                       )}
-                      <button type="button" onClick={() => deleteSourceFile(f.id)} className="shrink-0 text-[10px] text-muted-foreground/14 hover:text-destructive/45">Remove</button>
+                      <button type="button" onClick={() => deleteSourceFile(f.id)} className="shrink-0 text-[10px] text-muted-foreground/14 hover:text-destructive/45">{tr("Remove")}</button>
                     </div>
                   )
                 })}
@@ -9403,7 +9416,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <button type="button" onClick={() => toggleCollapse("advanced")}
               className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-left hover:bg-secondary/20">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-muted-foreground/25">Advanced</span>
+                <span className="text-[11px] text-muted-foreground/25">{tr("Advanced")}</span>
                 {isProcessing && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />}
               </div>
               <ChevronDown className={`h-3 w-3 text-muted-foreground/18 transition-transform ${brandCollapsed["advanced"] !== true ? "-rotate-90" : ""}`} />
@@ -9412,7 +9425,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <div className="mt-2 space-y-5">
                 {Object.keys(brandProcessingLog).length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/22">Processing History</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/22">{tr("Processing History")}</p>
                     {Object.entries(brandProcessingLog).map(([fileId, log]) => {
                       const file = brandSourceFiles.find((f) => f.id === fileId)
                       const isActive = brandProcessingIds.has(fileId)
@@ -9421,11 +9434,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           <div className="mb-1 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                               <p className="text-[10px] text-foreground/40">{file?.filename ?? "Unknown"}</p>
-                              {isActive  && <span className="flex items-center gap-1 text-[9px] text-accent/45"><span className="h-1 w-1 animate-pulse rounded-full bg-accent" /> Active</span>}
-                              {!isActive && log.done && !log.error && <span className="text-[9px] text-accent/40">Done</span>}
-                              {!isActive && log.error && <span className="text-[9px] text-red-500/40">Failed</span>}
+                              {isActive  && <span className="flex items-center gap-1 text-[9px] text-accent/45"><span className="h-1 w-1 animate-pulse rounded-full bg-accent" />{tr("Active")}</span>}
+                              {!isActive && log.done && !log.error && <span className="text-[9px] text-accent/40">{tr("Done")}</span>}
+                              {!isActive && log.error && <span className="text-[9px] text-red-500/40">{tr("Failed")}</span>}
                             </div>
-                            <button type="button" onClick={() => setBrandProcessingLog((prev) => { const n={...prev}; delete n[fileId]; return n })} className="text-[9px] text-muted-foreground/14 hover:text-muted-foreground/35">Dismiss</button>
+                            <button type="button" onClick={() => setBrandProcessingLog((prev) => { const n={...prev}; delete n[fileId]; return n })} className="text-[9px] text-muted-foreground/14 hover:text-muted-foreground/35">{tr("Dismiss")}</button>
                           </div>
                           <div className="space-y-0.5">
                             {log.steps.map((step, i) => (
@@ -9436,7 +9449,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             ))}
                             {isActive && <div className="text-[10px] text-muted-foreground/14 animate-pulse">···</div>}
                           </div>
-                          {log.error && <p className="mt-1 text-[10px] text-red-500/35">{log.error}</p>}
+                          {log.error && <p className="mt-1 text-[10px] text-red-500/35">{tr(log.error)}</p>}
                         </div>
                       )
                     })}
@@ -9444,7 +9457,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 )}
                 {pageRenders.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/22">Source Pages</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/22">{tr("Source Pages")}</p>
                     <div className="grid gap-1.5 sm:grid-cols-3 lg:grid-cols-4">
                       {pageRenders.map((asset) => (
                         <div key={asset.id} className="group overflow-hidden rounded-lg bg-card/25">
@@ -9454,7 +9467,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           </div>
                           <div className="flex items-center justify-between px-2 py-1">
                             <p className="truncate text-[8px] text-foreground/22">{asset.name ?? "Page"}</p>
-                            <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[8px] text-muted-foreground/10 opacity-0 group-hover:opacity-100 hover:text-destructive/40">Remove</button>
+                            <button type="button" onClick={() => deleteAsset(asset.id)} className="shrink-0 text-[8px] text-muted-foreground/10 opacity-0 group-hover:opacity-100 hover:text-destructive/40">{tr("Remove")}</button>
                           </div>
                         </div>
                       ))}
@@ -9544,9 +9557,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                     {variantLabel(existing!.variant)} assigned
                                   </span>
                                 ) : existing ? (
-                                  <span className="text-[10px] text-muted-foreground/20">Replace</span>
+                                  <span className="text-[10px] text-muted-foreground/20">{tr("Replace")}</span>
                                 ) : (
-                                  <span className="text-[10px] text-muted-foreground/20">Assign</span>
+                                  <span className="text-[10px] text-muted-foreground/20">{tr("Assign")}</span>
                                 )}
                               </button>
                             )
@@ -9556,11 +9569,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     ))}
                   </div>
                   <div className="border-t border-border/40 px-7 py-5">
-                    <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/22">Details</p>
+                    <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/22">{tr("Details")}</p>
                     <div className="space-y-1.5">
                       {drawerInstance[0]?.sourcePage != null && (
                         <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-muted-foreground/30">Source page</span>
+                          <span className="text-muted-foreground/30">{tr("Source page")}</span>
                           <span className="text-foreground/45">Page {drawerInstance[0].sourcePage}</span>
                         </div>
                       )}
@@ -9568,7 +9581,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         const sf = brandSourceFiles.find((f) => f.id === drawerInstance[0].sourceFileId)
                         return sf ? (
                           <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-muted-foreground/30">Source</span>
+                            <span className="text-muted-foreground/30">{tr("Source")}</span>
                             <span className="truncate max-w-[180px] text-foreground/45">{sf.filename}</span>
                           </div>
                         ) : null
@@ -9609,11 +9622,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
     return (
       <div className="space-y-5">
-        <HqPageHeader title="Hero" description="Configure the hero section of your public profile — image, identity, copy and style." />
+        <HqPageHeader title={tr("Hero")} description={tr("Configure the hero section of your public profile — image, identity, copy and style.")} />
 
         {/* ── Preset strip ── */}
         <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary px-3 py-1.5">
-          <p className="shrink-0 text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/35">Layout</p>
+          <p className="shrink-0 text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/35">{tr("Layout")}</p>
           <div className="flex flex-1 items-center gap-0.5">
             {HERO_PRESETS.map((preset) => (
               <button
@@ -9637,11 +9650,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   !isPro && "pointer-events-none opacity-40"
                 )}
               >
-                {preset.label}
+                {tr(preset.label)}
               </button>
             ))}
           </div>
-          {!isPro && <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">Pro</span>}
+          {!isPro && <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">{tr("Pro")}</span>}
         </div>
 
         {/* ── Two-column layout ── */}
@@ -9686,12 +9699,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         {location&&<p className="mt-2.5 flex items-center gap-2 text-sm text-white/65 sm:mt-3"><MapPin className="h-3.5 w-3.5 shrink-0 text-accent/80 sm:h-4 sm:w-4" />{location}</p>}
                         {heroTagline&&<p className="mt-1 text-base font-medium uppercase tracking-[0.07em] text-accent/90 sm:mt-1.5 sm:text-lg" style={{textShadow:`0 0 10px rgba(${previewTheme.glowRgb}, 0.15)`}}>{heroTagline}</p>}
                         {shortBio&&<p className="mt-2 max-w-[700px] text-sm leading-relaxed text-white/80 sm:mt-2.5 sm:text-base">{shortBio}</p>}
-                        {bookingEmail&&<div className="mt-4 flex flex-col gap-3 sm:mt-5"><div className="flex h-11 w-fit items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-md shadow-accent/15 sm:h-12"><Mail className="h-4 w-4" />Book this artist</div></div>}
+                        {bookingEmail&&<div className="mt-4 flex flex-col gap-3 sm:mt-5"><div className="flex h-11 w-fit items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-md shadow-accent/15 sm:h-12"><Mail className="h-4 w-4" />{tr("Book this artist")}</div></div>}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="absolute right-2 top-2 z-10 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">Preview</div>
+                <div className="absolute right-2 top-2 z-10 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-white/40">{tr("Preview")}</div>
               </div>
             </div>
           </div>
@@ -9702,18 +9715,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Content */}
             <div className="overflow-hidden rounded-xl border border-border bg-secondary">
               <button type="button" onClick={() => togglePanel("content")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Content</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">{tr("Content")}</span>
                 <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "content" && "rotate-180")} />
               </button>
               {openHeroPanel === "content" && (
                 <div className="border-t border-border px-4 pb-4 pt-3">
                   <div className="space-y-1.5">
                     <div className="flex items-baseline justify-between">
-                      <label htmlFor="heroTagline" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Tagline</label>
+                      <label htmlFor="heroTagline" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Tagline")}</label>
                       <span className={cn("text-[10px] tabular-nums transition-colors duration-150", heroTagline.length > 90 ? "text-amber-400/60" : "text-muted-foreground/30")}>{heroTagline.length}/100</span>
                     </div>
-                    <Input id="heroTagline" value={heroTagline} maxLength={100} placeholder="Peak-time house music for underground dance floors." onChange={(e) => setHeroTagline(e.target.value)} />
-                    <p className="text-[10px] text-muted-foreground/38">Rendered above the bio in accent color. Leave blank to omit.</p>
+                    <Input id="heroTagline" value={heroTagline} maxLength={100} placeholder={tr("Peak-time house music for underground dance floors.")} onChange={(e) => setHeroTagline(e.target.value)} />
+                    <p className="text-[10px] text-muted-foreground/38">{tr("Rendered above the bio in accent color. Leave blank to omit.")}</p>
                   </div>
                 </div>
               )}
@@ -9723,24 +9736,24 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="overflow-hidden rounded-xl border border-border bg-secondary">
               <button type="button" onClick={() => togglePanel("branding")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Branding</span>
-                  {!isPro && <span className="rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">Pro</span>}
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">{tr("Branding")}</span>
+                  {!isPro && <span className="rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">{tr("Pro")}</span>}
                 </div>
                 <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "branding" && "rotate-180")} />
               </button>
               {openHeroPanel === "branding" && (
                 <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Identity Mode</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Identity Mode")}</p>
                     <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["text","logo","both"] as const).map((mode) => (
                         <button key={mode} type="button" onClick={() => isPro && setHeroIdentityMode(mode)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroIdentityMode === mode ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{mode}</button>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground/35">Text: name only. Logo: logo only. Both: logo + name.</p>
+                    <p className="text-[10px] text-muted-foreground/35">{tr("Text: name only. Logo: logo only. Both: logo + name.")}</p>
                   </div>
                   <div className="space-y-2 border-t border-border pt-3">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Typography Style</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Typography Style")}</p>
                     <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["default","condensed","cinematic","editorial"] as const).map((style) => (
                         <button key={style} type="button" onClick={() => isPro && setHeroTextStyle(style)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroTextStyle === style ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{style}</button>
@@ -9749,44 +9762,44 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                   {isPro && (
                     <div className="space-y-2 border-t border-border pt-3">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Logo")}</p>
                       {heroLogoUrl && (
                         <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary p-3">
                           <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-[#0a0a0a]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={heroLogoUrl} alt="Hero logo" className="max-h-8 max-w-full object-contain" />
+                            <img src={heroLogoUrl} alt={tr("Hero logo")} className="max-h-8 max-w-full object-contain" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-[11px] text-foreground/55">{heroLogoUrl.split("/").pop()}</p>
-                            <button type="button" onClick={() => setHeroLogoUrl("")} className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80">Remove</button>
+                            <button type="button" onClick={() => setHeroLogoUrl("")} className="mt-0.5 text-[10px] text-destructive/50 transition-colors hover:text-destructive/80">{tr("Remove")}</button>
                           </div>
                         </div>
                       )}
                       <Input id="heroLogoFile" type="file" accept="image/png,image/svg+xml,image/webp" onChange={(e) => setHeroLogoFile(e.target.files?.[0] ?? null)} />
                       <Button type="button" onClick={handleUploadHeroLogo} disabled={!heroLogoFile || isUploadingHeroLogo || isSaving || isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">{isUploadingHeroLogo ? "Uploading..." : "Upload logo"}</Button>
-                      <p className="text-[10px] text-muted-foreground/38">PNG, SVG, or WEBP. Transparent background recommended.</p>
+                      <p className="text-[10px] text-muted-foreground/38">{tr("PNG, SVG, or WEBP. Transparent background recommended.")}</p>
                     </div>
                   )}
                   <div className="space-y-2 border-t border-border pt-3">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Placement</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Logo Placement")}</p>
                     <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
-                      {([{value:"editorial",label:"Editorial"},{value:"top_center",label:"Top"},{value:"center",label:"Center"},{value:"custom",label:"Custom"}] as {value:HeroLogoPlacement;label:string}[]).map(({value,label}) => (
+                      {([{value:"editorial",label: tr("Editorial")},{value:"top_center",label: tr("Top")},{value:"center",label: tr("Center")},{value:"custom",label: tr("Custom")}] as {value:HeroLogoPlacement;label:string}[]).map(({value,label}) => (
                         <button key={value} type="button" onClick={() => isPro && setHeroLogoPlacement(value)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroLogoPlacement === value ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{label}</button>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground/35">Editorial: in content flow. Floating: over the photo.</p>
+                    <p className="text-[10px] text-muted-foreground/35">{tr("Editorial: in content flow. Floating: over the photo.")}</p>
                   </div>
                   <div className={cn("space-y-2 border-t border-border pt-3", isFloating && "pointer-events-none opacity-30")}>
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Layout</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Layout")}</p>
                     <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
-                      {([{value:"replace_text",label:"Replace"},{value:"above_text",label:"Above"},{value:"below_text",label:"Below"},{value:"left_text",label:"Left"},{value:"right_text",label:"Right"}] as {value:HeroLogoLayout;label:string}[]).map(({value,label}) => (
+                      {([{value:"replace_text",label: tr("Replace")},{value:"above_text",label: tr("Above")},{value:"below_text",label: tr("Below")},{value:"left_text",label: tr("Left")},{value:"right_text",label: tr("Right")}] as {value:HeroLogoLayout;label:string}[]).map(({value,label}) => (
                         <button key={value} type="button" onClick={() => isPro && setHeroLogoLayout(value)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroLogoLayout === value ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{label}</button>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground/35">Use Replace if your logo already contains your name.</p>
+                    <p className="text-[10px] text-muted-foreground/35">{tr("Use Replace if your logo already contains your name.")}</p>
                   </div>
                   <div className={cn("space-y-2 border-t border-border pt-3", isFloating && "pointer-events-none opacity-30")}>
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Alignment</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Alignment")}</p>
                     <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary p-0.5 w-fit">
                       {(["left","center","right"] as const).map((a) => (
                         <button key={a} type="button" onClick={() => isPro && setHeroLogoAlignment(a)} disabled={!isPro} className={cn("rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", heroLogoAlignment === a ? "bg-secondary text-foreground/75" : "text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>{a}</button>
@@ -9795,13 +9808,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   </div>
                   <div className="space-y-2 border-t border-border pt-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Logo Size</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Logo Size")}</p>
                       <span className="text-[10px] tabular-nums text-muted-foreground/50">{heroLogoScale}px</span>
                     </div>
                     <input type="range" min={40} max={240} step={5} value={heroLogoScale} onChange={(e) => isPro && setHeroLogoScale(Number(e.target.value))} disabled={!isPro} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-accent/70 disabled:cursor-not-allowed disabled:opacity-40" />
                   </div>
                   <div className="space-y-3 border-t border-border pt-3">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Position Offset</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Position Offset")}</p>
                     {[{label:"H",val:heroLogoOffsetX,set:setHeroLogoOffsetX},{label:"V",val:heroLogoOffsetY,set:setHeroLogoOffsetY}].map(({label,val,set}) => (
                       <div key={label} className="space-y-1.5">
                         <div className="flex items-center justify-between">
@@ -9819,29 +9832,29 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {/* Media */}
             <div className="overflow-hidden rounded-xl border border-border bg-secondary">
               <button type="button" onClick={() => togglePanel("media")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Media</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">{tr("Media")}</span>
                 <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "media" && "rotate-180")} />
               </button>
               {openHeroPanel === "media" && (
                 <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
                   <div className="space-y-1.5">
-                    <label htmlFor="heroImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Image URL</label>
+                    <label htmlFor="heroImageUrl" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Image URL")}</label>
                     <Input id="heroImageUrl" value={heroImageUrl} onChange={(e) => setHeroImageUrl(e.target.value)} />
                   </div>
                   <div className="space-y-2 border-t border-border pt-3">
-                    <label htmlFor="heroImageFile" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">Upload</label>
+                    <label htmlFor="heroImageFile" className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">{tr("Upload")}</label>
                     <Input id="heroImageFile" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setHeroImageFile(e.target.files?.[0] ?? null)} />
                     <Button type="button" onClick={handleUploadHeroImage} disabled={!heroImageFile || isUploadingHeroImage || isSaving || isPublishing} className="bg-secondary text-foreground hover:bg-secondary/80">
-                      {heroUploadStatus === "compressing" ? "Compressing..." : heroUploadStatus === "uploading" ? "Uploading..." : "Upload image"}
+                      {heroUploadStatus === "compressing" ? tr("Compressing...") : heroUploadStatus === "uploading" ? tr("Uploading...") : tr("Upload image")}
                     </Button>
-                    <p className="text-[10px] text-muted-foreground/38">JPEG, PNG, or WEBP. Large images are auto-optimized before upload.</p>
+                    <p className="text-[10px] text-muted-foreground/38">{tr("JPEG, PNG, or WEBP. Large images are auto-optimized before upload.")}</p>
                   </div>
                   <div className="space-y-3 border-t border-border pt-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">Composition</p>
-                      <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.10em] text-muted-foreground/30">Preview only</span>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">{tr("Composition")}</p>
+                      <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.10em] text-muted-foreground/30">{tr("Preview only")}</span>
                     </div>
-                    {[{label:"Position X",val:heroImageX,set:setHeroImageX,min:0,max:100},{label:"Position Y",val:heroImageY,set:setHeroImageY,min:0,max:100},{label:"Zoom",val:heroImageZoom,set:setHeroImageZoom,min:100,max:140}].map(({label,val,set,min,max}) => (
+                    {[{label: tr("Position X"),val:heroImageX,set:setHeroImageX,min:0,max:100},{label: tr("Position Y"),val:heroImageY,set:setHeroImageY,min:0,max:100},{label: tr("Zoom"),val:heroImageZoom,set:setHeroImageZoom,min:100,max:140}].map(({label,val,set,min,max}) => (
                       <div key={label} className="space-y-1.5">
                         <div className="flex items-center justify-between">
                           <p className="text-[10px] text-muted-foreground/50">{label}</p>
@@ -9859,15 +9872,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="overflow-hidden rounded-xl border border-border bg-secondary">
               <button type="button" onClick={() => togglePanel("appearance")} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-100 hover:bg-white/[0.015]">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Appearance</span>
-                  {!isPro && <span className="rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">Pro</span>}
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">{tr("Appearance")}</span>
+                  {!isPro && <span className="rounded border border-border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/28">{tr("Pro")}</span>}
                 </div>
                 <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground/35 transition-transform duration-150", openHeroPanel === "appearance" && "rotate-180")} />
               </button>
               {openHeroPanel === "appearance" && (
                 <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">Theme</p>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">{tr("Theme")}</p>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {Object.values(ACCENT_THEMES).map((theme) => (
                         <button key={theme.value} type="button" onClick={() => isPro && setAccentTheme(theme.value)} disabled={!isPro} className={cn("flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-100", accentTheme === theme.value ? "border-border bg-secondary text-foreground/80" : "border-transparent text-muted-foreground/30 hover:text-muted-foreground/50", !isPro && "pointer-events-none")}>
@@ -9944,10 +9957,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     if (!isPro) {
       return (
         <div className="space-y-6">
-          <HqPageHeader title="Custom Domain" description="Connect an apex domain you own to your DJHQ profile." />
+          <HqPageHeader title={tr("Custom Domain")} description={tr("Connect an apex domain you own to your DJHQ profile.")} />
           <div className="rounded-xl border border-border bg-card/30 p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">Pro feature</p>
-            <h3 className="mt-2 text-sm font-semibold text-foreground">Available on Pro</h3>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/60">{tr("Pro feature")}</p>
+            <h3 className="mt-2 text-sm font-semibold text-foreground">{tr("Available on Pro")}</h3>
             <p className="mt-2 text-sm text-muted-foreground/60">
               Upgrade to Pro to connect a custom domain like{" "}
               <span className="font-mono text-foreground/70">yourname.com</span> to your DJHQ profile.
@@ -9957,7 +9970,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex items-center gap-1.5 text-sm text-accent transition-colors hover:text-accent/70"
             >
               <Mail className="h-3.5 w-3.5" />
-              Contact us to upgrade
+              {tr("Contact us to upgrade")}
             </a>
           </div>
         </div>
@@ -9969,20 +9982,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
-          <p className="mt-1 text-sm text-muted-foreground/60">Connect an apex domain you own to your DJHQ profile.</p>
+          <h2 className="text-base font-semibold text-foreground">{tr("Custom Domain")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground/60">{tr("Connect an apex domain you own to your DJHQ profile.")}</p>
         </div>
 
         {/* Add domain form — only shown when no domain exists */}
         {!activeDomain && (
           <div className="rounded-xl border border-border bg-card/40 p-5 transition-colors duration-150 hover:border-border">
-            <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">Add domain</p>
+            <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">{tr("Add domain")}</p>
             <div className="flex gap-2">
               <Input
                 value={domainInput}
                 onChange={(e) => { setDomainInput(e.target.value); setAddDomainError("") }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !isAddingDomain) void handleAddDomain() }}
-                placeholder="yourartistdomain.com"
+                placeholder={tr("yourartistdomain.com")}
                 disabled={isAddingDomain}
                 className="font-mono text-sm"
               />
@@ -9992,11 +10005,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 disabled={isAddingDomain || !domainInput.trim()}
                 className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90"
               >
-                {isAddingDomain ? "Adding…" : "Add domain"}
+                {isAddingDomain ? tr("Adding…") : tr("Add domain")}
               </Button>
             </div>
             {addDomainError && (
-              <p className="mt-2 text-xs text-destructive/70">{addDomainError}</p>
+              <p className="mt-2 text-xs text-destructive/70">{tr(addDomainError)}</p>
             )}
             <p className="mt-3 text-xs text-muted-foreground/40">
               Apex domains only (e.g. <span className="font-mono">yourname.com</span>). Subdomains and www are not yet supported.
@@ -10024,7 +10037,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {activeDomain.status === "error" && activeDomain.errorMessage?.startsWith("Provisioning") && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground/60">
-                  Retry after a few minutes or contact support if the issue persists.
+                  {tr("Retry after a few minutes or contact support if the issue persists.")}
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <Button
@@ -10042,7 +10055,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     disabled={isRemovingDomainId === activeDomain.id}
                     className="text-xs text-muted-foreground/40 transition-colors hover:text-destructive/70 disabled:pointer-events-none"
                   >
-                    {isRemovingDomainId === activeDomain.id ? "Removing…" : "Remove"}
+                    {isRemovingDomainId === activeDomain.id ? tr("Removing…") : tr("Remove")}
                   </button>
                 </div>
               </div>
@@ -10052,15 +10065,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {(activeDomain.status === "pending" || (activeDomain.status === "error" && !activeDomain.errorMessage?.startsWith("Provisioning"))) && activeDomain.verificationRecord && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground/60">
-                  Add this TXT record to your DNS to verify ownership:
+                  {tr("Add this TXT record to your DNS to verify ownership:")}
                 </p>
                 {dnsTable([
-                  { label: "Type", value: activeDomain.verificationRecord.type },
-                  { label: "Name", value: activeDomain.verificationRecord.name },
-                  { label: "Value", value: activeDomain.verificationRecord.value },
+                  { label: tr("Type"), value: activeDomain.verificationRecord.type },
+                  { label: tr("Name"), value: activeDomain.verificationRecord.name },
+                  { label: tr("Value"), value: activeDomain.verificationRecord.value },
                 ])}
                 <p className="text-[11px] text-muted-foreground/40">
-                  DNS changes can take up to 48 hours to propagate.
+                  {tr("DNS changes can take up to 48 hours to propagate.")}
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <Button
@@ -10078,7 +10091,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     disabled={isRemovingDomainId === activeDomain.id}
                     className="text-xs text-muted-foreground/40 transition-colors hover:text-destructive/70 disabled:pointer-events-none"
                   >
-                    {isRemovingDomainId === activeDomain.id ? "Removing…" : "Remove"}
+                    {isRemovingDomainId === activeDomain.id ? tr("Removing…") : tr("Remove")}
                   </button>
                 </div>
               </div>
@@ -10088,7 +10101,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {activeDomain.status === "verifying" && (
               <div className="mt-4 flex items-center gap-2">
                 <Button type="button" size="sm" disabled className="bg-secondary text-foreground/50">
-                  Checking…
+                  {tr("Checking…")}
                 </Button>
               </div>
             )}
@@ -10100,9 +10113,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   ✓ Ownership verified. Now point your domain to DJHQ:
                 </p>
                 {activeDomain.routingRecord && dnsTable([
-                  { label: "Type", value: activeDomain.routingRecord.type },
-                  { label: "Name", value: activeDomain.routingRecord.name },
-                  { label: "Value", value: activeDomain.routingRecord.value },
+                  { label: tr("Type"), value: activeDomain.routingRecord.type },
+                  { label: tr("Name"), value: activeDomain.routingRecord.name },
+                  { label: tr("Value"), value: activeDomain.routingRecord.value },
                 ])}
                 <p className="text-[11px] text-muted-foreground/40">
                   If using Cloudflare, set this record to DNS-only (grey cloud) while connecting.
@@ -10161,14 +10174,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             {activeDomain.status === "suspended" && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs text-muted-foreground/60">
-                  This domain is suspended. Contact DJHQ to reactivate it.
+                  {tr("This domain is suspended. Contact DJHQ to reactivate it.")}
                 </p>
                 <a
                   href={`mailto:${brand.supportEmail}`}
                   className="inline-flex items-center gap-1.5 text-xs text-accent/70 transition-colors hover:text-accent"
                 >
                   <Mail className="h-3 w-3" />
-                  Contact support
+                  {tr("Contact support")}
                 </a>
               </div>
             )}
@@ -10177,7 +10190,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
         {/* Canonical URL note */}
         <div className="rounded-xl border border-border bg-card/30 p-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Note</p>
+          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">{tr("Note")}</p>
           <p className="mt-1 text-xs text-muted-foreground/50">
             Your canonical DJHQ URL{" "}
             <span className="font-mono text-foreground/50">{APP_DISPLAY_HOST}/{artist.handle}</span>{" "}
@@ -10552,7 +10565,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-foreground">
-              Artist Story
+              {tr("Artist Story")}
               {itemCount > 0 && (
                 <span className="ml-2 text-sm font-normal text-muted-foreground/40">
                   · {itemCount} {itemCount === 1 ? "update" : "updates"}
@@ -10561,7 +10574,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </h2>
             <p className="mt-0.5 text-[11.5px] text-muted-foreground/52">
               Control which updates appear in your public Artist Story and where they appear in the editorial mosaic.{" "}
-              <span className="text-muted-foreground/30">Story Slot controls visual placement · Show in Collapsed controls default visibility.</span>
+              <span className="text-muted-foreground/30">{tr("Story Slot controls visual placement · Show in Collapsed controls default visibility.")}</span>
             </p>
           </div>
           <button
@@ -10571,7 +10584,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 text-[11px] font-medium text-foreground/70 transition-all duration-150 hover:border-border hover:text-foreground disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Update
+            {tr("Add Update")}
           </button>
         </div>
 
@@ -10584,11 +10597,11 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/50">
-                    Placement Board
+                    {tr("Placement Board")}
                   </span>
                   {mosaicActive ? (
                     <span className="rounded-[3px] bg-accent/10 px-[5px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-accent/60">
-                      Mosaic active
+                      {tr("Mosaic active")}
                     </span>
                   ) : (
                     <span className="rounded-[3px] bg-secondary/60 px-[5px] py-[1px] text-[7px] font-medium uppercase tracking-[0.10em] text-muted-foreground/35">
@@ -10597,7 +10610,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   )}
                 </div>
                 <p className="mt-0.5 text-[10px] text-muted-foreground/35">
-                  Click a slot to assign or change which update appears there.
+                  {tr("Click a slot to assign or change which update appears there.")}
                 </p>
               </div>
               {timelineSlotPickerOpen && (
@@ -10606,7 +10619,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   onClick={() => setTimelineSlotPickerOpen(null)}
                   className="text-[9px] text-muted-foreground/40 hover:text-foreground/60 transition-colors"
                 >
-                  Close picker
+                  {tr("Close picker")}
                 </button>
               )}
             </div>
@@ -10647,13 +10660,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       </span>
                       <div className="flex items-center gap-[3px] shrink-0 mt-[1px]">
                         {isExplicit && (
-                          <span title="Explicitly assigned" className="h-[5px] w-[5px] rounded-full bg-accent/55 shrink-0" />
+                          <span title={tr("Explicitly assigned")} className="h-[5px] w-[5px] rounded-full bg-accent/55 shrink-0" />
                         )}
                         {noImage && (
-                          <span title="No cover image — will use text-only display" className="text-[8px] leading-none text-amber-400/60">!</span>
+                          <span title={tr("No cover image — will use text-only display")} className="text-[8px] leading-none text-amber-400/60">!</span>
                         )}
                         {isConflict && (
-                          <span title="Conflict — two published items claim this slot; first by fallback order wins" className="text-[8px] leading-none text-orange-400/60">⚡</span>
+                          <span title={tr("Conflict — two published items claim this slot; first by fallback order wins")} className="text-[8px] leading-none text-orange-400/60">⚡</span>
                         )}
                       </div>
                     </div>
@@ -10664,10 +10677,10 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           {assigned.title}
                         </p>
                       ) : (
-                        <p className="text-[8px] text-muted-foreground/22 italic">Empty — click to assign</p>
+                        <p className="text-[8px] text-muted-foreground/22 italic">{tr("Empty — click to assign")}</p>
                       )}
                       {assigned && !isExplicit && (
-                        <p className="text-[7px] text-muted-foreground/22 mt-[2px]">Auto</p>
+                        <p className="text-[7px] text-muted-foreground/22 mt-[2px]">{tr("Auto")}</p>
                       )}
                     </div>
                   </button>
@@ -10714,15 +10727,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           : "hover:bg-secondary/40 text-muted-foreground/50 hover:text-foreground/60"
                       }`}
                     >
-                      <span className="text-[9px] font-medium">Auto (no explicit assignment)</span>
+                      <span className="text-[9px] font-medium">{tr("Auto (no explicit assignment)")}</span>
                       {!timelineItems.find((i) => i.storySlot === timelineSlotPickerOpen) && (
-                        <span className="text-[8px] text-accent/50 ml-auto">current</span>
+                        <span className="text-[8px] text-accent/50 ml-auto">{tr("current")}</span>
                       )}
                     </button>
 
                     {/* Published items */}
                     {eligibleItems.length === 0 && (
-                      <p className="px-2.5 py-2 text-[9px] text-muted-foreground/30">No published updates to assign.</p>
+                      <p className="px-2.5 py-2 text-[9px] text-muted-foreground/30">{tr("No published updates to assign.")}</p>
                     )}
                     {eligibleItems.map((item) => {
                       const isCurrentSlot = item.storySlot === timelineSlotPickerOpen
@@ -10751,7 +10764,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           <div className="flex items-center gap-1.5 shrink-0">
                             {item.imageUrl && <span className="text-[9px] text-foreground/30">📷</span>}
                             {isCurrentSlot && (
-                              <span className="text-[8px] font-bold text-accent/70">assigned</span>
+                              <span className="text-[8px] font-bold text-accent/70">{tr("assigned")}</span>
                             )}
                             {isOtherSlot && (
                               <span className="text-[8px] text-muted-foreground/30">
@@ -10771,14 +10784,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
               <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
                 <span className="inline-block h-[5px] w-[5px] rounded-full bg-accent/55" />
-                Explicitly assigned
+                {tr("Explicitly assigned")}
               </span>
               <span className="flex items-center gap-1 text-[9px] text-muted-foreground/28">
                 <span className="inline-block h-[5px] w-[5px] rounded-full bg-border/50" />
-                Auto-filled by fallback order
+                {tr("Auto-filled by fallback order")}
               </span>
-              <span className="text-[9px] text-amber-400/55">! = no image</span>
-              <span className="text-[9px] text-orange-400/55">⚡ = slot conflict, first wins</span>
+              <span className="text-[9px] text-amber-400/55">{tr("! = no image")}</span>
+              <span className="text-[9px] text-orange-400/55">{tr("⚡ = slot conflict, first wins")}</span>
             </div>
           </div>
         )}
@@ -10799,7 +10812,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 <Input
                   value={timelineTitle}
                   onChange={(e) => setTimelineTitle(e.target.value)}
-                  placeholder="e.g. Hï Ibiza Residency, Boiler Room Berlin, #1 Beatport…"
+                  placeholder={tr("e.g. Hï Ibiza Residency, Boiler Room Berlin, #1 Beatport…")}
                   className="h-9 text-sm"
                 />
               </div>
@@ -10836,12 +10849,12 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {/* Location */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                  Location <span className="normal-case text-muted-foreground/30">(optional)</span>
+                  Location <span className="normal-case text-muted-foreground/30">{tr("(optional)")}</span>
                 </label>
                 <Input
                   value={timelineLocation}
                   onChange={(e) => setTimelineLocation(e.target.value)}
-                  placeholder="e.g. Ibiza, Spain"
+                  placeholder={tr("e.g. Ibiza, Spain")}
                   className="h-9 text-sm"
                 />
               </div>
@@ -10849,7 +10862,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {/* Link */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                  Link <span className="normal-case text-muted-foreground/30">(optional)</span>
+                  Link <span className="normal-case text-muted-foreground/30">{tr("(optional)")}</span>
                 </label>
                 <Input
                   value={timelineLink}
@@ -10863,7 +10876,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <div className="sm:col-span-2 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                    Cover Image <span className="normal-case text-muted-foreground/30">(optional)</span>
+                    Cover Image <span className="normal-case text-muted-foreground/30">{tr("(optional)")}</span>
                   </label>
                   {timelineImageUrl && (
                     <button
@@ -10874,7 +10887,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
                         <path d="M18 6 6 18M6 6l12 12" />
                       </svg>
-                      Remove image
+                      {tr("Remove image")}
                     </button>
                   )}
                 </div>
@@ -10898,18 +10911,18 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     <Input
                       value={timelineImageUrl}
                       onChange={(e) => setTimelineImageUrl(e.target.value)}
-                      placeholder="https://... or a Google Drive share link"
+                      placeholder={tr("https://... or a Google Drive share link")}
                       className="h-9 text-sm"
                     />
                     <p className="text-[10px] text-muted-foreground/38">
-                      Google Drive share links are automatically converted for display.
+                      {tr("Google Drive share links are automatically converted for display.")}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <label className="cursor-pointer rounded-md border border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors">
-                        Choose image
+                        {tr("Choose image")}
                         <input
                           type="file"
                           accept=".jpg,.jpeg,.png,.webp"
@@ -10923,14 +10936,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         />
                       </label>
                       {timelineImageUploading && (
-                        <span className="text-[11px] text-muted-foreground/50">Uploading…</span>
+                        <span className="text-[11px] text-muted-foreground/50">{tr("Uploading…")}</span>
                       )}
                       {!timelineImageUploading && timelineImageUrl && (
-                        <span className="text-[10px] text-muted-foreground/30 italic">Image set</span>
+                        <span className="text-[10px] text-muted-foreground/30 italic">{tr("Image set")}</span>
                       )}
                     </div>
                     {timelineImageUploadError && (
-                      <p className="text-[11px] text-destructive">{timelineImageUploadError}</p>
+                      <p className="text-[11px] text-destructive">{tr(timelineImageUploadError)}</p>
                     )}
                     <p className="text-[10px] text-muted-foreground/38">JPG, PNG, or WebP — max {MAX_CAREER_IMAGE_MB} MB</p>
                   </div>
@@ -10948,7 +10961,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                       {/* Treatment selector */}
                       <div className="space-y-1.5">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Media Treatment</p>
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">{tr("Media Treatment")}</p>
                         <div className="grid grid-cols-2 gap-1.5">
                           {TREATMENT_OPTIONS.map(({ value, label, desc }) => (
                             <button
@@ -10972,7 +10985,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                       {showPortraitInWideWarning && (
                         <div className="rounded-[6px] border border-amber-500/20 bg-amber-500/6 px-3 py-2">
                           <p className="text-[10px] leading-[1.5] text-amber-400/80">
-                            Portrait image in a wide slot may crop awkwardly. Try <strong>Blurred Fill</strong> for a cinematic look, or <strong>Contain</strong> to preserve the full photo.
+                            Portrait image in a wide slot may crop awkwardly. Try <strong>{tr("Blurred Fill")}</strong> for a cinematic look, or <strong>{tr("Contain")}</strong> to preserve the full photo.
                           </p>
                         </div>
                       )}
@@ -10983,7 +10996,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           <p className="text-[10px] text-muted-foreground/45">
                             {slotLabel
                               ? <>Crop preview: <span className="font-medium text-foreground/60">{slotLabel}</span></>
-                              : <span className="italic">Assign a Story Slot above to preview the exact crop.</span>
+                              : <span className="italic">{tr("Assign a Story Slot above to preview the exact crop.")}</span>
                             }
                           </p>
 
@@ -11016,7 +11029,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={normalizedSrc}
-                                  alt="Crop preview"
+                                  alt={tr("Crop preview")}
                                   className="absolute inset-0 h-full w-full pointer-events-none"
                                   style={{
                                     objectFit: 'contain',
@@ -11037,7 +11050,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={normalizedSrc}
-                                  alt="Crop preview"
+                                  alt={tr("Crop preview")}
                                   className="absolute inset-0 h-full w-full pointer-events-none"
                                   style={{
                                     objectFit: timelineImageTreatment === 'contain' ? 'contain' : 'cover',
@@ -11075,9 +11088,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                           {/* Sliders */}
                           <div className="space-y-2">
                             {([
-                              { label: 'Horizontal', value: timelineImageFocalX, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalX(v), show: true },
-                              { label: 'Vertical',   value: timelineImageFocalY, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalY(v), show: true },
-                              { label: 'Zoom',       value: timelineImageZoom,   min: 1, max: 3,   step: 0.1, format: (v: number) => `${v.toFixed(1)}×`, onChange: (v: number) => setTimelineImageZoom(Math.round(v * 10) / 10), show: showZoom },
+                              { label: tr('Horizontal'), value: timelineImageFocalX, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalX(v), show: true },
+                              { label: tr('Vertical'),   value: timelineImageFocalY, min: 0, max: 100, step: 1, format: (v: number) => `${v}%`, onChange: (v: number) => setTimelineImageFocalY(v), show: true },
+                              { label: tr('Zoom'),       value: timelineImageZoom,   min: 1, max: 3,   step: 0.1, format: (v: number) => `${v.toFixed(1)}×`, onChange: (v: number) => setTimelineImageZoom(Math.round(v * 10) / 10), show: showZoom },
                             ] as const).filter(s => s.show).map(({ label, value, min, max, step, format, onChange }) => (
                               <div key={label} className="flex items-center gap-2">
                                 <span className="w-20 shrink-0 text-[10px] text-muted-foreground/50">{label}</span>
@@ -11121,14 +11134,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                             onClick={() => { setTimelineImageFocalX(50); setTimelineImageFocalY(50); setTimelineImageZoom(1); setTimelineImageTreatment('cover') }}
                             className="text-[10px] text-muted-foreground/35 hover:text-muted-foreground transition-colors"
                           >
-                            Reset position
+                            {tr("Reset position")}
                           </button>
                         </>
                       )}
 
                       {/* Description Display */}
                       <div className="space-y-1.5 pt-1">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Description Display</p>
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">{tr("Description Display")}</p>
                         <div className="flex gap-0 rounded border border-border/50 bg-muted/30 p-0.5 w-fit">
                           {(['auto', 'full', 'short', 'minimal', 'hidden'] as const).map((mode) => (
                             <button
@@ -11154,7 +11167,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                       {/* Metadata Overlay */}
                       <div className="space-y-1.5 pt-1">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">Metadata Overlay</p>
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">{tr("Metadata Overlay")}</p>
                         <div className="flex gap-0 rounded border border-border/50 bg-muted/30 p-0.5 w-fit">
                           {(['auto', 'full', 'compact', 'minimal', 'hidden'] as const).map((mode) => (
                             <button
@@ -11192,9 +11205,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {/* Preview Image URL — HQ only */}
               <div className="sm:col-span-2 space-y-1.5">
                 <label className="flex items-center gap-[6px] text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
-                  Preview Image URL
+                  {tr("Preview Image URL")}
                   <span className="rounded-[3px] bg-amber-500/10 px-[5px] py-[1px] text-[8px] font-bold uppercase tracking-[0.12em] text-amber-500/60">
-                    HQ only — never public
+                    {tr("HQ only — never public")}
                   </span>
                 </label>
                 <Input
@@ -11204,19 +11217,19 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   className="h-9 text-sm"
                 />
                 <p className="text-[10px] text-muted-foreground/30">
-                  Design preview only. Never shown on the public profile.
+                  {tr("Design preview only. Never shown on the public profile.")}
                 </p>
               </div>
 
               {/* Description */}
               <div className="sm:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                  Description <span className="normal-case text-muted-foreground/30">(optional)</span>
+                  Description <span className="normal-case text-muted-foreground/30">{tr("(optional)")}</span>
                 </label>
                 <Textarea
                   value={timelineDescription}
                   onChange={(e) => setTimelineDescription(e.target.value)}
-                  placeholder="Short editorial note shown on the public profile…"
+                  placeholder={tr("Short editorial note shown on the public profile…")}
                   rows={2}
                   className="resize-none text-sm"
                 />
@@ -11255,20 +11268,20 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               {/* Story Slot */}
               <div className="sm:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                  Story Slot <span className="normal-case text-muted-foreground/30">(optional)</span>
+                  Story Slot <span className="normal-case text-muted-foreground/30">{tr("(optional)")}</span>
                 </label>
                 <select
                   value={timelineStorySlot}
                   onChange={(e) => setTimelineStorySlot(e.target.value)}
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
                 >
-                  <option value="">Auto — fill next available slot by fallback order</option>
+                  <option value="">{tr("Auto — fill next available slot by fallback order")}</option>
                   {STORY_SLOTS.map((s) => (
                     <option key={s.id} value={s.id}>{s.label} — {s.desc}</option>
                   ))}
                 </select>
                 <p className="text-[10px] text-muted-foreground/38">
-                  Controls which visual position this update occupies in the public Artist Story mosaic. If two updates claim the same slot, the one ranked first by sort order wins.
+                  {tr("Controls which visual position this update occupies in the public Artist Story mosaic. If two updates claim the same slot, the one ranked first by sort order wins.")}
                 </p>
               </div>
 
@@ -11290,7 +11303,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             </div>
 
             {timelineError && (
-              <p className="text-xs text-destructive/80">{timelineError}</p>
+              <p className="text-xs text-destructive/80">{tr(timelineError)}</p>
             )}
 
             <div className="flex items-center gap-2 pt-1">
@@ -11308,7 +11321,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 disabled={timelineSaving}
                 className="text-xs text-muted-foreground/50 hover:text-foreground/70 disabled:opacity-40"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
             </div>
           </div>
@@ -11329,9 +11342,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             <div className="h-px flex-1 bg-border/30" />
             <div>
               <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/30">
-                Update Inventory
+                {tr("Update Inventory")}
               </span>
-              <span className="ml-2 text-[9px] text-muted-foreground/22">· Fallback &amp; Overflow Order</span>
+              <span className="ml-2 text-[9px] text-muted-foreground/22">{tr("· Fallback & Overflow Order")}</span>
             </div>
             <div className="h-px flex-1 bg-border/30" />
           </div>
@@ -11364,7 +11377,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 {/* Drag handle — sets Fallback Order only */}
                 <div
                   className="mt-0.5 shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-muted-foreground/50 transition-colors duration-100"
-                  title="Drag to set Fallback Order — only affects Auto-slotted and overflow items"
+                  title={tr("Drag to set Fallback Order — only affects Auto-slotted and overflow items")}
                 >
                   <GripVertical className="h-4 w-4" />
                 </div>
@@ -11382,16 +11395,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="text-sm font-semibold text-foreground/90 leading-snug truncate">{item.title}</p>
                     {item.isFeatured && (
-                      <span title="Featured — sorted first in fallback order" className="shrink-0 rounded-[3px] bg-amber-500/12 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/70">
-                        Featured
+                      <span title={tr("Featured — sorted first in fallback order")} className="shrink-0 rounded-[3px] bg-amber-500/12 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/70">
+                        {tr("Featured")}
                       </span>
                     )}
                     {item.imageUrl && (
-                      <span title="Has cover image" className="shrink-0 text-[9px] text-foreground/28">📷</span>
+                      <span title={tr("Has cover image")} className="shrink-0 text-[9px] text-foreground/28">📷</span>
                     )}
                     {!item.imageUrl && item.previewImageUrl && (
-                      <span title="HQ preview image only — not shown publicly" className="shrink-0 rounded-[3px] bg-amber-500/8 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/50">
-                        Preview img
+                      <span title={tr("HQ preview image only — not shown publicly")} className="shrink-0 rounded-[3px] bg-amber-500/8 px-[4px] py-[1px] text-[7px] font-bold uppercase tracking-[0.10em] text-amber-500/50">
+                        {tr("Preview img")}
                       </span>
                     )}
                   </div>
@@ -11403,15 +11416,15 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                     {/* Story Slot label + inline select */}
                     <div className="flex items-center gap-1">
-                      <span className="text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/30">Slot</span>
+                      <span className="text-[8px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/30">{tr("Slot")}</span>
                       <select
                         value={item.storySlot ?? ""}
                         disabled={busy}
                         onChange={(e) => { handleSlotChange(item, e.target.value || null); setTimelineSlotPickerOpen(null) }}
                         className="h-[22px] rounded border border-border/50 bg-background/60 px-1.5 text-[9px] font-medium text-muted-foreground/70 transition-colors hover:border-border hover:text-foreground/80 focus:outline-none focus:ring-1 focus:ring-accent/40 disabled:opacity-40 cursor-pointer"
-                        title="Story Slot — controls visual position in the public Artist Story mosaic"
+                        title={tr("Story Slot — controls visual position in the public Artist Story mosaic")}
                       >
-                        <option value="">Auto</option>
+                        <option value="">{tr("Auto")}</option>
                         {STORY_SLOTS.map((s) => (
                           <option key={s.id} value={s.id}>{s.label}</option>
                         ))}
@@ -11437,13 +11450,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
                     {/* Slot conflict warning */}
                     {item.storySlot && timelineItems.filter((t) => t.isPublished && t.storySlot === item.storySlot).length > 1 && (
-                      <span title="Multiple published items claim this slot — first by fallback order wins publicly" className="text-[9px] text-orange-400/55">
+                      <span title={tr("Multiple published items claim this slot — first by fallback order wins publicly")} className="text-[9px] text-orange-400/55">
                         ⚡ conflict
                       </span>
                     )}
                     {/* Image warning for image-preferred slots */}
                     {item.isPublished && !item.imageUrl && (item.storySlot === "top-feature-primary" || item.storySlot === "top-feature-secondary" || item.storySlot === "left-tall-story" || item.storySlot === "right-bottom" || item.storySlot === "bottom-left" || item.storySlot === "bottom-right") && (
-                      <span title="Image-preferred slot — card will render as text-only" className="text-[9px] text-amber-400/50">
+                      <span title={tr("Image-preferred slot — card will render as text-only")} className="text-[9px] text-amber-400/50">
                         ! no image
                       </span>
                     )}
@@ -11457,14 +11470,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     type="button"
                     disabled={busy}
                     onClick={() => handleTogglePublish(item)}
-                    title={item.isPublished ? "Unpublish" : "Publish"}
+                    title={item.isPublished ? tr("Unpublish") : tr("Publish")}
                     className={`h-6 rounded px-2 text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors duration-100 disabled:opacity-40 ${
                       item.isPublished
                         ? "bg-accent/10 text-accent/70 hover:bg-accent/20"
                         : "bg-secondary/50 text-muted-foreground/40 hover:text-foreground/60"
                     }`}
                   >
-                    {item.isPublished ? "Live" : "Draft"}
+                    {item.isPublished ? tr("Live") : tr("Draft")}
                   </button>
 
                   {/* Edit */}
@@ -11474,7 +11487,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     onClick={() => openEditForm(item)}
                     className="h-6 rounded px-2 text-[9px] font-medium text-muted-foreground/40 transition-colors duration-100 hover:text-foreground/70 disabled:opacity-40"
                   >
-                    Edit
+                    {tr("Edit")}
                   </button>
 
                   {/* Delete */}
@@ -11485,14 +11498,14 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                         onClick={() => handleDelete(item.id)}
                         className="h-6 rounded px-2 text-[9px] font-semibold text-destructive/70 hover:text-destructive"
                       >
-                        Confirm
+                        {tr("Confirm")}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTimelineDeleteId(null)}
                         className="h-6 rounded px-2 text-[9px] text-muted-foreground/40 hover:text-foreground/60"
                       >
-                        Cancel
+                        {tr("Cancel")}
                       </button>
                     </div>
                   ) : (
@@ -11514,9 +11527,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
         {/* Empty state */}
         {timelineLoaded && itemCount === 0 && !timelineFormOpen && (
           <div className="rounded-xl border border-dashed border-border bg-secondary px-6 py-10 text-center">
-            <p className="text-sm font-medium text-foreground/55">No milestones yet.</p>
+            <p className="text-sm font-medium text-foreground/55">{tr("No milestones yet.")}</p>
             <p className="mt-1.5 mx-auto max-w-xs text-[12px] leading-[1.6] text-muted-foreground/35">
-              Add residencies, festival debuts, press achievements, chart positions, and other career moments.
+              {tr("Add residencies, festival debuts, press achievements, chart positions, and other career moments.")}
             </p>
             <button
               type="button"
@@ -11524,7 +11537,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-4 text-[11px] font-medium text-foreground/65 transition-all duration-150 hover:border-border hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add First Career Update
+              {tr("Add First Career Update")}
             </button>
           </div>
         )}
@@ -11631,13 +11644,16 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
 
           <div className="flex-1" />
 
+          <LocaleToggle locale={locale} label={tr("Language")} />
+          <Link href="/hq" className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-[11px] font-semibold text-foreground/65 transition-colors hover:border-accent/50 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{tr("All products")}</Link>
+
           {(saveMessage || statusMessage) && (
             <p className={`hidden max-w-[240px] truncate text-[11px] sm:block ${
               saveMessage && !saveMessage.startsWith("Changes") && !saveMessage.startsWith("Release") && !saveMessage.startsWith("DJ set") && !saveMessage.startsWith("Video") && !saveMessage.startsWith("Gallery")
                 ? "text-destructive/65"
                 : "text-muted-foreground/55"
             }`}>
-              {saveMessage || statusMessage}
+              {tr(saveMessage || statusMessage || "")}
             </p>
           )}
 
@@ -11645,7 +11661,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             artist.isPublished ? "text-accent" : "text-muted-foreground/38"
           }`}>
             <span className={`h-1.5 w-1.5 rounded-full ${artist.isPublished ? "animate-pulse bg-accent" : "bg-muted-foreground/25"}`} />
-            {artist.isPublished ? "Live" : "Draft"}
+            {artist.isPublished ? tr("Live") : tr("Draft")}
           </span>
 
           <a
@@ -11655,13 +11671,13 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
             className="hidden h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12px] font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground sm:inline-flex"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            View site
+            {tr("View site")}
           </a>
 
           <button
             type="button"
             onClick={handleSignOut}
-            title="Sign out"
+            title={tr("Sign out")} aria-label={tr("Sign out")}
             className="h-8 rounded-lg px-2 text-muted-foreground/38 transition-colors hover:text-foreground/65"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -11685,9 +11701,9 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-foreground ring-[1.5px] ring-background" />
             )}
             {savedRecently && !isSaveDirty && !isSaving ? (
-              <><Check className="h-3.5 w-3.5" /> Saved</>
+              <><Check className="h-3.5 w-3.5" /> {tr("Saved")}</>
             ) : (
-              <><Save className="h-3.5 w-3.5" /> {isSaving ? "Saving…" : "Save"}</>
+              <><Save className="h-3.5 w-3.5" /> {isSaving ? tr("Saving…") : tr("Save")}</>
             )}
           </Button>
         </div>
@@ -11737,7 +11753,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 className={`hq-nav-item${activeSection === "home" ? " hq-nav-item--active" : ""}`}
               >
                 <Layers className="h-[14px] w-[14px] shrink-0" />
-                Command
+                {tr("Command")}
               </button>
 
               {navGroups.map((group, gi) => (
@@ -11746,7 +11762,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                     className="mb-1.5 px-3 text-[8px] font-black uppercase tracking-[0.28em]"
                     style={{ color: "rgba(255,255,255,0.20)" }}
                   >
-                    {group.label}
+                    {tr(group.label)}
                   </p>
                   <div className="space-y-px">
                     {group.items.map((item) => {
@@ -11786,7 +11802,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                 activeSection === "home" ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
-              Command
+              {tr("Command")}
             </button>
             {navGroups.flatMap((g) => g.items).map((item) => (
               <button
@@ -11798,7 +11814,7 @@ export default function DashboardClient({ initialArtist, statusMessage }: Dashbo
                   activeSection === item.id ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {item.label}
+                {tr(item.label)}
               </button>
             ))}
           </div>

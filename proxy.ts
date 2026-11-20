@@ -47,6 +47,10 @@ export async function proxy(request: NextRequest) {
   const host = request.headers.get("host") ?? ""
   const hostname = host.split(":")[0] // strip port for local dev
 
+  if (process.env.NODE_ENV === "development" && process.env.DJHQ_DEV_LAN_HOST && hostname === process.env.DJHQ_DEV_LAN_HOST) {
+    return NextResponse.next()
+  }
+
   if (isDjhqOwnedHost(hostname)) {
     return NextResponse.next()
   }

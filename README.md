@@ -1,5 +1,24 @@
-# djhq
+# DJHQ
+
 Digital headquarters SaaS platform for DJs and electronic music producers.
+
+> **Handoff Documentation & Current Architecture:**  
+> For the authoritative repository handoff, platform decisions, and validation records, see:  
+> - [`docs/handoff/PROJECT_HANDOFF.md`](./docs/handoff/PROJECT_HANDOFF.md) — Authoritative platform status, architecture, and commands.  
+> - [`docs/handoff/VALIDATION_STATUS.md`](./docs/handoff/VALIDATION_STATUS.md) — Test results, skips, and verification evidence.
+
+---
+
+## Overview & Architecture
+
+DJHQ operates as an umbrella platform:
+- **Set2Go (`/set2go`):** The Pioneer CDJ USB export engine is the **only** service targeted for the initial public launch. Set2Go users do not require an artist profile.
+- **Artist Website Service:** The general public rollout of the artist website builder is deferred. The live `ANDRES:HERRERA` website, domain routing (`proxy.ts`), and management tools (`/hq`, `/dashboard`) remain fully active and preserved.
+- **Monorepo Layout:**
+  - Next.js 16 App Router application at repository root.
+  - Set2Go export engine at `services/set2go/` (canonical active Python source).
+
+---
 
 ## Environment Variables
 

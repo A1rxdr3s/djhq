@@ -1,12 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  ...(process.env.NODE_ENV === "development"
+    ? { allowedDevOrigins: ["127.0.0.1", ...(/^[a-zA-Z0-9.-]+$/.test(process.env.DJHQ_DEV_LAN_HOST ?? "") ? [process.env.DJHQ_DEV_LAN_HOST] : [])] }
+    : {}),
   async redirects() {
     return [
-      // /dashboard → /hq (permanent 308). Query parameters are preserved automatically
-      // by Next.js redirects, so /dashboard?section=profile → /hq?section=profile.
-      { source: "/dashboard", destination: "/hq", permanent: true },
+      // Preserve legacy Website bookmarks and their query parameters.
+      { source: "/dashboard", destination: "/hq/website", permanent: true },
       // Catch any /dashboard/* sub-paths for forward compatibility.
-      { source: "/dashboard/:path*", destination: "/hq/:path*", permanent: true },
+      { source: "/dashboard/:path*", destination: "/hq/website/:path*", permanent: true },
     ]
   },
 

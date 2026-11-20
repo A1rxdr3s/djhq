@@ -1,0 +1,57 @@
+.page { min-height: 100vh; display: flex; flex-direction: column; }
+.main { flex: 1; display: flex; align-items: center; padding: 72px 5%; }
+.content { width: min(100%, 480px); margin: 0 auto; }
+.content h1 { margin: 0; font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1.05; letter-spacing: -.05em; font-weight: 900; }
+.content p { color: #9ca3a6; font-size: 15px; line-height: 1.6; margin: 16px 0 0; }
+.content .notice { color: #f2f1ed; margin-top: 32px; }
+.actions { display: grid; gap: 12px; margin-top: 16px; }
+.actions button { min-height: 48px; border: 1px solid #565656; background: transparent; color: #9ca3a6; border-radius: 4px; font: inherit; font-size: 14px; font-weight: 600; cursor: not-allowed; }
+.login { width: min(100%, 520px); }
+.login > p { font-weight: 450; letter-spacing: .005em; }
+.login .notice { color: #9ca3a6; margin-top: 26px; font-size: 13px; }
+.login .actions { gap: 10px; margin-top: 18px; }
+.login .actions button, .login .actions input { box-sizing: border-box; width: 100%; min-height: 50px; }
+.login .actions button { display: flex; align-items: center; justify-content: center; gap: 10px; line-height: 1.3; letter-spacing: .01em; }
+.live button:not(:disabled) { cursor: pointer; color: #f2f1ed; transition: border-color .15s, background-color .15s, transform .1s; }
+.live button:not(:disabled):hover { border-color: #f26a36; background: rgba(242,106,54,.08); }
+.live button:not(:disabled):active { transform: translateY(1px); }
+.live button:disabled { opacity: .55; cursor: wait; }
+.live button:focus-visible, .live input:focus-visible { outline: 2px solid #f26a36; outline-offset: 3px; }
+.live input { color: #f2f1ed; }
+.form { display: grid; gap: 10px; }
+.form button[type=submit] { background: #f26a36; border-color: #f26a36; color: #0b0d0e; }
+.form button[type=submit]:not(:disabled):hover { background: #ff8253; border-color: #ff8253; }
+.status { margin-top: 18px; padding: 12px 14px; border: 1px solid #45494b; border-radius: 4px; background: #111314; color: #f2f1ed; font-size: 14px; }
+.error { border-color: rgba(242,106,54,.6); }
+@media (prefers-reduced-motion: reduce) { .live button { transition: none; } .live button:active { transform: none; } }
+.googleIcon { display: block; flex: none; width: auto; height: 20px; }
+.login .actions input { border: 1px solid #45494b; border-radius: 4px; background: #111314; color: #9ca3a6; padding: 0 14px; font: inherit; font-size: 15px; line-height: 1.6; letter-spacing: .005em; opacity: 1; }
+.login .actions input::placeholder { color: #737a7d; opacity: 1; }
+.login .actions label { color: #f2f1ed; font-size: 13px; font-weight: 600; line-height: 1.4; }
+.login .separator { display: flex; align-items: center; gap: 14px; color: #9ca3a6; font-size: 11px; font-weight: 700; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; margin: 8px 0; }
+.login .separator::before, .login .separator::after { content: ''; flex: 1; height: 1px; background: #565656; }
+.login .invitation { margin-top: 26px; }
+.content .invitation { margin-top: 24px; }
+.details { margin-top: 36px; border-top: 1px solid #565656; }
+.details h2 { margin: 24px 0 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; }
+.details p { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .main { align-items: flex-start; padding: 64px 5%; } }
+
+/* Sign-in refinements (scoped; Account and Login previews are unaffected) */
+.signin h1 { font-size: clamp(2rem, 4.8vw, 3.2rem); line-height: 1.08; letter-spacing: -.045em; font-weight: 900; }
+.signin > p:first-of-type { font-size: 16px; line-height: 1.55; color: #b4babc; max-width: 46ch; margin-top: 14px; }
+.signin .actions { gap: 14px; margin-top: 28px; }
+.signin .separator { margin: 6px 0; color: #aab0b2; }
+.signin .separator::before, .signin .separator::after { background: #4a4f52; }
+.signin .form { gap: 8px; }
+.signin .form button[type=submit] { margin-top: 8px; }
+.signin .actions label { font-size: 14px; color: #f2f1ed; }
+.signin .actions button { font-size: 15px; font-weight: 700; letter-spacing: .01em; }
+.signin .live button:not([type=submit]) { border-color: #6d7376; background: #151819; color: #fff; }
+.signin .live button:not([type=submit]):not(:disabled):hover { border-color: #f26a36; background: #1d2022; }
+.signin .actions input { color: #f2f1ed; border-color: #5d6366; background: #111314; }
+.signin .actions input::placeholder { color: #8d9497; }
+.signin .actions input:focus { border-color: #f26a36; }
+.signin .form button[type=submit] { color: #0b0d0e; font-weight: 800; }
+.signin .invitation { margin-top: 24px; color: #9ca3a6; font-size: 13px; }
+@media (max-width: 600px) { .signin h1 { font-size: clamp(1.9rem, 8.4vw, 2.5rem); } .signin .actions { margin-top: 22px; } }

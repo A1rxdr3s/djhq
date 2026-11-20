@@ -1,0 +1,1 @@
+DJHQ manual vector candidate. Geometry was drawn with SVG cubic Bezier curves, not bitmap auto-trace. Compare against approved original prior to production signoff. All non-wordmark assets are unchanged from previous approved pack. No project integration performed.

@@ -1,0 +1,13 @@
+# Isolated Auth proof — deny-only fixture
+
+**Never use on production or a shared Supabase instance.** This fixture deliberately denies *all* new registrations, including valid invitees. It does not implement a secure positive admission path, invitation redemption, grants, Google verification or email verification. It is not a migration.
+
+Local prerequisite discovery: `supabase` CLI exists; `docker`, `psql`, and `postgres` were not found on PATH and no `supabase/config.toml` was found. No disposable project has been identified or authorized. Do not use repository `.env.local` or existing Supabase credentials.
+
+Local simulation: `node --test tests/auth-proof/policy.test.mjs tests/invitation-admission-model.test.mjs`. These tests do not execute SQL, Supabase Auth, OAuth or real concurrency.
+
+For a separately authorized, explicitly disposable local Supabase project, install/enable prerequisites only with approval, initialize it in a separate temporary directory, and verify project identity and database endpoint before any write. Apply `deny-hook.sql` to that disposable database using `psql -v ON_ERROR_STOP=1` with credentials supplied through a secure local mechanism, then configure the Before User Created hook to `pg-functions://postgres/public/djhq_proof_before_user_created`. Do not print secrets. Verify grants and hook configuration. Create a test existing user *before* enabling the hook, then verify existing-user login and refresh remain functional.
+
+With disposable Auth and Mailpit, attempt direct email OTP signup without invitation, with forged metadata, and with fake admission rows; verify rejection and unchanged Auth user count. For Google, configure a separate test-only OAuth client and test account and repeat actual direct OAuth signup; capture outcome without logging tokens. Test both providers' existing-user sign-in and automatic linking, verifying that linking never adds a product grant. Disable the hook after testing only within the disposable project. Do not claim these cases passed until actually run.
+
+The remaining positive, expired, redeemed, wrong-identity, recovery and concurrent-claim tests require a separately implemented trustworthy binding and transactional redemption. A hook accepting matching email or client metadata would not establish that binding. Verify concurrent claims in PostgreSQL with two independent transactions and unique grant constraints; inject rollback and crash failures. For redirected OAuth test state, nonce, PKCE, email verification, token leakage and internal return-path allowlisting. Do not enable public signup based on this deny-only test.
