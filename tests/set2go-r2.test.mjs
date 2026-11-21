@@ -21,6 +21,7 @@ test('multipart signs only owned stored track and checks actual object size', as
 
 test('development configuration fails closed and invalid job prefixes are rejected', async () => {
   assert.throws(() => developmentR2FromEnv({ NODE_ENV: 'production', SET2GO_UPLOAD_MODE: 'r2-development' }))
+  assert.throws(() => developmentR2FromEnv({ NODE_ENV: 'production', SET2GO_PRIVATE_TESTING: 'enabled', SET2GO_UPLOAD_MODE: 'unsupported' }))
   const adapter = createR2Adapter({ authorizePart: async () => true, authorizeCompletion: async () => true, client: { send: async () => ({}) }, bucket: 'private' })
   await assert.rejects(adapter.deleteJobObjects('../other'))
 })

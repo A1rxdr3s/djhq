@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react"
 import Image from "next/image"
 import { Mail } from "lucide-react"
+import { sanitizeNextDestination } from "@/lib/auth/login-redirect"
 import { supabase } from "@/lib/supabase/client"
 import { message as copy, type Locale, type MessageKey } from "@/lib/i18n/messages"
 import { SiteHeader, SiteFooter } from "../site-shell"
@@ -10,9 +11,10 @@ import { usePageLocale } from "../use-page-locale"
 import styles from "../account-shell.module.css"
 import shared from "../home.module.css"
 
-export default function SignInClient({ initialLocale }: { initialLocale: Locale }) {
+export default function SignInClient({ initialLocale, initialNext }: { initialLocale: Locale; initialNext?: string }) {
   const { locale, changeLocale } = usePageLocale(initialLocale, "signInMetaTitle", "signInDescription")
   const t = (key: MessageKey) => copy(locale, key)
+  const nextPath = sanitizeNextDestination(initialNext)
   const [email, setEmail] = useState("")
   const [message, setMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
@@ -24,10 +26,14 @@ export default function SignInClient({ initialLocale }: { initialLocale: Locale 
     setMessage("")
     setErrorMessage("")
 
+    const redirectTo = nextPath
+      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+      : `${window.location.origin}/auth/callback`
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
       },
     })
 
@@ -43,10 +49,14 @@ export default function SignInClient({ initialLocale }: { initialLocale: Locale 
     setMessage("")
     setErrorMessage("")
 
+    const emailRedirectTo = nextPath
+      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+      : `${window.location.origin}/auth/callback?next=/hq`
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/hq`,
+        emailRedirectTo,
       },
     })
 

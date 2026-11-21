@@ -1,3 +1,4 @@
+import { accessForUser } from '@/lib/products/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createUploadStore } from '@/lib/set2go/cloud/postgres-store'
 import { authorizeDevelopmentUpload } from '@/lib/set2go/cloud/dev-access.mjs'
@@ -14,7 +15,10 @@ async function metadata(request: Request) {
 export async function POST(request: Request) {
   try {
     const owner = await authorizeDevelopmentUpload(request, process.env, async () => {
-      const db = await createSupabaseServerClient(); const {data,error} = await db.auth.getUser(); return error ? null : data.user
+      const db = await createSupabaseServerClient()
+      const { data, error } = await db.auth.getUser()
+      if (error || !data.user) return null
+      return accessForUser(data.user, false).set2go ? data.user : null
     })
     if (!owner) return Response.json({error:'Cloud upload access unavailable.'},{status:404})
     const body = await metadata(request)

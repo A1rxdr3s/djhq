@@ -21,7 +21,7 @@ test('explicit preference wins; browser preference and English fallback work', (
 
 test('public pages reference every dictionary message', async () => {
   const { readFileSync } = await import('node:fs')
-  const source = ['app/page.tsx', 'app/home-client.tsx', 'app/site-shell.tsx', 'app/mobile-nav.tsx', 'app/language-switch.tsx', 'app/about/page.tsx', 'app/about/about-client.tsx', 'app/account-shell.tsx'].map(path => readFileSync(path, 'utf8')).join('\n')
+  const source = ['app/page.tsx', 'app/home-client.tsx', 'app/site-shell.tsx', 'app/mobile-nav.tsx', 'app/language-switch.tsx', 'app/about/page.tsx', 'app/about/about-client.tsx', 'app/account-shell.tsx', 'app/sign-in/sign-in-client.tsx', 'app/sign-in/page.tsx'].map(path => readFileSync(path, 'utf8')).join('\n')
   for (const key of Object.keys(en)) assert.match(source, new RegExp(`["']${key}["']`), `unused message: ${key}`)
 })
 

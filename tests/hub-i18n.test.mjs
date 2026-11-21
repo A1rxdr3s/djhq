@@ -65,8 +65,10 @@ test('sign-in copy exists in both languages', () => {
 })
 test('sign-in keeps the original Supabase auth calls and callbacks', () => {
   const src = readFileSync(new URL('../app/sign-in/sign-in-client.tsx', import.meta.url), 'utf8')
-  assert.match(src, /signInWithOAuth\(\{\s*provider: "google",\s*options: \{\s*redirectTo: `\$\{window\.location\.origin\}\/auth\/callback`/)
-  assert.match(src, /signInWithOtp\(\{\s*email,\s*options: \{\s*emailRedirectTo: `\$\{window\.location\.origin\}\/auth\/callback\?next=\/hq`/)
+  assert.match(src, /signInWithOAuth\(\{\s*provider: "google",\s*options: \{\s*redirectTo/)
+  assert.match(src, /\$\{window\.location\.origin\}\/auth\/callback/)
+  assert.match(src, /signInWithOtp\(\{\s*email,\s*options: \{\s*emailRedirectTo/)
+  assert.match(src, /\$\{window\.location\.origin\}\/auth\/callback\?next=\/hq/)
 })
 
 test('hub status labels: Set2Go stays an accurate development status, Website has none', () => {

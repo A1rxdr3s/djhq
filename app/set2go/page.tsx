@@ -11,13 +11,18 @@ export default async function Set2GoPage() {
   const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()])
   let cloudEnabled = false
   const origin = process.env.SET2GO_DEV_CLOUD_ORIGIN
-  let localOrigin = false
+  let validOrigin = false
   try {
     const parsed = new URL(origin ?? '')
-    localOrigin = parsed.origin === origin && parsed.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)
-  } catch { /* Keep the cloud feature hidden when local origin config is invalid. */ }
+    const isLocal = parsed.origin === origin && parsed.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)
+    const isProdTesting = process.env.SET2GO_PRIVATE_TESTING === 'enabled' && parsed.origin === origin && parsed.protocol === 'https:' && parsed.hostname === 'djhq.app'
+    validOrigin = process.env.NODE_ENV === 'development' ? (isLocal || isProdTesting) : isProdTesting
+  } catch { /* Keep the cloud feature hidden when origin config is invalid. */ }
   const storageConfigured = !!process.env.R2_ACCOUNT_ID && /^[a-f0-9]{32}$/i.test(process.env.R2_ACCOUNT_ID) && !!process.env.R2_PRIVATE_BUCKET && !!process.env.R2_ACCESS_KEY_ID && !!process.env.R2_SECRET_ACCESS_KEY
-  if (process.env.NODE_ENV === 'development' && process.env.SET2GO_DEV_CLOUD_UPLOAD === 'enabled' && process.env.SET2GO_UPLOAD_MODE === 'r2-development' && localOrigin && storageConfigured) {
+  const devUploadEnabled = process.env.SET2GO_DEV_CLOUD_UPLOAD === 'enabled'
+  const uploadModeValid = process.env.SET2GO_UPLOAD_MODE === 'r2-development' || (process.env.SET2GO_PRIVATE_TESTING === 'enabled' && process.env.SET2GO_UPLOAD_MODE === 'r2-private-testing')
+  const envAllowed = process.env.NODE_ENV === 'development' || process.env.SET2GO_PRIVATE_TESTING === 'enabled'
+  if (envAllowed && devUploadEnabled && uploadModeValid && validOrigin && storageConfigured) {
     cloudEnabled = user.id === process.env.SET2GO_DEV_CLOUD_USER_ID
   }
   return <Set2GoClient cloudEnabled={cloudEnabled} initialLocale={resolveLocale(cookieStore.get(LOCALE_COOKIE)?.value, requestHeaders.get('accept-language'))} />

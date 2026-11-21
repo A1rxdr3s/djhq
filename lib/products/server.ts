@@ -27,6 +27,7 @@ export function accessForUser(user: { id: string; email?: string | null }, ownsA
     platformAdmin: isAdminEmail(user.email),
     ownsWebsite: ownsArtist,
     development: process.env.NODE_ENV === 'development',
+    privateTesting: process.env.SET2GO_PRIVATE_TESTING === 'enabled',
     set2goDeveloperId: process.env.SET2GO_DEV_CLOUD_USER_ID,
   })
 }

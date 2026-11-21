@@ -21,3 +21,9 @@ test('no entitlement fails closed and production has no Set2Go entitlement', () 
   assert.equal(resolveProductAccess({ ...base, userId: developer, development: false }).set2go, false)
   assert.equal(resolveProductAccess({ ...base, userId: developer, set2goDeveloperId: 'bad' }).set2go, false)
 })
+
+test('private testing gate explicitly authorizes Set2Go for allowlisted developer in production', () => {
+  assert.equal(resolveProductAccess({ ...base, userId: developer, development: false, privateTesting: true }).set2go, true)
+  assert.equal(resolveProductAccess({ ...base, userId: other, development: false, privateTesting: true }).set2go, false)
+  assert.equal(resolveProductAccess({ ...base, userId: developer, development: false, privateTesting: false }).set2go, false)
+})
